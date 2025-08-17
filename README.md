@@ -1,8 +1,33 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Environment Setup
+
+### 1. Configure Environment Variables
+
+Copy the example environment file and configure your credentials:
+
+```bash
+cp .env.example .env.local
+```
+
+Edit `.env.local` with your actual values:
+
+- `NEXTAUTH_SECRET`: Generate a random 32-character string
+- `GOOGLE_CLIENT_ID`: Get from [Google Cloud Console](https://console.developers.google.com/)
+- `GOOGLE_CLIENT_SECRET`: Get from Google Cloud Console
+- `ALLOWED_EMAILS`: Comma-separated list of allowed email addresses
+
+### 2. Google OAuth Setup
+
+1. Go to [Google Cloud Console](https://console.developers.google.com/)
+2. Create a new project or select existing one
+3. Enable Google+ API
+4. Create OAuth 2.0 credentials
+5. Add `http://localhost:3000/api/auth/callback/google` to authorized redirect URIs
+
 ## Getting Started
 
-First, run the development server:
+After setting up environment variables, run the development server:
 
 ```bash
 npm run dev
