@@ -1,0 +1,18 @@
+{
+  "env": {
+    "NEXTAUTH_SECRET": "@nextauth-secret",
+    "GOOGLE_CLIENT_ID": "@google-client-id", 
+    "GOOGLE_CLIENT_SECRET": "@google-client-secret",
+    "ALLOWED_EMAILS": "@allowed-emails",
+    "NEXTAUTH_URL": "@nextauth-url"
+  },
+  "build": {
+    "env": {
+      "NEXTAUTH_SECRET": "@nextauth-secret",
+      "GOOGLE_CLIENT_ID": "@google-client-id",
+      "GOOGLE_CLIENT_SECRET": "@google-client-secret", 
+      "ALLOWED_EMAILS": "@allowed-emails",
+      "NEXTAUTH_URL": "@nextauth-url"
+    }
+  }
+}
