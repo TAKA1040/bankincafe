@@ -4,7 +4,10 @@ import { SessionProvider } from "./providers/SessionProvider";
 
 export const metadata: Metadata = {
   title: "Banking Cafe",
-  description: "Banking management application",
+  description: "Banking management application with secure authentication",
+  icons: {
+    icon: '/favicon.ico',
+  },
 };
 
 export default function RootLayout({
