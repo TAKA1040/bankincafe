@@ -82,12 +82,9 @@ const handler = NextAuth({
     async session({ session, token }) {
       console.log('session callback called with session:', session, 'token:', token)
       // トークンからセッションにユーザー情報を設定
-      if (token) {
-        session.user = {
-          id: token.sub,
-          name: token.name,
-          email: token.email,
-        }
+      if (token && session.user) {
+        session.user.name = token.name
+        session.user.email = token.email
       }
       return session
     },
