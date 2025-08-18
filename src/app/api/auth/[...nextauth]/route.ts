@@ -33,7 +33,7 @@ if (process.env.NODE_ENV === 'development') {
   )
 }
 
-export const authOptions: AuthOptions = {
+const authOptions: AuthOptions = {
   providers,
   pages: {
     signIn: '/login',
@@ -45,9 +45,9 @@ export const authOptions: AuthOptions = {
       }
       return token
     },
-    async session({ session, token: _token }) {
-      if (session.user) {
-        // session.user.id = token.id as string
+    async session({ session, token }) {
+      if (session.user && token.id) {
+        session.user.id = token.id as string
       }
       return session
     },
