@@ -46,8 +46,8 @@ const authOptions: AuthOptions = {
       return token
     },
     async session({ session, token }) {
-      if (session.user && token.id) {
-        session.user.id = token.id as string
+      if (session.user) {
+        // session.user.id = token.id as string
       }
       return session
     },
