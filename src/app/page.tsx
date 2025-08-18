@@ -3,7 +3,6 @@
 import { signOut, useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
-import DevLogin from './components/DevLogin'
 
 export default function Home() {
   const { data: session, status } = useSession()

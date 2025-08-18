@@ -47,7 +47,8 @@ const authOptions: AuthOptions = {
     },
     async session({ session, token }) {
       if (session.user && token.id) {
-        (session.user as any).id = token.id as string
+        // @ts-ignore - Extending session.user with id property
+        session.user.id = token.id as string
       }
       return session
     },
