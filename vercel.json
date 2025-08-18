@@ -1,7 +1,1 @@
-{
-  "functions": {
-    "src/app/api/auth/[...nextauth]/route.ts": {
-      "maxDuration": 30
-    }
-  }
-}
+{}
