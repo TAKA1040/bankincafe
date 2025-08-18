@@ -5,9 +5,18 @@ import { SessionProvider } from "./providers/SessionProvider";
 export const metadata: Metadata = {
   title: "Banking Cafe",
   description: "Banking management application with secure authentication",
-  icons: {
-    icon: '/favicon.ico',
-  },
+  icons: [
+    {
+      rel: 'icon',
+      type: 'image/x-icon',
+      url: '/favicon.ico',
+    },
+    {
+      rel: 'shortcut icon',
+      type: 'image/x-icon',
+      url: '/favicon.ico',
+    }
+  ],
 };
 
 export default function RootLayout({

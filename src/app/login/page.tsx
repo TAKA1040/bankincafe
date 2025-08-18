@@ -5,14 +5,26 @@ import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 
 export default function LoginPage() {
-  const { data: session } = useSession()
+  const { data: session, status } = useSession()
   const router = useRouter()
 
   useEffect(() => {
-    if (session) {
+    if (session && status === 'authenticated') {
       router.push('/')
     }
-  }, [session, router])
+  }, [session, status, router])
+
+  // ローディング中
+  if (status === 'loading') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <h1 className="text-3xl font-extrabold text-gray-900">Banking Cafe</h1>
+          <p className="mt-2 text-sm text-gray-600">読み込み中...</p>
+        </div>
+      </div>
+    )
+  }
 
   if (session) {
     return (
