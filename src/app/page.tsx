@@ -1,26 +1,26 @@
 'use client'
 
 import { signOut, useSession } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
+import { useEffect } from 'react'
 import DevLogin from './components/DevLogin'
 
 export default function Home() {
   const { data: session, status } = useSession()
+  const router = useRouter()
 
-  // デバッグ情報
-  console.log('Home component - Status:', status, 'Session:', session)
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push('/login')
+    }
+  }, [status, router])
 
-  // ログイン状態に関係なく、すぐに画面を表示
   if (status === "loading") {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="max-w-md w-full space-y-8">
-          <div className="text-center">
-            <h1 className="text-3xl font-extrabold text-gray-900">Banking Cafe</h1>
-            <p className="mt-2 text-sm text-gray-600">開発モード - テストログイン</p>
-            <div className="mt-6">
-              <DevLogin />
-            </div>
-          </div>
+        <div className="text-center">
+          <h1 className="text-3xl font-extrabold text-gray-900">Banking Cafe</h1>
+          <p className="mt-2 text-sm text-gray-600">読み込み中...</p>
         </div>
       </div>
     )
@@ -69,18 +69,6 @@ export default function Home() {
     )
   }
 
-  // 未ログイン時のシンプルなログイン画面
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="max-w-md w-full space-y-8">
-        <div className="text-center">
-          <h1 className="text-3xl font-extrabold text-gray-900">Banking Cafe</h1>
-          <p className="mt-2 text-sm text-gray-600">開発モード - テストログイン</p>
-        </div>
-        <div>
-          <DevLogin />
-        </div>
-      </div>
-    </div>
-  )
+  // 未ログイン時はログインページにリダイレクト
+  return null
 }
