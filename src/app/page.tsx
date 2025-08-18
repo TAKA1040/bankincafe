@@ -69,6 +69,13 @@ export default function Home() {
     )
   }
 
-  // 未ログイン時はログインページにリダイレクト
-  return null
+  // 未ログイン時はログインページにリダイレクト中
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="text-center">
+        <h1 className="text-3xl font-extrabold text-gray-900">Banking Cafe</h1>
+        <p className="mt-2 text-sm text-gray-600">ログインページへリダイレクト中...</p>
+      </div>
+    </div>
+  )
 }
