@@ -108,22 +108,79 @@ export default function DebugPage() {
         <h2 style={{ marginBottom: '1rem', color: '#dc2626' }}>必要な設定確認項目</h2>
         <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px', padding: '1rem' }}>
           <h3 style={{ margin: '0 0 0.5rem 0', color: '#dc2626' }}>Google Cloud Console</h3>
-          <p style={{ margin: '0 0 0.5rem 0', fontSize: '14px' }}>
-            承認済みのリダイレクト URI: <code style={{ background: '#f3f4f6', padding: '2px 4px', borderRadius: '4px' }}>
-              {config ? config['Expected Redirect URL'] : 'Loading...'}
-            </code>
-          </p>
+          <p style={{ margin: '0 0 0.5rem 0', fontSize: '14px' }}>承認済みのリダイレクト URI:</p>
+          {config && (
+            <input 
+              type="text" 
+              readOnly 
+              value={config['Expected Redirect URL']}
+              onClick={(e) => {
+                e.currentTarget.select()
+                navigator.clipboard.writeText(config['Expected Redirect URL'])
+                alert('URLをコピーしました！')
+              }}
+              style={{
+                background: '#f3f4f6',
+                padding: '8px',
+                borderRadius: '4px',
+                fontSize: '12px',
+                width: '100%',
+                border: '1px solid #d1d5db',
+                cursor: 'pointer',
+                margin: '4px 0'
+              }}
+            />
+          )}
           
           <h3 style={{ margin: '1rem 0 0.5rem 0', color: '#dc2626' }}>Supabase Dashboard</h3>
-          <p style={{ margin: '0 0 0.5rem 0', fontSize: '14px' }}>
-            Site URL: <code style={{ background: '#f3f4f6', padding: '2px 4px', borderRadius: '4px' }}>
-              {config ? config['Origin'] : 'Loading...'}
-            </code>
-          </p>
-          <p style={{ margin: '0', fontSize: '14px' }}>
-            Redirect URLs: <code style={{ background: '#f3f4f6', padding: '2px 4px', borderRadius: '4px' }}>
-              {config ? config['Expected Redirect URL'] : 'Loading...'}
-            </code>
+          <p style={{ margin: '0 0 0.5rem 0', fontSize: '14px' }}>Site URL:</p>
+          {config && (
+            <input 
+              type="text" 
+              readOnly 
+              value={config['Origin']}
+              onClick={(e) => {
+                e.currentTarget.select()
+                navigator.clipboard.writeText(config['Origin'])
+                alert('URLをコピーしました！')
+              }}
+              style={{
+                background: '#f3f4f6',
+                padding: '8px',
+                borderRadius: '4px',
+                fontSize: '12px',
+                width: '100%',
+                border: '1px solid #d1d5db',
+                cursor: 'pointer',
+                margin: '4px 0 8px 0'
+              }}
+            />
+          )}
+          <p style={{ margin: '0 0 0.5rem 0', fontSize: '14px' }}>Redirect URLs:</p>
+          {config && (
+            <input 
+              type="text" 
+              readOnly 
+              value={config['Expected Redirect URL']}
+              onClick={(e) => {
+                e.currentTarget.select()
+                navigator.clipboard.writeText(config['Expected Redirect URL'])
+                alert('URLをコピーしました！')
+              }}
+              style={{
+                background: '#f3f4f6',
+                padding: '8px',
+                borderRadius: '4px',
+                fontSize: '12px',
+                width: '100%',
+                border: '1px solid #d1d5db',
+                cursor: 'pointer',
+                margin: '4px 0'
+              }}
+            />
+          )}
+          <p style={{margin: '0.25rem 0', color: '#6b7280', fontSize: '10px'}}>
+            ↑ 各フィールドをクリックでURLコピー
           </p>
         </div>
       </div>

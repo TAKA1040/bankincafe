@@ -96,16 +96,29 @@ export default function LoginPage() {
           <p style={{margin: '0 0 0.5rem 0', color: '#374151'}}>
             <strong>必要なリダイレクトURI:</strong>
           </p>
-          <code style={{
-            background: '#f3f4f6',
-            padding: '2px 4px',
-            borderRadius: '4px',
-            fontSize: '12px',
-            display: 'block',
-            margin: '4px 0'
-          }}>
-            https://bankincafe.apaf.me/auth/callback
-          </code>
+          <input 
+            type="text" 
+            readOnly 
+            value="https://bankincafe.apaf.me/auth/callback"
+            onClick={(e) => {
+              e.currentTarget.select()
+              navigator.clipboard.writeText('https://bankincafe.apaf.me/auth/callback')
+              alert('URLをコピーしました！')
+            }}
+            style={{
+              background: '#f3f4f6',
+              padding: '8px',
+              borderRadius: '4px',
+              fontSize: '12px',
+              width: '100%',
+              border: '1px solid #d1d5db',
+              cursor: 'pointer',
+              margin: '4px 0'
+            }}
+          />
+          <p style={{margin: '0.25rem 0', color: '#6b7280', fontSize: '10px'}}>
+            ↑ クリックでコピー
+          </p>
           <p style={{margin: '0.5rem 0', color: '#374151', fontSize: '12px'}}>
             上記をGoogle Cloud Consoleの承認済みリダイレクトURIに追加してください
           </p>
