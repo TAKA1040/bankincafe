@@ -1,36 +1,48 @@
 /**
  * パス: src/app/login/page.tsx
- * 目的: Googleログインページ（Supabase Auth使用）
+ * 目的: Googleログインページ（Supabase Auth使用、エラーハンドリング強化）
  */
 'use client'
 import { createClient } from '@/lib/supabase/client'
+import { normalizeAuthError, setupAuthMonitoring } from '@/lib/auth-utils'
+import { useEffect } from 'react'
 
 export default function LoginPage() {
   const supabase = createClient()
+
+  // 認証モニタリングの設定
+  useEffect(() => {
+    const cleanup = setupAuthMonitoring()
+    return cleanup
+  }, [])
 
   const handleGoogleLogin = async () => {
     try {
       const redirectURL = `${location.origin}/auth/callback`
       console.log('[LOGIN] Using redirect URL:', redirectURL)
       
+      // メッセージチャンネルエラーを防ぐため、同一タブでリダイレクト
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: { 
           redirectTo: redirectURL,
           queryParams: {
             access_type: 'offline',
-            prompt: 'consent'
-          }
+            prompt: 'select_account' // 'consent' から変更してポップアップ問題を回避
+          },
+          skipBrowserRedirect: false, // ポップアップではなく同一タブでリダイレクト
         },
       })
       
       if (error) {
         console.error('[LOGIN] Auth error:', error)
-        alert(`ログインエラー: ${error.message}`)
+        const normalizedError = normalizeAuthError(error)
+        window.location.href = `/auth/auth-code-error?error=${normalizedError.code}&description=${encodeURIComponent(normalizedError.message)}&details=${encodeURIComponent(normalizedError.details || '')}`
       }
     } catch (err) {
       console.error('[LOGIN] Unexpected error:', err)
-      alert('予期しないエラーが発生しました')
+      const normalizedError = normalizeAuthError(err)
+      window.location.href = `/auth/auth-code-error?error=${normalizedError.code}&description=${encodeURIComponent(normalizedError.message)}&details=${encodeURIComponent(normalizedError.details || '')}`
     }
   }
 

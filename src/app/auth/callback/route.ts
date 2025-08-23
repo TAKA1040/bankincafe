@@ -13,11 +13,24 @@ export async function GET(request: Request) {
     const code = searchParams.get('code')
     const error_param = searchParams.get('error')
     const error_description = searchParams.get('error_description')
+    const authError = searchParams.get('authError')
     
     console.log('[CALLBACK] Request URL:', request.url)
     console.log('[CALLBACK] Code present:', !!code)
     console.log('[CALLBACK] Error param:', error_param)
     console.log('[CALLBACK] Error description:', error_description)
+    console.log('[CALLBACK] Auth Error:', authError)
+
+    // authErrorパラメータの処理
+    if (authError) {
+      try {
+        const decodedAuthError = decodeURIComponent(authError)
+        console.log('[CALLBACK] Decoded auth error:', decodedAuthError)
+        return NextResponse.redirect(`${origin}/auth/auth-code-error?error=auth_channel_error&description=${encodeURIComponent('認証チャンネルエラーが発生しました')}&details=${encodeURIComponent(decodedAuthError)}`)
+      } catch (decodeError) {
+        console.error('[CALLBACK] Failed to decode authError:', decodeError)
+      }
+    }
 
     // Google認証でエラーが返された場合
     if (error_param) {
