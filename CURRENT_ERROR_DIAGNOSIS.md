@@ -51,9 +51,13 @@ https://bankin-b2fdzcnzj-takas-projects-ebc9ff02.vercel.app
 
 **正しい Redirect URLs 設定**:
 ```
-http://localhost:3000/auth/callback
-https://bankincafe.apaf.me/auth/callback
-http://127.0.0.1:3000/auth/callback
+http://localhost:3000/auth/callback          ← ローカル開発用
+https://bankincafe.apaf.me/auth/callback     ← 本番用（httpsのみ！）
+```
+
+**❌ 設定してはいけないURL:**
+```
+http://bankincafe.apaf.me/auth/callback      ← 削除必要（httpの本番URLは存在しない）
 ```
 
 ## ⚠️ 重要な注意点
