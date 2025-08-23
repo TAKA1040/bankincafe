@@ -1,13 +1,55 @@
-アクセスをブロック: このアプリのリクエストは無効です
+{
+  "Current URL": "https://bankincafe.apaf.me/debug",
+  "Origin": "https://bankincafe.apaf.me",
+  "Protocol": "https:",
+  "Host": "bankincafe.apaf.me",
+  "Expected Redirect URL": "https://bankincafe.apaf.me/auth/callback",
+  "Google Client ID": "***MASKED***",
+  "Supabase URL": "https://auwmmosfteomieyexkeh.supabase.co",
+  "Supabase Anon Key": "***MASKED***",
+  "User Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36",
+  "Timestamp": "2025-08-23T12:00:26.711Z"
+}
 
-dash201206@gmail.com
-このアプリが無効なリクエストを送信したため、ログインできません。しばらくしてからもう一度お試しいただくか、この問題についてデベロッパーにお問い合わせください。 このエラーの詳細
-このアプリのデベロッパーの場合は、エラーの詳細をご確認ください。
-エラー 400: redirect_uri_mismatch
+
+Supabase Connection Test:
+
+{
+  "data": true,
+  "error": null
+}
 
 
-ログイン画面に表示されてる文字⇓
- 設定確認が必要です
+OAuth URL Generation Test:
+
+URL: https://auwmmosfteomieyexkeh.supabase.co/auth/v1/authorize?provider=google&
+redirect_to=https%3A%2F%2Fbankincafe.apaf.me%2Fauth%2Fcallback&
+code_challenge=2QFVuDdCkzYmJ6zTiAkk5HEygtlsA9Fs7Bzn7SwsM&
+code_challenge_method=s256
+
+
+Error: No error
+
+
+下記にいかにも設定し直瀬みたいなのが表示されているが、設定しようとする後すでに登録済みなので重複で登録できない。
+
+必要な設定確認項目
+Google Cloud Console
+承認済みのリダイレクト URI:
+
+https://bankincafe.apaf.me/auth/callback
+Supabase Dashboard
+Site URL:
+
+https://bankincafe.apaf.me
+Redirect URLs:
+
+https://bankincafe.apaf.me/auth/callback
+↑ 各フィールドをクリックでURLコピー
+
+
+ログインページに戻ると
+🚨 設定確認が必要です
 エラー: redirect_uri_mismatch
 
 必要なリダイレクトURI:
@@ -17,4 +59,6 @@ https://bankincafe.apaf.me/auth/callback
 
 上記をGoogle Cloud Consoleの承認済みリダイレクトURIに追加してください
 
-これが出てるけど、登録すると重複してるから登録できない。
+また同じことを指示してる
+
+これはいやがらせ？
