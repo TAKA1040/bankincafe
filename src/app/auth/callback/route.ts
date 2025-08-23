@@ -1,6 +1,6 @@
 /**
  * パス: src/app/auth/callback/route.ts
- * 目的: Google認証後のコールバック処理（認証コードをセッションに交換）
+ * 目的: Supabase OAuth認証後のコールバック処理（シンプル実装）
  */
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
@@ -8,64 +8,35 @@ import { createClient } from '@/lib/supabase/server'
 export const dynamic = 'force-dynamic'
 
 export async function GET(request: Request) {
-  try {
-    const { searchParams, origin } = new URL(request.url)
-    const code = searchParams.get('code')
-    const error_param = searchParams.get('error')
-    const error_description = searchParams.get('error_description')
-    const authError = searchParams.get('authError')
+  const requestUrl = new URL(request.url)
+  const code = requestUrl.searchParams.get('code')
+  const origin = requestUrl.origin
+
+  console.log('[CALLBACK] Processing OAuth callback')
+  console.log('[CALLBACK] Code present:', !!code)
+  console.log('[CALLBACK] Origin:', origin)
+
+  if (code) {
+    const supabase = await createClient()
     
-    console.log('[CALLBACK] Request URL:', request.url)
-    console.log('[CALLBACK] Code present:', !!code)
-    console.log('[CALLBACK] Error param:', error_param)
-    console.log('[CALLBACK] Error description:', error_description)
-    console.log('[CALLBACK] Auth Error:', authError)
-
-    // authErrorパラメータの処理（メッセージチャンネルエラー対応）
-    if (authError) {
-      try {
-        const decodedAuthError = decodeURIComponent(authError)
-        console.log('[CALLBACK] Decoded auth error:', decodedAuthError)
-        // メッセージチャンネルエラーの場合は、再ログインを促す
-        return NextResponse.redirect(`${origin}/auth/auth-code-error?error=message_channel_error&description=${encodeURIComponent('認証処理中にエラーが発生しました。再度ログインを試行してください。')}&details=${encodeURIComponent(decodedAuthError)}`)
-      } catch (decodeError) {
-        console.error('[CALLBACK] Failed to decode authError:', decodeError)
-        return NextResponse.redirect(`${origin}/auth/auth-code-error?error=decode_error&description=${encodeURIComponent('エラー情報の処理に失敗しました')}`)
-      }
-    }
-
-    // URLパラメータに v2 が含まれる場合（メッセージチャンネルエラーの兆候）
-    const url = request.url
-    if (url.includes('/v2?') || url.includes('v2%3F')) {
-      console.warn('[CALLBACK] v2 parameter detected - potential message channel error')
-      return NextResponse.redirect(`${origin}/auth/auth-code-error?error=v2_parameter_detected&description=${encodeURIComponent('認証フローでメッセージチャンネルエラーが発生した可能性があります')}`)
-    }
-
-    // Google認証でエラーが返された場合
-    if (error_param) {
-      console.error('[CALLBACK] OAuth error:', error_param, error_description)
-      return NextResponse.redirect(`${origin}/auth/auth-code-error?error=${encodeURIComponent(error_param)}&description=${encodeURIComponent(error_description || '')}`)
-    }
-
-    if (code) {
-      console.log('[CALLBACK] Exchanging code for session...')
-      const supabase = await createClient()
+    try {
       const { data, error } = await supabase.auth.exchangeCodeForSession(code)
       
-      if (!error && data.session) {
-        console.log('[CALLBACK] Session exchange successful, user:', data.user?.email)
-        const next = searchParams.get('next') ?? '/'
-        return NextResponse.redirect(`${origin}${next}`)
-      } else {
-        console.error('[CALLBACK] Session exchange failed:', error)
-        return NextResponse.redirect(`${origin}/auth/auth-code-error?error=session_exchange_failed&description=${encodeURIComponent(error?.message || 'Unknown error')}`)
+      if (error) {
+        console.error('[CALLBACK] Session exchange error:', error)
+        return NextResponse.redirect(`${origin}/auth/auth-code-error?error=${error.message}`)
       }
+      
+      if (data.session) {
+        console.log('[CALLBACK] Authentication successful for user:', data.user?.email)
+        return NextResponse.redirect(`${origin}/`)
+      }
+    } catch (err) {
+      console.error('[CALLBACK] Unexpected error during session exchange:', err)
+      return NextResponse.redirect(`${origin}/auth/auth-code-error?error=unexpected_error`)
     }
-    
-    console.error('[CALLBACK] No code parameter found')
-    return NextResponse.redirect(`${origin}/auth/auth-code-error?error=no_code&description=Authorization code not found`)
-  } catch (err) {
-    console.error('[CALLBACK] Unexpected error:', err)
-    return NextResponse.redirect(`${new URL(request.url).origin}/auth/auth-code-error?error=unexpected&description=${encodeURIComponent(String(err))}`)
   }
+
+  console.error('[CALLBACK] No authorization code found')
+  return NextResponse.redirect(`${origin}/auth/auth-code-error?error=no_code`)
 }

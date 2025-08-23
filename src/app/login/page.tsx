@@ -1,53 +1,38 @@
 /**
- * パス: src/app/login/page.tsx
- * 目的: Googleログインページ（Supabase Auth使用、エラーハンドリング強化）
+ * パス: src/app/login/page.tsx  
+ * 目的: Googleログインページ（正しいSupabase OAuth実装）
  */
 'use client'
 import { createClient } from '@/lib/supabase/client'
-import { normalizeAuthError, setupAuthMonitoring } from '@/lib/auth-utils'
-import { useEffect } from 'react'
 
 export default function LoginPage() {
   const supabase = createClient()
 
-  // 認証モニタリングの設定
-  useEffect(() => {
-    const cleanup = setupAuthMonitoring()
-    return cleanup
-  }, [])
-
   const handleGoogleLogin = async () => {
     try {
-      const redirectURL = `${location.origin}/auth/callback`
+      console.log('🔍 [LOGIN] Starting Google OAuth flow')
       
-      // OAuth情報をコンソールに出力（アラートは削除）
-      console.log('🔍 [LOGIN DEBUG] Starting OAuth flow to:', redirectURL)
-      
-      // メッセージチャンネルエラーを完全に回避するための最適化された設定
-      const { error } = await supabase.auth.signInWithOAuth({
+      // 正しいSupabase OAuth実装
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
-        options: { 
-          redirectTo: redirectURL,
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
           queryParams: {
+            access_type: 'offline',
             prompt: 'select_account',
-            access_type: 'offline'
-          },
-          skipBrowserRedirect: false
-        },
+          }
+        }
       })
-      
-      // エラー処理
+
       if (error) {
-        console.error('[LOGIN] Auth error:', error)
-        const normalizedError = normalizeAuthError(error)
-        window.location.href = `/auth/auth-code-error?error=${normalizedError.code}&description=${encodeURIComponent(normalizedError.message)}&details=${encodeURIComponent(normalizedError.details || '')}`
+        console.error('[LOGIN] OAuth error:', error)
+        alert(`認証エラー: ${error.message}`)
       } else {
-        console.log('🔍 [LOGIN DEBUG] OAuth request initiated successfully')
+        console.log('🔍 [LOGIN] OAuth URL generated:', data?.url)
       }
     } catch (err) {
       console.error('[LOGIN] Unexpected error:', err)
-      const normalizedError = normalizeAuthError(err)
-      window.location.href = `/auth/auth-code-error?error=${normalizedError.code}&description=${encodeURIComponent(normalizedError.message)}&details=${encodeURIComponent(normalizedError.details || '')}`
+      alert(`予期しないエラー: ${String(err)}`)
     }
   }
 

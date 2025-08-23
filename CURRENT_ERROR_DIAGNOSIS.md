@@ -77,13 +77,21 @@ http://bankincafe.apaf.me/auth/callback      ← 削除必要（httpの本番URL
 5. ブラウザキャッシュクリア
 6. シークレットモードで再テスト
 
-### 🚨 第2段階（設定済みなのにエラーが続く場合）
+### 🚨 **根本原因発見！設定が完全に間違っていました**
 
-**原因候補:**
-1. **Google設定の反映遅延** (最大30分かかる場合がある)
-2. **ブラウザキャッシュ残存** (OAuth認証情報が古いまま)
-3. **OAuth Client ID の混在** (複数のClient IDが存在する可能性)
-4. **Supabase設定未修正** (まだ古いNextAuth設定のまま)
+**Google Cloud Console設定が根本的に間違っています！**
+
+❌ **間違った設定（現在）:**
+```
+Google承認済みリダイレクトURI: https://bankincafe.apaf.me/auth/callback
+```
+
+✅ **正しい設定（修正必要）:**
+```
+Google承認済みリダイレクトURI: https://auwmmosfteomieyexkeh.supabase.co/auth/v1/callback
+```
+
+**理由: Supabase OAuthフローでは、GoogleはSupabaseのエンドポイントにリダイレクトします**
 
 **追加対処法:**
 1. **完全キャッシュクリア**:
