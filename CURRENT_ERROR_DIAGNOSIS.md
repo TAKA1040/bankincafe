@@ -12,29 +12,47 @@ dash201206@gmail.com
 
 **redirect_uri_mismatch** エラーは、Google OAuth設定の承認済みリダイレクトURIと実際のリクエストURIが一致しないことが原因です。
 
-## 🎯 必要な設定（未完了のため）
+## 🎯 必要な設定修正
 
 ### Google Cloud Console
 **OAuth 2.0 クライアントID**: `351623689886-v266i1gs0ctq4c1vsail0amacegocmpi`
 
-**承認済みのリダイレクト URI** に以下を追加必須:
+**🚨 現在の設定エラーを修正**:
 ```
-https://bankincafe.apaf.me/auth/callback
+❌ 間違い: https://bankincafe.apaf.me/auth/v1/callback
+✅ 正しい: https://bankincafe.apaf.me/auth/callback
+```
+
+**承認済みのリダイレクト URI** の正しい設定:
+```
 http://localhost:3000/auth/callback
+https://bankincafe.apaf.me/auth/callback
+https://bankin-b2fdzcnzj-takas-projects-ebc9ff02.vercel.app/auth/callback
+```
+
+**承認済みの JavaScript 生成元** の設定:
+```
+http://localhost:3000
+https://bankincafe.apaf.me
+https://bankin-b2fdzcnzj-takas-projects-ebc9ff02.vercel.app
 ```
 
 ### Supabase Authentication
 **プロジェクト**: `auwmmosfteomieyexkeh.supabase.co`
 
-**Site URL**:
+**🚨 現在の本番設定エラー発見**:
 ```
-https://bankincafe.apaf.me
+❌ Site URL現在: http://bankincafe.apaf.me/  (httpで設定されている)
+✅ Site URL正しい: https://bankincafe.apaf.me (httpsに修正必要)
+
+❌ Redirect URL現在: /api/auth/callback/google (古いNextAuth設定)
+✅ Redirect URL正しい: /auth/callback (Supabase Auth用)
 ```
 
-**Redirect URLs**:
+**正しい Redirect URLs 設定**:
 ```
-https://bankincafe.apaf.me/auth/callback
 http://localhost:3000/auth/callback
+https://bankincafe.apaf.me/auth/callback
 http://127.0.0.1:3000/auth/callback
 ```
 

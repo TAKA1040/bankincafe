@@ -17,3 +17,8 @@ URI 2
 https://bankincafe.apaf.me/auth/v1/callback
 URI 3 
 https://bankin-b2fdzcnzj-takas-projects-ebc9ff02.vercel.app/auth/callback
+
+
+あと、supabassに管理者URL
+dash201206@gmail.com
+が登録されてないようなのでCLIでDBも確認して
