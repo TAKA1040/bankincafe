@@ -59,6 +59,39 @@ export default function LoginPage() {
         <p style={{marginBottom:'2rem', color:'#666'}}>
           管理者: dash201206@gmail.com
         </p>
+        
+        <div style={{
+          background: '#fef2f2',
+          border: '1px solid #fecaca',
+          borderRadius: '8px',
+          padding: '1rem',
+          marginBottom: '2rem',
+          fontSize: '14px',
+          textAlign: 'left'
+        }}>
+          <h3 style={{margin: '0 0 0.5rem 0', color: '#dc2626', fontSize: '16px'}}>
+            🚨 設定確認が必要です
+          </h3>
+          <p style={{margin: '0 0 0.5rem 0', color: '#374151'}}>
+            <strong>エラー:</strong> redirect_uri_mismatch
+          </p>
+          <p style={{margin: '0 0 0.5rem 0', color: '#374151'}}>
+            <strong>必要なリダイレクトURI:</strong>
+          </p>
+          <code style={{
+            background: '#f3f4f6',
+            padding: '2px 4px',
+            borderRadius: '4px',
+            fontSize: '12px',
+            display: 'block',
+            margin: '4px 0'
+          }}>
+            https://bankincafe.apaf.me/auth/callback
+          </code>
+          <p style={{margin: '0.5rem 0', color: '#374151', fontSize: '12px'}}>
+            上記をGoogle Cloud Consoleの承認済みリダイレクトURIに追加してください
+          </p>
+        </div>
         <button 
           onClick={handleGoogleLogin} 
           style={{

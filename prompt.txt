@@ -1,6 +1,19 @@
-アクセスをブロック: このアプリのリクエストは無効です
+今回の内容にあってるか確認して
 
-dash201206@gmail.com
-このアプリが無効なリクエストを送信したため、ログインできません。しばらくしてからもう一度お試しいただくか、この問題についてデベロッパーにお問い合わせください。 このエラーの詳細
-このアプリのデベロッパーの場合は、エラーの詳細をご確認ください。
-エラー 400: redirect_uri_mismatch
+承認済みの JavaScript 生成元
+ブラウザからのリクエストに使用します
+URI 1 
+http://localhost:3000
+URI 2 
+https://bankin-b2fdzcnzj-takas-projects-ebc9ff02.vercel.app
+URI 3 
+https://bankincafe.apaf.me
+
+承認済みのリダイレクト URI
+ウェブサーバーからのリクエストに使用します
+URI 1 
+http://localhost:3000/auth/callback
+URI 2 
+https://bankincafe.apaf.me/auth/v1/callback
+URI 3 
+https://bankin-b2fdzcnzj-takas-projects-ebc9ff02.vercel.app/auth/callback

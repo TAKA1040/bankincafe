@@ -76,11 +76,35 @@ http://127.0.0.1:3000/auth/callback
 
 ## 🚨 トラブルシューティング
 
-### まだエラーが出る場合:
-1. ブラウザのキャッシュをクリア
-2. シークレットモードで試す
-3. 設定変更後、10分程度待つ（反映に時間がかかる場合がある）
-4. ブラウザの開発者コンソールでエラー詳細を確認
+### ❌ 「アクセスをブロック: このアプリのリクエストは無効です (Error 400: redirect_uri_mismatch)」が出る場合:
+
+**🔴 これは最も多いエラーです。以下を必ず確認してください:**
+
+1. **Google Cloud Console の設定確認**:
+   - [Google Cloud Console](https://console.cloud.google.com/) → 「APIs & Services」 → 「認証情報」
+   - OAuth 2.0 クライアントID: `351623689886-v266i1gs0ctq4c1vsail0amacegocmpi` を選択
+   - **「承認済みのリダイレクト URI」に以下が正確に入力されているか確認**:
+     ```
+     https://bankincafe.apaf.me/auth/callback
+     http://localhost:3000/auth/callback
+     ```
+   - ⚠️ **重要**: URLは完全一致である必要があります（`/`の有無、`https`/`http`の違いも重要）
+
+2. **設定の保存確認**:
+   - 「保存」ボタンを押したか確認
+   - 設定変更から5〜10分待つ（Googleの反映に時間がかかります）
+
+3. **ブラウザキャッシュのクリア**:
+   ```
+   Ctrl+Shift+Delete → すべてのキャッシュとCookieを削除
+   ```
+
+4. **シークレット/プライベートモードで再テスト**
+
+### その他のエラーが出る場合:
+1. Supabase Dashboard の URL Configuration を確認
+2. 設定変更後、10分程度待つ
+3. ブラウザの開発者コンソールでエラー詳細を確認
 
 ---
 
