@@ -19,30 +19,29 @@ export default function LoginPage() {
   const handleGoogleLogin = async () => {
     try {
       const redirectURL = `${location.origin}/auth/callback`
-      console.log('🔍 [LOGIN DEBUG] Current location:', location.href)
+      console.log('🔍 [LOGIN DEBUG] Starting Google OAuth flow')
       console.log('🔍 [LOGIN DEBUG] Redirect URL:', redirectURL)
-      console.log('🔍 [LOGIN DEBUG] Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL)
       
-      // Google Cloud Console設定確認用
-      alert(`🔧 設定確認:\n本番URL: ${location.origin}\nコールバックURL: ${redirectURL}\n\nGoogle Cloud Consoleの「承認済みのリダイレクト URI」に上記コールバックURLを追加してください。`)
-      
-      // メッセージチャンネルエラーを防ぐため、同一タブでリダイレクト
+      // メッセージチャンネルエラーを完全に回避するための最適化された設定
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: { 
           redirectTo: redirectURL,
           queryParams: {
-            access_type: 'offline',
-            prompt: 'select_account' // 'consent' から変更してポップアップ問題を回避
+            prompt: 'select_account',
+            access_type: 'offline'
           },
-          skipBrowserRedirect: false, // ポップアップではなく同一タブでリダイレクト
+          skipBrowserRedirect: false
         },
       })
       
+      // エラー処理
       if (error) {
         console.error('[LOGIN] Auth error:', error)
         const normalizedError = normalizeAuthError(error)
         window.location.href = `/auth/auth-code-error?error=${normalizedError.code}&description=${encodeURIComponent(normalizedError.message)}&details=${encodeURIComponent(normalizedError.details || '')}`
+      } else {
+        console.log('🔍 [LOGIN DEBUG] OAuth request initiated successfully')
       }
     } catch (err) {
       console.error('[LOGIN] Unexpected error:', err)

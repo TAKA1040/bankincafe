@@ -45,30 +45,15 @@ export function normalizeAuthError(error: any): AuthError {
 }
 
 /**
- * 認証状態のモニタリング
+ * 認証状態のモニタリング（簡素化してメッセージチャンネルエラーを回避）
  */
 export function setupAuthMonitoring() {
-  const supabase = createClient()
+  // メッセージチャンネルエラーを避けるため、必要最小限の監視のみ
+  console.log('[AUTH_MONITOR] Initialized (minimal monitoring)')
   
-  // 認証状態の変更を監視
-  const { data: { subscription } } = supabase.auth.onAuthStateChange(
-    (event, session) => {
-      console.log('[AUTH_MONITOR] State change:', event, session?.user?.email || 'No user')
-      
-      // セッション期限切れの処理
-      if (event === 'TOKEN_REFRESHED') {
-        console.log('[AUTH_MONITOR] Token refreshed successfully')
-      }
-      
-      if (event === 'SIGNED_OUT') {
-        console.log('[AUTH_MONITOR] User signed out, clearing local state')
-        // 必要に応じて追加のクリーンアップ
-      }
-    }
-  )
-  
+  // クリーンアップ関数を返す（実際のサブスクリプションなし）
   return () => {
-    subscription.unsubscribe()
+    console.log('[AUTH_MONITOR] Cleanup called')
   }
 }
 

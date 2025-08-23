@@ -21,15 +21,24 @@ export async function GET(request: Request) {
     console.log('[CALLBACK] Error description:', error_description)
     console.log('[CALLBACK] Auth Error:', authError)
 
-    // authErrorパラメータの処理
+    // authErrorパラメータの処理（メッセージチャンネルエラー対応）
     if (authError) {
       try {
         const decodedAuthError = decodeURIComponent(authError)
         console.log('[CALLBACK] Decoded auth error:', decodedAuthError)
-        return NextResponse.redirect(`${origin}/auth/auth-code-error?error=auth_channel_error&description=${encodeURIComponent('認証チャンネルエラーが発生しました')}&details=${encodeURIComponent(decodedAuthError)}`)
+        // メッセージチャンネルエラーの場合は、再ログインを促す
+        return NextResponse.redirect(`${origin}/auth/auth-code-error?error=message_channel_error&description=${encodeURIComponent('認証処理中にエラーが発生しました。再度ログインを試行してください。')}&details=${encodeURIComponent(decodedAuthError)}`)
       } catch (decodeError) {
         console.error('[CALLBACK] Failed to decode authError:', decodeError)
+        return NextResponse.redirect(`${origin}/auth/auth-code-error?error=decode_error&description=${encodeURIComponent('エラー情報の処理に失敗しました')}`)
       }
+    }
+
+    // URLパラメータに v2 が含まれる場合（メッセージチャンネルエラーの兆候）
+    const url = request.url
+    if (url.includes('/v2?') || url.includes('v2%3F')) {
+      console.warn('[CALLBACK] v2 parameter detected - potential message channel error')
+      return NextResponse.redirect(`${origin}/auth/auth-code-error?error=v2_parameter_detected&description=${encodeURIComponent('認証フローでメッセージチャンネルエラーが発生した可能性があります')}`)
     }
 
     // Google認証でエラーが返された場合
