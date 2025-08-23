@@ -19,8 +19,24 @@ export default function LoginPage() {
   const handleGoogleLogin = async () => {
     try {
       const redirectURL = `${location.origin}/auth/callback`
-      console.log('🔍 [LOGIN DEBUG] Starting Google OAuth flow')
-      console.log('🔍 [LOGIN DEBUG] Redirect URL:', redirectURL)
+      
+      // デバッグ情報をコンソールと画面に表示
+      const debugInfo = {
+        'Current URL': location.href,
+        'Redirect URL': redirectURL,
+        'Google Client ID': process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
+        'Supabase URL': process.env.NEXT_PUBLIC_SUPABASE_URL,
+        'Timestamp': new Date().toISOString()
+      }
+      
+      console.group('🔍 [LOGIN DEBUG] OAuth Flow Details')
+      Object.entries(debugInfo).forEach(([key, value]) => {
+        console.log(`${key}:`, value)
+      })
+      console.groupEnd()
+      
+      // 一時的にアラートでも確認
+      alert(`🔍 OAuth Debug Info:\n${JSON.stringify(debugInfo, null, 2)}`)
       
       // メッセージチャンネルエラーを完全に回避するための最適化された設定
       const { error } = await supabase.auth.signInWithOAuth({
@@ -38,6 +54,7 @@ export default function LoginPage() {
       // エラー処理
       if (error) {
         console.error('[LOGIN] Auth error:', error)
+        alert(`🚨 Auth Error:\n${JSON.stringify(error, null, 2)}`)
         const normalizedError = normalizeAuthError(error)
         window.location.href = `/auth/auth-code-error?error=${normalizedError.code}&description=${encodeURIComponent(normalizedError.message)}&details=${encodeURIComponent(normalizedError.details || '')}`
       } else {
@@ -45,6 +62,7 @@ export default function LoginPage() {
       }
     } catch (err) {
       console.error('[LOGIN] Unexpected error:', err)
+      alert(`🚨 Unexpected Error:\n${JSON.stringify(err, null, 2)}`)
       const normalizedError = normalizeAuthError(err)
       window.location.href = `/auth/auth-code-error?error=${normalizedError.code}&description=${encodeURIComponent(normalizedError.message)}&details=${encodeURIComponent(normalizedError.details || '')}`
     }

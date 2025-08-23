@@ -65,12 +65,49 @@ http://127.0.0.1:3000/auth/callback
 
 ## 🔧 解決手順
 
-1. Google Cloud Console で上記URIを追加
+### ✅ 第1段階（完了）
+1. Google Cloud Console で上記URIを追加 ✅
 2. Supabase Dashboard で上記URLを設定
 3. 両方の設定を保存
 4. 10分待機
 5. ブラウザキャッシュクリア
 6. シークレットモードで再テスト
+
+### 🚨 第2段階（設定済みなのにエラーが続く場合）
+
+**原因候補:**
+1. **Google設定の反映遅延** (最大30分かかる場合がある)
+2. **ブラウザキャッシュ残存** (OAuth認証情報が古いまま)
+3. **OAuth Client ID の混在** (複数のClient IDが存在する可能性)
+4. **Supabase設定未修正** (まだ古いNextAuth設定のまま)
+
+**追加対処法:**
+1. **完全キャッシュクリア**:
+   ```
+   Ctrl+Shift+Delete → すべて選択 → すべて削除
+   ```
+
+2. **別ブラウザでテスト**:
+   ```
+   Chrome → Firefox / Edge で試行
+   ```
+
+3. **OAuth Client ID確認**:
+   ```
+   Google Cloud Console で複数のClient IDがないか確認
+   正しいClient ID: 351623689886-v266i1gs0ctq4c1vsail0amacegocmpi
+   ```
+
+4. **Supabase URL Configuration確認**:
+   ```
+   Site URL: https://bankincafe.apaf.me (httpsで設定済みか確認)
+   Redirect URLs: /auth/callback (NextAuthパスでないか確認)
+   ```
+
+5. **30分待機後再テスト**:
+   ```
+   Google OAuth設定は完全反映に時間がかかります
+   ```
 
 ## 📋 設定確認済み項目
 

@@ -1,24 +1,15 @@
-今回の内容にあってるか確認して
-
-承認済みの JavaScript 生成元
-ブラウザからのリクエストに使用します
-URI 1 
-http://localhost:3000
-URI 2 
-https://bankin-b2fdzcnzj-takas-projects-ebc9ff02.vercel.app
-URI 3 
-https://bankincafe.apaf.me
-
-承認済みのリダイレクト URI
-ウェブサーバーからのリクエストに使用します
-URI 1 
-http://localhost:3000/auth/callback
-URI 2 
-https://bankincafe.apaf.me/auth/v1/callback
-URI 3 
-https://bankin-b2fdzcnzj-takas-projects-ebc9ff02.vercel.app/auth/callback
+page-26336f6b6ad9044b.js:1 [AUTH_MONITOR] Initialized (minimal monitoring)
+favicon.ico:1  Failed to load resource: the server responded with a status of 404 ()
 
 
-あと、supabassに管理者URL
-dash201206@gmail.com
-が登録されてないようなのでCLIでDBも確認して
+
+🚨 設定確認が必要です
+エラー: redirect_uri_mismatch
+
+必要なリダイレクトURI:
+
+https://bankincafe.apaf.me/auth/callback
+上記をGoogle Cloud Consoleの承認済みリダイレクトURIに追加してください
+
+ログイン画面でこんなエラーが
+確認したけど登録されてるよ？
