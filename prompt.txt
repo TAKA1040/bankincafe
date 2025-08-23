@@ -1,15 +1,20 @@
-page-26336f6b6ad9044b.js:1 [AUTH_MONITOR] Initialized (minimal monitoring)
-favicon.ico:1  Failed to load resource: the server responded with a status of 404 ()
+アクセスをブロック: このアプリのリクエストは無効です
+
+dash201206@gmail.com
+このアプリが無効なリクエストを送信したため、ログインできません。しばらくしてからもう一度お試しいただくか、この問題についてデベロッパーにお問い合わせください。 このエラーの詳細
+このアプリのデベロッパーの場合は、エラーの詳細をご確認ください。
+エラー 400: redirect_uri_mismatch
 
 
-
-🚨 設定確認が必要です
+ログイン画面に表示されてる文字⇓
+ 設定確認が必要です
 エラー: redirect_uri_mismatch
 
 必要なリダイレクトURI:
 
 https://bankincafe.apaf.me/auth/callback
+↑ クリックでコピー
+
 上記をGoogle Cloud Consoleの承認済みリダイレクトURIに追加してください
 
-ログイン画面でこんなエラーが
-確認したけど登録されてるよ？
+これが出てるけど、登録すると重複してるから登録できない。

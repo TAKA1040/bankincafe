@@ -24,7 +24,7 @@ export default function LoginPage() {
       const debugInfo = {
         'Current URL': location.href,
         'Redirect URL': redirectURL,
-        'Google Client ID': process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
+        'Google Client ID': '***MASKED***',
         'Supabase URL': process.env.NEXT_PUBLIC_SUPABASE_URL,
         'Timestamp': new Date().toISOString()
       }

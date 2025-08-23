@@ -17,9 +17,9 @@ export default function DebugPage() {
       'Protocol': window.location.protocol,
       'Host': window.location.host,
       'Expected Redirect URL': `${window.location.origin}/auth/callback`,
-      'Google Client ID': process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
+      'Google Client ID': '***MASKED***',
       'Supabase URL': process.env.NEXT_PUBLIC_SUPABASE_URL,
-      'Supabase Anon Key': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.substring(0, 20) + '...',
+      'Supabase Anon Key': '***MASKED***',
       'User Agent': navigator.userAgent,
       'Timestamp': new Date().toISOString()
     }
