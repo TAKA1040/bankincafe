@@ -19,7 +19,12 @@ export default function LoginPage() {
   const handleGoogleLogin = async () => {
     try {
       const redirectURL = `${location.origin}/auth/callback`
-      console.log('[LOGIN] Using redirect URL:', redirectURL)
+      console.log('🔍 [LOGIN DEBUG] Current location:', location.href)
+      console.log('🔍 [LOGIN DEBUG] Redirect URL:', redirectURL)
+      console.log('🔍 [LOGIN DEBUG] Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL)
+      
+      // Google Cloud Console設定確認用
+      alert(`🔧 設定確認:\n本番URL: ${location.origin}\nコールバックURL: ${redirectURL}\n\nGoogle Cloud Consoleの「承認済みのリダイレクト URI」に上記コールバックURLを追加してください。`)
       
       // メッセージチャンネルエラーを防ぐため、同一タブでリダイレクト
       const { error } = await supabase.auth.signInWithOAuth({
@@ -50,7 +55,7 @@ export default function LoginPage() {
     <div style={{display:'flex',minHeight:'100vh',alignItems:'center',justifyContent:'center'}}>
       <div style={{textAlign:'center', padding:'2rem'}}>
         <h1 style={{marginBottom:'2rem', fontSize:'2rem', fontWeight:'bold'}}>
-          銀行カフェへようこそ
+          鈑金Cafeへようこそ
         </h1>
         <p style={{marginBottom:'2rem', color:'#666'}}>
           管理者: dash201206@gmail.com

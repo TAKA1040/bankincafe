@@ -86,7 +86,7 @@ export default async function HomePage() {
 
         <div style={{marginTop:'2rem', padding:'1rem', background:'#fef3c7', borderRadius:'8px'}}>
           <p style={{fontSize:'0.9rem', color:'#92400e'}}>
-            <strong>次の開発予定:</strong><br />
+            <strong>鈑金Cafe - 次の開発予定:</strong><br />
             ・プロフィール管理機能<br />
             ・承認フロー（PENDING → APPROVED）<br />
             ・管理者機能

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: '銀行カフェ',
+  title: '鈑金Cafe',
   description: 'Supabase認証を使用したNext.jsアプリケーション',
 }
 
