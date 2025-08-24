@@ -286,7 +286,7 @@ class WorkSearchDB {
     })
 
     // 日付順でソート（新しい順）
-    results.sort((a, b) => new Date(b.billing_date) - new Date(a.billing_date))
+    results.sort((a, b) => new Date(b.billing_date).getTime() - new Date(a.billing_date).getTime())
     
     return results
   }
@@ -344,7 +344,7 @@ class WorkSearchDB {
       })
     })
 
-    return results.sort((a, b) => new Date(b.billing_date) - new Date(a.billing_date))
+    return results.sort((a, b) => new Date(b.billing_date).getTime() - new Date(a.billing_date).getTime())
   }
 }
 
