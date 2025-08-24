@@ -1,0 +1,23 @@
+# Reference files - not part of the application
+_reference_images/
+reference_images/
+請求書システム画像/
+
+# IDE and development files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# AI tool configuration
+.claude/
+.aider/
+.windsurf/
+.cursor/
+prompts.txt
+prompts/
+*.prompt
+
+# Environment files
+.env.cli.secret
+ENV/
