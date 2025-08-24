@@ -420,40 +420,29 @@ export default function WorkHistoryPage() {
 
   return (
     <SecurityWrapper requirePin={true}>
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 p-6">
-        <div className="max-w-7xl mx-auto space-y-8">
+      <div className="min-h-screen bg-gray-50 p-6">
+        <div className="max-w-7xl mx-auto space-y-6">
           {/* ヘッダー */}
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-8">
+          <div className="bg-white rounded-lg shadow-sm border p-6">
             <div className="flex justify-between items-center">
               <div>
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center">
-                    <Search className="h-6 w-6 text-white" />
-                  </div>
-                  <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
-                    作業内容履歴
-                  </h1>
-                </div>
-                <p className="text-gray-600 text-lg">過去の作業価格や実績を検索・確認できます</p>
+                <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                  作業内容履歴
+                </h1>
+                <p className="text-gray-600">過去の作業価格や実績を検索・確認できます</p>
               </div>
               <div className="flex space-x-3">
                 <button
-                  onClick={handleBack}
-                  className="bg-gray-500 text-white px-6 py-3 rounded-xl hover:bg-gray-600 transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-                >
-                  ← ホームに戻る
-                </button>
-                <button
                   onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-                  className="bg-indigo-500 text-white px-6 py-3 rounded-xl hover:bg-indigo-600 transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 flex items-center border border-blue-400/30"
+                  className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 transition-colors flex items-center"
                 >
                   <Filter className="h-4 w-4 mr-2" />
-                  {showAdvancedFilters ? '簡易表示' : '詳細フィルター'}
+                  詳細フィルター
                 </button>
                 {searchResults.length > 0 && (
                   <button
                     onClick={exportToCSV}
-                    className="bg-emerald-500 text-white px-6 py-3 rounded-xl hover:bg-emerald-600 transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 flex items-center"
+                    className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors flex items-center"
                   >
                     <Download className="h-4 w-4 mr-2" />
                     CSV出力
@@ -464,35 +453,25 @@ export default function WorkHistoryPage() {
           </div>
 
           {/* 検索フィルター */}
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-8">
-            <div className="space-y-6">
+          <div className="bg-white rounded-lg shadow-sm border p-6">
+            <div className="space-y-4">
               {/* 基本検索 */}
-              <div className="flex gap-6">
-                <div className="flex-1">
-                  <label className="block text-sm font-semibold text-gray-700 mb-3">🔍 作業名で検索</label>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">作業名で検索</label>
+                <div className="flex gap-3">
                   <input
                     type="text"
                     value={searchKeyword}
                     onChange={(e) => setSearchKeyword(e.target.value)}
-                    placeholder="作業名を入力（複数キーワード対応）"
-                    className="w-full px-6 py-4 bg-white/10 backdrop-blur-sm border-2 border-white/20 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-400/30 focus:border-blue-400 transition-all duration-300 text-white font-medium shadow-xl placeholder-blue-200"
+                    placeholder="作業名を入力（部分一致）"
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     onKeyDown={(e) => { if (e.key === 'Escape') setSearchKeyword(''); if (e.key === 'Enter') handleSearch() }}
                   />
-                </div>
-                <div className="flex items-end gap-3">
                   <button
-                    onClick={() => { setSearchKeyword(''); setDebouncedKeyword(''); setCurrentPage(1) }}
-                    disabled={!searchKeyword}
-                    className={`px-6 py-4 rounded-2xl border-2 font-bold transition-all duration-300 shadow-xl ${searchKeyword ? 'bg-white/10 text-white border-white/30 hover:bg-white/20 hover:shadow-2xl transform hover:-translate-y-0.5' : 'bg-white/5 text-white/30 border-white/10 cursor-not-allowed'}`}
-                    title="検索キーワードをクリア"
+                    onClick={handleSearch}
+                    className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition-colors flex items-center"
                   >
-                    クリア
-                  </button>
-                  <button
-                    onClick={() => { setCurrentPage(1); handleSearch() }}
-                    className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-8 py-4 rounded-2xl hover:from-blue-600 hover:to-indigo-700 transition-all duration-300 font-bold shadow-xl hover:shadow-2xl transform hover:-translate-y-0.5 flex items-center border border-blue-400/30"
-                  >
-                    <Search className="h-5 w-5 mr-2" />
+                    <Search className="h-4 w-4 mr-2" />
                     検索
                   </button>
                 </div>
@@ -500,16 +479,13 @@ export default function WorkHistoryPage() {
 
               {/* 詳細フィルター */}
               {showAdvancedFilters && (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pt-8 border-t-2 border-white/20">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t">
                   <div>
-                    <label className="block text-lg font-bold text-white mb-4 flex items-center">
-                      <span className="text-2xl mr-3">👥</span>
-                      顧客で絞り込み
-                    </label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">顧客で絞り込み</label>
                     <select
                       value={customerFilter}
                       onChange={(e) => setCustomerFilter(e.target.value)}
-                      className="w-full px-6 py-4 bg-white/10 backdrop-blur-sm border-2 border-white/20 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-400/30 focus:border-blue-400 transition-all duration-300 text-white font-medium shadow-xl"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     >
                       <option value="">すべての顧客</option>
                       {customers.map(customer => (
@@ -520,56 +496,44 @@ export default function WorkHistoryPage() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-lg font-bold text-white mb-4 flex items-center">
-                      <span className="text-2xl mr-3">📅</span>
-                      期間開始
-                    </label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">期間開始</label>
                     <input
                       type="date"
                       value={dateFrom}
                       onChange={(e) => setDateFrom(e.target.value)}
-                      className="w-full px-6 py-4 bg-white/10 backdrop-blur-sm border-2 border-white/20 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-400/30 focus:border-blue-400 transition-all duration-300 text-white font-medium shadow-xl"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
                   </div>
                   <div>
-                    <label className="block text-lg font-bold text-white mb-4 flex items-center">
-                      <span className="text-2xl mr-3">📅</span>
-                      期間終了
-                    </label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">期間終了</label>
                     <input
                       type="date"
                       value={dateTo}
                       onChange={(e) => setDateTo(e.target.value)}
-                      className="w-full px-6 py-4 bg-white/10 backdrop-blur-sm border-2 border-white/20 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-400/30 focus:border-blue-400 transition-all duration-300 text-white font-medium shadow-xl"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
                   </div>
-                  <div className="md:col-span-3 flex items-center gap-6 pt-6">
-                    <span className="text-lg font-bold text-white flex items-center">
-                      <span className="text-2xl mr-3">⚡</span>
-                      クイック設定:
-                    </span>
-                    <button onClick={setCurrentMonth} className="px-6 py-3 bg-blue-500/20 border-2 border-blue-400/30 text-blue-200 rounded-2xl hover:bg-blue-500/30 hover:border-blue-400/50 transition-all duration-300 font-semibold shadow-xl hover:shadow-2xl transform hover:-translate-y-0.5">当月</button>
-                    <button onClick={setPrevMonth} className="px-6 py-3 bg-orange-500/20 border-2 border-orange-400/30 text-orange-200 rounded-2xl hover:bg-orange-500/30 hover:border-orange-400/50 transition-all duration-300 font-semibold shadow-xl hover:shadow-2xl transform hover:-translate-y-0.5">前月</button>
-                    <button onClick={clearDateRange} className="px-6 py-3 bg-gray-500/20 border-2 border-gray-400/30 text-gray-200 rounded-2xl hover:bg-gray-500/30 hover:border-gray-400/50 transition-all duration-300 font-semibold shadow-xl hover:shadow-2xl transform hover:-translate-y-0.5">クリア</button>
+                  <div className="md:col-span-3 flex items-center gap-3 pt-2">
+                    <span className="text-sm font-medium text-gray-700">クイック設定:</span>
+                    <button onClick={setCurrentMonth} className="px-3 py-1 bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors text-sm">当月</button>
+                    <button onClick={setPrevMonth} className="px-3 py-1 bg-orange-100 text-orange-700 rounded-md hover:bg-orange-200 transition-colors text-sm">前月</button>
+                    <button onClick={clearDateRange} className="px-3 py-1 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors text-sm">クリア</button>
                   </div>
                 </div>
               )}
             </div>
           </div>
 
-          {/* 作業名候補 */}
+          {/* よく使用される作業 */}
           {!searchKeyword && workSuggestions.length > 0 && (
-            <div className="bg-white/10 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 p-10">
-              <h2 className="text-2xl font-bold text-white mb-6 flex items-center">
-                <span className="text-3xl mr-3">⭐</span>
-                よく使用される作業
-              </h2>
-              <div className="flex flex-wrap gap-4">
-                {workSuggestions.map(workName => (
+            <div className="bg-white rounded-lg shadow-sm border p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">よく使用される作業</h2>
+              <div className="flex flex-wrap gap-2">
+                {workSuggestions.slice(0, 6).map(workName => (
                   <button
                     key={workName}
                     onClick={() => { setCurrentPage(1); selectWorkSuggestion(workName) }}
-                    className="bg-gradient-to-r from-white/20 to-indigo-400/20 backdrop-blur-sm text-blue-100 px-6 py-3 rounded-full hover:from-blue-400/30 hover:to-indigo-400/30 transition-all duration-300 font-semibold shadow-xl hover:shadow-2xl transform hover:-translate-y-1 border border-blue-400/30"
+                    className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm hover:bg-blue-200 transition-colors"
                   >
                     {workName}
                   </button>
@@ -580,67 +544,79 @@ export default function WorkHistoryPage() {
 
           {/* 統計情報 */}
           {workStats && (
-            <div className="bg-white/10 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 p-10">
-              <h2 className="text-2xl font-bold text-white mb-6 flex items-center">
-                <span className="text-3xl mr-3">📊</span>
+            <div className="bg-white rounded-lg shadow-sm border p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">
                 「{searchKeyword}」の統計情報
               </h2>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-                <div className="bg-gradient-to-br from-blue-500/20 to-blue-600/20 backdrop-blur-sm p-8 rounded-3xl border border-blue-400/30 shadow-2xl hover:shadow-3xl transition-all duration-300 transform hover:-translate-y-1">
-                  <div className="text-lg font-bold text-blue-200 mb-2">実施回数</div>
-                  <div className="text-4xl font-black text-white">{workStats.count}</div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="bg-blue-50 p-4 rounded-lg">
+                  <div className="text-sm font-medium text-blue-600 mb-1">実施回数</div>
+                  <div className="text-2xl font-bold text-blue-900">{workStats.count}回</div>
                   <div className="text-sm text-blue-300 mt-2">回</div>
                 </div>
-                <div className="bg-gradient-to-br from-emerald-500/20 to-emerald-600/20 backdrop-blur-sm p-8 rounded-3xl border border-emerald-400/30 shadow-2xl hover:shadow-3xl transition-all duration-300 transform hover:-translate-y-1">
-                  <div className="text-lg font-bold text-emerald-200 mb-2">平均単価</div>
-                  <div className="text-3xl font-black text-white">¥{workStats.avgPrice.toLocaleString()}</div>
+                <div className="bg-green-50 p-4 rounded-lg">
+                  <div className="text-sm font-medium text-green-600 mb-1">平均単価</div>
+                  <div className="text-2xl font-bold text-green-900">¥{workStats.avgPrice.toLocaleString()}</div>
                 </div>
-                <div className="bg-gradient-to-br from-orange-500/20 to-orange-600/20 backdrop-blur-sm p-8 rounded-3xl border border-orange-400/30 shadow-2xl hover:shadow-3xl transition-all duration-300 transform hover:-translate-y-1">
-                  <div className="text-lg font-bold text-orange-200 mb-2">価格帯</div>
-                  <div className="text-lg font-bold text-white">
+                <div className="bg-orange-50 p-4 rounded-lg">
+                  <div className="text-sm font-medium text-orange-600 mb-1">価格帯</div>
+                  <div className="text-sm font-bold text-orange-900">
                     ¥{workStats.minPrice.toLocaleString()} 〜 ¥{workStats.maxPrice.toLocaleString()}
                   </div>
                 </div>
-                <div className="bg-gradient-to-br from-purple-500/20 to-purple-600/20 backdrop-blur-sm p-8 rounded-3xl border border-purple-400/30 shadow-2xl hover:shadow-3xl transition-all duration-300 transform hover:-translate-y-1">
-                  <div className="text-lg font-bold text-purple-200 mb-2">総売上</div>
-                  <div className="text-3xl font-black text-white">¥{workStats.totalAmount.toLocaleString()}</div>
+                <div className="bg-purple-50 p-4 rounded-lg">
+                  <div className="text-sm font-medium text-purple-600 mb-1">総売上</div>
+                  <div className="text-2xl font-bold text-purple-900">¥{workStats.totalAmount.toLocaleString()}</div>
                 </div>
               </div>
             </div>
           )}
 
           {/* 検索結果 */}
-          <div className="bg-white/10 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 overflow-hidden">
-            <div className="px-10 py-8 border-b-2 border-white/20 bg-gradient-to-r from-blue-500/10 to-indigo-500/10 backdrop-blur-sm">
+          <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
+            <div className="px-6 py-4 border-b bg-gray-50">
               <div className="flex justify-between items-center">
-                <h2 className="text-3xl font-black text-white flex items-center">
-                  <span className="text-3xl mr-4">📋</span>
-                  検索結果 ({searchResults.length} 件)
+                <h2 className="text-lg font-semibold text-gray-900">
+                  検索結果 ({searchResults.length}件)
                 </h2>
                 {searchResults.length > 0 && (
-                  <div className="text-xl font-bold text-emerald-200 bg-emerald-500/20 border-2 border-emerald-400/30 text-emerald-200 rounded-2xl hover:bg-emerald-500/30 hover:border-emerald-400/50 transition-all duration-300 font-semibold shadow-xl hover:shadow-2xl transform hover:-translate-y-0.5 border border-emerald-400/30">
+                  <div className="text-lg font-semibold text-green-600">
                     総額: ¥{searchResults.reduce((sum, result) => sum + result.total, 0).toLocaleString()}
                   </div>
                 )}
               </div>
             </div>
+            
             {searchResults.length > 0 && (
-              <div className="px-10 py-6 flex items-center justify-between text-lg text-blue-200 bg-blue-500/10 backdrop-blur-sm border-b border-white/10">
+              <div className="px-6 py-3 flex items-center justify-between text-sm text-gray-600 bg-gray-50 border-b">
                 <div>
-                  <span className="font-bold">{searchResults.length} 件中 {searchResults.length === 0 ? 0 : startIndex + 1} - {endIndex} を表示</span>
+                  {searchResults.length} 件中 {searchResults.length === 0 ? 0 : startIndex + 1} - {endIndex} を表示
                 </div>
-                <div className="flex items-center gap-4">
-                  <button onClick={goPrev} disabled={currentPage <= 1} className={`px-6 py-3 rounded-2xl font-bold transition-all duration-300 shadow-xl ${currentPage <= 1 ? 'bg-white/5 text-white/30 cursor-not-allowed border border-white/10' : 'bg-blue-500 text-white hover:bg-blue-600 hover:shadow-2xl transform hover:-translate-y-0.5 border border-blue-400/30'}`}>前へ</button>
-                  <span className="font-black text-white px-4 text-xl">{currentPage} / {pageCount}</span>
-                  <button onClick={goNext} disabled={currentPage >= pageCount} className={`px-6 py-3 rounded-2xl font-bold transition-all duration-300 shadow-xl ${currentPage >= pageCount ? 'bg-white/5 text-white/30 cursor-not-allowed border border-white/10' : 'bg-blue-500 text-white hover:bg-blue-600 hover:shadow-2xl transform hover:-translate-y-0.5 border border-blue-400/30'}`}>次へ</button>
+                <div className="flex items-center gap-2">
+                  <button 
+                    onClick={goPrev} 
+                    disabled={currentPage <= 1} 
+                    className={`px-3 py-1 rounded text-sm ${currentPage <= 1 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
+                  >
+                    前へ
+                  </button>
+                  <span className="px-2">{currentPage} / {pageCount}</span>
+                  <button 
+                    onClick={goNext} 
+                    disabled={currentPage >= pageCount} 
+                    className={`px-3 py-1 rounded text-sm ${currentPage >= pageCount ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
+                  >
+                    次へ
+                  </button>
                 </div>
               </div>
             )}
+            
             {searchResults.length === 0 ? (
-              <div className="p-8 text-center text-gray-500">
+              <div className="p-12 text-center text-gray-500">
                 <Search className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                <p>該当する作業履歴がありません</p>
-                <p className="text-sm mt-2">検索条件を変更して再度お試しください</p>
+                <p className="text-lg mb-2">該当する作業履歴がありません</p>
+                <p className="text-sm">検索条件を変更して再度お試しください</p>
               </div>
             ) : (
               <div className="overflow-x-auto">
@@ -648,19 +624,22 @@ export default function WorkHistoryPage() {
                   <thead className="bg-gray-50">
                     <tr>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        請求書番号・日付
+                        請求書No<br />請求日
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        顧客名・件名
+                        顧客名<br />件名
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        作業名・登録番号
+                        登録番号<br />作業名
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        数量・単価
+                        数量<br />種別
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        操作
+                        単価<br />合計
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        請求書表示<br />作業価格検索
                       </th>
                     </tr>
                   </thead>
@@ -676,30 +655,33 @@ export default function WorkHistoryPage() {
                           <div className="text-sm text-gray-500">{result.subject}</div>
                         </td>
                         <td className="px-6 py-4">
+                          <div className="text-sm text-gray-500">{result.registration}</div>
                           <div className="text-sm text-gray-900">
                             <span className={searchKeyword && result.work_name.toLowerCase().includes(searchKeyword.toLowerCase()) ? 'bg-yellow-200' : ''}>
                               {result.work_name}
                             </span>
                             {result.is_set && (
-                              <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                                セット
+                              <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800">
+                                個別
                               </span>
                             )}
                           </div>
-                          <div className="text-sm text-gray-500">{result.registration}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">数量: {result.quantity}</div>
-                          <div className="text-sm font-medium text-green-600">¥{result.unit_price.toLocaleString()}</div>
-                          <div className="text-sm font-bold text-gray-900">合計: ¥{result.total.toLocaleString()}</div>
+                          <div className="text-sm text-gray-900">{result.quantity}</div>
+                          <div className="text-sm text-gray-500">{result.is_set ? 'セット' : '個別'}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm font-medium text-gray-900">¥{result.unit_price.toLocaleString()}</div>
+                          <div className="text-sm font-bold text-gray-900">¥{result.total.toLocaleString()}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                          <div className="space-y-2">
-                            <button className="w-full bg-blue-600 text-white px-3 py-1 rounded text-xs hover:bg-blue-700">
+                          <div className="space-y-1">
+                            <button className="w-full bg-blue-600 text-white px-3 py-1 rounded text-xs hover:bg-blue-700 transition-colors">
                               請求書表示
                             </button>
                             <button 
-                              className="w-full bg-green-600 text-white px-3 py-1 rounded text-xs hover:bg-green-700"
+                              className="w-full bg-green-600 text-white px-3 py-1 rounded text-xs hover:bg-green-700 transition-colors"
                               onClick={() => { setCurrentPage(1); selectWorkSuggestion(result.work_name) }}
                             >
                               作業価格検索
@@ -712,12 +694,6 @@ export default function WorkHistoryPage() {
                 </table>
               </div>
             )}
-          </div>
-
-          {/* フッター */}
-          <div className="mt-8 text-center text-gray-500 text-sm">
-            <p>🔧 鈑金Cafe 作業履歴システム</p>
-            <p>過去の作業実績から適切な価格設定をサポートします</p>
           </div>
         </div>
       </div>
