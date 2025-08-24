@@ -1512,7 +1512,7 @@ export default function WorkSearchPage() {
                         </tbody>
                         <tfoot className="bg-gray-50">
                           <tr>
-                            <td colSpan="3" className="border border-gray-200 px-4 py-2 text-right font-bold">合計金額</td>
+                            <td colSpan={3} className="border border-gray-200 px-4 py-2 text-right font-bold">合計金額</td>
                             <td className="border border-gray-200 px-4 py-2 text-right font-bold text-lg">
                               ¥{selectedInvoice.total.toLocaleString()}
                             </td>

@@ -796,14 +796,14 @@ export default function CustomerManagementPage() {
                     <tbody>
                       {isSearching ? (
                         <tr>
-                          <td colSpan="5" className="empty-state">
+                          <td colSpan={5} className="empty-state">
                             <Search className="h-8 w-8 mx-auto mb-2 animate-pulse" style={{ color: '#3b82f6' }} />
                             <div>検索中...</div>
                           </td>
                         </tr>
                       ) : customers.length === 0 ? (
                         <tr>
-                          <td colSpan="5" className="empty-state">
+                          <td colSpan={5} className="empty-state">
                             <Users className="h-16 w-16 mx-auto mb-4" />
                             <div className="text-xl font-semibold mb-2">
                               {searchKeyword ? '検索条件に一致する顧客が見つかりません' : '登録されている顧客がありません'}
