@@ -311,9 +311,9 @@ class WorkSearchDB {
     })
 
     return Object.entries(workCounts)
-      .sort(([,a], [,b]) => b - a)
+      .sort(([,a], [,b]) => (b as number) - (a as number))
       .slice(0, 8)
-      .map(([name, count]) => ({ name, count }))
+      .map(([name, count]) => ({ name, count: count as number }))
   }
 
   // 作業の価格履歴（最新版のみ対象）
