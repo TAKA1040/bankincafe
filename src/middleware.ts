@@ -1,17 +1,12 @@
-/**
- * パス: src/middleware.ts
- * 目的: Supabaseセッション同期ミドルウェア
- */
-import { createClient } from '@/lib/supabase/middleware'
-import type { NextRequest } from 'next/server'
+import { type NextRequest } from 'next/server'
+import { updateSession } from '@/lib/supabase/middleware'
 
 export async function middleware(request: NextRequest) {
-  const { supabase, response } = createClient(request)
-  // セッションを同期（Cookie → Supabase）
-  await supabase.auth.getSession()
-  return response
+  return await updateSession(request)
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
+  matcher: [
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+  ],
 }

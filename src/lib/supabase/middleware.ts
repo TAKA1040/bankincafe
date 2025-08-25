@@ -1,11 +1,7 @@
-/**
- * パス: src/lib/supabase/middleware.ts
- * 目的: Supabaseミドルウェアクライアント（Edge Runtime用）
- */
-import { createServerClient, type CookieOptions } from '@supabase/ssr'
-import { type NextRequest, NextResponse } from 'next/server'
+import { createServerClient } from '@supabase/ssr'
+import { NextResponse, type NextRequest } from 'next/server'
 
-export function createClient(request: NextRequest) {
+export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({
     request: {
       headers: request.headers,
@@ -20,7 +16,7 @@ export function createClient(request: NextRequest) {
         get(name: string) {
           return request.cookies.get(name)?.value
         },
-        set(name: string, value: string, options: CookieOptions) {
+        set(name: string, value: string, options: any) {
           request.cookies.set({
             name,
             value,
@@ -37,7 +33,7 @@ export function createClient(request: NextRequest) {
             ...options,
           })
         },
-        remove(name: string, options: CookieOptions) {
+        remove(name: string, options: any) {
           request.cookies.set({
             name,
             value: '',
@@ -58,5 +54,8 @@ export function createClient(request: NextRequest) {
     }
   )
 
-  return { supabase, response }
+  // セッションを更新（リフレッシュトークンがある場合）
+  await supabase.auth.getUser()
+
+  return response
 }
