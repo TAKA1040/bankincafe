@@ -3,7 +3,7 @@
  * 目的: セキュリティラッパー（将来のPIN認証対応）
  */
 'use client'
-import React from 'react'
+import React, { useEffect } from 'react'
 
 interface SecurityWrapperProps {
   children: React.ReactNode
@@ -19,12 +19,22 @@ export default function SecurityWrapper({
   // TODO: 将来のPIN認証実装
   // const [pinAuthenticated, setPinAuthenticated] = useState(false)
   // const [showPinDialog, setShowPinDialog] = useState(false)
-  
+
   // 現在はPIN認証をスキップ（後から有効化）
-  if (requirePin) {
-    console.log('🔐 [SECURITY] PIN authentication will be required in future')
-    // 将来ここでPIN入力ダイアログを表示
-  }
+  // 開発時のStrict Modeや再レンダリングでも多重出力されないように、一度だけログを出す
+  useEffect(() => {
+    if (!requirePin) return
+    if (typeof window === 'undefined') return
+    try {
+      const key = 'bankin_pin_log_once'
+      if (!sessionStorage.getItem(key)) {
+        console.log('🔐 [SECURITY] PIN authentication will be required in future')
+        sessionStorage.setItem(key, '1')
+      }
+    } catch {
+      // no-op
+    }
+  }, [requirePin])
 
   // 現在は常に子コンポーネントを表示
   return <>{children}</>
