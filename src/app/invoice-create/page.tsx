@@ -1,1153 +1,1243 @@
-/**
- * パス: src/app/invoice-create/page.tsx
- * 目的: 請求書作成ページ
- */
 'use client'
-import React, { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import SecurityWrapper from '@/components/security-wrapper'
 
+import { useState, useEffect, useMemo } from 'react'
+import { useRouter } from 'next/navigation'
+import { ArrowLeft, Plus, Trash2, Save, Search, Calculator } from 'lucide-react'
+
+// 型定義
 interface WorkItem {
-  id: string
+  id: number
   type: 'individual' | 'set'
-  name: string
+  work_name: string
+  unit_price: number
   quantity: number
-  unitPrice: number
   amount: number
-  setDetails?: string[]
+  memo: string
+  set_details?: string[]
+}
+
+interface CustomerCategory {
+  id: string
+  name: string
+  companyName: string
+  isDefault?: boolean
+}
+
+interface InvoiceData {
+  invoice_year: number
+  invoice_month: number
+  billing_date: string
+  customer_category: string
+  customer_name: string
+  subject: string
+  registration_number: string
+  order_number: string
+  internal_order_number: string
+  work_items: WorkItem[]
+  subtotal: number
+  tax_amount: number
+  total_amount: number
+  memo: string
 }
 
 interface WorkHistoryItem {
-  name: string
-  unitPrice: number
-  lastUsed: string
-  frequency: number
+  id: number
+  work_name: string
+  unit_price: number
+  customer_name: string
+  date: string
+}
+
+// WorkHistoryDBクラス
+class WorkHistoryDB {
+  private data: WorkHistoryItem[]
+
+  constructor() {
+    this.data = this.loadData()
+  }
+
+  private loadData(): WorkHistoryItem[] {
+    try {
+      if (typeof window === 'undefined') return this.getDefaultData()
+      const stored = localStorage.getItem('bankin_work_history')
+      return stored ? JSON.parse(stored) : this.getDefaultData()
+    } catch {
+      return this.getDefaultData()
+    }
+  }
+
+  private getDefaultData(): WorkHistoryItem[] {
+    return [
+      { id: 1, work_name: 'Webサイト制作', unit_price: 100000, customer_name: 'テクノロジー株式会社', date: '2024-01-15' },
+      { id: 2, work_name: 'システム保守', unit_price: 50000, customer_name: 'サンプル商事株式会社B', date: '2024-02-10' },
+      { id: 3, work_name: 'データベース設計', unit_price: 80000, customer_name: '株式会社UDトラックス', date: '2024-03-05' },
+      { id: 4, work_name: 'SEO対策', unit_price: 30000, customer_name: 'テクノロジー株式会社', date: '2024-01-20' },
+      { id: 5, work_name: 'サーバー構築', unit_price: 120000, customer_name: 'サンプル商事株式会社B', date: '2024-02-25' },
+      { id: 6, work_name: 'ロゴデザイン', unit_price: 50000, customer_name: 'デザイン会社', date: '2024-03-01' },
+      { id: 7, work_name: 'システム開発', unit_price: 200000, customer_name: '開発会社', date: '2024-03-10' },
+      { id: 8, work_name: 'コンサルティング', unit_price: 80000, customer_name: 'コンサル会社', date: '2024-03-15' }
+    ]
+  }
+
+  search(keyword: string): WorkHistoryItem[] {
+    if (!keyword.trim()) return []
+    
+    const normalizedKeyword = keyword.toLowerCase()
+    return this.data.filter(item =>
+      item.work_name.toLowerCase().includes(normalizedKeyword) ||
+      item.customer_name.toLowerCase().includes(normalizedKeyword)
+    )
+  }
+
+  getWorkSuggestions(keyword: string): string[] {
+    if (!keyword.trim()) return []
+    
+    const suggestions = this.search(keyword)
+      .map(item => item.work_name)
+      .filter((value, index, self) => self.indexOf(value) === index)
+      .slice(0, 5)
+    
+    return suggestions
+  }
+
+  getCustomerSuggestions(keyword: string): string[] {
+    if (!keyword.trim()) return []
+    
+    const normalizedKeyword = keyword.toLowerCase()
+    const suggestions = this.data
+      .filter(item => item.customer_name.toLowerCase().includes(normalizedKeyword))
+      .map(item => item.customer_name)
+      .filter((value, index, self) => self.indexOf(value) === index)
+      .slice(0, 5)
+    
+    return suggestions
+  }
+
+  getPriceByWork(workName: string): number | null {
+    const item = this.data.find(item => item.work_name === workName)
+    return item ? item.unit_price : null
+  }
+}
+
+// 件名マスターDBクラス（同じものを使用）
+class SubjectMasterDB {
+  private readonly STORAGE_KEY = 'bankin_subject_master'
+
+  getSubjects() {
+    try {
+      if (typeof window === 'undefined') return []
+      const stored = localStorage.getItem(this.STORAGE_KEY)
+      return stored ? JSON.parse(stored) : []
+    } catch {
+      return []
+    }
+  }
+
+  searchSubjects(keyword: string) {
+    if (!keyword.trim()) return this.getSubjects()
+    const normalizedKeyword = keyword.toLowerCase()
+    return this.getSubjects()
+      .filter((subject: any) => 
+        subject.subjectName.toLowerCase().includes(normalizedKeyword) ||
+        (subject.category && subject.category.toLowerCase().includes(normalizedKeyword))
+      )
+      .sort((a: any, b: any) => b.usageCount - a.usageCount)
+      .slice(0, 8)
+  }
+
+  autoRegisterSubject(subjectName: string) {
+    const subjects = this.getSubjects()
+    const existing = subjects.find((subj: any) => 
+      subj.subjectName.toLowerCase() === subjectName.toLowerCase()
+    )
+    
+    if (existing) {
+      const updated = subjects.map((subj: any) => 
+        subj.id === existing.id 
+          ? { ...subj, usageCount: subj.usageCount + 1, lastUsedAt: new Date().toISOString().split('T')[0] }
+          : subj
+      )
+      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(updated))
+    } else {
+      const newSubject = {
+        id: Date.now().toString(),
+        subjectName: subjectName,
+        category: 'その他',
+        usageCount: 1,
+        lastUsedAt: new Date().toISOString().split('T')[0]
+      }
+      subjects.push(newSubject)
+      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(subjects))
+    }
+  }
+}
+
+// 登録番号マスターDBクラス（同じものを使用）
+class RegistrationMasterDB {
+  private readonly STORAGE_KEY = 'bankin_registration_master'
+
+  getRegistrations() {
+    try {
+      if (typeof window === 'undefined') return []
+      const stored = localStorage.getItem(this.STORAGE_KEY)
+      return stored ? JSON.parse(stored) : []
+    } catch {
+      return []
+    }
+  }
+
+  searchRegistrations(keyword: string) {
+    if (!keyword.trim()) return this.getRegistrations()
+    const normalizedKeyword = keyword.toLowerCase()
+    return this.getRegistrations()
+      .filter((registration: any) => 
+        registration.registrationNumber.toLowerCase().includes(normalizedKeyword) ||
+        (registration.description && registration.description.toLowerCase().includes(normalizedKeyword)) ||
+        (registration.category && registration.category.toLowerCase().includes(normalizedKeyword))
+      )
+      .sort((a: any, b: any) => b.usageCount - a.usageCount)
+      .slice(0, 8)
+  }
+
+  autoRegisterRegistration(registrationNumber: string) {
+    const registrations = this.getRegistrations()
+    const existing = registrations.find((reg: any) => 
+      reg.registrationNumber.toLowerCase() === registrationNumber.toLowerCase()
+    )
+    
+    if (existing) {
+      const updated = registrations.map((reg: any) => 
+        reg.id === existing.id 
+          ? { ...reg, usageCount: reg.usageCount + 1, lastUsedAt: new Date().toISOString().split('T')[0] }
+          : reg
+      )
+      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(updated))
+    } else {
+      const newRegistration = {
+        id: Date.now().toString(),
+        registrationNumber: registrationNumber,
+        description: '自動登録',
+        category: 'その他',
+        usageCount: 1,
+        lastUsedAt: new Date().toISOString().split('T')[0]
+      }
+      registrations.push(newRegistration)
+      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(registrations))
+    }
+  }
+}
+
+// 顧客カテゴリーDBクラス
+class CustomerCategoryDB {
+  private readonly STORAGE_KEY = 'bankin_customer_categories'
+
+  getCategories(): CustomerCategory[] {
+    try {
+      if (typeof window === 'undefined') return this.getDefaultCategories()
+      const stored = localStorage.getItem(this.STORAGE_KEY)
+      return stored ? JSON.parse(stored) : this.getDefaultCategories()
+    } catch {
+      return this.getDefaultCategories()
+    }
+  }
+
+  private getDefaultCategories(): CustomerCategory[] {
+    return [
+      {
+        id: 'ud',
+        name: 'UD',
+        companyName: '株式会社UDトラックス',
+        isDefault: true
+      },
+      {
+        id: 'other',
+        name: 'その他',
+        companyName: '',
+        isDefault: true
+      }
+    ]
+  }
+
+  getCategoryById(id: string): CustomerCategory | undefined {
+    return this.getCategories().find(cat => cat.id === id)
+  }
 }
 
 export default function InvoiceCreatePage() {
   const router = useRouter()
+  const [db, setDb] = useState<WorkHistoryDB | null>(null)
+  const [categoryDb, setCategoryDb] = useState<CustomerCategoryDB | null>(null)
+  const [subjectDb, setSubjectDb] = useState<SubjectMasterDB | null>(null)
+  const [registrationDb, setRegistrationDb] = useState<RegistrationMasterDB | null>(null)
   
-  // サンプル作業履歴データ
-  const workHistory: WorkHistoryItem[] = [
-    { name: 'バンパー修理', unitPrice: 100000, lastUsed: '2025-05-15T10:00:00Z', frequency: 15 },
-    { name: 'サイドパネル塗装', unitPrice: 50000, lastUsed: '2025-05-20T14:00:00Z', frequency: 8 },
-    { name: 'フロントパネル交換', unitPrice: 80000, lastUsed: '2025-04-10T10:00:00Z', frequency: 12 },
-    { name: 'ライト調整', unitPrice: 15000, lastUsed: '2025-05-01T10:00:00Z', frequency: 25 },
-    { name: 'ドア交換', unitPrice: 120000, lastUsed: '2025-04-15T10:00:00Z', frequency: 5 },
-    { name: 'ミラー修理', unitPrice: 25000, lastUsed: '2025-05-10T10:00:00Z', frequency: 10 }
-  ]
-  
-  // フォーム状態管理
-  const [billingMonth, setBillingMonth] = useState(
-    parseInt(`${new Date().getFullYear()}${(new Date().getMonth() + 1).toString().padStart(2, '0')}`)
-  )
+  // 基本情報の状態
+  const [invoiceYear, setInvoiceYear] = useState(new Date().getFullYear())
+  const [invoiceMonth, setInvoiceMonth] = useState(new Date().getMonth() + 1)
   const [billingDate, setBillingDate] = useState(new Date().toISOString().split('T')[0])
-  const [customerCategory, setCustomerCategory] = useState<'UD' | 'その他'>('UD')
-  const [customerName, setCustomerName] = useState('株式会社UDトラックス')
+  const [customerCategories, setCustomerCategories] = useState<CustomerCategory[]>([])
+  const [customerCategory, setCustomerCategory] = useState('ud')
+  const [customerName, setCustomerName] = useState('')
   const [subject, setSubject] = useState('')
   const [registrationNumber, setRegistrationNumber] = useState('')
   const [orderNumber, setOrderNumber] = useState('')
   const [internalOrderNumber, setInternalOrderNumber] = useState('')
   const [memo, setMemo] = useState('')
-  const [workItems, setWorkItems] = useState<WorkItem[]>([])
   
-  // 検索・サジェスト
-  const [workSearchKeyword, setWorkSearchKeyword] = useState('')
-  const [workSearch, setWorkSearch] = useState('')
-  const [workSuggestions, setWorkSuggestions] = useState<WorkHistoryItem[]>([])
-  const [showSuggestions, setShowSuggestions] = useState(false)
+  // 作業項目の状態
+  const [workItems, setWorkItems] = useState<WorkItem[]>([
+    { id: 1, type: 'individual', work_name: '', unit_price: 0, quantity: 1, amount: 0, memo: '', set_details: [] }
+  ])
   
-  // エラー・状態管理
-  const [errors, setErrors] = useState<Record<string, string>>({})
-  const [isLoading, setIsLoading] = useState(false)
-
-  const handleBack = () => {
-    router.push('/')
-  }
-
-  // 作業履歴検索
-  const searchWorkHistory = (keyword: string) => {
-    if (!keyword || keyword.length < 1) return []
+  // サジェスト関連の状態
+  const [customerSuggestions, setCustomerSuggestions] = useState<string[]>([])
+  const [workSuggestions, setWorkSuggestions] = useState<{ [key: number]: string[] }>({})
+  const [showCustomerSuggestions, setShowCustomerSuggestions] = useState(false)
+  const [showWorkSuggestions, setShowWorkSuggestions] = useState<{ [key: number]: boolean }>({})
+  
+  // 件名・登録番号サジェスト関連の状態
+  const [subjectSuggestions, setSubjectSuggestions] = useState<any[]>([])
+  const [showSubjectSuggestions, setShowSubjectSuggestions] = useState(false)
+  const [registrationSuggestions, setRegistrationSuggestions] = useState<any[]>([])
+  const [showRegistrationSuggestions, setShowRegistrationSuggestions] = useState(false)
+  
+  // クライアントサイドでDBを初期化
+  useEffect(() => {
+    setDb(new WorkHistoryDB())
+    const catDb = new CustomerCategoryDB()
+    setCategoryDb(catDb)
+    const categories = catDb.getCategories()
+    setCustomerCategories(categories)
     
-    const results = workHistory.filter(work => 
-      work.name.toLowerCase().includes(keyword.toLowerCase())
-    )
-
-    // 頻度と最終使用日でソート
-    results.sort((a, b) => {
-      if (a.frequency !== b.frequency) return b.frequency - a.frequency
-      return new Date(b.lastUsed).getTime() - new Date(a.lastUsed).getTime()
-    })
-
-    return results.slice(0, 10) // 最大10件
-  }
-
-  // 作業検索ハンドラ
-  const handleWorkSearch = (keyword: string) => {
-    setWorkSearchKeyword(keyword)
-    if (keyword.trim()) {
-      const suggestions = searchWorkHistory(keyword)
-      setWorkSuggestions(suggestions)
-    } else {
-      setWorkSuggestions([])
+    // 件名・登録番号マスターDB初期化
+    setSubjectDb(new SubjectMasterDB())
+    setRegistrationDb(new RegistrationMasterDB())
+    
+    // 初期選択したカテゴリーの会社名を設定
+    const initialCategory = catDb.getCategoryById('ud')
+    if (initialCategory && initialCategory.companyName) {
+      setCustomerName(initialCategory.companyName)
     }
-  }
+  }, [])
 
-  // 月調整機能
+  // 年月調整関数
   const adjustMonth = (delta: number) => {
-    let year = Math.floor(billingMonth / 100)
-    let month = billingMonth % 100
-    
-    month += delta
-    if (month > 12) {
-      year += 1
-      month = 1
-    } else if (month < 1) {
-      year -= 1
-      month = 12
-    }
-    
-    const newBillingMonth = year * 100 + month
-    setBillingMonth(newBillingMonth)
+    const currentDate = new Date(invoiceYear, invoiceMonth - 1)
+    currentDate.setMonth(currentDate.getMonth() + delta)
+    setInvoiceYear(currentDate.getFullYear())
+    setInvoiceMonth(currentDate.getMonth() + 1)
   }
 
-  // 日付調整ヘルパー
-  const formatYMD = (date: Date) => date.toISOString().split('T')[0]
+  // 日付調整関数
   const adjustBillingDate = (delta: number) => {
-    const d = new Date(billingDate)
-    d.setDate(d.getDate() + delta)
-    setBillingDate(formatYMD(d))
+    const currentDate = new Date(billingDate)
+    currentDate.setDate(currentDate.getDate() + delta)
+    setBillingDate(currentDate.toISOString().split('T')[0])
   }
+
+  // 今日の日付にセット
   const setBillingDateToday = () => {
-    setBillingDate(formatYMD(new Date()))
+    setBillingDate(new Date().toISOString().split('T')[0])
   }
+  
+  // 計算結果
+  const subtotal = useMemo(() => {
+    return workItems.reduce((sum, item) => sum + item.amount, 0)
+  }, [workItems])
+  
+  const taxAmount = useMemo(() => {
+    return Math.floor(subtotal * 0.1)
+  }, [subtotal])
+  
+  const totalAmount = useMemo(() => {
+    return subtotal + taxAmount
+  }, [subtotal, taxAmount])
 
-  // 顧客タイプ変更
-  const handleCustomerTypeChange = (type: 'UD' | 'その他') => {
-    setCustomerCategory(type)
-    if (type === 'UD') {
-      setCustomerName('株式会社UDトラックス')
-      setSubject(subject) // 件名は保持
-    } else {
-      setCustomerName('')
-      setSubject('')
-    }
-    // エラーをクリア
-    setErrors(prev => ({ ...prev, customerName: '' }))
-  }
-
-  // 顧客名変更時の処理
-  const handleCustomerNameChange = (name: string) => {
-    setCustomerName(name)
-    if (customerCategory === 'その他') {
-      setSubject(name) // その他の場合は件名も同じに
-    }
-    // エラーをクリア
-    setErrors(prev => ({ ...prev, customerName: '' }))
-  }
-
-  // 音声入力は現状未対応のため、UIボタンとハンドラを削除しました
-
-  const addWorkItem = (type: 'individual' | 'set') => {
-    const newItem: WorkItem = {
-      id: Date.now().toString(),
-      type,
-      name: '',
-      quantity: 1,
-      unitPrice: 0,
-      amount: 0,
-      setDetails: type === 'set' ? [''] : undefined
-    }
-    setWorkItems([...workItems, newItem])
-    // エラーをクリア
-    setErrors(prev => ({ ...prev, items: '' }))
-  }
-
-  // 作業項目の更新
-  const updateItem = (id: string, field: keyof WorkItem, value: any) => {
-    setWorkItems(prev => prev.map(item => {
-      if (item.id === id) {
-        const updatedItem = { ...item, [field]: value }
-        if (field === 'quantity' || field === 'unitPrice') {
-          updatedItem.amount = updatedItem.quantity * updatedItem.unitPrice
-        }
-        return updatedItem
-      }
-      return item
-    }))
+  // 顧客カテゴリー変更処理
+  const handleCustomerCategoryChange = (categoryId: string) => {
+    setCustomerCategory(categoryId)
     
-    // エラーをクリア
-    const itemIndex = workItems.findIndex(item => item.id === id)
-    if (itemIndex !== -1) {
-      if (field === 'name') {
-        setErrors(prev => ({ ...prev, [`item_${itemIndex}_name`]: '' }))
-      } else if (field === 'unitPrice') {
-        setErrors(prev => ({ ...prev, [`item_${itemIndex}_price`]: '' }))
-      } else if (field === 'quantity') {
-        setErrors(prev => ({ ...prev, [`item_${itemIndex}_quantity`]: '' }))
+    if (!categoryDb) return
+    
+    const category = categoryDb.getCategoryById(categoryId)
+    if (category) {
+      if (category.companyName) {
+        // カテゴリーに会社名が設定されている場合、顧客名のみ自動入力
+        setCustomerName(category.companyName)
+        // 件名はクリア（手動入力）
+        setSubject('')
+      } else {
+        // 「その他」の場合、手動入力
+        setCustomerName('')
+        setSubject('')
       }
     }
   }
 
-  // セット作業詳細の追加
-  const addSetDetail = (itemId: string) => {
-    setWorkItems(prev => prev.map(item => {
-      if (item.id === itemId && item.setDetails) {
-        return { ...item, setDetails: [...item.setDetails, ''] }
-      }
-      return item
-    }))
+  // 顧客名変更処理（「その他」の場合のみ件名への自動コピー機能付き）
+  const handleCustomerNameChange = (value: string, autoUpdateSubject: boolean = true) => {
+    setCustomerName(value)
+    
+    // 「その他」カテゴリーの場合のみ、顧客名を件名に自動コピー
+    if (autoUpdateSubject && value.trim() && customerCategory === 'other') {
+      setSubject(value)
+    }
+    
+    if (db && value.trim()) {
+      const suggestions = db.getCustomerSuggestions(value)
+      setCustomerSuggestions(suggestions)
+      setShowCustomerSuggestions(suggestions.length > 0)
+    } else {
+      setShowCustomerSuggestions(false)
+    }
   }
 
-  // セット作業詳細の更新
-  const updateSetDetail = (itemId: string, index: number, value: string) => {
-    setWorkItems(prev => prev.map(item => {
-      if (item.id === itemId && item.setDetails) {
-        const newDetails = [...item.setDetails]
-        newDetails[index] = value
-        return { ...item, setDetails: newDetails }
-      }
-      return item
-    }))
+  // 作業名サジェスト
+  const handleWorkNameChange = (id: number, value: string) => {
+    setWorkItems(prev => prev.map(item => 
+      item.id === id ? { ...item, work_name: value } : item
+    ))
+    
+    if (db && value.trim()) {
+      const suggestions = db.getWorkSuggestions(value)
+      setWorkSuggestions(prev => ({ ...prev, [id]: suggestions }))
+      setShowWorkSuggestions(prev => ({ ...prev, [id]: suggestions.length > 0 }))
+    } else {
+      setShowWorkSuggestions(prev => ({ ...prev, [id]: false }))
+    }
   }
 
-  // セット作業詳細の削除
-  const removeSetDetail = (itemId: string, index: number) => {
-    setWorkItems(prev => prev.map(item => {
-      if (item.id === itemId && item.setDetails && item.setDetails.length > 1) {
-        const newDetails = [...item.setDetails]
-        newDetails.splice(index, 1)
-        return { ...item, setDetails: newDetails }
-      }
-      return item
-    }))
+  // 作業名選択時の価格自動設定
+  const handleWorkNameSelect = (id: number, workName: string) => {
+    if (!db) return
+    
+    const price = db.getPriceByWork(workName)
+    setWorkItems(prev => prev.map(item => 
+      item.id === id ? { 
+        ...item, 
+        work_name: workName,
+        unit_price: price || item.unit_price,
+        amount: (price || item.unit_price) * item.quantity
+      } : item
+    ))
+    setShowWorkSuggestions(prev => ({ ...prev, [id]: false }))
+  }
+
+  // 単価変更
+  const handleUnitPriceChange = (id: number, price: number) => {
+    setWorkItems(prev => prev.map(item => 
+      item.id === id ? { 
+        ...item, 
+        unit_price: price,
+        amount: price * item.quantity
+      } : item
+    ))
+  }
+
+  // 数量変更
+  const handleQuantityChange = (id: number, quantity: number) => {
+    const validQuantity = Math.max(1, quantity)
+    setWorkItems(prev => prev.map(item => 
+      item.id === id ? { 
+        ...item, 
+        quantity: validQuantity,
+        amount: item.unit_price * validQuantity
+      } : item
+    ))
+  }
+
+  // 作業項目追加
+  const addWorkItem = (type: 'individual' | 'set' = 'individual') => {
+    const newId = Math.max(...workItems.map(item => item.id)) + 1
+    setWorkItems(prev => [...prev, {
+      id: newId,
+      type: type,
+      work_name: '',
+      unit_price: 0,
+      quantity: 1,
+      amount: 0,
+      memo: '',
+      set_details: type === 'set' ? [''] : []
+    }])
   }
 
   // 作業項目削除
-  const removeItem = (id: string) => {
-    setWorkItems(prev => prev.filter(item => item.id !== id))
+  const removeWorkItem = (id: number) => {
+    if (workItems.length > 1) {
+      setWorkItems(prev => prev.filter(item => item.id !== id))
+      // サジェスト状態もクリア
+      setShowWorkSuggestions(prev => {
+        const newState = { ...prev }
+        delete newState[id]
+        return newState
+      })
+      setWorkSuggestions(prev => {
+        const newState = { ...prev }
+        delete newState[id]
+        return newState
+      })
+    }
   }
 
-  // 金額計算
-  const subtotal = workItems.reduce((sum, item) => sum + item.amount, 0)
-  const tax = Math.floor(subtotal * 0.1)
-  const total = subtotal + tax
+  // メモ変更
+  const handleMemoChange = (id: number, memo: string) => {
+    setWorkItems(prev => prev.map(item => 
+      item.id === id ? { ...item, memo } : item
+    ))
+  }
 
-  // バリデーション
-  const validateForm = () => {
-    const newErrors: Record<string, string> = {}
+  // 作業種別変更
+  const handleTypeChange = (id: number, type: 'individual' | 'set') => {
+    setWorkItems(prev => prev.map(item => 
+      item.id === id ? { 
+        ...item, 
+        type: type,
+        set_details: type === 'set' ? (item.set_details || ['']) : []
+      } : item
+    ))
+  }
+
+  // セット詳細追加
+  const addSetDetail = (itemId: number) => {
+    setWorkItems(prev => prev.map(item => 
+      item.id === itemId && item.type === 'set' ? {
+        ...item,
+        set_details: [...(item.set_details || []), '']
+      } : item
+    ))
+  }
+
+  // セット詳細削除
+  const removeSetDetail = (itemId: number, detailIndex: number) => {
+    setWorkItems(prev => prev.map(item => 
+      item.id === itemId && item.type === 'set' ? {
+        ...item,
+        set_details: (item.set_details || []).filter((_, index) => index !== detailIndex)
+      } : item
+    ))
+  }
+
+  // セット詳細変更
+  const handleSetDetailChange = (itemId: number, detailIndex: number, value: string) => {
+    setWorkItems(prev => prev.map(item => 
+      item.id === itemId && item.type === 'set' ? {
+        ...item,
+        set_details: (item.set_details || []).map((detail, index) => 
+          index === detailIndex ? value : detail
+        )
+      } : item
+    ))
+  }
+
+  // 保存処理
+  const handleSave = (isDraft = true) => {
+    // 基本情報バリデーション
+    if (!billingDate) {
+      alert('請求日を入力してください')
+      return
+    }
     
     if (!customerName.trim()) {
-      newErrors.customerName = '顧客名は必須です'
+      alert('顧客名を入力してください')
+      return
     }
     
     if (!subject.trim()) {
-      newErrors.subject = '件名は必須です'
-    }
-    
-    if (workItems.length === 0) {
-      newErrors.items = '作業項目を少なくとも1つ追加してください'
-    }
-    
-    workItems.forEach((item, index) => {
-      if (!item.name.trim()) {
-        newErrors[`item_${index}_name`] = '作業内容は必須です'
-      }
-      if (item.quantity < 1) {
-        newErrors[`item_${index}_quantity`] = '数量は1以上を入力してください'
-      }
-      if (item.unitPrice <= 0) {
-        newErrors[`item_${index}_price`] = '単価は0より大きい値を入力してください'
-      }
-      if (item.type === 'set' && item.setDetails && item.setDetails.every(detail => !detail.trim())) {
-        newErrors[`item_${index}_details`] = 'セット内作業内容を入力してください'
-      }
-    })
-    
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
-
-  const handleSave = async (isDraft = false) => {
-    if (!validateForm()) {
-      alert('入力内容に不備があります')
+      alert('件名を入力してください')
       return
     }
 
-    setIsLoading(true)
+    // 作業項目バリデーション
+    if (workItems.length === 0) {
+      alert('作業項目を追加してください')
+      return
+    }
     
-    try {
-      const invoice = {
-        billingMonth,
-        billingDate,
-        customerCategory,
-        customerName: customerCategory === 'UD' ? '株式会社UDトラックス' : customerName,
-        subject,
-        registrationNumber,
-        orderNumber,
-        internalOrderNumber,
-        memo,
-        items: workItems,
-        subtotal,
-        tax,
-        total,
-        status: isDraft ? 'draft' : 'finalized',
-        createdAt: new Date().toISOString()
-      }
+    if (workItems.some(item => !item.work_name.trim())) {
+      alert('すべての作業名を入力してください')
+      return
+    }
 
-      // 保存処理のシミュレーション
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
-      console.log('請求書保存:', invoice)
-      alert(isDraft ? '下書きを保存しました' : '請求書を確定しました')
-      
-      // 成功時はリストページに戻る
-      router.push('/invoice-list')
+    if (workItems.some(item => item.unit_price <= 0)) {
+      alert('すべての単価を正しく入力してください（0より大きい値）')
+      return
+    }
+
+    if (workItems.some(item => item.quantity < 1)) {
+      alert('すべての数量を正しく入力してください（1以上の値）')
+      return
+    }
+
+    // セット作業の詳細チェック
+    for (const item of workItems) {
+      if (item.type === 'set') {
+        if (!item.set_details || item.set_details.length === 0 || item.set_details.some(detail => !detail.trim())) {
+          alert('セット作業の詳細をすべて入力してください')
+          return
+        }
+      }
+    }
+
+    const invoiceData: InvoiceData = {
+      invoice_year: invoiceYear,
+      invoice_month: invoiceMonth,
+      billing_date: billingDate,
+      customer_category: customerCategory,
+      customer_name: customerName,
+      subject: subject,
+      registration_number: registrationNumber,
+      order_number: orderNumber,
+      internal_order_number: internalOrderNumber,
+      work_items: workItems,
+      subtotal: subtotal,
+      tax_amount: taxAmount,
+      total_amount: totalAmount,
+      memo: memo
+    }
+
+    try {
+      if (typeof window !== 'undefined') {
+        // 請求書データを保存
+        const existingInvoices = JSON.parse(localStorage.getItem('bankin_invoices') || '[]')
+        const newInvoice = {
+          id: Date.now(),
+          ...invoiceData,
+          created_at: new Date().toISOString(),
+          status: isDraft ? 'draft' : 'finalized'
+        }
+        existingInvoices.push(newInvoice)
+        localStorage.setItem('bankin_invoices', JSON.stringify(existingInvoices))
+        
+        alert(isDraft ? '請求書を下書き保存しました' : '請求書を確定保存しました')
+        router.push('/invoice-list')
+      }
     } catch (error) {
       alert('保存に失敗しました')
-    } finally {
-      setIsLoading(false)
+      console.error('Save error:', error)
     }
   }
-
-  const styles = `
-    .invoice-container {
-      min-height: 100vh;
-      background: #f8f9fa;
-      padding: 1rem;
-    }
-
-    .invoice-header {
-      background: white;
-      border-radius: 8px;
-      padding: 1rem;
-      margin-bottom: 1rem;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .invoice-title {
-      font-size: 1.5rem;
-      font-weight: bold;
-      color: #1f2937;
-      margin: 0;
-    }
-
-    .back-button {
-      padding: 0.5rem 1rem;
-      background: #6b7280;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 0.9rem;
-    }
-
-    .form-section {
-      background: white;
-      border-radius: 8px;
-      padding: 1.5rem;
-      margin-bottom: 1rem;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-
-    .section-title {
-      font-size: 1.1rem;
-      font-weight: 600;
-      color: #374151;
-      margin-bottom: 1rem;
-      padding-bottom: 0.5rem;
-      border-bottom: 2px solid #e5e7eb;
-    }
-
-    .form-row {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 1rem;
-      margin-bottom: 1rem;
-    }
-
-    .form-group {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .form-label {
-      font-size: 0.9rem;
-      font-weight: 600;
-      color: #374151;
-      margin-bottom: 0.5rem;
-    }
-
-    .form-input {
-      padding: 0.75rem;
-      border: 1px solid #d1d5db;
-      border-radius: 6px;
-      font-size: 0.9rem;
-    }
-
-    .input-with-voice {
-      display: flex;
-      gap: 0.5rem;
-    }
-
-    .voice-button {
-      padding: 0.75rem 1rem;
-      background: #3b82f6;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 0.8rem;
-      white-space: nowrap;
-    }
-
-    .add-work-buttons {
-      display: flex;
-      gap: 1rem;
-      margin-bottom: 1rem;
-    }
-
-    .add-button {
-      padding: 0.75rem 1.5rem;
-      background: #10b981;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 0.9rem;
-    }
-
-    .work-item {
-      background: #f9fafb;
-      border: 1px solid #e5e7eb;
-      border-radius: 6px;
-      padding: 1rem;
-      margin-bottom: 0.5rem;
-    }
-
-    .work-item-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1rem;
-    }
-
-    .work-type-badge {
-      padding: 0.25rem 0.75rem;
-      border-radius: 12px;
-      font-size: 0.8rem;
-      font-weight: 600;
-    }
-
-    .delete-button {
-      background: #ef4444;
-      color: white;
-      border: none;
-      padding: 0.25rem 0.75rem;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 0.8rem;
-    }
-
-    .work-item-content {
-      background: white;
-      padding: 1rem;
-      border-radius: 6px;
-    }
-
-    .work-input-row {
-      display: grid;
-      grid-template-columns: 2fr 1fr 1fr 1fr;
-      gap: 1rem;
-      align-items: start;
-    }
-
-    .work-input-group {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .work-label {
-      font-size: 0.8rem;
-      font-weight: 600;
-      color: #374151;
-      margin-bottom: 0.5rem;
-    }
-
-    .work-search-container {
-      position: relative;
-      display: flex;
-      gap: 0.5rem;
-    }
-
-    .work-search-input {
-      flex: 1;
-    }
-
-    .voice-small {
-      padding: 0.5rem;
-      font-size: 0.8rem;
-      min-width: auto;
-    }
-
-    .suggestions-dropdown {
-      position: absolute;
-      top: 100%;
-      left: 0;
-      right: 0;
-      z-index: 10;
-      background: white;
-      border: 1px solid #d1d5db;
-      border-radius: 6px;
-      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-      max-height: 200px;
-      overflow-y: auto;
-    }
-
-    .suggestion-item {
-      padding: 0.75rem;
-      cursor: pointer;
-      border-bottom: 1px solid #f3f4f6;
-    }
-
-    .suggestion-item:hover {
-      background: #f9fafb;
-    }
-
-    .suggestion-item:last-child {
-      border-bottom: none;
-    }
-
-    .suggestion-name {
-      font-weight: 500;
-      color: #111827;
-      margin-bottom: 0.25rem;
-    }
-
-    .suggestion-meta {
-      font-size: 0.8rem;
-      color: #6b7280;
-    }
-
-    .error-text {
-      color: #ef4444;
-      font-size: 0.8rem;
-      margin-top: 0.25rem;
-    }
-
-    .set-details-section {
-      margin-top: 1rem;
-      padding-top: 1rem;
-      border-top: 1px solid #e5e7eb;
-    }
-
-    .set-details-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 0.75rem;
-    }
-
-    .add-detail-button {
-      background: #10b981;
-      color: white;
-      border: none;
-      padding: 0.5rem 0.75rem;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 0.8rem;
-    }
-
-    .set-detail-row {
-      display: flex;
-      gap: 0.5rem;
-      align-items: center;
-      margin-bottom: 0.5rem;
-    }
-
-    .remove-detail-button {
-      background: #ef4444;
-      color: white;
-      border: none;
-      padding: 0.5rem 0.75rem;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 0.8rem;
-      min-width: auto;
-    }
-
-    .calculation-section {
-      background: white;
-      padding: 1.5rem;
-      border-radius: 8px;
-      border: 2px solid #e5e7eb;
-    }
-
-    .calculation-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 0.75rem 0;
-      border-bottom: 1px solid #f3f4f6;
-    }
-
-    .calculation-row:last-child {
-      border-bottom: none;
-    }
-
-    .total-row {
-      border-top: 2px solid #374151;
-      margin-top: 0.5rem;
-      padding-top: 1rem;
-    }
-
-    .calculation-label {
-      font-size: 1rem;
-      color: #374151;
-      font-weight: 500;
-    }
-
-    .calculation-value {
-      font-size: 1rem;
-      font-weight: 600;
-      color: #111827;
-    }
-
-    .total-amount {
-      font-size: 1.25rem;
-      font-weight: 700;
-      color: #dc2626;
-    }
-
-    .save-section {
-      text-align: center;
-      padding: 2rem;
-    }
-
-    .save-button {
-      padding: 1rem 3rem;
-      background: #dc2626;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 1.1rem;
-      font-weight: 600;
-    }
-
-    .voice-info {
-      background: #dbeafe;
-      border: 1px solid #3b82f6;
-      border-radius: 8px;
-      padding: 1rem;
-      margin-bottom: 1rem;
-    }
-
-    .voice-info-title {
-      color: #1d4ed8;
-      font-weight: 600;
-      margin-bottom: 0.5rem;
-    }
-
-    .voice-info-list {
-      color: #1e40af;
-      font-size: 0.9rem;
-      margin: 0;
-      padding-left: 1.5rem;
-    }
-
-    .warning-note {
-      background: #fef3c7;
-      border: 1px solid #f59e0b;
-      border-radius: 6px;
-      padding: 0.75rem;
-      color: #92400e;
-      font-size: 0.9rem;
-      margin-top: 0.5rem;
-    }
-
-    /* 顧客名ラベルの右側に種別ラジオを配置するための行レイアウト */
-    .form-label-row {
-      display: flex;
-      align-items: center;
-      justify-content: flex-start; /* 顧客名ラベルの直後にラジオを寄せる */
-      gap: 0.5rem;
-      margin-bottom: 0.5rem;
-      flex-wrap: wrap;
-    }
-
-    .customer-type-options {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      flex-wrap: wrap;
-      margin-left: 0.25rem; /* ラベルとの距離を少しだけ空ける */
-    }
-
-    @media (max-width: 768px) {
-      .invoice-header {
-        flex-direction: column;
-        gap: 1rem;
-      }
-
-      .form-row {
-        grid-template-columns: 1fr;
-      }
-
-      .input-with-voice {
-        flex-direction: column;
-      }
-
-      .voice-button {
-        align-self: stretch;
-      }
-
-      .add-work-buttons {
-        flex-direction: column;
-      }
-    }
-  `
-
-  // 提案ドロップダウンを閉じる
-  const handleClickOutside = () => {
-    setShowSuggestions(false)
-  }
-
-  React.useEffect(() => {
-    if (showSuggestions) {
-      document.addEventListener('click', handleClickOutside)
-      return () => document.removeEventListener('click', handleClickOutside)
-    }
-  }, [showSuggestions])
 
   return (
-    <SecurityWrapper requirePin={true}>
-      <>
-        <style dangerouslySetInnerHTML={{ __html: styles }} />
-        
-        <div className="invoice-container">
-          {/* ヘッダー */}
-          <div className="invoice-header">
-            <h1 className="invoice-title">請求書作成</h1>
-            <button 
-              onClick={handleBack}
-              className="back-button"
-            >
-              ← 請求書一覧に戻る
-            </button>
-          </div>
-
-          {/* 基本情報セクション */}
-          <div className="form-section">
-            <div className="section-title">基本情報</div>
-            
-            <div className="form-row">
-              <div className="form-group">
-                <label className="form-label">請求データ年月</label>
-                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                  <span>📅</span>
-                  <input
-                    type="text"
-                    value={`${Math.floor(billingMonth / 100).toString().padStart(4, '0')}/${(billingMonth % 100).toString().padStart(2, '0')}`}
-                    readOnly
-                    className="form-input"
-                    style={{ flex: 1, backgroundColor: '#f3f4f6' }}
-                  />
-                  <button 
-                    onClick={() => adjustMonth(-1)}
-                    className="voice-button" 
-                    style={{ background: '#6b7280', fontSize: '0.8rem' }}
-                  >
-                    前月
-                  </button>
-                  <button 
-                    onClick={() => setBillingMonth(parseInt(`${new Date().getFullYear()}${(new Date().getMonth() + 1).toString().padStart(2, '0')}`))}
-                    className="voice-button" 
-                    style={{ background: '#6b7280', fontSize: '0.8rem' }}
-                  >
-                    当月
-                  </button>
-                  <button 
-                    onClick={() => adjustMonth(1)}
-                    className="voice-button" 
-                    style={{ background: '#6b7280', fontSize: '0.8rem' }}
-                  >
-                    次月
-                  </button>
-                </div>
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">請求日 (発行日) *</label>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <input
-                    type="date"
-                    value={billingDate}
-                    onChange={(e) => setBillingDate(e.target.value)}
-                    className="form-input"
-                    required
-                    style={{ flex: 1 }}
-                  />
-                  <button 
-                    onClick={() => adjustBillingDate(-1)}
-                    className="voice-button" 
-                    style={{ background: '#6b7280', fontSize: '0.8rem' }}
-                  >
-                    前日
-                  </button>
-                  <button 
-                    onClick={setBillingDateToday}
-                    className="voice-button" 
-                    style={{ background: '#6b7280', fontSize: '0.8rem' }}
-                  >
-                    当日
-                  </button>
-                  <button 
-                    onClick={() => adjustBillingDate(1)}
-                    className="voice-button" 
-                    style={{ background: '#6b7280', fontSize: '0.8rem' }}
-                  >
-                    翌日
-                  </button>
-                </div>
-              </div>
+    <div className="min-h-screen bg-gray-50">
+      <div className="container mx-auto px-4 py-8">
+        {/* ヘッダー */}
+        <header className="bg-white rounded-lg shadow-sm p-6 mb-6">
+          <div className="flex justify-between items-center">
+            <h1 className="text-2xl font-bold text-gray-800">請求書作成</h1>
+            <div className="flex gap-2">
+              <button
+                onClick={() => handleSave(true)}
+                className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 flex items-center gap-2 font-medium"
+              >
+                <Save size={20} />
+                下書き
+              </button>
+              <button
+                onClick={() => handleSave(false)}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2 font-medium"
+              >
+                <Save size={20} />
+                保存
+              </button>
+              <button
+                onClick={() => router.push('/')}
+                className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 flex items-center gap-2 font-medium"
+              >
+                <ArrowLeft size={20} />
+                戻る
+              </button>
             </div>
+          </div>
+        </header>
 
-            <div className="form-row">
-              <div className="form-group">
-                <div className="form-label-row">
-                  <label className="form-label" style={{ marginBottom: 0 }}>顧客名 *</label>
-                  <div className="customer-type-options">
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                      <input
-                        type="radio"
-                        name="customerType"
-                        value="UD"
-                        checked={customerCategory === 'UD'}
-                        onChange={() => handleCustomerTypeChange('UD')}
-                      />
-                      UD
-                    </label>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                      <input
-                        type="radio"
-                        name="customerType"
-                        value="その他"
-                        checked={customerCategory === 'その他'}
-                        onChange={() => handleCustomerTypeChange('その他')}
-                      />
-                      その他
-                    </label>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* メインフォーム */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* 基本情報 */}
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <h2 className="text-lg font-semibold mb-6 text-gray-800">📋 基本情報</h2>
+              
+              {/* 年月・日付セクション */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    請求データ年月 <span className="text-red-500">*</span>
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => adjustMonth(-1)}
+                      className="px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded text-sm transition-colors"
+                    >
+                      前月
+                    </button>
+                    <div className="flex gap-1 flex-1">
+                      <select
+                        value={invoiceYear}
+                        onChange={(e) => setInvoiceYear(Number(e.target.value))}
+                        className="flex-1 px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      >
+                        {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i).map(year => (
+                          <option key={year} value={year}>{year}</option>
+                        ))}
+                      </select>
+                      <span className="py-2 text-gray-500">年</span>
+                      <select
+                        value={invoiceMonth}
+                        onChange={(e) => setInvoiceMonth(Number(e.target.value))}
+                        className="flex-1 px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      >
+                        {Array.from({ length: 12 }, (_, i) => i + 1).map(month => (
+                          <option key={month} value={month}>{month}</option>
+                        ))}
+                      </select>
+                      <span className="py-2 text-gray-500">月</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => adjustMonth(1)}
+                      className="px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded text-sm transition-colors"
+                    >
+                      次月
+                    </button>
                   </div>
                 </div>
-                <div className="input-with-voice">
-                  <input
-                    type="text"
-                    placeholder={customerCategory === 'UD' ? '株式会社UDトラックス' : '顧客名を入力'}
-                    value={customerName}
-                    onChange={(e) => handleCustomerNameChange(e.target.value)}
-                    disabled={customerCategory === 'UD'}
-                    className="form-input"
-                    style={{ 
-                      flex: 1,
-                      backgroundColor: customerCategory === 'UD' ? '#f3f4f6' : 'white'
-                    }}
-                    required
-                  />
-                  {/* 音声入力ボタン削除 */}
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    請求日（発行日） <span className="text-red-500">*</span>
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => adjustBillingDate(-1)}
+                      className="px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded text-sm transition-colors"
+                    >
+                      前日
+                    </button>
+                    <input
+                      type="date"
+                      value={billingDate}
+                      onChange={(e) => setBillingDate(e.target.value)}
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={setBillingDateToday}
+                      className="px-2 py-1 bg-blue-100 hover:bg-blue-200 rounded text-sm transition-colors"
+                    >
+                      今日
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => adjustBillingDate(1)}
+                      className="px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded text-sm transition-colors"
+                    >
+                      翌日
+                    </button>
+                  </div>
                 </div>
-                {errors.customerName && (
-                  <p style={{ color: '#ef4444', fontSize: '0.8rem', marginTop: '0.25rem' }}>
-                    {errors.customerName}
-                  </p>
-                )}
               </div>
 
-              <div className="form-group">
-                <label className="form-label">件名 *</label>
-                <div className="input-with-voice">
+              {/* 顧客情報セクション */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-sm font-medium text-gray-700">
+                      顧客カテゴリ
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => router.push('/customer-settings')}
+                      className="text-xs text-blue-600 hover:text-blue-800 underline"
+                    >
+                      カテゴリー設定
+                    </button>
+                  </div>
+                  <div className="flex flex-wrap gap-3">
+                    {customerCategories.map((category) => (
+                      <label key={category.id} className="flex items-center">
+                        <input
+                          type="radio"
+                          value={category.id}
+                          checked={customerCategory === category.id}
+                          onChange={(e) => handleCustomerCategoryChange(e.target.value)}
+                          className="mr-2"
+                        />
+                        {category.name}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+                
+                <div className="relative">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    顧客名 <span className="text-red-500">*</span>
+                  </label>
                   <input
                     type="text"
-                    placeholder="件名を入力"
+                    value={customerName}
+                    onChange={(e) => handleCustomerNameChange(e.target.value)}
+                    onBlur={() => setTimeout(() => setShowCustomerSuggestions(false), 200)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder={
+                      customerCategory === 'other' 
+                        ? '顧客名を入力してください' 
+                        : customerCategories.find(cat => cat.id === customerCategory)?.companyName || '顧客名を入力してください'
+                    }
+                    required
+                    disabled={customerCategory !== 'other' && customerCategories.find(cat => cat.id === customerCategory)?.companyName}
+                  />
+                  {showCustomerSuggestions && customerSuggestions.length > 0 && (
+                    <div className="absolute z-20 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                      {customerSuggestions.map((suggestion, index) => (
+                        <button
+                          key={index}
+                          type="button"
+                          onClick={() => {
+                            setCustomerName(suggestion)
+                            setShowCustomerSuggestions(false)
+                          }}
+                          className="w-full px-3 py-2 text-left hover:bg-blue-50 first:rounded-t-lg last:rounded-b-lg"
+                        >
+                          {suggestion}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* 件名・番号セクション */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="relative">
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-sm font-medium text-gray-700">
+                      件名 <span className="text-red-500">*</span>
+                      <span className="text-xs text-gray-500 ml-2">（顧客名から自動入力されます。変更可能）</span>
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => router.push('/subject-settings')}
+                      className="text-xs text-blue-600 hover:text-blue-800 underline"
+                    >
+                      件名設定
+                    </button>
+                  </div>
+                  <input
+                    type="text"
                     value={subject}
                     onChange={(e) => {
                       setSubject(e.target.value)
-                      setErrors(prev => ({ ...prev, subject: '' }))
+                      if (subjectDb && e.target.value.trim()) {
+                        const suggestions = subjectDb.searchSubjects(e.target.value)
+                        setSubjectSuggestions(suggestions)
+                        setShowSubjectSuggestions(suggestions.length > 0)
+                      } else {
+                        setShowSubjectSuggestions(false)
+                      }
                     }}
-                    className="form-input"
-                    style={{ flex: 1 }}
+                    onBlur={() => {
+                      // 自動登録処理
+                      if (subject.trim() && subjectDb) {
+                        subjectDb.autoRegisterSubject(subject.trim())
+                      }
+                      // ドロップダウンを閉じる（少し遅延させてクリックイベントが処理されるように）
+                      setTimeout(() => setShowSubjectSuggestions(false), 200)
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="件名を入力"
                     required
                   />
-                  {/* 音声入力ボタン削除 */}
+                  {showSubjectSuggestions && subjectSuggestions.length > 0 && (
+                    <div className="absolute z-20 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                      {subjectSuggestions.map((suggestion, index) => (
+                        <button
+                          key={suggestion.id}
+                          type="button"
+                          onClick={() => {
+                            setSubject(suggestion.subjectName)
+                            setShowSubjectSuggestions(false)
+                            // 使用回数を増やす
+                            if (subjectDb) {
+                              subjectDb.autoRegisterSubject(suggestion.subjectName)
+                            }
+                          }}
+                          className="w-full px-3 py-2 text-left hover:bg-blue-50 first:rounded-t-lg last:rounded-b-lg text-sm border-b border-gray-100 last:border-b-0"
+                        >
+                          <div className="flex justify-between items-center">
+                            <span className="font-medium">{suggestion.subjectName}</span>
+                            <div className="flex items-center gap-2 text-xs text-gray-500">
+                              {suggestion.category && (
+                                <span className="bg-gray-100 px-2 py-1 rounded">{suggestion.category}</span>
+                              )}
+                              <span>使用: {suggestion.usageCount}回</span>
+                            </div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
-                {errors.subject && (
-                  <p style={{ color: '#ef4444', fontSize: '0.8rem', marginTop: '0.25rem' }}>
-                    {errors.subject}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            <div className="form-row">
-              <div className="form-group">
-                <label className="form-label">登録番号</label>
-                <input
-                  type="text"
-                  placeholder="登録番号 (任意)"
-                  value={registrationNumber}
-                  onChange={(e) => setRegistrationNumber(e.target.value)}
-                  className="form-input"
-                />
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">発注番号</label>
-                <input
-                  type="text"
-                  placeholder="発注番号 (任意)"
-                  value={orderNumber}
-                  onChange={(e) => setOrderNumber(e.target.value)}
-                  className="form-input"
-                />
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">オーダー番号</label>
-                <input
-                  type="text"
-                  placeholder="オーダー番号 (任意)"
-                  value={internalOrderNumber}
-                  onChange={(e) => setInternalOrderNumber(e.target.value)}
-                  className="form-input"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* 作業項目セクション */}
-          <div className="form-section">
-            <div className="section-title">作業項目</div>
-            
-            <div className="add-work-buttons">
-              <button 
-                onClick={() => addWorkItem('individual')}
-                className="add-button"
-              >
-                + 個別作業追加
-              </button>
-              <button 
-                onClick={() => addWorkItem('set')}
-                className="add-button"
-              >
-                + セット作業追加
-              </button>
-            </div>
-
-{workItems.length === 0 ? (
-              <div style={{ 
-                textAlign: 'center', 
-                color: '#6b7280', 
-                padding: '2rem',
-                background: '#f9fafb',
-                borderRadius: '6px',
-                border: '2px dashed #d1d5db'
-              }}>
-                作業項目を追加してください
-              </div>
-            ) : (
-              workItems.map((item, index) => (
-                <div key={item.id} className="work-item">
-                  <div className="work-item-header">
-                    <span className="work-type-badge" style={{ 
-                      backgroundColor: item.type === 'individual' ? '#d1fae5' : '#fee2e2',
-                      color: item.type === 'individual' ? '#059669' : '#dc2626'
-                    }}>
-                      {item.type === 'individual' ? '個別作業' : 'セット作業'}
-                    </span>
-                    <button 
-                      onClick={() => removeItem(item.id)}
-                      className="delete-button"
+                
+                <div className="relative">
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-sm font-medium text-gray-700">
+                      登録番号（任意）
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => router.push('/registration-settings')}
+                      className="text-xs text-blue-600 hover:text-blue-800 underline"
                     >
-                      削除
+                      登録番号設定
                     </button>
                   </div>
-
-                  <div className="work-item-content">
-                    <div className="work-input-row">
-                      <div className="work-input-group" style={{ flex: '2' }}>
-                        <label className="work-label">作業内容 *</label>
-                        <div className="work-search-container">
-                          <input
-                            type="text"
-                            value={item.name}
-                            onChange={(e) => {
-                              updateItem(item.id, 'name', e.target.value)
-                              setWorkSearch(e.target.value)
-                            }}
-                            onFocus={() => setShowSuggestions(true)}
-                            placeholder="作業内容を入力または検索"
-                            className="form-input work-search-input"
-                          />
-                          {/* 音声入力ボタン削除 */}
-                          
-                          {showSuggestions && workSearch && searchWorkHistory(workSearch).length > 0 && (
-                            <div className="suggestions-dropdown">
-                              {searchWorkHistory(workSearch).map((suggestion, idx) => (
-                                <div 
-                                  key={idx} 
-                                  className="suggestion-item"
-                                  onClick={() => {
-                                    updateItem(item.id, 'name', suggestion.name)
-                                    updateItem(item.id, 'unitPrice', suggestion.unitPrice)
-                                    setWorkSearch('')
-                                    setShowSuggestions(false)
-                                  }}
-                                >
-                                  <div className="suggestion-name">{suggestion.name}</div>
-                                  <div className="suggestion-meta">
-                                    ¥{suggestion.unitPrice.toLocaleString()} | 使用回数: {suggestion.frequency}
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                        {errors[`item_${index}_name`] && (
-                          <p className="error-text">{errors[`item_${index}_name`]}</p>
-                        )}
-                      </div>
-
-                      <div className="work-input-group">
-                        <label className="work-label">数量 *</label>
-                        <input
-                          type="number"
-                          value={item.quantity}
-                          onChange={(e) => {
-                            const v = Math.max(1, parseInt(e.target.value) || 1)
-                            updateItem(item.id, 'quantity', v)
+                  <input
+                    type="text"
+                    value={registrationNumber}
+                    onChange={(e) => {
+                      setRegistrationNumber(e.target.value)
+                      if (registrationDb && e.target.value.trim()) {
+                        const suggestions = registrationDb.searchRegistrations(e.target.value)
+                        setRegistrationSuggestions(suggestions)
+                        setShowRegistrationSuggestions(suggestions.length > 0)
+                      } else {
+                        setShowRegistrationSuggestions(false)
+                      }
+                    }}
+                    onBlur={() => {
+                      // 自動登録処理
+                      if (registrationNumber.trim() && registrationDb) {
+                        registrationDb.autoRegisterRegistration(registrationNumber.trim())
+                      }
+                      // ドロップダウンを閉じる（少し遅延させてクリックイベントが処理されるように）
+                      setTimeout(() => setShowRegistrationSuggestions(false), 200)
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="登録番号"
+                  />
+                  {showRegistrationSuggestions && registrationSuggestions.length > 0 && (
+                    <div className="absolute z-20 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                      {registrationSuggestions.map((suggestion, index) => (
+                        <button
+                          key={suggestion.id}
+                          type="button"
+                          onClick={() => {
+                            setRegistrationNumber(suggestion.registrationNumber)
+                            setShowRegistrationSuggestions(false)
+                            // 使用回数を増やす
+                            if (registrationDb) {
+                              registrationDb.autoRegisterRegistration(suggestion.registrationNumber)
+                            }
                           }}
-                          className="form-input"
-                          min="1"
-                          step="1"
+                          className="w-full px-3 py-2 text-left hover:bg-blue-50 first:rounded-t-lg last:rounded-b-lg text-sm border-b border-gray-100 last:border-b-0"
+                        >
+                          <div className="flex justify-between items-start">
+                            <div className="flex-1">
+                              <div className="font-medium">{suggestion.registrationNumber}</div>
+                              {suggestion.description && (
+                                <div className="text-xs text-gray-600 mt-1">{suggestion.description}</div>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2 text-xs text-gray-500 ml-2">
+                              {suggestion.category && (
+                                <span className="bg-gray-100 px-2 py-1 rounded">{suggestion.category}</span>
+                              )}
+                              <span>使用: {suggestion.usageCount}回</span>
+                            </div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    発注番号（任意）
+                  </label>
+                  <input
+                    type="text"
+                    value={orderNumber}
+                    onChange={(e) => setOrderNumber(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="発注番号"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    オーダー番号（任意）
+                  </label>
+                  <input
+                    type="text"
+                    value={internalOrderNumber}
+                    onChange={(e) => setInternalOrderNumber(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="オーダー番号"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* 作業項目 */}
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-lg font-semibold text-gray-800">🛠️ 作業項目</h2>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => addWorkItem('individual')}
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2 font-medium transition-colors"
+                  >
+                    <Plus size={16} />
+                    個別作業
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => addWorkItem('set')}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2 font-medium transition-colors"
+                  >
+                    <Plus size={16} />
+                    セット作業
+                  </button>
+                </div>
+              </div>
+              
+              <div className="space-y-6">
+                {workItems.map((item, index) => (
+                  <div key={item.id} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                    <div className="flex justify-between items-start mb-4">
+                      <div className="flex items-center gap-3">
+                        <span className={`text-sm font-semibold text-white px-2 py-1 rounded ${
+                          item.type === 'set' ? 'bg-blue-600' : 'bg-green-600'
+                        }`}>
+                          {item.type === 'set' ? 'セット' : '個別'} {index + 1}
+                        </span>
+                        <select
+                          value={item.type}
+                          onChange={(e) => handleTypeChange(item.id, e.target.value as 'individual' | 'set')}
+                          className="text-sm border border-gray-300 rounded px-2 py-1"
+                        >
+                          <option value="individual">個別作業</option>
+                          <option value="set">セット作業</option>
+                        </select>
+                      </div>
+                      {workItems.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => removeWorkItem(item.id)}
+                          className="text-red-600 hover:text-red-800 hover:bg-red-50 p-1 rounded transition-colors"
+                          title="この項目を削除"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      )}
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                      <div className="relative md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          作業名 <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={item.work_name}
+                          onChange={(e) => handleWorkNameChange(item.id, e.target.value)}
+                          onBlur={() => setTimeout(() => setShowWorkSuggestions(prev => ({ ...prev, [item.id]: false })), 200)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          placeholder="作業名を入力"
+                          required
                         />
-                        {errors[`item_${index}_quantity`] && (
-                          <p className="error-text">{errors[`item_${index}_quantity`]}</p>
+                        {showWorkSuggestions[item.id] && workSuggestions[item.id] && workSuggestions[item.id].length > 0 && (
+                          <div className="absolute z-20 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                            {workSuggestions[item.id].map((suggestion, suggestionIndex) => (
+                              <button
+                                key={suggestionIndex}
+                                type="button"
+                                onClick={() => handleWorkNameSelect(item.id, suggestion)}
+                                className="w-full px-3 py-2 text-left hover:bg-blue-50 first:rounded-t-lg last:rounded-b-lg text-sm"
+                              >
+                                {suggestion}
+                              </button>
+                            ))}
+                          </div>
                         )}
                       </div>
-
-                      <div className="work-input-group">
-                        <label className="work-label">単価 *</label>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          単価 (円)
+                        </label>
                         <input
                           type="number"
-                          value={item.unitPrice}
-                          onChange={(e) => updateItem(item.id, 'unitPrice', parseInt(e.target.value) || 0)}
-                          className="form-input"
+                          value={item.unit_price}
+                          onChange={(e) => handleUnitPriceChange(item.id, Number(e.target.value))}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                           min="0"
                           step="1000"
                         />
-                        {errors[`item_${index}_price`] && (
-                          <p className="error-text">{errors[`item_${index}_price`]}</p>
-                        )}
                       </div>
-
-                      <div className="work-input-group">
-                        <label className="work-label">金額</label>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          数量
+                        </label>
                         <input
-                          type="text"
-                          value={`¥${item.amount.toLocaleString()}`}
-                          readOnly
-                          className="form-input"
-                          style={{ backgroundColor: '#f3f4f6', fontWeight: '600' }}
+                          type="number"
+                          value={item.quantity}
+                          onChange={(e) => handleQuantityChange(item.id, Number(e.target.value))}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          min="1"
                         />
                       </div>
                     </div>
-
-                    {/* セット作業の詳細入力 */}
+                    
+                    {/* セット詳細（セット作業のみ） */}
                     {item.type === 'set' && (
-                      <div className="set-details-section">
-                        <div className="set-details-header">
-                          <label className="work-label">セット内作業内容</label>
-                          <button 
+                      <div className="mt-4">
+                        <div className="flex justify-between items-center mb-2">
+                          <label className="block text-sm font-medium text-gray-700">
+                            セット詳細 <span className="text-red-500">*</span>
+                          </label>
+                          <button
+                            type="button"
                             onClick={() => addSetDetail(item.id)}
-                            className="add-detail-button"
+                            className="px-2 py-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600 transition-colors"
                           >
                             + 詳細追加
                           </button>
                         </div>
-                        {item.setDetails && item.setDetails.map((detail, detailIndex) => (
-                          <div key={detailIndex} className="set-detail-row">
-                            <input
-                              type="text"
-                              value={detail}
-                              onChange={(e) => updateSetDetail(item.id, detailIndex, e.target.value)}
-                              placeholder={`詳細作業 ${detailIndex + 1}`}
-                              className="form-input"
-                              style={{ flex: 1 }}
-                            />
-                            {/* 音声入力ボタン削除 */}
-                            {item.setDetails && item.setDetails.length > 1 && (
-                              <button 
-                                onClick={() => removeSetDetail(item.id, detailIndex)}
-                                className="remove-detail-button"
-                              >
-                                ×
-                              </button>
-                            )}
-                          </div>
-                        ))}
-                        {errors[`item_${index}_details`] && (
-                          <p className="error-text">{errors[`item_${index}_details`]}</p>
-                        )}
+                        <div className="space-y-2">
+                          {(item.set_details || []).map((detail, detailIndex) => (
+                            <div key={detailIndex} className="flex gap-2">
+                              <input
+                                type="text"
+                                value={detail}
+                                onChange={(e) => handleSetDetailChange(item.id, detailIndex, e.target.value)}
+                                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                                placeholder={`詳細項目 ${detailIndex + 1}`}
+                                required
+                              />
+                              {(item.set_details || []).length > 1 && (
+                                <button
+                                  type="button"
+                                  onClick={() => removeSetDetail(item.id, detailIndex)}
+                                  className="px-2 py-2 text-red-600 hover:bg-red-50 rounded transition-colors"
+                                  title="この詳細を削除"
+                                >
+                                  <Trash2 size={16} />
+                                </button>
+                              )}
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     )}
+                    
+                    <div className="mt-4">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        メモ（任意）
+                      </label>
+                      <input
+                        type="text"
+                        value={item.memo}
+                        onChange={(e) => handleMemoChange(item.id, e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="作業に関するメモ"
+                      />
+                    </div>
+                    
+                    <div className="mt-4 pt-3 border-t border-gray-200">
+                      <div className="text-right">
+                        <span className="text-lg font-bold text-blue-600">
+                          金額: ¥{item.amount.toLocaleString()}
+                        </span>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              ))
-            )}
-
-            {errors.items && (
-              <p style={{ color: '#ef4444', fontSize: '0.9rem', marginTop: '0.5rem', textAlign: 'center' }}>
-                {errors.items}
-              </p>
-            )}
-          </div>
-
-          {/* 合計金額セクション */}
-          {workItems.length > 0 && (
-            <div className="form-section">
-              <div className="section-title">合計金額</div>
-              
-              <div className="calculation-section">
-                <div className="calculation-row">
-                  <span className="calculation-label">小計</span>
-                  <span className="calculation-value">¥{subtotal.toLocaleString()}</span>
-                </div>
-                <div className="calculation-row">
-                  <span className="calculation-label">消費税 (10%)</span>
-                  <span className="calculation-value">¥{tax.toLocaleString()}</span>
-                </div>
-                <div className="calculation-row total-row">
-                  <span className="calculation-label">合計</span>
-                  <span className="calculation-value total-amount">¥{total.toLocaleString()}</span>
-                </div>
+                ))}
               </div>
             </div>
-          )}
 
-          {/* 保存セクション */}
-          <div className="save-section">
-            <button onClick={() => handleSave(true)} className="save-button" style={{ background: '#6b7280', marginRight: '1rem' }} disabled={isLoading}>
-              下書き保存
-            </button>
-            <button onClick={() => handleSave()} className="save-button" disabled={isLoading}>
-              請求書を保存
-            </button>
+            {/* メモ */}
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <h2 className="text-lg font-semibold mb-4 text-gray-800">📝 メモ</h2>
+              <textarea
+                value={memo}
+                onChange={(e) => setMemo(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                rows={4}
+                placeholder="請求書に関するメモ（任意）"
+              />
+            </div>
+          </div>
+
+          {/* 金額サマリー */}
+          <div className="lg:col-span-1">
+            <div className="bg-white rounded-lg shadow-sm p-6 sticky top-6">
+              <h2 className="text-lg font-semibold mb-4 flex items-center gap-2 text-gray-800">
+                <Calculator size={20} className="text-blue-600" />
+                💰 金額計算
+              </h2>
+              
+              <div className="space-y-4">
+                <div className="flex justify-between items-center py-2">
+                  <span className="text-gray-600">小計:</span>
+                  <span className="font-semibold text-lg">¥{subtotal.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between items-center py-2">
+                  <span className="text-gray-600">消費税 (10%):</span>
+                  <span className="font-semibold text-lg">¥{taxAmount.toLocaleString()}</span>
+                </div>
+                <hr className="border-gray-300" />
+                <div className="flex justify-between items-center py-3">
+                  <span className="text-lg font-bold">合計:</span>
+                  <span className="text-xl font-bold text-blue-600">¥{totalAmount.toLocaleString()}</span>
+                </div>
+              </div>
+              
+              <div className="mt-6 pt-4 border-t border-gray-200">
+                <h3 className="text-sm font-medium text-gray-700 mb-2">作業項目数</h3>
+                <p className="text-2xl font-bold text-gray-800">{workItems.length}件</p>
+              </div>
+
+              {workItems.length > 1 && (
+                <div className="mt-4 pt-4 border-t border-gray-200">
+                  <h3 className="text-sm font-medium text-gray-700 mb-2">平均単価</h3>
+                  <p className="text-lg font-semibold text-gray-600">
+                    ¥{Math.round(subtotal / workItems.length).toLocaleString()}
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
-      </>
-    </SecurityWrapper>
+
+        {/* 下部の保存ボタン */}
+        <div className="mt-8 bg-white rounded-lg shadow-sm p-6">
+          <div className="flex justify-center gap-4">
+            <button
+              onClick={() => handleSave(true)}
+              className="px-6 py-3 bg-amber-600 text-white rounded-lg hover:bg-amber-700 flex items-center gap-2 font-medium text-lg"
+            >
+              <Save size={24} />
+              下書き保存
+            </button>
+            <button
+              onClick={() => handleSave(false)}
+              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2 font-medium text-lg"
+            >
+              <Save size={24} />
+              確定保存
+            </button>
+          </div>
+          <p className="text-center text-sm text-gray-500 mt-3">
+            下書き保存: 後で編集可能 | 確定保存: 請求書として完成
+          </p>
+        </div>
+      </div>
+    </div>
   )
 }

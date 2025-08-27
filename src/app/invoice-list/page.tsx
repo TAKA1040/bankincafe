@@ -1,930 +1,1089 @@
-/**
- * パス: src/app/invoice-list/page.tsx
- * 目的: 請求書一覧画面
- */
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
-import SecurityWrapper from '@/components/security-wrapper'
+import { ArrowLeft, Search, FileText, Eye, Download, Filter, Calendar, X } from 'lucide-react'
 
 // 型定義
 interface Invoice {
   id: number
-  invoice_no: string
-  billing_month: number
+  invoice_year: number
+  invoice_month: number
   billing_date: string
-  customer_id: number
-  client_name: string
-  registration_no: string
-  order_no: string
-  internal_order_no: string
+  customer_category: 'UD' | 'その他'
+  customer_name: string
+  subject: string
+  registration_number: string
+  order_number: string
+  internal_order_number: string
   subtotal: number
-  tax: number
-  total: number
-  status: 'draft' | 'finalized' | 'canceled'
-  created_by: string
+  tax_amount: number
+  total_amount: number
+  status: 'draft' | 'finalized' | 'cancelled'  // ドキュメント状態
+  payment_status: 'unpaid' | 'paid' | 'partial'  // 支払い状態
   created_at: string
-  updated_at: string
   memo: string
-  category: 'UD' | 'その他'
-  original_invoice_id: number | null
+  work_items: Array<{
+    id: number
+    type: 'individual' | 'set'
+    work_name: string
+    unit_price: number
+    quantity: number
+    amount: number
+    memo: string
+    set_details?: string[]
+  }>
 }
 
-interface Customer {
-  id: number
-  company_name: string
-  person_in_charge: string
-  position: string
-  phone: string
-  email: string
+interface SearchFilters {
+  keyword: string
+  status: string  // ドキュメント状態
+  payment_status: string  // 支払い状態
+  year: string
+  month: string
+  startDate: string
+  endDate: string
 }
 
-interface InvoiceItem {
-  id: number
-  invoice_id: number
-  item_type: 'individual' | 'set'
-  name: string
-  quantity: number
-  unit_price: number
-  total: number
-  set_details: string
+interface SortConfig {
+  key: keyof Invoice
+  direction: 'asc' | 'desc'
 }
 
-// データベース管理クラス
+// InvoiceDBクラス
 class InvoiceDB {
-  customers: Customer[]
-  invoices: Invoice[]
-  invoiceItems: InvoiceItem[]
-  currentUser: { id: string; name: string; email: string }
+  private data: Invoice[]
 
   constructor() {
-    // サンプルデータ
-    this.customers = [
-      {
-        id: 1,
-        company_name: '株式会社UDトラックス',
-        person_in_charge: '山田太郎',
-        position: '部長',
-        phone: '03-1234-5678',
-        email: 'yamada@udtrucks.com'
-      },
-      {
-        id: 2,
-        company_name: 'DEF商事',
-        person_in_charge: '佐藤花子',
-        position: '課長',
-        phone: '06-9876-5432',
-        email: 'sato@def-trading.com'
-      },
-      {
-        id: 3,
-        company_name: 'サーバーメンテナンス',
-        person_in_charge: '田中次郎',
-        position: '主任',
-        phone: '045-555-1234',
-        email: 'tanaka@server-maint.com'
-      }
-    ]
+    this.data = this.loadData()
+  }
 
-    this.invoices = [
+  private loadData(): Invoice[] {
+    try {
+      const stored = localStorage.getItem('bankin_invoices')
+      return stored ? JSON.parse(stored) : this.getDefaultData()
+    } catch {
+      return this.getDefaultData()
+    }
+  }
+
+  private getDefaultData(): Invoice[] {
+    return [
       {
         id: 1,
-        invoice_no: '25050001-1',
-        billing_month: 2505,
-        billing_date: '2025-05-15',
-        customer_id: 1,
-        client_name: 'UD',
-        registration_no: 'T1234567890123',
-        order_no: 'ORD-001',
-        internal_order_no: 'INT-001',
+        invoice_year: 2024,
+        invoice_month: 1,
+        billing_date: '2024-01-15',
+        customer_category: 'その他' as const,
+        customer_name: 'テクノロジー株式会社',
+        subject: 'Webサイト制作',
+        registration_number: 'T1234567890123',
+        order_number: 'ORD-2024-001',
+        internal_order_number: 'INT-001',
         subtotal: 100000,
-        tax: 10000,
-        total: 110000,
+        tax_amount: 10000,
+        total_amount: 110000,
         status: 'finalized',
-        created_by: 'user1',
-        created_at: '2025-05-15T10:00:00Z',
-        updated_at: '2025-05-15T10:00:00Z',
-        memo: 'バンパー修理作業',
-        category: 'UD',
-        original_invoice_id: null
+        payment_status: 'paid',
+        created_at: '2024-01-15T10:00:00.000Z',
+        memo: '初回案件',
+        work_items: [
+          { id: 1, type: 'individual', work_name: 'Webサイト制作', unit_price: 100000, quantity: 1, amount: 100000, memo: '' }
+        ]
       },
       {
         id: 2,
-        invoice_no: '25050002-1',
-        billing_month: 2505,
-        billing_date: '2025-05-20',
-        customer_id: 2,
-        client_name: 'DEF商事',
-        registration_no: 'T9876543210987',
-        order_no: 'ORD-002',
-        internal_order_no: 'INT-002',
+        invoice_year: 2024,
+        invoice_month: 2,
+        billing_date: '2024-02-10',
+        customer_category: 'その他' as const,
+        customer_name: 'サンプル商事株式会社B',
+        subject: 'システム保守',
+        registration_number: '',
+        order_number: 'ORD-2024-002',
+        internal_order_number: '',
         subtotal: 50000,
-        tax: 5000,
-        total: 55000,
-        status: 'draft',
-        created_by: 'user1',
-        created_at: '2025-05-20T14:00:00Z',
-        updated_at: '2025-05-20T14:00:00Z',
-        memo: 'フルメンテナンスセット',
-        category: 'その他',
-        original_invoice_id: null
-      },
-      {
-        id: 3,
-        invoice_no: '25040015-1',
-        billing_month: 2504,
-        billing_date: '2025-04-10',
-        customer_id: 3,
-        client_name: 'サーバーメンテナンス',
-        registration_no: 'T1111222233334',
-        order_no: 'ORD-015',
-        internal_order_no: 'INT-015',
-        subtotal: 80000,
-        tax: 8000,
-        total: 88000,
+        tax_amount: 5000,
+        total_amount: 55000,
         status: 'finalized',
-        created_by: 'user1',
-        created_at: '2025-04-10T09:00:00Z',
-        updated_at: '2025-04-10T09:00:00Z',
-        memo: 'サイドパネル塗装',
-        category: 'その他',
-        original_invoice_id: null
-      }
-    ]
-
-    this.invoiceItems = [
-      {
-        id: 1,
-        invoice_id: 1,
-        item_type: 'individual',
-        name: 'バンパー修理',
-        quantity: 1,
-        unit_price: 100000,
-        total: 100000,
-        set_details: ''
-      },
-      {
-        id: 2,
-        invoice_id: 2,
-        item_type: 'set',
-        name: 'フルメンテナンスセット',
-        quantity: 1,
-        unit_price: 50000,
-        total: 50000,
-        set_details: 'サイドパネル塗装、バンパー点検、ライト調整'
+        payment_status: 'unpaid',
+        created_at: '2024-02-10T14:30:00.000Z',
+        memo: '',
+        work_items: [
+          { id: 1, type: 'individual', work_name: 'システム保守', unit_price: 50000, quantity: 1, amount: 50000, memo: '' }
+        ]
       },
       {
         id: 3,
-        invoice_id: 3,
-        item_type: 'individual',
-        name: 'サイドパネル塗装',
-        quantity: 1,
-        unit_price: 80000,
-        total: 80000,
-        set_details: ''
+        invoice_year: 2024,
+        invoice_month: 3,
+        billing_date: '2024-03-05',
+        customer_category: 'UD' as const,
+        customer_name: '株式会社UDトラックス',
+        subject: 'データベース設計',
+        registration_number: 'T9876543210987',
+        order_number: 'UD-2024-001',
+        internal_order_number: 'UD-INT-001',
+        subtotal: 80000,
+        tax_amount: 8000,
+        total_amount: 88000,
+        status: 'draft',
+        payment_status: 'unpaid',
+        created_at: '2024-03-05T09:15:00.000Z',
+        memo: '設計書含む',
+        work_items: [
+          { id: 1, type: 'set', work_name: 'データベース設計', unit_price: 80000, quantity: 1, amount: 80000, memo: '', set_details: ['ER図作成', 'テーブル設計', '正規化検証'] }
+        ]
       }
     ]
-
-    this.currentUser = { id: 'user1', name: '管理者', email: 'admin@bankin-cafe.com' }
   }
 
-  // 赤伝処理
-  createRedSlip(originalInvoiceId: number): Invoice | null {
-    const originalInvoice = this.invoices.find(inv => inv.id === originalInvoiceId)
-    if (!originalInvoice || originalInvoice.status !== 'finalized') return null
-
-    // 赤伝番号生成
-    const basePart = originalInvoice.invoice_no.split('-')[0]
-    const redSlips = this.invoices.filter(inv => 
-      inv.invoice_no.startsWith(basePart + '-R')
-    )
-    const redSlipCount = redSlips.length + 1
-    const redSlipNumber = `${basePart}-R${redSlipCount}`
-    
-    const redSlip: Invoice = {
-      id: Date.now(),
-      invoice_no: redSlipNumber,
-      billing_month: originalInvoice.billing_month,
-      billing_date: new Date().toISOString().split('T')[0],
-      customer_id: originalInvoice.customer_id,
-      client_name: originalInvoice.client_name,
-      registration_no: originalInvoice.registration_no,
-      order_no: originalInvoice.order_no,
-      internal_order_no: originalInvoice.internal_order_no,
-      subtotal: -originalInvoice.subtotal,
-      tax: -originalInvoice.tax,
-      total: -originalInvoice.total,
-      status: 'finalized',
-      created_by: this.currentUser.id,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      memo: `${originalInvoice.invoice_no} の取り消し`,
-      category: originalInvoice.category,
-      original_invoice_id: originalInvoiceId
+  save(): void {
+    try {
+      localStorage.setItem('bankin_invoices', JSON.stringify(this.data))
+    } catch (error) {
+      console.warn('Failed to save invoices:', error)
     }
+  }
 
-    this.invoices.push(redSlip)
+  search(filters: SearchFilters): Invoice[] {
+    return this.data.filter(invoice => {
+      // キーワード検索（大文字小文字を区別しないあいまい検索）
+      if (filters.keyword.trim()) {
+        const keyword = filters.keyword.toLowerCase()
+        const matchesKeyword = 
+          // 請求書番号での検索（# を含む場合と含まない場合の両方に対応）
+          invoice.id.toString().includes(keyword) ||
+          `#${invoice.id}`.toLowerCase().includes(keyword) ||
+          // 顧客情報での検索
+          invoice.customer_name.toLowerCase().includes(keyword) ||
+          invoice.customer_category.toLowerCase().includes(keyword) ||
+          // 請求情報での検索
+          invoice.subject.toLowerCase().includes(keyword) ||
+          invoice.memo.toLowerCase().includes(keyword) ||
+          // 注文番号等での検索
+          invoice.registration_number.toLowerCase().includes(keyword) ||
+          invoice.order_number.toLowerCase().includes(keyword) ||
+          invoice.internal_order_number.toLowerCase().includes(keyword) ||
+          // 請求年月での検索
+          `${invoice.invoice_year}年${invoice.invoice_month}月`.includes(keyword) ||
+          `${invoice.invoice_year}/${invoice.invoice_month}`.includes(keyword) ||
+          // 請求日での検索
+          invoice.billing_date.includes(keyword) ||
+          new Date(invoice.billing_date).toLocaleDateString('ja-JP').includes(keyword) ||
+          // 作業項目での検索
+          invoice.work_items.some(item => 
+            item.work_name.toLowerCase().includes(keyword) ||
+            item.memo.toLowerCase().includes(keyword) ||
+            (item.set_details && item.set_details.some(detail => detail.toLowerCase().includes(keyword)))
+          )
+        if (!matchesKeyword) return false
+      }
 
-    // 元の請求書のアイテムを取得して、マイナス値で赤伝アイテムを作成
-    const originalItems = this.invoiceItems.filter(item => item.invoice_id === originalInvoiceId)
-    originalItems.forEach(item => {
-      this.invoiceItems.push({
-        id: Date.now() + Math.random(),
-        invoice_id: redSlip.id,
-        item_type: item.item_type,
-        name: item.name,
-        quantity: -item.quantity,
-        unit_price: item.unit_price,
-        total: -item.total,
-        set_details: item.set_details
-      })
+      // ドキュメント状態フィルター
+      if (filters.status && filters.status !== 'all') {
+        if (invoice.status !== filters.status) return false
+      }
+
+      // 支払い状態フィルター
+      if (filters.payment_status && filters.payment_status !== 'all') {
+        if (invoice.payment_status !== filters.payment_status) return false
+      }
+
+      // 年フィルター
+      if (filters.year && filters.year !== 'all') {
+        if (invoice.invoice_year !== parseInt(filters.year)) return false
+      }
+
+      // 月フィルター
+      if (filters.month && filters.month !== 'all') {
+        if (invoice.invoice_month !== parseInt(filters.month)) return false
+      }
+
+      return true
     })
-
-    // 元の請求書のステータスを取消済みに変更
-    originalInvoice.status = 'canceled'
-    originalInvoice.updated_at = new Date().toISOString()
-
-    return redSlip
   }
 
-  // 請求書削除（下書きのみ）
-  deleteInvoice(invoiceId: number): void {
-    this.invoices = this.invoices.filter(inv => inv.id !== invoiceId)
-    this.invoiceItems = this.invoiceItems.filter(item => item.invoice_id !== invoiceId)
-  }
-
-  // 開発用: テストデータを追加
-  addTestData(count: number = 50): void {
-    const now = new Date()
-    const yearYY = now.getFullYear() - 2000
-    const month = now.getMonth() + 1
-    const baseMonthNum = yearYY * 100 + month // 例: 2505
-    const baseId = this.invoices.reduce((max, inv) => Math.max(max, inv.id), 0)
-
-    for (let i = 0; i < count; i++) {
-      const id = baseId + i + 1
-      const cust = this.customers[Math.floor(Math.random() * this.customers.length)]
-      const isUD = cust.company_name.includes('UD')
-      const category = isUD ? 'UD' : 'その他'
-      const billingMonth = baseMonthNum - (i % 6) // 直近6ヶ月に散らす
-      const date = new Date(now.getTime() - i * 86400000)
-      const billingDate = date.toISOString().split('T')[0]
-      const seq = (10000 + ((this.invoices.length + i + 1) % 10000)).toString().slice(-4)
-      const invoiceNo = `${billingMonth}${seq}-1`
-      const subtotal = Math.floor(30000 + Math.random() * 120000)
-      const tax = Math.floor(subtotal * 0.1)
-      const total = subtotal + tax
-      const status: Invoice['status'] = Math.random() < 0.6 ? 'finalized' : (Math.random() < 0.5 ? 'draft' : 'canceled')
-
-      this.invoices.push({
-        id,
-        invoice_no: invoiceNo,
-        billing_month: billingMonth,
-        billing_date: billingDate,
-        customer_id: cust.id,
-        client_name: isUD ? 'UD' : cust.company_name,
-        registration_no: 'T0000000000000',
-        order_no: `ORD-T-${id}`,
-        internal_order_no: `INT-T-${id}`,
-        subtotal,
-        tax,
-        total,
-        status,
-        created_by: this.currentUser.id,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        memo: `[TEST] 追加データ ${id}`,
-        category,
-        original_invoice_id: null
-      })
-
-      this.invoiceItems.push({
-        id: id * 100,
-        invoice_id: id,
-        item_type: 'individual',
-        name: 'テスト作業',
-        quantity: 1,
-        unit_price: subtotal,
-        total: subtotal,
-        set_details: ''
-      })
+  updateStatus(id: number, status: Invoice['status']): void {
+    const index = this.data.findIndex(invoice => invoice.id === id)
+    if (index !== -1) {
+      this.data[index].status = status
+      this.save()
     }
   }
 
-  // 開発用: 追加したテストデータを削除
-  clearTestData(): void {
-    const testIds = new Set(this.invoices.filter(inv => inv.memo?.startsWith('[TEST]')).map(inv => inv.id))
-    this.invoices = this.invoices.filter(inv => !testIds.has(inv.id))
-    this.invoiceItems = this.invoiceItems.filter(item => !testIds.has(item.invoice_id))
+  updatePaymentStatus(id: number, paymentStatus: Invoice['payment_status']): void {
+    const index = this.data.findIndex(invoice => invoice.id === id)
+    if (index !== -1) {
+      this.data[index].payment_status = paymentStatus
+      this.save()
+    }
+  }
+
+  createRedInvoice(originalId: number): Invoice {
+    const original = this.data.find(inv => inv.id === originalId)
+    if (!original || original.status !== 'finalized') {
+      throw new Error('確定済みの請求書のみ赤伝を作成できます')
+    }
+
+    const newId = Math.max(...this.data.map(inv => inv.id)) + 1
+    const redInvoice: Invoice = {
+      ...original,
+      id: newId,
+      subject: `[赤伝] ${original.subject}`,
+      subtotal: -original.subtotal,
+      tax_amount: -original.tax_amount,
+      total_amount: -original.total_amount,
+      status: 'finalized',
+      payment_status: 'unpaid',
+      created_at: new Date().toISOString(),
+      memo: `元請求書 #${original.id} の赤伝です。${original.memo}`,
+      work_items: original.work_items.map(item => ({
+        ...item,
+        amount: -item.amount
+      }))
+    }
+
+    this.data.push(redInvoice)
+    this.save()
+    return redInvoice
+  }
+
+  delete(id: number): void {
+    this.data = this.data.filter(invoice => invoice.id !== id)
+    this.save()
+  }
+
+  exportToCSV(invoices: Invoice[]): void {
+    const headers = [
+      '請求書番号', '請求年月', '請求日', '顧客カテゴリ', '顧客名', '件名', 
+      '登録番号', '発注番号', 'オーダー番号', '金額(税込)',
+      'ドキュメント状態', '支払い状態', '作成日', 'メモ'
+    ]
+    
+    const rows = invoices.map(invoice => [
+      `#${invoice.id}`,
+      `${invoice.invoice_year}年${invoice.invoice_month}月`,
+      invoice.billing_date,
+      invoice.customer_category,
+      `"${invoice.customer_name.replace(/"/g, '""')}"`,
+      `"${invoice.subject.replace(/"/g, '""')}"`,
+      invoice.registration_number,
+      invoice.order_number,
+      invoice.internal_order_number,
+      invoice.total_amount.toString(),
+      this.getStatusLabel(invoice.status),
+      this.getPaymentStatusLabel(invoice.payment_status),
+      new Date(invoice.created_at).toLocaleDateString('ja-JP'),
+      `"${invoice.memo.replace(/"/g, '""')}"`
+    ])
+
+    const csvContent = [headers.join(','), ...rows.map(row => row.join(','))].join('\n')
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `請求書一覧_${new Date().toISOString().split('T')[0]}.csv`
+    link.click()
+    
+    setTimeout(() => URL.revokeObjectURL(url), 100)
+  }
+
+  private getStatusLabel(status: Invoice['status']): string {
+    const statusMap = {
+      draft: '下書き',
+      finalized: '確定',
+      cancelled: '取消'
+    }
+    return statusMap[status] || status
+  }
+
+  private getPaymentStatusLabel(paymentStatus: Invoice['payment_status']): string {
+    const paymentStatusMap = {
+      unpaid: '未払い',
+      paid: '支払済み',
+      partial: '一部入金'
+    }
+    return paymentStatusMap[paymentStatus] || paymentStatus
   }
 }
 
 export default function InvoiceListPage() {
   const router = useRouter()
-  const [db, setDb] = useState(() => new InvoiceDB())
-  const [searchKeyword, setSearchKeyword] = useState('')
-  const [statusFilter, setStatusFilter] = useState<'all' | 'draft' | 'finalized' | 'canceled'>('all')
+  const [db] = useState(() => new InvoiceDB())
+  const [invoices, setInvoices] = useState<Invoice[]>([])
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null)
-  const [invoices, setInvoices] = useState<Invoice[]>(db.invoices)
-
-  // データ更新用
-  const updateData = () => {
-    setInvoices([...db.invoices])
-  }
-
-  // 戻るボタン
-  const handleBack = () => {
-    router.push('/')
-  }
-
-  // 新規作成
-  const handleCreateNew = () => {
-    router.push('/invoice-create')
-  }
-
-  // 編集
-  const handleEdit = (invoiceId: number) => {
-    router.push(`/invoice-create?edit=${invoiceId}`)
-  }
-
-  // 詳細表示
-  const handleViewDetail = (invoice: Invoice) => {
-    setSelectedInvoice(invoice)
-  }
-
-  // 赤伝処理
-  const handleRedSlip = (invoice: Invoice) => {
-    if (confirm('この請求書を赤伝で取り消しますか？\n取り消し後は元に戻せません。')) {
-      const redSlip = db.createRedSlip(invoice.id)
-      if (redSlip) {
-        alert(`赤伝 ${redSlip.invoice_no} を作成しました`)
-        updateData()
-      } else {
-        alert('赤伝の作成に失敗しました')
-      }
-    }
-  }
-
-  // 検索デバウンス・正規化・ページネーション設定
-  const [debouncedSearch, setDebouncedSearch] = useState('')
-  useEffect(() => {
-    const id = setTimeout(() => setDebouncedSearch(searchKeyword), 200)
-    return () => clearTimeout(id)
-  }, [searchKeyword])
-
-  const normalize = (s: string) => (s ?? '').toString().toLowerCase().normalize('NFKC')
-
+  const [showDetailModal, setShowDetailModal] = useState(false)
+  const [isSearching, setIsSearching] = useState(false)
+  const [sortConfig, setSortConfig] = useState<SortConfig>({ key: 'billing_date', direction: 'desc' })
   const [currentPage, setCurrentPage] = useState(1)
-  const pageSize = 20
-
-  // 検索キーワードやステータス変更時はページ先頭へ
-  useEffect(() => { setCurrentPage(1) }, [debouncedSearch, statusFilter])
-
-  // 月範囲フィルタ（当月/前月ボタン、from-to 入力）
-  const [monthFrom, setMonthFrom] = useState<string>('')
-  const [monthTo, setMonthTo] = useState<string>('')
-  const ymOf = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
-  const handleThisMonth = () => {
-    const ym = ymOf(new Date())
-    setMonthFrom(ym)
-    setMonthTo(ym)
-  }
-  const handlePrevMonth = () => {
-    const d = new Date()
-    d.setMonth(d.getMonth() - 1)
-    const ym = ymOf(d)
-    setMonthFrom(ym)
-    setMonthTo(ym)
-  }
-  const handleClearMonth = () => {
-    setMonthFrom('')
-    setMonthTo('')
-  }
-  useEffect(() => { setCurrentPage(1) }, [monthFrom, monthTo])
-
-  // dev用: HMR後に古いインスタンスを使い続けると新メソッドが無いことがあるためのフォールバック
-  const getDb = () => {
-    const hasMethods = typeof (db as any).addTestData === 'function' && typeof (db as any).clearTestData === 'function'
-    if (hasMethods) return db
-    const next = new InvoiceDB()
-    // 既存データを引き継ぐ
-    next.customers = db.customers
-    next.invoices = db.invoices
-    next.invoiceItems = db.invoiceItems
-    setDb(next)
-    return next
-  }
-
-  // テストデータ 追加/削除
-  const handleAddTestData = (n: number = 50) => {
-    const d = getDb()
-    d.addTestData(n)
-    setSelectedInvoice(null)
-    updateData()
-    setCurrentPage(1)
-  }
-
-  const handleClearTestData = () => {
-    const d = getDb()
-    d.clearTestData()
-    setSelectedInvoice(null)
-    updateData()
-    setCurrentPage(1)
-  }
-
-  // フィルタリング（月範囲 + 複数フィールド + 正規化 + ANDマルチキーワード）
-  const terms = normalize(debouncedSearch).split(/\s+/).filter(Boolean)
-  const toYYMM = (ym: string | null) => {
-    if (!ym) return null
-    const [y, m] = ym.split('-').map(Number)
-    return (y - 2000) * 100 + m
-  }
-  let minMonth = toYYMM(monthFrom)
-  let maxMonth = toYYMM(monthTo)
-  if (minMonth !== null && maxMonth !== null && minMonth > maxMonth) {
-    const t = minMonth; minMonth = maxMonth; maxMonth = t
-  }
-  const filteredInvoices = invoices.filter(invoice => {
-    const matchesStatus = statusFilter === 'all' || invoice.status === statusFilter
-    if (!matchesStatus) return false
-    if (minMonth !== null && invoice.billing_month < minMonth) return false
-    if (maxMonth !== null && invoice.billing_month > maxMonth) return false
-    if (terms.length === 0) return true
-
-    const companyName = db.customers.find(c => c.id === invoice.customer_id)?.company_name ?? ''
-    const fields = [
-      invoice.invoice_no,
-      invoice.client_name,
-      companyName,
-      invoice.order_no,
-      invoice.internal_order_no,
-      invoice.memo
-    ].map(normalize)
-
-    return terms.every(t => fields.some(f => f.includes(t)))
+  const [itemsPerPage] = useState(10)
+  
+  const [filters, setFilters] = useState<SearchFilters>({
+    keyword: '',
+    status: 'all',
+    payment_status: 'all',
+    year: 'all',
+    month: 'all',
+    startDate: '',
+    endDate: ''
   })
 
-  // ページネーション
-  const pageCount = Math.max(1, Math.ceil(filteredInvoices.length / pageSize))
-  const current = Math.min(currentPage, pageCount)
-  const startIndex = (current - 1) * pageSize
-  const paginatedInvoices = filteredInvoices.slice(startIndex, startIndex + pageSize)
-  const goPrev = () => setCurrentPage(p => Math.max(1, p - 1))
-  const goNext = () => setCurrentPage(p => Math.min(pageCount, p + 1))
+  // 検索処理
+  useEffect(() => {
+    const searchInvoices = async () => {
+      setIsSearching(true)
+      await new Promise(resolve => setTimeout(resolve, 200))
+      const filtered = db.search(filters)
+      setInvoices(sortInvoices(filtered))
+      setCurrentPage(1)  // 検索時は最初のページに戻る
+      setIsSearching(false)
+    }
+    searchInvoices()
+  }, [filters, db])
 
-  // ステータス表示
-  const getStatusBadge = (status: string) => {
-    const styles = {
-      draft: 'bg-yellow-100 text-yellow-800',
-      finalized: 'bg-green-100 text-green-800', 
-      canceled: 'bg-red-100 text-red-800'
-    }
-    const texts = {
-      draft: '下書き',
-      finalized: '確定済',
-      canceled: '取消済'
-    }
-    return {
-      style: styles[status as keyof typeof styles] || 'bg-gray-100 text-gray-800',
-      text: texts[status as keyof typeof texts] || '不明'
+  // 初期データロード
+  useEffect(() => {
+    const filtered = db.search(filters)
+    setInvoices(sortInvoices(filtered))
+  }, [db])
+
+  // ソート適用
+  useEffect(() => {
+    setInvoices(prev => sortInvoices(prev))
+  }, [sortConfig])
+
+  // ペジネーションのデータ範囲計算
+  const totalPages = Math.ceil(invoices.length / itemsPerPage)
+  const startIndex = (currentPage - 1) * itemsPerPage
+  const endIndex = startIndex + itemsPerPage
+  const currentInvoices = invoices.slice(startIndex, endIndex)
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const handleBack = () => router.push('/')
+
+  const handleStatusChange = (id: number, status: Invoice['status']) => {
+    db.updateStatus(id, status)
+    const filtered = db.search(filters)
+    setInvoices(sortInvoices(filtered))
+  }
+
+  const handlePaymentStatusChange = (id: number, paymentStatus: Invoice['payment_status']) => {
+    db.updatePaymentStatus(id, paymentStatus)
+    const filtered = db.search(filters)
+    setInvoices(sortInvoices(filtered))
+  }
+
+  const handleCreateRedInvoice = (originalId: number) => {
+    try {
+      const redInvoice = db.createRedInvoice(originalId)
+      const filtered = db.search(filters)
+      setInvoices(sortInvoices(filtered))
+      alert(`赤伝請求書 #${redInvoice.id} を作成しました`)
+    } catch (error) {
+      alert(error instanceof Error ? error.message : '赤伝作成に失敗しました')
     }
   }
 
+  const sortInvoices = (invoiceList: Invoice[]): Invoice[] => {
+    return [...invoiceList].sort((a, b) => {
+      const aValue = a[sortConfig.key]
+      const bValue = b[sortConfig.key]
+      
+      if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1
+      if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1
+      return 0
+    })
+  }
+
+  const handleSort = (key: keyof Invoice) => {
+    const direction = sortConfig.key === key && sortConfig.direction === 'asc' ? 'desc' : 'asc'
+    setSortConfig({ key, direction })
+    setInvoices(sortInvoices(invoices))
+  }
+
+  const handleDelete = (id: number) => {
+    if (confirm('この請求書を削除してもよろしいですか？')) {
+      db.delete(id)
+      setInvoices([...db.data])
+      alert('請求書を削除しました')
+    }
+  }
+
+  const handleExportCSV = () => {
+    db.exportToCSV(invoices)
+  }
+
+  const getStatusBadge = (status: Invoice['status']) => {
+    const statusConfig = {
+      draft: { label: '下書き', className: 'bg-gray-100 text-gray-800' },
+      finalized: { label: '確定', className: 'bg-blue-100 text-blue-800' },
+      cancelled: { label: '取消', className: 'bg-red-100 text-red-800' }
+    }
+    
+    const config = statusConfig[status] || statusConfig.draft
+    return (
+      <span className={`px-2 py-1 rounded-full text-xs font-medium ${config.className}`}>
+        {config.label}
+      </span>
+    )
+  }
+
+  const getPaymentStatusBadge = (paymentStatus: Invoice['payment_status']) => {
+    const statusConfig = {
+      unpaid: { label: '未払い', className: 'bg-orange-100 text-orange-800' },
+      paid: { label: '支払済み', className: 'bg-green-100 text-green-800' },
+      partial: { label: '一部入金', className: 'bg-yellow-100 text-yellow-800' }
+    }
+    
+    const config = statusConfig[paymentStatus] || statusConfig.unpaid
+    return (
+      <span className={`px-2 py-1 rounded-full text-xs font-medium ${config.className}`}>
+        {config.label}
+      </span>
+    )
+  }
+
+  const totalAmount = useMemo(() => {
+    return invoices.reduce((sum, invoice) => sum + invoice.total_amount, 0)
+  }, [invoices])
+
+  const statusCounts = useMemo(() => {
+    return invoices.reduce((counts, invoice) => {
+      counts[invoice.status] = (counts[invoice.status] || 0) + 1
+      return counts
+    }, {} as Record<string, number>)
+  }, [invoices])
+
+  const paymentCounts = useMemo(() => {
+    return invoices.reduce((counts, invoice) => {
+      counts[invoice.payment_status] = (counts[invoice.payment_status] || 0) + 1
+      return counts
+    }, {} as Record<string, number>)
+  }, [invoices])
+
   return (
-    <SecurityWrapper requirePin={true}>
-      <div style={{ minHeight: '100vh', background: '#f8f9fa', padding: '1rem' }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-          
-          {/* ヘッダー */}
-          <div style={{ 
-            background: 'white', 
-            borderRadius: '8px', 
-            padding: '1.5rem',
-            marginBottom: '1rem',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center'
-          }}>
-            <div>
-              <h1 style={{ fontSize: '1.8rem', fontWeight: 'bold', margin: '0 0 0.5rem 0' }}>
-                請求書一覧
-              </h1>
-              <button 
-                onClick={handleBack}
-                style={{
-                  padding: '0.5rem 1rem',
-                  background: '#6b7280',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontSize: '0.9rem'
-                }}
+    <div className="min-h-screen bg-gray-50">
+      <div className="container mx-auto px-4 py-8">
+        {/* ヘッダー */}
+        <header className="bg-white rounded-lg shadow-sm p-4 md:p-6 mb-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="flex items-center gap-3">
+              <FileText className="text-blue-600" size={28} />
+              <h1 className="text-xl md:text-2xl font-bold text-gray-800">請求書一覧</h1>
+            </div>
+            
+            {/* PC用ボタン */}
+            <div className="hidden md:flex gap-2">
+              <button
+                onClick={() => router.push('/invoice-create')}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
               >
-                ← ホームに戻る
+                <FileText size={20} />
+                新規作成
+              </button>
+              <button
+                onClick={handleExportCSV}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2"
+              >
+                <Download size={20} />
+                CSV出力
+              </button>
+              <button
+                onClick={handleBack}
+                className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 flex items-center gap-2"
+              >
+                <ArrowLeft size={20} />
+                戻る
               </button>
             </div>
-            <button 
-              onClick={handleCreateNew}
-              style={{
-                padding: '0.75rem 1.5rem',
-                background: '#10b981',
-                color: 'white',
-                border: 'none',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontSize: '1rem',
-                fontWeight: '600'
-              }}
-            >
-              + 新規請求書作成
-            </button>
+            
+            {/* スマホ用ボタン */}
+            <div className="md:hidden flex flex-wrap gap-2 w-full">
+              <button
+                onClick={() => router.push('/invoice-create')}
+                className="flex-1 min-w-[100px] px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center justify-center gap-2 text-sm font-medium"
+              >
+                <FileText size={18} />
+                新規作成
+              </button>
+              <button
+                onClick={handleExportCSV}
+                className="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-1 text-sm font-medium"
+              >
+                <Download size={18} />
+                CSV
+              </button>
+              <button
+                onClick={handleBack}
+                className="px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 flex items-center gap-1 text-sm font-medium"
+              >
+                <ArrowLeft size={18} />
+                戻る
+              </button>
+            </div>
           </div>
+        </header>
 
-          {/* 検索・フィルター */}
-          <div style={{ 
-            background: 'white', 
-            borderRadius: '8px', 
-            padding: '1rem',
-            marginBottom: '1rem',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-          }}>
-            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+        {/* 統計情報 - PC用 */}
+        <div className="hidden md:grid grid-cols-4 lg:grid-cols-6 gap-4 mb-6">
+          <div className="bg-white rounded-lg shadow-sm p-4">
+            <h3 className="text-sm font-medium text-gray-600">総件数</h3>
+            <p className="text-2xl font-bold text-gray-800">{invoices.length}件</p>
+          </div>
+          <div className="bg-white rounded-lg shadow-sm p-4">
+            <h3 className="text-sm font-medium text-gray-600">金額合計</h3>
+            <p className="text-lg font-bold text-blue-600">¥{totalAmount.toLocaleString()}</p>
+          </div>
+          <div className="bg-white rounded-lg shadow-sm p-4">
+            <h3 className="text-sm font-medium text-gray-600">下書き</h3>
+            <p className="text-2xl font-bold text-gray-600">{statusCounts.draft || 0}件</p>
+          </div>
+          <div className="bg-white rounded-lg shadow-sm p-4">
+            <h3 className="text-sm font-medium text-gray-600">確定</h3>
+            <p className="text-2xl font-bold text-blue-600">{statusCounts.finalized || 0}件</p>
+          </div>
+          <div className="bg-white rounded-lg shadow-sm p-4">
+            <h3 className="text-sm font-medium text-gray-600">支払済み</h3>
+            <p className="text-2xl font-bold text-green-600">{paymentCounts.paid || 0}件</p>
+          </div>
+          <div className="bg-white rounded-lg shadow-sm p-4">
+            <h3 className="text-sm font-medium text-gray-600">未払い</h3>
+            <p className="text-2xl font-bold text-orange-600">{paymentCounts.unpaid || 0}件</p>
+          </div>
+        </div>
+
+        {/* 統計情報 - スマホ用（コンパクト） */}
+        <div className="md:hidden bg-white rounded-lg shadow-sm p-4 mb-6">
+          <div className="flex justify-between items-center mb-3">
+            <h3 className="text-lg font-semibold text-gray-800">📊 統計</h3>
+            <div className="text-sm text-gray-600">検索結果: {invoices.length}件</div>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-4">
+            {/* 上段: 件数と金額 */}
+            <div className="text-center">
+              <div className="text-xs text-gray-600 mb-1">総件数</div>
+              <div className="text-xl font-bold text-gray-800">{invoices.length}件</div>
+            </div>
+            <div className="text-center">
+              <div className="text-xs text-gray-600 mb-1">合計金額</div>
+              <div className="text-lg font-bold text-blue-600">¥{Math.round(totalAmount / 10000)}万</div>
+            </div>
+          </div>
+          
+          <div className="border-t border-gray-100 mt-3 pt-3">
+            <div className="flex justify-between text-sm">
+              <div className="flex items-center gap-2">
+                <span className="w-3 h-3 bg-gray-400 rounded-full"></span>
+                <span className="text-gray-600">下書き</span>
+                <span className="font-medium">{statusCounts.draft || 0}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-3 h-3 bg-blue-500 rounded-full"></span>
+                <span className="text-gray-600">確定</span>
+                <span className="font-medium">{statusCounts.finalized || 0}</span>
+              </div>
+            </div>
+            <div className="flex justify-between text-sm mt-2">
+              <div className="flex items-center gap-2">
+                <span className="w-3 h-3 bg-green-500 rounded-full"></span>
+                <span className="text-gray-600">支払済</span>
+                <span className="font-medium">{paymentCounts.paid || 0}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-3 h-3 bg-orange-500 rounded-full"></span>
+                <span className="text-gray-600">未払い</span>
+                <span className="font-medium">{paymentCounts.unpaid || 0}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 検索・フィルターセクション */}
+        <div className="bg-white rounded-lg shadow-sm p-4 md:p-6 mb-6">
+          {/* 第1段: 検索キーワード */}
+          <div className="mb-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
               <input
                 type="text"
-                value={searchKeyword}
-                onChange={(e) => setSearchKeyword(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Escape') setSearchKeyword('') }}
-                placeholder="請求書を検索..."
-                style={{
-                  flex: '1',
-                  minWidth: '200px',
-                  padding: '0.75rem',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '6px',
-                  fontSize: '0.9rem'
-                }}
+                placeholder="番号、顧客名、件名で検索..."
+                value={filters.keyword}
+                onChange={(e) => setFilters({...filters, keyword: e.target.value})}
+                className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
               />
-              <button
-                onClick={() => setSearchKeyword('')}
-                disabled={!searchKeyword}
-                title="検索キーワードをクリア"
-                style={{
-                  padding: '0.5rem 0.75rem',
-                  background: searchKeyword ? '#9ca3af' : '#e5e7eb',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  cursor: searchKeyword ? 'pointer' : 'not-allowed',
-                  fontSize: '0.8rem'
-                }}
-              >
-                クリア
-              </button>
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
-                {[
-                  { key: 'all', label: 'すべて' },
-                  { key: 'draft', label: '下書き' },
-                  { key: 'finalized', label: '確定済' },
-                  { key: 'canceled', label: '取消済' }
-                ].map(filter => (
-                  <button
-                    key={filter.key}
-                    onClick={() => setStatusFilter(filter.key as any)}
-                    style={{
-                      padding: '0.5rem 1rem',
-                      background: statusFilter === filter.key ? '#3b82f6' : '#e5e7eb',
-                      color: statusFilter === filter.key ? 'white' : '#374151',
-                      border: 'none',
-                      borderRadius: '6px',
-                      cursor: 'pointer',
-                      fontSize: '0.8rem'
-                    }}
-                  >
-                    {filter.label}
-                  </button>
-                ))}
-              </div>
-              {/* 月範囲フィルタ */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                <span style={{ color: '#374151', fontSize: '0.85rem' }}>期間</span>
-                <input
-                  type="month"
-                  value={monthFrom}
-                  onChange={(e) => setMonthFrom(e.target.value)}
-                  style={{ padding: '0.5rem', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '0.85rem' }}
-                />
-                <span style={{ color: '#6b7280' }}>〜</span>
-                <input
-                  type="month"
-                  value={monthTo}
-                  onChange={(e) => setMonthTo(e.target.value)}
-                  style={{ padding: '0.5rem', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '0.85rem' }}
-                />
-                <button onClick={handleThisMonth} style={{ padding: '0.5rem 0.75rem', background: '#10b981', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem' }}>当月</button>
-                <button onClick={handlePrevMonth} style={{ padding: '0.5rem 0.75rem', background: '#3b82f6', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem' }}>前月</button>
-                <button onClick={handleClearMonth} style={{ padding: '0.5rem 0.75rem', background: '#9ca3af', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem' }}>クリア</button>
-              </div>
-              <div style={{ display: 'flex', gap: '0.5rem', marginLeft: 'auto' }}>
-                <button
-                  onClick={() => handleAddTestData(50)}
-                  title="テストデータを50件追加"
-                  style={{
-                    padding: '0.5rem 1rem',
-                    background: '#8b5cf6',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    fontSize: '0.8rem',
-                    fontWeight: 600
-                  }}
-                >
-                  +50 テスト追加
-                </button>
-                <button
-                  onClick={handleClearTestData}
-                  title="追加したテストデータを削除"
-                  style={{
-                    padding: '0.5rem 1rem',
-                    background: '#dc2626',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    fontSize: '0.8rem',
-                    fontWeight: 600
-                  }}
-                >
-                  テスト削除
-                </button>
-              </div>
             </div>
           </div>
+          
+          {/* 第2段: フィルター選択 */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div>
+              <label className="block text-xs text-gray-600 mb-1 font-medium">状態フィルタ</label>
+              <select
+                value={filters.status}
+                onChange={(e) => setFilters({...filters, status: e.target.value})}
+                className="w-full px-2 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="all">全状態</option>
+                <option value="draft">下書き</option>
+                <option value="finalized">確定</option>
+                <option value="cancelled">取消</option>
+              </select>
+            </div>
 
-          {/* 請求書一覧テーブル */}
-          <div style={{ 
-            background: 'white', 
-            borderRadius: '8px', 
-            overflow: 'hidden',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-          }}>
-            {paginatedInvoices.length === 0 ? (
-              <div style={{ 
-                padding: '3rem', 
-                textAlign: 'center', 
-                color: '#6b7280' 
-              }}>
-                該当する請求書がありません
-              </div>
-            ) : (
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead style={{ background: '#f9fafb', borderBottom: '1px solid #e5e7eb' }}>
-                  <tr>
-                    <th style={{ padding: '1rem', textAlign: 'left', fontWeight: '600', color: '#374151' }}>日付</th>
-                    <th style={{ padding: '1rem', textAlign: 'left', fontWeight: '600', color: '#374151' }}>件名</th>
-                    <th style={{ padding: '1rem', textAlign: 'right', fontWeight: '600', color: '#374151' }}>金額</th>
-                    <th style={{ padding: '1rem', textAlign: 'center', fontWeight: '600', color: '#374151' }}>状態</th>
-                    <th style={{ padding: '1rem', textAlign: 'center', fontWeight: '600', color: '#374151' }}>操作</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {paginatedInvoices.map((invoice, index) => (
-                    <tr key={invoice.id} style={{
-                      borderBottom: index < paginatedInvoices.length - 1 ? '1px solid #f3f4f6' : 'none',
-                      background: invoice.status === 'draft' ? '#fffbeb' : 'white'
-                    }}>
-                      <td style={{ padding: '1rem' }}>
-                        <div style={{ fontWeight: '500' }}>{invoice.billing_date}</div>
-                        <div style={{ fontSize: '0.8rem', color: '#6b7280' }}>
-                          {invoice.invoice_no}
+            <div>
+              <label className="block text-xs text-gray-600 mb-1 font-medium">支払フィルタ</label>
+              <select
+                value={filters.payment_status}
+                onChange={(e) => setFilters({...filters, payment_status: e.target.value})}
+                className="w-full px-2 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="all">全支払</option>
+                <option value="unpaid">未払い</option>
+                <option value="paid">支払済</option>
+                <option value="partial">一部入金</option>
+              </select>
+            </div>
+            
+            <div>
+              <label className="block text-xs text-gray-600 mb-1 font-medium">年度</label>
+              <select
+                value={filters.year}
+                onChange={(e) => setFilters({...filters, year: e.target.value})}
+                className="w-full px-2 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="all">全年度</option>
+                {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i).map(year => (
+                  <option key={year} value={year}>{year}年</option>
+                ))}
+              </select>
+            </div>
+            
+            <div>
+              <label className="block text-xs text-gray-600 mb-1 font-medium">月</label>
+              <select
+                value={filters.month}
+                onChange={(e) => setFilters({...filters, month: e.target.value})}
+                className="w-full px-2 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="all">全月</option>
+                {Array.from({ length: 12 }, (_, i) => i + 1).map(month => (
+                  <option key={month} value={month}>{month}月</option>
+                ))}
+              </select>
+            </div>
+          </div>
+          
+          {(filters.keyword || filters.status !== 'all' || filters.payment_status !== 'all' || filters.year !== 'all' || filters.month !== 'all') && (
+            <div className="mt-4 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+              <span className="text-sm text-gray-600 font-medium">🔍 検索結果: {invoices.length}件</span>
+              <button
+                onClick={() => setFilters({
+                  keyword: '',
+                  status: 'all',
+                  payment_status: 'all',
+                  year: 'all',
+                  month: 'all',
+                  startDate: '',
+                  endDate: ''
+                })}
+                className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1 hover:bg-blue-50 px-2 py-1 rounded transition-colors"
+              >
+                <X size={16} />
+                フィルターをクリア
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* 請求書一覧テーブル - PC用 */}
+        <div className="hidden md:block bg-white rounded-lg shadow-sm overflow-hidden">
+          <table className="w-full">
+            <thead className="bg-gray-50 border-b">
+              <tr>
+                <th className="px-4 py-3 text-left border-r">
+                  <div className="text-sm font-bold text-gray-700">請求書No</div>
+                  <div className="text-sm font-bold text-gray-700">請求日</div>
+                </th>
+                <th className="px-4 py-3 text-left border-r">
+                  <div className="text-sm font-bold text-gray-700">顧客名</div>
+                  <div className="text-sm font-bold text-gray-700">件名</div>
+                </th>
+                <th className="px-4 py-3 text-left border-r">
+                  <div className="text-sm font-bold text-gray-700">登録番号</div>
+                  <div className="text-sm font-bold text-gray-700">作業名</div>
+                </th>
+                <th className="px-4 py-3 text-left border-r">
+                  <div className="text-sm font-bold text-gray-700">数量</div>
+                  <div className="text-sm font-bold text-gray-700">種別</div>
+                </th>
+                <th className="px-4 py-3 text-right border-r">
+                  <div className="text-sm font-bold text-gray-700">単価</div>
+                  <div className="text-sm font-bold text-gray-700">合計</div>
+                </th>
+                <th className="px-4 py-3 text-center">
+                  <div className="text-sm font-bold text-gray-700">請求書表示</div>
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {isSearching ? (
+                <tr>
+                  <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
+                    検索中...
+                  </td>
+                </tr>
+              ) : currentInvoices.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
+                    請求書がありません
+                  </td>
+                </tr>
+              ) : (
+                currentInvoices.map((invoice) => {
+                  // 作業項目の情報を取得
+                  const totalQuantity = invoice.work_items.reduce((sum, item) => sum + item.quantity, 0)
+                  const workNames = invoice.work_items.map(item => item.work_name).join(' / ')
+                  const workTypes = invoice.work_items.map(item => item.type === 'set' ? 'セット' : '個別').join(' / ')
+                  const avgUnitPrice = invoice.work_items.length > 0 
+                    ? Math.round(invoice.work_items.reduce((sum, item) => sum + item.unit_price, 0) / invoice.work_items.length)
+                    : 0
+                  
+                  return (
+                    <tr key={invoice.id} className="hover:bg-gray-50">
+                      {/* 請求書No / 請求日 */}
+                      <td className="px-4 py-4 border-r">
+                        <div className="text-sm font-bold text-blue-600">
+                          #{invoice.id}
+                        </div>
+                        <div className="text-sm text-gray-700">
+                          {new Date(invoice.billing_date).toLocaleDateString('ja-JP')}
                         </div>
                       </td>
-                      <td style={{ padding: '1rem' }}>
-                        <div style={{ fontWeight: '500' }}>
-                          {db.customers.find(c => c.id === invoice.customer_id)?.company_name || invoice.client_name}
+                      
+                      {/* 顧客名 / 件名 */}
+                      <td className="px-4 py-4 border-r">
+                        <div className="text-sm font-bold text-gray-900">
+                          {invoice.customer_name}
                         </div>
-                        <div style={{ fontSize: '0.8rem', color: '#6b7280' }}>
-                          作成: {new Date(invoice.created_at).toLocaleDateString('ja-JP')}
+                        <div className="text-sm text-gray-600">
+                          {invoice.subject}
                         </div>
                       </td>
-                      <td style={{ padding: '1rem', textAlign: 'right', fontWeight: '600' }}>
-                        ¥{invoice.total.toLocaleString()}
+                      
+                      {/* 登録番号 / 作業名 */}
+                      <td className="px-4 py-4 border-r">
+                        <div className="text-sm text-gray-900">
+                          {invoice.registration_number || '-'}
+                        </div>
+                        <div className="text-sm text-gray-600 max-w-40 truncate" title={workNames}>
+                          {workNames || '-'}
+                        </div>
                       </td>
-                      <td style={{ padding: '1rem', textAlign: 'center' }}>
-                        {(() => {
-                          const badge = getStatusBadge(invoice.status)
-                          return (
-                            <span style={{
-                              padding: '0.25rem 0.75rem',
-                              borderRadius: '12px',
-                              fontSize: '0.8rem',
-                              fontWeight: '500'
-                            }} className={badge.style}>
-                              {badge.text}
-                            </span>
-                          )
-                        })()}
-                        {invoice.original_invoice_id && (
-                          <div style={{ marginTop: '0.25rem' }}>
-                            <span style={{
-                              padding: '0.25rem 0.5rem',
-                              borderRadius: '12px',
-                              fontSize: '0.7rem',
-                              background: '#fee2e2',
-                              color: '#dc2626'
-                            }}>
-                              赤伝
-                            </span>
-                          </div>
-                        )}
+                      
+                      {/* 数量 / 種別 */}
+                      <td className="px-4 py-4 border-r">
+                        <div className="text-sm font-bold text-gray-900">
+                          {totalQuantity}
+                        </div>
+                        <div className="text-sm text-gray-600">
+                          {workTypes || '-'}
+                        </div>
                       </td>
-                      <td style={{ padding: '1rem', textAlign: 'center' }}>
-                        <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem' }}>
-                          <button 
-                            onClick={() => handleViewDetail(invoice)}
-                            style={{
-                              padding: '0.375rem 0.75rem',
-                              background: '#3b82f6',
-                              color: 'white',
-                              border: 'none',
-                              borderRadius: '4px',
-                              cursor: 'pointer',
-                              fontSize: '0.8rem'
+                      
+                      {/* 単価 / 合計 */}
+                      <td className="px-4 py-4 text-right border-r">
+                        <div className="text-sm text-gray-900">
+                          ¥{avgUnitPrice.toLocaleString()}
+                        </div>
+                        <div className="text-sm font-bold text-blue-600">
+                          ¥{invoice.total_amount.toLocaleString()}
+                        </div>
+                      </td>
+                      
+                      {/* 請求書表示 */}
+                      <td className="px-4 py-4 text-center">
+                        <div className="flex flex-col items-center gap-2">
+                          <button
+                            onClick={() => {
+                              setSelectedInvoice(invoice)
+                              setShowDetailModal(true)
                             }}
+                            className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
                           >
                             詳細
                           </button>
+                          
                           {invoice.status === 'draft' && (
-                            <button 
-                              onClick={() => handleEdit(invoice.id)}
-                              style={{
-                                padding: '0.375rem 0.75rem',
-                                background: '#10b981',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '4px',
-                                cursor: 'pointer',
-                                fontSize: '0.8rem'
-                              }}
+                            <button
+                              onClick={() => router.push(`/invoice-create?edit=${invoice.id}`)}
+                              className="px-3 py-1 text-sm bg-green-600 text-white rounded hover:bg-green-700"
                             >
                               編集
                             </button>
                           )}
-                          {invoice.status === 'finalized' && (
-                            <button 
-                              onClick={() => handleRedSlip(invoice)}
-                              style={{
-                                padding: '0.375rem 0.75rem',
-                                background: '#dc2626',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '4px',
-                                cursor: 'pointer',
-                                fontSize: '0.8rem'
-                              }}
-                            >
-                              削除
-                            </button>
-                          )}
+                          
+                          <div className="space-y-1 mt-2">
+                            {getStatusBadge(invoice.status)}
+                            {getPaymentStatusBadge(invoice.payment_status)}
+                          </div>
                         </div>
                       </td>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </div>
+                  )
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
 
-          {/* ページネーション */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 0' }}>
-            <div style={{ color: '#6b7280', fontSize: '0.9rem' }}>
-              {filteredInvoices.length} 件中 {filteredInvoices.length === 0 ? 0 : startIndex + 1} - {Math.min(startIndex + pageSize, filteredInvoices.length)} を表示
+        {/* 請求書一覧カード - スマホ用 */}
+        <div className="md:hidden space-y-4">
+          {isSearching ? (
+            <div className="bg-white rounded-lg shadow-sm p-6 text-center text-gray-500">
+              検索中...
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <button
-                onClick={goPrev}
-                disabled={current <= 1}
-                style={{
-                  padding: '0.5rem 0.75rem',
-                  background: current <= 1 ? '#e5e7eb' : '#3b82f6',
-                  color: current <= 1 ? '#9ca3af' : 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  cursor: current <= 1 ? 'not-allowed' : 'pointer',
-                  fontSize: '0.85rem'
-                }}
-              >
-                前へ
-              </button>
-              <span style={{ fontSize: '0.9rem', color: '#374151' }}>
-                {current} / {pageCount}
-              </span>
-              <button
-                onClick={goNext}
-                disabled={current >= pageCount}
-                style={{
-                  padding: '0.5rem 0.75rem',
-                  background: current >= pageCount ? '#e5e7eb' : '#3b82f6',
-                  color: current >= pageCount ? '#9ca3af' : 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  cursor: current >= pageCount ? 'not-allowed' : 'pointer',
-                  fontSize: '0.85rem'
-                }}
-              >
-                次へ
-              </button>
+          ) : currentInvoices.length === 0 ? (
+            <div className="bg-white rounded-lg shadow-sm p-6 text-center text-gray-500">
+              請求書がありません
             </div>
-          </div>
-
-          {/* 統計情報 */}
-          <div style={{ 
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-            gap: '1rem',
-            marginTop: '1.5rem'
-          }}>
-            {[
-              { label: '全体', count: invoices.length, color: '#374151' },
-              { label: '下書き', count: invoices.filter(inv => inv.status === 'draft').length, color: '#d97706' },
-              { label: '確定済み', count: invoices.filter(inv => inv.status === 'finalized').length, color: '#059669' },
-              { label: '取消済み', count: invoices.filter(inv => inv.status === 'canceled').length, color: '#dc2626' }
-            ].map(stat => (
-              <div key={stat.label} style={{ 
-                background: 'white',
-                borderRadius: '8px',
-                padding: '1.5rem',
-                textAlign: 'center',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-              }}>
-                <div style={{ fontSize: '0.9rem', color: '#6b7280', marginBottom: '0.5rem' }}>
-                  {stat.label}
+          ) : (
+            currentInvoices.map((invoice) => (
+              <div key={invoice.id} className="bg-white rounded-lg shadow-sm p-4 border border-gray-200">
+                {/* ヘッダー行 */}
+                <div className="flex justify-between items-start mb-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg font-bold text-blue-600">#{invoice.id}</span>
+                    {invoice.customer_category === 'UD' && (
+                      <span className="text-yellow-500">💰</span>
+                    )}
+                  </div>
+                  <div className="flex flex-col gap-1 items-end">
+                    {getStatusBadge(invoice.status)}
+                    {getPaymentStatusBadge(invoice.payment_status)}
+                  </div>
                 </div>
-                <div style={{ fontSize: '2rem', fontWeight: 'bold', color: stat.color }}>
-                  {stat.count}
-                </div>
-              </div>
-            ))}
-          </div>
 
-          {/* 詳細モーダル（後で実装） */}
-          {selectedInvoice && (
-            <div style={{
-              position: 'fixed',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              background: 'rgba(0,0,0,0.5)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              zIndex: 1000,
-              padding: '1rem'
-            }}>
-              <div style={{
-                background: 'white',
-                borderRadius: '8px',
-                padding: '2rem',
-                maxWidth: '800px',
-                width: '100%',
-                maxHeight: '80vh',
-                overflow: 'auto'
-              }}>
-                <h3 style={{ marginBottom: '1rem', fontSize: '1.5rem' }}>
-                  請求書詳細 - {selectedInvoice.invoice_no}
-                </h3>
-                <div style={{ marginBottom: '2rem' }}>
-                  <p><strong>顧客:</strong> {selectedInvoice.client_name}</p>
-                  <p><strong>請求日:</strong> {selectedInvoice.billing_date}</p>
-                  <p><strong>金額:</strong> ¥{selectedInvoice.total.toLocaleString()}</p>
-                  <p><strong>ステータス:</strong> {getStatusBadge(selectedInvoice.status).text}</p>
-                  {selectedInvoice.memo && (
-                    <p><strong>メモ:</strong> {selectedInvoice.memo}</p>
+                {/* 基本情報 */}
+                <div className="space-y-2 mb-3">
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-600">顧客</span>
+                    <span className="text-sm font-medium text-right max-w-[60%] break-words">{invoice.customer_name}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-600">件名</span>
+                    <span className="text-sm text-right max-w-[60%] break-words">{invoice.subject}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-600">請求日</span>
+                    <span className="text-sm">{new Date(invoice.billing_date).toLocaleDateString('ja-JP')}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-600">金額</span>
+                    <span className="text-lg font-bold text-blue-600">¥{invoice.total_amount.toLocaleString()}</span>
+                  </div>
+                  {invoice.order_number && (
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-600">発注</span>
+                      <span className="text-xs text-gray-500">{invoice.order_number}</span>
+                    </div>
                   )}
                 </div>
-                <button 
-                  onClick={() => setSelectedInvoice(null)}
-                  style={{
-                    padding: '0.75rem 1.5rem',
-                    background: '#6b7280',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '6px',
-                    cursor: 'pointer'
-                  }}
+
+                {/* 操作ボタン */}
+                <div className="flex justify-between items-center pt-3 border-t border-gray-100">
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => {
+                        setSelectedInvoice(invoice)
+                        setShowDetailModal(true)
+                      }}
+                      className="px-3 py-1 text-sm text-blue-600 border border-blue-300 rounded hover:bg-blue-50"
+                    >
+                      詳細
+                    </button>
+                    {invoice.status === 'draft' && (
+                      <button
+                        onClick={() => router.push(`/invoice-create?edit=${invoice.id}`)}
+                        className="px-3 py-1 text-sm text-green-600 border border-green-300 rounded hover:bg-green-50"
+                      >
+                        編集
+                      </button>
+                    )}
+                    {invoice.status === 'finalized' && (
+                      <button
+                        onClick={() => handleCreateRedInvoice(invoice.id)}
+                        className="px-3 py-1 text-sm text-red-600 border border-red-300 rounded hover:bg-red-50"
+                      >
+                        赤伝
+                      </button>
+                    )}
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <select
+                      value={invoice.status}
+                      onChange={(e) => handleStatusChange(invoice.id, e.target.value as Invoice['status'])}
+                      className="text-xs px-2 py-1 border border-gray-300 rounded"
+                      disabled={invoice.status === 'finalized'}
+                    >
+                      <option value="draft">下書き</option>
+                      <option value="finalized">確定</option>
+                      <option value="cancelled">取消</option>
+                    </select>
+                    <select
+                      value={invoice.payment_status}
+                      onChange={(e) => handlePaymentStatusChange(invoice.id, e.target.value as Invoice['payment_status'])}
+                      className="text-xs px-2 py-1 border border-gray-300 rounded"
+                    >
+                      <option value="unpaid">未払い</option>
+                      <option value="paid">支払済</option>
+                      <option value="partial">一部入金</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* ページネーション */}
+        {totalPages > 1 && (
+          <div className="bg-white rounded-lg shadow-sm mt-4 p-4">
+            <div className="flex justify-between items-center">
+              <div className="text-sm text-gray-600">
+                {invoices.length}件中 {startIndex + 1}-{Math.min(endIndex, invoices.length)}件を表示
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  閉じる
+                  前へ
+                </button>
+                <div className="flex gap-1">
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    const pageNum = Math.max(1, Math.min(totalPages - 4, currentPage - 2)) + i
+                    return (
+                      <button
+                        key={pageNum}
+                        onClick={() => handlePageChange(pageNum)}
+                        className={`px-3 py-1 border rounded ${
+                          pageNum === currentPage
+                            ? 'bg-blue-600 text-white border-blue-600'
+                            : 'border-gray-300 hover:bg-gray-50'
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    )
+                  })}
+                </div>
+                <button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  次へ
                 </button>
               </div>
             </div>
-          )}
+          </div>
+        )}
 
-        </div>
+        {/* 詳細モーダル */}
+        {showDetailModal && selectedInvoice && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" role="dialog" aria-modal="true">
+            <div className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+              <div className="p-6">
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-xl font-bold">
+                    請求書詳細 #{selectedInvoice.id}
+                  </h2>
+                  <button
+                    onClick={() => setShowDetailModal(false)}
+                    className="text-gray-500 hover:text-gray-700"
+                  >
+                    <X size={24} />
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                  <div>
+                    <h3 className="text-lg font-semibold mb-3">基本情報</h3>
+                    <div className="space-y-2">
+                      <div><span className="font-medium">請求年月:</span> {selectedInvoice.invoice_year}年{selectedInvoice.invoice_month}月</div>
+                      <div><span className="font-medium">顧客名:</span> {selectedInvoice.customer_name}</div>
+                      <div><span className="font-medium">件名:</span> {selectedInvoice.subject}</div>
+                      <div><span className="font-medium">ステータス:</span> {getStatusBadge(selectedInvoice.status)}</div>
+                      <div><span className="font-medium">作成日:</span> {new Date(selectedInvoice.created_at).toLocaleDateString('ja-JP')}</div>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <h3 className="text-lg font-semibold mb-3">金額情報</h3>
+                    <div className="space-y-2">
+                      <div><span className="font-medium">小計:</span> ¥{selectedInvoice.subtotal.toLocaleString()}</div>
+                      <div><span className="font-medium">消費税:</span> ¥{selectedInvoice.tax_amount.toLocaleString()}</div>
+                      <div className="text-lg font-bold"><span className="font-medium">合計:</span> ¥{selectedInvoice.total_amount.toLocaleString()}</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mb-6">
+                  <h3 className="text-lg font-semibold mb-3">作業項目</h3>
+                  <div className="overflow-x-auto">
+                    <table className="w-full border border-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-4 py-2 text-left border-b">作業名</th>
+                          <th className="px-4 py-2 text-right border-b">単価</th>
+                          <th className="px-4 py-2 text-right border-b">数量</th>
+                          <th className="px-4 py-2 text-right border-b">金額</th>
+                          <th className="px-4 py-2 text-left border-b">メモ</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {selectedInvoice.work_items.map((item) => (
+                          <tr key={item.id}>
+                            <td className="px-4 py-2 border-b">{item.work_name}</td>
+                            <td className="px-4 py-2 text-right border-b">¥{item.unit_price.toLocaleString()}</td>
+                            <td className="px-4 py-2 text-right border-b">{item.quantity}</td>
+                            <td className="px-4 py-2 text-right border-b">¥{item.amount.toLocaleString()}</td>
+                            <td className="px-4 py-2 border-b">{item.memo}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {selectedInvoice.memo && (
+                  <div className="mb-6">
+                    <h3 className="text-lg font-semibold mb-3">メモ</h3>
+                    <p className="text-gray-700 bg-gray-50 p-3 rounded">{selectedInvoice.memo}</p>
+                  </div>
+                )}
+
+                <div className="flex justify-end gap-2">
+                  <button
+                    onClick={() => setShowDetailModal(false)}
+                    className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                  >
+                    閉じる
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
-    </SecurityWrapper>
+    </div>
   )
 }

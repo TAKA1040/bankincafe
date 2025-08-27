@@ -1,889 +1,590 @@
-/**
- * パス: src/app/sales-management/page.tsx
- * 目的: 売上管理画面
- */
 'use client'
 
-import React, { useState, useCallback } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
-import SecurityWrapper from '@/components/security-wrapper'
+import { ArrowLeft, BarChart3, Download, TrendingUp, Calendar, DollarSign } from 'lucide-react'
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts'
 
 // 型定義
-interface Customer {
-  id: number
-  company_name: string
-  person_in_charge: string
-  position: string
-  phone: string
-  email: string
-}
-
 interface Invoice {
   id: number
-  invoice_no: string
-  billing_month: number
-  billing_date: string
-  customer_id: number
-  client_name: string
-  registration_no: string
-  order_no: string
-  internal_order_no: string
-  subtotal: number
-  tax: number
-  total: number
-  status: 'draft' | 'finalized' | 'canceled'
-  created_by: string
-  created_at: string
-  updated_at: string
-  memo: string
-  category: 'UD' | 'その他'
-  original_invoice_id: number | null
-}
-
-interface Payment {
-  id: number
-  invoice_id: number
-  paid: boolean
-  payment_date: string | null
-  memo: string
+  invoice_year: number
+  invoice_month: number
+  customer_name: string
+  subject: string
+  total_amount: number
+  status: 'draft' | 'sent' | 'paid' | 'cancelled'
   created_at: string
 }
 
-interface MonthlyData {
-  UD: number
-  other: number
-  total: number
+interface MonthlySales {
+  month: string
+  year: number
+  monthNum: number
+  amount: number
+  count: number
 }
 
-// 売上管理専用のデータ管理クラス
+interface CustomerSales {
+  customer_name: string
+  total_amount: number
+  invoice_count: number
+  percentage: number
+}
+
+interface SalesStatistics {
+  totalSales: number
+  totalInvoices: number
+  averageAmount: number
+  paidAmount: number
+  unpaidAmount: number
+  topCustomer: string
+  topMonth: string
+}
+
+// SalesDBクラス
 class SalesDB {
-  customers: Customer[]
-  invoices: Invoice[]
-  payments: Payment[]
-  currentUser: { id: string; name: string; email: string }
+  private data: Invoice[]
 
   constructor() {
-    this.customers = [
-      {
-        id: 1,
-        company_name: '株式会社UDトラックス',
-        person_in_charge: '営業部',
-        position: '担当者',
-        phone: '03-1234-5678',
-        email: 'sales@ud-trucks.com'
-      },
-      {
-        id: 2,
-        company_name: 'DEF商事株式会社',
-        person_in_charge: '長崎サービスセンター',
-        position: 'サービス担当',
-        phone: '095-8765-4321',
-        email: 'service@def-trading.com'
-      },
-      {
-        id: 3,
-        company_name: '株式会社ロジコム・アイ',
-        person_in_charge: '整備部',
-        position: '部長',
-        phone: '093-111-2222',
-        email: 'maintenance@logicom.com'
-      },
-      {
-        id: 4,
-        company_name: '東邦興産株式会社',
-        person_in_charge: '運送課',
-        position: '課長',
-        phone: '093-333-4444',
-        email: 'transport@toho-kosan.com'
-      },
-      {
-        id: 5,
-        company_name: '鶴丸海運株式会社',
-        person_in_charge: '車両管理部',
-        position: 'マネージャー',
-        phone: '093-555-6666',
-        email: 'fleet@tsurumaru.com'
-      }
-    ]
+    this.data = this.loadData()
+  }
 
-    this.invoices = [
-      // 2025年6月のデータ
+  private loadData(): Invoice[] {
+    try {
+      const stored = localStorage.getItem('bankin_invoices')
+      return stored ? JSON.parse(stored) : this.getDefaultData()
+    } catch {
+      return this.getDefaultData()
+    }
+  }
+
+  private getDefaultData(): Invoice[] {
+    return [
       {
         id: 1,
-        invoice_no: '25060001-1',
-        billing_month: 202506,
-        billing_date: '2025-06-02',
-        customer_id: 1,
-        client_name: 'バンパー修理作業',
-        registration_no: 'T1234567890123',
-        order_no: 'ORD-001',
-        internal_order_no: '2506001-01',
-        subtotal: 100000,
-        tax: 10000,
-        total: 110000,
-        status: 'finalized',
-        created_by: 'user1',
-        created_at: '2025-06-02T10:00:00Z',
-        updated_at: '2025-06-02T10:00:00Z',
-        memo: 'バンパー修理作業',
-        category: 'UD',
-        original_invoice_id: null
+        invoice_year: 2024,
+        invoice_month: 1,
+        customer_name: 'テクノロジー株式会社',
+        subject: 'Webサイト制作',
+        total_amount: 110000,
+        status: 'paid',
+        created_at: '2024-01-15T10:00:00.000Z'
       },
       {
         id: 2,
-        invoice_no: '25060002-1',
-        billing_month: 202506,
-        billing_date: '2025-06-02',
-        customer_id: 2,
-        client_name: 'マフラーカバー修理',
-        registration_no: 'T9876543210987',
-        order_no: 'ORD-002',
-        internal_order_no: '2506002-01',
-        subtotal: 50000,
-        tax: 5000,
-        total: 55000,
-        status: 'finalized',
-        created_by: 'user1',
-        created_at: '2025-06-02T14:00:00Z',
-        updated_at: '2025-06-02T14:00:00Z',
-        memo: 'マフラーカバー修理一式',
-        category: 'UD',
-        original_invoice_id: null
+        invoice_year: 2024,
+        invoice_month: 2,
+        customer_name: 'サンプル商事株式会社B',
+        subject: 'システム保守',
+        total_amount: 55000,
+        status: 'paid',
+        created_at: '2024-02-10T14:30:00.000Z'
       },
       {
         id: 3,
-        invoice_no: '25060003-1',
-        billing_month: 202506,
-        billing_date: '2025-06-04',
-        customer_id: 3,
-        client_name: 'ドライバーシート点検',
-        registration_no: 'T1111222233334',
-        order_no: 'ORD-003',
-        internal_order_no: '2506003-01',
-        subtotal: 30000,
-        tax: 3000,
-        total: 33000,
-        status: 'finalized',
-        created_by: 'user1',
-        created_at: '2025-06-04T13:00:00Z',
-        updated_at: '2025-06-04T13:00:00Z',
-        memo: 'ドライバーシート分解作動不良点検',
-        category: 'UD',
-        original_invoice_id: null
+        invoice_year: 2024,
+        invoice_month: 3,
+        customer_name: '株式会社UDトラックス',
+        subject: 'データベース設計',
+        total_amount: 88000,
+        status: 'sent',
+        created_at: '2024-03-05T09:15:00.000Z'
       },
-      // 2025年5月のデータ
       {
         id: 4,
-        invoice_no: '25050001-1',
-        billing_month: 202505,
-        billing_date: '2025-05-15',
-        customer_id: 1,
-        client_name: 'トラック荷台修理',
-        registration_no: 'T1234567890123',
-        order_no: 'ORD-005',
-        internal_order_no: '2505001-01',
-        subtotal: 80000,
-        tax: 8000,
-        total: 88000,
-        status: 'finalized',
-        created_by: 'user1',
-        created_at: '2025-05-15T10:00:00Z',
-        updated_at: '2025-05-15T10:00:00Z',
-        memo: 'トラック荷台修理',
-        category: 'UD',
-        original_invoice_id: null
+        invoice_year: 2024,
+        invoice_month: 1,
+        customer_name: 'テクノロジー株式会社',
+        subject: 'SEO対策',
+        total_amount: 33000,
+        status: 'paid',
+        created_at: '2024-01-20T16:00:00.000Z'
       },
       {
         id: 5,
-        invoice_no: '25050002-1',
-        billing_month: 202505,
-        billing_date: '2025-05-20',
-        customer_id: 4,
-        client_name: 'システム開発業務',
-        registration_no: '',
-        order_no: 'ORD-SYS-001',
-        internal_order_no: '2505002-01',
-        subtotal: 500000,
-        tax: 50000,
-        total: 550000,
-        status: 'finalized',
-        created_by: 'user1',
-        created_at: '2025-05-20T14:00:00Z',
-        updated_at: '2025-05-20T14:00:00Z',
-        memo: 'システム開発・保守',
-        category: 'その他',
-        original_invoice_id: null
+        invoice_year: 2024,
+        invoice_month: 2,
+        customer_name: 'サンプル商事株式会社B',
+        subject: 'サーバー構築',
+        total_amount: 132000,
+        status: 'paid',
+        created_at: '2024-02-25T11:30:00.000Z'
       },
-      // 2025年4月のデータ
       {
         id: 6,
-        invoice_no: '25040001-1',
-        billing_month: 202504,
-        billing_date: '2025-04-10',
-        customer_id: 2,
-        client_name: 'キャビン修理・溶接',
-        registration_no: 'T9876543210987',
-        order_no: 'ORD-004',
-        internal_order_no: '2504001-01',
-        subtotal: 60000,
-        tax: 6000,
-        total: 66000,
-        status: 'finalized',
-        created_by: 'user1',
-        created_at: '2025-04-10T11:00:00Z',
-        updated_at: '2025-04-10T11:00:00Z',
-        memo: 'キャビン修理・溶接',
-        category: 'UD',
-        original_invoice_id: null
-      },
-      {
-        id: 7,
-        invoice_no: '25040002-1',
-        billing_month: 202504,
-        billing_date: '2025-04-25',
-        customer_id: 5,
-        client_name: 'コンサルティング業務',
-        registration_no: '',
-        order_no: 'ORD-CON-001',
-        internal_order_no: '2504002-01',
-        subtotal: 300000,
-        tax: 30000,
-        total: 330000,
-        status: 'finalized',
-        created_by: 'user1',
-        created_at: '2025-04-25T15:00:00Z',
-        updated_at: '2025-04-25T15:00:00Z',
-        memo: 'コンサルティング業務',
-        category: 'その他',
-        original_invoice_id: null
+        invoice_year: 2024,
+        invoice_month: 4,
+        customer_name: 'モバイル株式会社',
+        subject: 'モバイルアプリ開発',
+        total_amount: 165000,
+        status: 'draft',
+        created_at: '2024-04-10T13:45:00.000Z'
       }
     ]
-
-    this.payments = [
-      { id: 1, invoice_id: 1, paid: true, payment_date: '2025-06-15', memo: '2025-06-15入金確認', created_at: '2025-06-15T09:00:00Z' },
-      { id: 2, invoice_id: 2, paid: true, payment_date: '2025-06-10', memo: '2025-06-10入金確認', created_at: '2025-06-10T09:00:00Z' },
-      { id: 3, invoice_id: 3, paid: false, payment_date: null, memo: '', created_at: '2025-06-04T13:00:00Z' },
-      { id: 4, invoice_id: 4, paid: true, payment_date: '2025-06-01', memo: '2025-06-01入金確認', created_at: '2025-06-01T09:00:00Z' },
-      { id: 5, invoice_id: 5, paid: true, payment_date: '2025-06-05', memo: '2025-06-05入金確認', created_at: '2025-06-05T09:00:00Z' },
-      { id: 6, invoice_id: 6, paid: true, payment_date: '2025-05-05', memo: '2025-05-05入金確認', created_at: '2025-05-05T09:00:00Z' },
-      { id: 7, invoice_id: 7, paid: false, payment_date: null, memo: '', created_at: '2025-04-25T15:00:00Z' }
-    ]
-
-    this.currentUser = { id: 'user1', name: '管理者', email: 'admin@bankin-cafe.com' }
   }
 
-  // 決算期ベース（4月〜翌3月）でのデータ集計
-  getSalesData(selectedYear: number) {
-    const startDate = new Date(selectedYear - 1, 3, 1) // 4月1日
-    const endDate = new Date(selectedYear, 2, 31, 23, 59, 59) // 翌年3月31日
+  getMonthlySales(year?: number): MonthlySales[] {
+    const filteredData = year ? this.data.filter(invoice => invoice.invoice_year === year) : this.data
     
-    const periodInvoices = this.invoices.filter(invoice => {
-      const invoiceDate = new Date(invoice.billing_date)
-      return invoiceDate >= startDate && invoiceDate <= endDate && invoice.status === 'finalized'
-    })
-
-    const monthlyData: Record<string, MonthlyData> = {}
-    // 4月から翌年3月まで初期化
-    for (let month = 4; month <= 15; month++) {
-      const actualMonth = month > 12 ? month - 12 : month
-      const year = month > 12 ? selectedYear : selectedYear - 1
-      const key = `${year}-${actualMonth.toString().padStart(2, '0')}`
-      monthlyData[key] = { 
-        UD: 0,      // UD売上
-        other: 0,   // その他売上
-        total: 0 
-      }
-    }
-
-    periodInvoices.forEach(invoice => {
-      const date = new Date(invoice.billing_date)
-      const key = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}`
+    const monthlyMap = new Map<string, MonthlySales>()
+    
+    filteredData.forEach(invoice => {
+      const key = `${invoice.invoice_year}-${invoice.invoice_month}`
+      const existing = monthlyMap.get(key)
       
-      if (monthlyData[key]) {
-        // カテゴリで分類：UD = 鈑金関連業務、その他 = その他の業務
-        if (invoice.category === 'UD') {
-          monthlyData[key].UD += invoice.total || 0
-        } else {
-          monthlyData[key].other += invoice.total || 0
-        }
-        monthlyData[key].total = monthlyData[key].UD + monthlyData[key].other
+      if (existing) {
+        existing.amount += invoice.total_amount
+        existing.count += 1
+      } else {
+        monthlyMap.set(key, {
+          month: `${invoice.invoice_year}年${invoice.invoice_month}月`,
+          year: invoice.invoice_year,
+          monthNum: invoice.invoice_month,
+          amount: invoice.total_amount,
+          count: 1
+        })
       }
     })
-
-    return { monthlyData, periodInvoices }
+    
+    return Array.from(monthlyMap.values()).sort((a, b) => {
+      if (a.year !== b.year) return a.year - b.year
+      return a.monthNum - b.monthNum
+    })
   }
 
-  // 入金状況更新
-  updatePaymentStatus(invoiceId: number, paid: boolean, memo: string) {
-    const existingPaymentIndex = this.payments.findIndex(p => p.invoice_id === invoiceId)
-    if (existingPaymentIndex >= 0) {
-      this.payments[existingPaymentIndex] = {
-        ...this.payments[existingPaymentIndex],
-        paid,
-        memo,
-        payment_date: paid ? new Date().toISOString().split('T')[0] : null
+  getCustomerSales(year?: number): CustomerSales[] {
+    const filteredData = year ? this.data.filter(invoice => invoice.invoice_year === year) : this.data
+    const totalAmount = filteredData.reduce((sum, invoice) => sum + invoice.total_amount, 0)
+    
+    const customerMap = new Map<string, CustomerSales>()
+    
+    filteredData.forEach(invoice => {
+      const existing = customerMap.get(invoice.customer_name)
+      
+      if (existing) {
+        existing.total_amount += invoice.total_amount
+        existing.invoice_count += 1
+      } else {
+        customerMap.set(invoice.customer_name, {
+          customer_name: invoice.customer_name,
+          total_amount: invoice.total_amount,
+          invoice_count: 1,
+          percentage: 0
+        })
       }
-    } else {
-      this.payments.push({
-        id: Date.now(),
-        invoice_id: invoiceId,
-        paid,
-        memo,
-        payment_date: paid ? new Date().toISOString().split('T')[0] : null,
-        created_at: new Date().toISOString()
-      })
+    })
+    
+    const customers = Array.from(customerMap.values())
+    customers.forEach(customer => {
+      customer.percentage = totalAmount > 0 ? (customer.total_amount / totalAmount) * 100 : 0
+    })
+    
+    return customers.sort((a, b) => b.total_amount - a.total_amount)
+  }
+
+  getStatistics(year?: number): SalesStatistics {
+    const filteredData = year ? this.data.filter(invoice => invoice.invoice_year === year) : this.data
+    
+    if (filteredData.length === 0) {
+      return {
+        totalSales: 0,
+        totalInvoices: 0,
+        averageAmount: 0,
+        paidAmount: 0,
+        unpaidAmount: 0,
+        topCustomer: '',
+        topMonth: ''
+      }
     }
+
+    const totalSales = filteredData.reduce((sum, invoice) => sum + invoice.total_amount, 0)
+    const paidAmount = filteredData
+      .filter(invoice => invoice.status === 'paid')
+      .reduce((sum, invoice) => sum + invoice.total_amount, 0)
+    const unpaidAmount = totalSales - paidAmount
+    const averageAmount = Math.round(totalSales / filteredData.length)
+
+    // 顧客別売上
+    const customerSales = this.getCustomerSales(year)
+    const topCustomer = customerSales[0]?.customer_name || ''
+
+    // 月別売上
+    const monthlySales = this.getMonthlySales(year)
+    const topMonth = monthlySales.sort((a, b) => b.amount - a.amount)[0]?.month || ''
+
+    return {
+      totalSales,
+      totalInvoices: filteredData.length,
+      averageAmount,
+      paidAmount,
+      unpaidAmount,
+      topCustomer,
+      topMonth
+    }
+  }
+
+  getAvailableYears(): number[] {
+    const years = [...new Set(this.data.map(invoice => invoice.invoice_year))]
+    return years.sort((a, b) => b - a)
+  }
+
+  exportToCSV(year?: number): void {
+    const filteredData = year ? this.data.filter(invoice => invoice.invoice_year === year) : this.data
+    
+    const headers = [
+      '請求書ID', '請求年', '請求月', '顧客名', '件名', '金額', 'ステータス', '作成日'
+    ]
+    
+    const rows = filteredData.map(invoice => [
+      invoice.id.toString(),
+      invoice.invoice_year.toString(),
+      invoice.invoice_month.toString(),
+      `"${invoice.customer_name.replace(/"/g, '""')}"`,
+      `"${invoice.subject.replace(/"/g, '""')}"`,
+      invoice.total_amount.toString(),
+      this.getStatusLabel(invoice.status),
+      new Date(invoice.created_at).toLocaleDateString('ja-JP')
+    ])
+
+    const csvContent = [headers.join(','), ...rows.map(row => row.join(','))].join('\n')
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `売上データ_${year || '全年度'}_${new Date().toISOString().split('T')[0]}.csv`
+    link.click()
+    
+    setTimeout(() => URL.revokeObjectURL(url), 100)
+  }
+
+  private getStatusLabel(status: Invoice['status']): string {
+    const statusMap = {
+      draft: '下書き',
+      sent: '送信済み',
+      paid: '支払済み',
+      cancelled: 'キャンセル'
+    }
+    return statusMap[status] || status
   }
 }
 
 export default function SalesManagementPage() {
   const router = useRouter()
   const [db] = useState(() => new SalesDB())
-  const [selectedYear, setSelectedYear] = useState(2025)
-  const [categoryFilter, setCategoryFilter] = useState('全て')
-  const [viewMode, setViewMode] = useState<'invoices' | 'monthly'>('invoices')
-  const [paymentUpdates, setPaymentUpdates] = useState<Record<number, { paid: boolean; memo: string; timestamp: number }>>({})
-  const [searchKeyword, setSearchKeyword] = useState('')
-  const [paymentStatusFilter, setPaymentStatusFilter] = useState('すべて')
+  const [selectedYear, setSelectedYear] = useState<number | undefined>(new Date().getFullYear())
+  const [viewMode, setViewMode] = useState<'monthly' | 'customer'>('monthly')
 
-  const { monthlyData, periodInvoices } = db.getSalesData(selectedYear)
-  
-  // カテゴリ別合計計算
-  const totals = Object.values(monthlyData).reduce(
-    (acc, data) => ({
-      UD: acc.UD + data.UD,
-      other: acc.other + data.other,
-      total: acc.total + data.total
-    }),
-    { UD: 0, other: 0, total: 0 }
-  )
+  const availableYears = useMemo(() => db.getAvailableYears(), [db])
+  const statistics = useMemo(() => db.getStatistics(selectedYear), [db, selectedYear])
+  const monthlySales = useMemo(() => db.getMonthlySales(selectedYear), [db, selectedYear])
+  const customerSales = useMemo(() => db.getCustomerSales(selectedYear), [db, selectedYear])
 
-  // 戻るボタン
-  const handleBack = () => {
-    router.push('/')
+  const handleBack = () => router.push('/')
+
+  const handleExportCSV = () => {
+    db.exportToCSV(selectedYear)
   }
 
-  // 入金状況更新（リアルタイム更新対応）
-  const updatePaymentStatus = useCallback((invoiceId: number, paid: boolean, memo: string) => {
-    db.updatePaymentStatus(invoiceId, paid, memo)
-    setPaymentUpdates(prev => ({
-      ...prev,
-      [invoiceId]: { paid, memo, timestamp: Date.now() }
-    }))
-  }, [db])
-
-  // フィルタリングされた請求書
-  const filteredInvoices = periodInvoices.filter(invoice => {
-    const customer = db.customers.find(c => c.id === invoice.customer_id)
-    const payment = db.payments.find(p => p.invoice_id === invoice.id)
-    
-    // カテゴリフィルタ
-    if (categoryFilter === 'UDのみ') {
-      if (invoice.category !== 'UD') return false
-    }
-    if (categoryFilter === 'その他のみ') {
-      if (invoice.category !== 'その他') return false
-    }
-    
-    // 入金ステータスフィルタ
-    if (paymentStatusFilter === '入金済み' && !payment?.paid) return false
-    if (paymentStatusFilter === '未入金' && payment?.paid) return false
-    
-    // キーワード検索
-    if (searchKeyword) {
-      const searchText = searchKeyword.toLowerCase()
-      const searchTargets = [
-        invoice.invoice_no,
-        customer?.company_name || '',
-        invoice.client_name,
-        payment?.memo || ''
-      ].join(' ').toLowerCase()
-      
-      if (!searchTargets.includes(searchText)) return false
-    }
-    
-    return true
-  })
-
-  // 月別集計のフィルタリング（表示フィルタに応じて）
-  const getFilteredMonthlyData = () => {
-    return Object.entries(monthlyData).filter(([key, data]) => {
-      switch (categoryFilter) {
-        case 'UDのみ':
-          return data.UD > 0
-        case 'その他のみ':
-          return data.other > 0
-        default:
-          return true // 全て表示
-      }
-    })
-  }
-
-  // CSVエクスポート機能
-  const exportToCSV = () => {
-    const headers = ['請求書番号', '請求日', '請求月', '顧客名', '件名', '登録番号', '発注番号', 'オーダー番号', '請求金額(円)', '入金', '入金メモ']
-    const csvData = filteredInvoices.map(invoice => {
-      const payment = db.payments.find(p => p.invoice_id === invoice.id)
-      const customer = db.customers.find(c => c.id === invoice.customer_id)
-      return [
-        invoice.invoice_no,
-        invoice.billing_date,
-        `${Math.floor(invoice.billing_month / 100)}-${(invoice.billing_month % 100).toString().padStart(2, '0')}`,
-        customer?.company_name || '',
-        invoice.client_name,
-        invoice.registration_no || '-',
-        invoice.order_no || '-',
-        invoice.internal_order_no || '-',
-        invoice.total,
-        payment?.paid ? '✓' : '',
-        payment?.memo || ''
-      ]
-    })
-
-    const csvContent = [headers, ...csvData].map(row => 
-      row.map(field => `"${field}"`).join(',')
-    ).join('\n')
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-    const link = document.createElement('a')
-    link.href = URL.createObjectURL(blob)
-    link.download = `売上管理_${selectedYear}_${new Date().toISOString().split('T')[0]}.csv`
-    link.click()
-  }
+  // グラフ用のカラーパレット
+  const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4', '#84CC16', '#F97316']
 
   return (
-    <SecurityWrapper requirePin={true}>
-      <div style={{ minHeight: '100vh', background: '#f8f9fa', padding: '1rem' }}>
-        <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
-          
-          {/* ヘッダー */}
-          <div style={{ 
-            background: 'white', 
-            borderBottom: '2px solid #3b82f6',
-            padding: '1rem',
-            marginBottom: '1rem',
-            borderRadius: '8px'
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <h1 style={{ fontSize: '1.8rem', fontWeight: 'bold', margin: '0 0 0.5rem 0' }}>
-                  売上管理
-                </h1>
-                <button 
-                  onClick={handleBack}
-                  style={{
-                    padding: '0.5rem 1rem',
-                    background: '#6b7280',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    fontSize: '0.9rem'
-                  }}
-                >
-                  ← ホームに戻る
-                </button>
-              </div>
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <button 
-                  onClick={() => setViewMode('monthly')}
-                  style={{
-                    padding: '0.5rem 1rem',
-                    background: viewMode === 'monthly' ? '#3b82f6' : 'white',
-                    color: viewMode === 'monthly' ? 'white' : '#3b82f6',
-                    border: '1px solid #3b82f6',
-                    borderRadius: '6px',
-                    cursor: 'pointer'
-                  }}
-                >
-                  月別集計
-                </button>
-                <button 
-                  onClick={() => setViewMode('invoices')}
-                  style={{
-                    padding: '0.5rem 1rem',
-                    background: viewMode === 'invoices' ? '#3b82f6' : 'white',
-                    color: viewMode === 'invoices' ? 'white' : '#3b82f6',
-                    border: '1px solid #3b82f6',
-                    borderRadius: '6px',
-                    cursor: 'pointer'
-                  }}
-                >
-                  請求書一覧
-                </button>
-              </div>
+    <div className="min-h-screen bg-gray-50">
+      <div className="container mx-auto px-4 py-8">
+        {/* ヘッダー */}
+        <header className="bg-white rounded-lg shadow-sm p-6 mb-6">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-3">
+              <BarChart3 className="text-blue-600" size={32} />
+              <h1 className="text-2xl font-bold text-gray-800">売上管理システム</h1>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={handleExportCSV}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2"
+              >
+                <Download size={20} />
+                CSV出力
+              </button>
+              <button
+                onClick={handleBack}
+                className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 flex items-center gap-2"
+              >
+                <ArrowLeft size={20} />
+                戻る
+              </button>
             </div>
           </div>
+        </header>
 
-          {/* 年度選択 */}
-          <div style={{ 
-            background: 'white',
-            padding: '1rem',
-            marginBottom: '1rem',
-            border: '1px solid #d1d5db',
-            borderRadius: '6px'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <label style={{ fontSize: '0.9rem' }}>対象年度（期末年）</label>
-                <button 
-                  onClick={() => setSelectedYear(selectedYear - 1)}
-                  style={{ 
-                    padding: '0.25rem 0.75rem', 
-                    background: '#e5e7eb', 
-                    border: 'none',
-                    borderRadius: '4px', 
-                    fontSize: '0.8rem',
-                    cursor: 'pointer'
-                  }}
+        {/* 年度選択・表示モード切替 */}
+        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <Calendar size={20} className="text-gray-600" />
+                <label className="text-sm font-medium text-gray-700">対象年度:</label>
+                <select
+                  value={selectedYear || 'all'}
+                  onChange={(e) => setSelectedYear(e.target.value === 'all' ? undefined : Number(e.target.value))}
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                 >
-                  前年
-                </button>
-                <input 
-                  type="number"
-                  value={selectedYear}
-                  onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                  style={{ 
-                    padding: '0.25rem 0.75rem', 
-                    border: '1px solid #d1d5db', 
-                    borderRadius: '4px', 
-                    width: '80px', 
-                    textAlign: 'center' 
-                  }}
-                />
-                <button 
-                  onClick={() => setSelectedYear(selectedYear + 1)}
-                  style={{ 
-                    padding: '0.25rem 0.75rem', 
-                    background: '#e5e7eb', 
-                    border: 'none',
-                    borderRadius: '4px', 
-                    fontSize: '0.8rem',
-                    cursor: 'pointer'
-                  }}
-                >
-                  翌年
-                </button>
-              </div>
-              
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <label style={{ fontSize: '0.9rem' }}>対象月（会計年度内）</label>
-                <select style={{ 
-                  padding: '0.25rem 0.75rem', 
-                  border: '1px solid #d1d5db', 
-                  borderRadius: '4px' 
-                }}>
-                  <option>通年 ({selectedYear - 1}年04月～{selectedYear}年03月)</option>
+                  <option value="all">全年度</option>
+                  {availableYears.map(year => (
+                    <option key={year} value={year}>{year}年</option>
+                  ))}
                 </select>
               </div>
             </div>
+            
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-gray-700">表示:</span>
+              <div className="flex bg-gray-100 rounded-lg p-1">
+                <button
+                  onClick={() => setViewMode('monthly')}
+                  className={`px-3 py-1 rounded text-sm ${
+                    viewMode === 'monthly'
+                      ? 'bg-white text-blue-600 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-800'
+                  }`}
+                >
+                  月別分析
+                </button>
+                <button
+                  onClick={() => setViewMode('customer')}
+                  className={`px-3 py-1 rounded text-sm ${
+                    viewMode === 'customer'
+                      ? 'bg-white text-blue-600 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-800'
+                  }`}
+                >
+                  顧客別分析
+                </button>
+              </div>
+            </div>
           </div>
+        </div>
 
-          {/* 月別売上集計ビュー */}
+        {/* 統計情報カード */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div className="bg-white rounded-lg shadow-sm p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-medium text-gray-600">総売上</h3>
+                <p className="text-2xl font-bold text-blue-600">¥{statistics.totalSales.toLocaleString()}</p>
+              </div>
+              <DollarSign className="text-blue-600" size={24} />
+            </div>
+          </div>
+          
+          <div className="bg-white rounded-lg shadow-sm p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-medium text-gray-600">請求書数</h3>
+                <p className="text-2xl font-bold text-green-600">{statistics.totalInvoices}件</p>
+              </div>
+              <BarChart3 className="text-green-600" size={24} />
+            </div>
+          </div>
+          
+          <div className="bg-white rounded-lg shadow-sm p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-medium text-gray-600">平均単価</h3>
+                <p className="text-2xl font-bold text-purple-600">¥{statistics.averageAmount.toLocaleString()}</p>
+              </div>
+              <TrendingUp className="text-purple-600" size={24} />
+            </div>
+          </div>
+          
+          <div className="bg-white rounded-lg shadow-sm p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-medium text-gray-600">回収率</h3>
+                <p className="text-2xl font-bold text-orange-600">
+                  {statistics.totalSales > 0 ? Math.round((statistics.paidAmount / statistics.totalSales) * 100) : 0}%
+                </p>
+              </div>
+              <Calendar className="text-orange-600" size={24} />
+            </div>
+          </div>
+        </div>
+
+        {/* メインコンテンツ */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          {/* 月別売上グラフ */}
           {viewMode === 'monthly' && (
-            <div style={{ background: 'white', border: '1px solid #d1d5db', borderRadius: '6px' }}>
-              <div style={{ padding: '1rem', borderBottom: '1px solid #e5e7eb' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <label style={{ fontSize: '0.9rem' }}>表示フィルタ:</label>
-                    <div style={{ display: 'flex', gap: '0.25rem' }}>
-                      {['全て', 'UDのみ', 'その他のみ'].map(filter => (
-                        <button
-                          key={filter}
-                          onClick={() => setCategoryFilter(filter)}
-                          style={{
-                            padding: '0.25rem 0.75rem',
-                            background: categoryFilter === filter ? (
-                              filter === 'UDのみ' ? '#3b82f6' : 
-                              filter === 'その他のみ' ? '#6b7280' : '#9ca3af'
-                            ) : '#f3f4f6',
-                            color: categoryFilter === filter ? 'white' : '#374151',
-                            border: 'none',
-                            borderRadius: '4px',
-                            fontSize: '0.8rem',
-                            cursor: 'pointer'
-                          }}
-                        >
-                          {filter}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div style={{ padding: '1rem' }}>
-                <h2 style={{ fontSize: '1.2rem', fontWeight: 'bold', marginBottom: '1rem' }}>
-                  {selectedYear - 1}年04月～{selectedYear}年03月 売上集計
-                </h2>
-                
-                <div style={{ overflowX: 'auto' }}>
-                  <table style={{ width: '100%', fontSize: '0.9rem', borderCollapse: 'collapse' }}>
-                    <thead>
-                      <tr style={{ background: '#f9fafb' }}>
-                        <th style={{ border: '1px solid #e5e7eb', padding: '0.5rem', textAlign: 'left' }}>年月</th>
-                        {(categoryFilter === '全て' || categoryFilter === 'UDのみ') && (
-                          <th style={{ border: '1px solid #e5e7eb', padding: '0.5rem', textAlign: 'right' }}>UD売上 (円)</th>
-                        )}
-                        {(categoryFilter === '全て' || categoryFilter === 'その他のみ') && (
-                          <th style={{ border: '1px solid #e5e7eb', padding: '0.5rem', textAlign: 'right' }}>その他売上 (円)</th>
-                        )}
-                        {categoryFilter === '全て' && (
-                          <th style={{ border: '1px solid #e5e7eb', padding: '0.5rem', textAlign: 'right' }}>合計 (円)</th>
-                        )}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {getFilteredMonthlyData().map(([key, data]) => {
-                        const [year, month] = key.split('-')
-                        return (
-                          <tr key={key}>
-                            <td style={{ border: '1px solid #e5e7eb', padding: '0.5rem' }}>{year}-{month}</td>
-                            {(categoryFilter === '全て' || categoryFilter === 'UDのみ') && (
-                              <td style={{ border: '1px solid #e5e7eb', padding: '0.5rem', textAlign: 'right', color: '#2563eb' }}>
-                                {data.UD.toLocaleString()}
-                              </td>
-                            )}
-                            {(categoryFilter === '全て' || categoryFilter === 'その他のみ') && (
-                              <td style={{ border: '1px solid #e5e7eb', padding: '0.5rem', textAlign: 'right', color: '#6b7280' }}>
-                                {data.other.toLocaleString()}
-                              </td>
-                            )}
-                            {categoryFilter === '全て' && (
-                              <td style={{ border: '1px solid #e5e7eb', padding: '0.5rem', textAlign: 'right', fontWeight: '500' }}>
-                                {data.total.toLocaleString()}
-                              </td>
-                            )}
-                          </tr>
-                        )
-                      })}
-                      <tr style={{ background: '#eff6ff', fontWeight: 'bold' }}>
-                        <td style={{ border: '1px solid #e5e7eb', padding: '0.5rem' }}>
-                          {selectedYear - 1}年04月～{selectedYear}年03月 合計:
-                        </td>
-                        {(categoryFilter === '全て' || categoryFilter === 'UDのみ') && (
-                          <td style={{ border: '1px solid #e5e7eb', padding: '0.5rem', textAlign: 'right', color: '#2563eb' }}>
-                            {totals.UD.toLocaleString()}
-                          </td>
-                        )}
-                        {(categoryFilter === '全て' || categoryFilter === 'その他のみ') && (
-                          <td style={{ border: '1px solid #e5e7eb', padding: '0.5rem', textAlign: 'right', color: '#6b7280' }}>
-                            {totals.other.toLocaleString()}
-                          </td>
-                        )}
-                        {categoryFilter === '全て' && (
-                          <td style={{ border: '1px solid #e5e7eb', padding: '0.5rem', textAlign: 'right', fontSize: '1.1rem' }}>
-                            {totals.total.toLocaleString()}
-                          </td>
-                        )}
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* 請求書一覧ビュー */}
-          {viewMode === 'invoices' && (
-            <div style={{ background: 'white', border: '1px solid #d1d5db', borderRadius: '6px' }}>
-              <div style={{ padding: '1rem', borderBottom: '1px solid #e5e7eb' }}>
-                <h2 style={{ fontSize: '1.2rem', fontWeight: 'bold', marginBottom: '0.75rem' }}>
-                  {selectedYear - 1}年度 請求書一覧
-                </h2>
-                
-                <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <label style={{ fontSize: '0.9rem' }}>キーワード検索</label>
-                    <input
-                      type="text"
-                      placeholder="請求書番号、顧客名、件名などで検索..."
-                      value={searchKeyword}
-                      onChange={(e) => setSearchKeyword(e.target.value)}
-                      style={{ 
-                        padding: '0.25rem 0.75rem', 
-                        border: '1px solid #d1d5db', 
-                        borderRadius: '4px', 
-                        width: '300px' 
-                      }}
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <h2 className="text-lg font-semibold mb-4">月別売上推移</h2>
+              <div className="h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={monthlySales}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis 
+                      dataKey="month" 
+                      tick={{ fontSize: 12 }}
+                      angle={-45}
+                      textAnchor="end"
+                      height={80}
                     />
-                    <button 
-                      onClick={() => setSearchKeyword('')}
-                      style={{ 
-                        padding: '0.25rem 0.75rem', 
-                        background: '#e5e7eb', 
-                        border: 'none',
-                        borderRadius: '4px', 
-                        fontSize: '0.8rem',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      クリア
-                    </button>
-                  </div>
-                  
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <label style={{ fontSize: '0.9rem' }}>入金ステータス</label>
-                    <select
-                      value={paymentStatusFilter}
-                      onChange={(e) => setPaymentStatusFilter(e.target.value)}
-                      style={{ 
-                        padding: '0.25rem 0.75rem', 
-                        border: '1px solid #d1d5db', 
-                        borderRadius: '4px' 
-                      }}
-                    >
-                      <option>すべて</option>
-                      <option>入金済み</option>
-                      <option>未入金</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
-                  <span style={{ fontSize: '0.9rem', color: '#6b7280' }}>
-                    検索結果 {filteredInvoices.length}件
-                  </span>
-                  <button 
-                    onClick={exportToCSV}
-                    style={{ 
-                      padding: '0.25rem 0.75rem', 
-                      background: '#10b981', 
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '4px', 
-                      fontSize: '0.8rem',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    Excel出力
-                  </button>
-                </div>
-              </div>
-
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', fontSize: '0.8rem' }}>
-                  <thead style={{ background: '#f9fafb' }}>
-                    <tr>
-                      <th style={{ border: '1px solid #e5e7eb', padding: '0.5rem', textAlign: 'left' }}>請求書番号</th>
-                      <th style={{ border: '1px solid #e5e7eb', padding: '0.5rem', textAlign: 'left' }}>請求日</th>
-                      <th style={{ border: '1px solid #e5e7eb', padding: '0.5rem', textAlign: 'left' }}>請求月</th>
-                      <th style={{ border: '1px solid #e5e7eb', padding: '0.5rem', textAlign: 'left' }}>顧客名</th>
-                      <th style={{ border: '1px solid #e5e7eb', padding: '0.5rem', textAlign: 'left' }}>件名</th>
-                      <th style={{ border: '1px solid #e5e7eb', padding: '0.5rem', textAlign: 'left' }}>登録番号</th>
-                      <th style={{ border: '1px solid #e5e7eb', padding: '0.5rem', textAlign: 'left' }}>発注番号</th>
-                      <th style={{ border: '1px solid #e5e7eb', padding: '0.5rem', textAlign: 'left' }}>オーダー番号</th>
-                      <th style={{ border: '1px solid #e5e7eb', padding: '0.5rem', textAlign: 'right' }}>請求金額(円)</th>
-                      <th style={{ border: '1px solid #e5e7eb', padding: '0.5rem', textAlign: 'center' }}>入金</th>
-                      <th style={{ border: '1px solid #e5e7eb', padding: '0.5rem', textAlign: 'left' }}>入金メモ</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredInvoices
-                      .sort((a, b) => new Date(b.billing_date).getTime() - new Date(a.billing_date).getTime())
-                      .map(invoice => {
-                        const payment = db.payments.find(p => p.invoice_id === invoice.id)
-                        const customer = db.customers.find(c => c.id === invoice.customer_id)
-                        const currentPayment = paymentUpdates[invoice.id] || {
-                          paid: payment?.paid || false,
-                          memo: payment?.memo || ''
-                        }
-                        
-                        const getCategoryColor = (category: string) => {
-                          switch (category) {
-                            case 'UD': return 'color: #2563eb; background: #eff6ff'
-                            default: return 'color: #6b7280; background: #f9fafb'
-                          }
-                        }
-                        
-                        return (
-                          <tr key={invoice.id} style={{ background: currentPayment.paid ? '#f0f9ff' : 'white' }}>
-                            <td style={{ border: '1px solid #e5e7eb', padding: '0.5rem' }}>
-                              <span style={{ color: '#2563eb', fontWeight: '500' }}>{invoice.invoice_no}</span>
-                            </td>
-                            <td style={{ border: '1px solid #e5e7eb', padding: '0.5rem' }}>{invoice.billing_date}</td>
-                            <td style={{ border: '1px solid #e5e7eb', padding: '0.5rem' }}>
-                              {Math.floor(invoice.billing_month / 100)}-{(invoice.billing_month % 100).toString().padStart(2, '0')}
-                            </td>
-                            <td style={{ border: '1px solid #e5e7eb', padding: '0.5rem' }}>
-                              <div>
-                                <div style={{ fontWeight: '500' }}>{customer?.company_name || ''}</div>
-                                <div style={{ fontSize: '0.7rem', color: '#6b7280' }}>{customer?.person_in_charge}</div>
-                              </div>
-                            </td>
-                            <td style={{ border: '1px solid #e5e7eb', padding: '0.5rem' }}>
-                              <div>
-                                <div>{invoice.client_name}</div>
-                                <span 
-                                  style={{
-                                    display: 'inline-block',
-                                    padding: '0.125rem 0.5rem',
-                                    borderRadius: '12px',
-                                    fontSize: '0.7rem',
-                                    fontWeight: '500',
-                                    marginTop: '0.25rem',
-                                    ...Object.fromEntries(getCategoryColor(invoice.category).split(';').map(pair => pair.trim().split(': ')))
-                                  }}
-                                >
-                                  {invoice.category}
-                                </span>
-                              </div>
-                            </td>
-                            <td style={{ border: '1px solid #e5e7eb', padding: '0.5rem', fontSize: '0.7rem' }}>
-                              {invoice.registration_no || '-'}
-                            </td>
-                            <td style={{ border: '1px solid #e5e7eb', padding: '0.5rem', fontSize: '0.7rem' }}>
-                              {invoice.order_no || '-'}
-                            </td>
-                            <td style={{ border: '1px solid #e5e7eb', padding: '0.5rem', fontSize: '0.7rem' }}>
-                              {invoice.internal_order_no || '-'}
-                            </td>
-                            <td style={{ border: '1px solid #e5e7eb', padding: '0.5rem', textAlign: 'right', fontWeight: '500' }}>
-                              {invoice.total.toLocaleString()}
-                            </td>
-                            <td style={{ border: '1px solid #e5e7eb', padding: '0.5rem', textAlign: 'center' }}>
-                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                <input
-                                  type="checkbox"
-                                  checked={currentPayment.paid}
-                                  onChange={(e) => updatePaymentStatus(invoice.id, e.target.checked, currentPayment.memo)}
-                                  style={{ width: '16px', height: '16px' }}
-                                />
-                                {currentPayment.paid && (
-                                  <span style={{ marginLeft: '0.25rem', color: '#2563eb' }}>✓</span>
-                                )}
-                              </div>
-                            </td>
-                            <td style={{ border: '1px solid #e5e7eb', padding: '0.5rem' }}>
-                              <input
-                                type="text"
-                                value={currentPayment.memo}
-                                onChange={(e) => updatePaymentStatus(invoice.id, currentPayment.paid, e.target.value)}
-                                style={{ 
-                                  width: '100%', 
-                                  padding: '0.125rem 0.5rem', 
-                                  fontSize: '0.7rem',
-                                  border: '1px solid #d1d5db',
-                                  borderRadius: '3px'
-                                }}
-                              />
-                              {payment?.payment_date && (
-                                <div style={{ fontSize: '0.7rem', color: '#6b7280', marginTop: '0.25rem' }}>
-                                  入金日: {payment.payment_date}
-                                </div>
-                              )}
-                            </td>
-                          </tr>
-                        )
-                      })}
-                  </tbody>
-                </table>
+                    <YAxis 
+                      tick={{ fontSize: 12 }}
+                      tickFormatter={(value) => `¥${(value / 1000).toFixed(0)}k`}
+                    />
+                    <Tooltip 
+                      formatter={(value: number) => [`¥${value.toLocaleString()}`, '売上']}
+                      labelFormatter={(label) => `${label}`}
+                    />
+                    <Bar dataKey="amount" fill="#3B82F6" />
+                  </BarChart>
+                </ResponsiveContainer>
               </div>
             </div>
           )}
 
+          {/* 顧客別売上グラフ */}
+          {viewMode === 'customer' && (
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <h2 className="text-lg font-semibold mb-4">顧客別売上構成</h2>
+              <div className="h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={customerSales.slice(0, 8)}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ customer_name, percentage }) => 
+                        percentage > 5 ? `${customer_name.slice(0, 10)}...` : ''
+                      }
+                      outerRadius={100}
+                      fill="#8884d8"
+                      dataKey="total_amount"
+                    >
+                      {customerSales.slice(0, 8).map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip 
+                      formatter={(value: number) => [`¥${value.toLocaleString()}`, '売上']}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          )}
+
+          {/* 売上詳細情報 */}
+          <div className="bg-white rounded-lg shadow-sm p-6">
+            <h2 className="text-lg font-semibold mb-4">詳細情報</h2>
+            <div className="space-y-4">
+              <div className="flex justify-between items-center p-3 bg-blue-50 rounded">
+                <span className="text-sm font-medium text-gray-700">支払済み金額</span>
+                <span className="text-lg font-bold text-blue-600">¥{statistics.paidAmount.toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between items-center p-3 bg-orange-50 rounded">
+                <span className="text-sm font-medium text-gray-700">未払い金額</span>
+                <span className="text-lg font-bold text-orange-600">¥{statistics.unpaidAmount.toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between items-center p-3 bg-green-50 rounded">
+                <span className="text-sm font-medium text-gray-700">主要顧客</span>
+                <span className="text-sm font-bold text-green-600">{statistics.topCustomer}</span>
+              </div>
+              <div className="flex justify-between items-center p-3 bg-purple-50 rounded">
+                <span className="text-sm font-medium text-gray-700">最高売上月</span>
+                <span className="text-sm font-bold text-purple-600">{statistics.topMonth}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* データテーブル */}
+        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+          <div className="p-6 border-b">
+            <h2 className="text-lg font-semibold">
+              {viewMode === 'monthly' ? '月別売上一覧' : '顧客別売上一覧'}
+            </h2>
+          </div>
+          
+          {viewMode === 'monthly' ? (
+            <table className="w-full">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    年月
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    売上金額
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    請求書数
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    平均単価
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {monthlySales.map((item) => (
+                  <tr key={item.month} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      {item.month}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                      ¥{item.amount.toLocaleString()}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                      {item.count}件
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                      ¥{Math.round(item.amount / item.count).toLocaleString()}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <table className="w-full">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    顧客名
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    売上金額
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    請求書数
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    構成比
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {customerSales.map((customer) => (
+                  <tr key={customer.customer_name} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      {customer.customer_name}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                      ¥{customer.total_amount.toLocaleString()}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                      {customer.invoice_count}件
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                      {customer.percentage.toFixed(1)}%
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
-    </SecurityWrapper>
+    </div>
   )
 }

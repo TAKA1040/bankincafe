@@ -1,0 +1,272 @@
+/* Work Item Card - CSS Modules実装 */
+
+.workItem {
+  border: 2px solid var(--color-secondary-200);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  background: linear-gradient(135deg, var(--color-secondary-50) 0%, white 100%);
+  transition: all var(--duration-medium) ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.workItem:hover {
+  border-color: var(--color-primary-300);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.itemHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-lg);
+}
+
+.typeBadge {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-md);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.typeBadgeIndividual {
+  background: linear-gradient(135deg, #dcfce7, #bbf7d0);
+  color: #15803d;
+  border: 1px solid #86efac;
+}
+
+.typeBadgeSet {
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  color: #92400e;
+  border: 1px solid #fcd34d;
+}
+
+.typeBadgeIndividual::before {
+  content: '⚡';
+}
+
+.typeBadgeSet::before {
+  content: '📦';
+}
+
+.deleteButton {
+  background: linear-gradient(135deg, var(--color-danger), #dc2626);
+  color: white;
+  border: none;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--duration-fast) ease;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  box-shadow: var(--shadow-sm);
+}
+
+.deleteButton:hover {
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.deleteButton:focus-visible {
+  box-shadow: var(--focus-ring);
+}
+
+.deleteButton:active {
+  transform: translateY(0);
+}
+
+.itemContent {
+  background: white;
+  padding: var(--spacing-lg);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-secondary-200);
+  box-shadow: var(--shadow-sm);
+}
+
+.inputGrid {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+}
+
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+}
+
+.label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-secondary-700);
+  margin-bottom: var(--spacing-xs);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.required {
+  color: var(--color-danger);
+}
+
+.input {
+  width: 100%;
+  padding: var(--spacing-sm);
+  border: 1px solid var(--color-secondary-300);
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  color: var(--color-secondary-900);
+  background: white;
+  transition: all var(--duration-fast) ease;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px var(--color-primary-50);
+}
+
+.setDetailsSection {
+  margin-bottom: var(--spacing-lg);
+}
+
+.setDetailsTitle {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-secondary-700);
+  margin-bottom: var(--spacing-sm);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.setDetailsTitle::before {
+  content: '📝';
+}
+
+.setDetailsList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.setDetailRow {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.setDetailInput {
+  flex: 1;
+  padding: var(--spacing-sm);
+  border: 1px solid var(--color-secondary-300);
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  background: white;
+  transition: all var(--duration-fast) ease;
+}
+
+.setDetailInput:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px var(--color-primary-50);
+}
+
+.removeDetailButton {
+  background: var(--color-danger);
+  color: white;
+  border: none;
+  padding: var(--spacing-xs);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--duration-fast) ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+}
+
+.removeDetailButton:hover {
+  background: #dc2626;
+  transform: scale(1.1);
+}
+
+.addDetailButton {
+  background: var(--color-secondary-500);
+  color: white;
+  border: none;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--duration-fast) ease;
+  margin-top: var(--spacing-sm);
+}
+
+.addDetailButton:hover {
+  background: var(--color-secondary-600);
+}
+
+.amountSection {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--color-secondary-200);
+}
+
+.amountLabel {
+  font-size: 0.875rem;
+  color: var(--color-secondary-600);
+  font-weight: 500;
+}
+
+.amountValue {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--color-primary-700);
+  background: linear-gradient(135deg, var(--color-primary-50), white);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-primary-200);
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+  .inputGrid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-sm);
+  }
+  
+  .itemHeader {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    align-items: flex-start;
+  }
+  
+  .amountSection {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    text-align: center;
+  }
+  
+  .workItem {
+    padding: var(--spacing-md);
+  }
+  
+  .itemContent {
+    padding: var(--spacing-md);
+  }
+}

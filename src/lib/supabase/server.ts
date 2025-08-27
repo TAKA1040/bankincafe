@@ -8,8 +8,8 @@ if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Supabase環境変数が設定されていません')
 }
 
-export const createClient = () => {
-  const cookieStore = cookies()
+export const createClient = async () => {
+  const cookieStore = await cookies()
 
   return createServerClient(supabaseUrl, supabaseAnonKey, {
     cookies: {

@@ -33,204 +33,12 @@ export default function DashboardClient({ user }: DashboardClientProps) {
   const isAdmin = user.email === 'dash201206@gmail.com'
   const displayName = user.user_metadata?.full_name || user.email
 
-  // CSS-in-JS用のスタイルシート作成
-  const styles = `
-    .dashboard-container {
-      min-height: 100vh;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      padding: 2rem;
-      font-family: system-ui, sans-serif;
-    }
-
-    .dashboard-header {
-      background-color: white;
-      border-radius: 16px;
-      padding: 2rem;
-      margin-bottom: 2rem;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .dashboard-title {
-      font-size: 2.5rem;
-      font-weight: bold;
-      color: #1f2937;
-      margin: 0 0 0.5rem 0;
-    }
-
-    .dashboard-subtitle {
-      color: #6b7280;
-      margin: 0;
-      font-size: 1.1rem;
-    }
-
-    .user-badge {
-      margin-top: 0.5rem;
-      padding: 0.5rem 1rem;
-      border-radius: 8px;
-      display: inline-block;
-    }
-
-    .logout-button {
-      padding: 0.75rem 1.5rem;
-      background-color: #ef4444;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      font-size: 1rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      box-shadow: 0 4px 6px rgba(239, 68, 68, 0.3);
-    }
-
-    .menu-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 1.5rem;
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-
-    .menu-item {
-      background-color: white;
-      border-radius: 16px;
-      padding: 2rem;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-      border: 2px solid transparent;
-      position: relative;
-      overflow: hidden;
-      display: block;
-    }
-
-    .menu-icon-bg {
-      position: absolute;
-      top: -20px;
-      right: -20px;
-      width: 80px;
-      height: 80px;
-      border-radius: 50%;
-      opacity: 0.7;
-    }
-
-    .menu-icon {
-      font-size: 3rem;
-      margin-bottom: 1rem;
-      text-align: left;
-    }
-
-    .menu-content {
-      width: 100%;
-    }
-
-    .menu-title {
-      font-size: 1.5rem;
-      font-weight: bold;
-      margin: 0 0 0.5rem 0;
-    }
-
-    .menu-description {
-      color: #6b7280;
-      margin: 0;
-      font-size: 1rem;
-      line-height: 1.5;
-    }
-
-    .footer-info {
-      text-align: center;
-      margin-top: 3rem;
-      color: rgba(255,255,255,0.8);
-      font-size: 0.9rem;
-    }
-
-    /* モバイル対応 */
-    @media (max-width: 768px) {
-      .dashboard-container {
-        padding: 1rem;
-      }
-
-      .dashboard-header {
-        border-radius: 12px;
-        padding: 1rem;
-        margin-bottom: 1rem;
-        flex-direction: column;
-        align-items: stretch;
-        gap: 1rem;
-      }
-
-      .dashboard-title {
-        font-size: 1.5rem;
-      }
-
-      .dashboard-subtitle {
-        font-size: 0.9rem;
-      }
-
-      .user-badge {
-        padding: 0.25rem 0.75rem;
-        margin-top: 0.25rem;
-        font-size: 0.75rem;
-      }
-
-      .logout-button {
-        padding: 0.5rem 1rem;
-        font-size: 0.85rem;
-        align-self: flex-end;
-      }
-
-      .menu-grid {
-        grid-template-columns: 1fr;
-        gap: 1rem;
-        max-width: 100%;
-      }
-
-      .menu-item {
-        border-radius: 8px;
-        padding: 0.75rem 1rem;
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        margin-bottom: 0.75rem;
-      }
-
-      .menu-icon-bg {
-        display: none;
-      }
-
-      .menu-icon {
-        font-size: 1.5rem;
-        margin-bottom: 0;
-        min-width: 1.5rem;
-        text-align: center;
-      }
-
-      .menu-content {
-        flex: 1;
-        min-width: 0;
-      }
-
-      .menu-title {
-        font-size: 1rem;
-        margin-bottom: 0.125rem;
-        font-weight: 600;
-      }
-
-      .menu-description {
-        font-size: 0.8rem;
-        line-height: 1.2;
-        opacity: 0.8;
-      }
-
-      .footer-info {
-        margin-top: 1.5rem;
-        font-size: 0.75rem;
-      }
-    }
-  `
+  // Tailwind CSSクラスを使用（XSS脆弱性を回避）
+  const getMenuItemStyle = (color: string) => ({
+    backgroundColor: color,
+    borderColor: color,
+    color: color,
+  })
 
   const menuItems: MenuItem[] = [
     {
@@ -290,7 +98,7 @@ export default function DashboardClient({ user }: DashboardClientProps) {
   ]
 
   const handleMenuClick = (menuId: string) => {
-    console.log(`🎯 [DASHBOARD] Menu clicked: ${menuId}`)
+    // メニュークリック処理
     
     // 各メニューページへのナビゲーション
     switch (menuId) {
@@ -313,12 +121,12 @@ export default function DashboardClient({ user }: DashboardClientProps) {
         router.push('/work-search')
         break
       default:
-        console.warn(`Unknown menu: ${menuId}`)
+        // 未知のメニュー
     }
   }
 
   const handleLogout = async () => {
-    console.log('🔐 [DASHBOARD] Logout requested')
+    // ログアウト処理
     
     // Supabaseログアウト処理
     const { createClient } = await import('@/lib/supabase/client')
@@ -326,10 +134,10 @@ export default function DashboardClient({ user }: DashboardClientProps) {
     
     const { error } = await supabase.auth.signOut()
     if (error) {
-      console.error('❌ [LOGOUT] Error:', error.message)
+      // ログアウトエラー
       alert(`ログアウトエラー: ${error.message}`)
     } else {
-      console.log('✅ [LOGOUT] Success')
+      // ログアウト成功
       router.push('/login')
     }
   }
@@ -337,8 +145,7 @@ export default function DashboardClient({ user }: DashboardClientProps) {
   return (
     <SecurityWrapper requirePin={false}>
       <>
-        {/* インラインCSS */}
-        <style dangerouslySetInnerHTML={{ __html: styles }} />
+        {/* Tailwind CSSを使用 */}
         
         <div className="dashboard-container">
           {/* ヘッダー */}

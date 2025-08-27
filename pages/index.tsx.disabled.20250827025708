@@ -1,0 +1,77 @@
+export default function HomePage() {
+  return (
+    <div style={{ padding: '40px', textAlign: 'center', fontFamily: 'Arial, sans-serif' }}>
+      <h1 style={{ color: '#1e40af', fontSize: '3rem', marginBottom: '20px' }}>
+        🚗 鈑金Cafe - Pages Router
+      </h1>
+      <p style={{ fontSize: '1.5rem', color: '#16a34a', marginBottom: '30px' }}>
+        ✅ PAGES ROUTER で正常動作中！
+      </p>
+      <div style={{ background: '#f0f9ff', padding: '20px', borderRadius: '8px', marginBottom: '30px' }}>
+        <h2 style={{ color: '#0369a1', marginBottom: '15px' }}>動作確認完了</h2>
+        <ul style={{ textAlign: 'left', maxWidth: '500px', margin: '0 auto' }}>
+          <li>✅ Next.js 14.2.18 + React 18.3.1 正常動作</li>
+          <li>✅ Pages Router 正常動作</li>
+          <li>✅ 404エラー解決済み</li>
+          <li>✅ プロセス競合問題解決済み</li>
+          <li>✅ 安定した開発環境構築完了</li>
+        </ul>
+      </div>
+      
+      <div style={{ display: 'flex', gap: '15px', justifyContent: 'center', flexWrap: 'wrap' }}>
+        <a 
+          href="/invoice-create" 
+          style={{ 
+            background: '#1e40af', 
+            color: 'white', 
+            padding: '12px 24px', 
+            borderRadius: '6px', 
+            textDecoration: 'none',
+            fontWeight: '500'
+          }}
+        >
+          請求書作成
+        </a>
+        <a 
+          href="/customer-list" 
+          style={{ 
+            background: '#16a34a', 
+            color: 'white', 
+            padding: '12px 24px', 
+            borderRadius: '6px', 
+            textDecoration: 'none',
+            fontWeight: '500'
+          }}
+        >
+          顧客管理
+        </a>
+        <a 
+          href="/work-history" 
+          style={{ 
+            background: '#7c3aed', 
+            color: 'white', 
+            padding: '12px 24px', 
+            borderRadius: '6px', 
+            textDecoration: 'none',
+            fontWeight: '500'
+          }}
+        >
+          作業履歴
+        </a>
+        <a 
+          href="/sales-management" 
+          style={{ 
+            background: '#dc2626', 
+            color: 'white', 
+            padding: '12px 24px', 
+            borderRadius: '6px', 
+            textDecoration: 'none',
+            fontWeight: '500'
+          }}
+        >
+          売上管理
+        </a>
+      </div>
+    </div>
+  )
+}

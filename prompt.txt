@@ -1,4 +1,479 @@
-件名　　　　作業内容
-件名の枠　　作業内容の枠　検索ボタン
-この並び
-検索ボタンというのは説明だから、表示は検索で。
+invoice-create
+このページの作業名の入力補助の作成について。
+これの実相に当たっては、大きくファイルを破損する可能性があるので、今のファイルの状態を保存してから、下記の児氏を実装してみてください。
+必ずしっぱいしたら、今の状態に戻れるようにしてお家ください。
+
+
+
+# 貼り付け用プロンプト（実ページでの動作テスト実装依頼）
+
+あなたは Next.js/React の実装担当です。
+以下の要件で **「作業入力プロトタイプ」ページ**を作成し、実ページで動作確認できる状態にしてください。
+
+## 目的
+
+* 「辞書3段（対象/動作/位置）＋fuzzy（曖昧）＋セット」入力の最小プロトタイプを実ページで試す。
+* テスト用の**簡易辞書**と\*\*価格提案（pricebook/履歴）\*\*を同梱。
+* ビルド・動作に関する**よくあるエラー**を回避する。
+
+## 前提（環境）
+
+* Next.js（App Router推奨） + TypeScript + Tailwind + shadcn/ui（`@/components/ui/*` が使える状態）
+
+  * もし shadcn/ui が未導入なら、同等の基本UIに置き換えてもOK（動作優先）
+* `lucide-react` を使用（無ければ追加）
+* `@` エイリアスで `src` かプロジェクトルートに解決できること（無ければ相対パスへ修正）
+
+### 必要パッケージ（未導入なら）
+
+```bash
+npm i lucide-react
+# （shadcn/ui 未導入なら）npm dlx shadcn-ui@latest init
+# 以降、button/input/select/tabs/card/badge/separator を追加生成
+```
+
+## 実装タスク
+
+1. ルーティング
+
+   * App Routerの場合：`app/work-entry/prototype/page.tsx` を新規作成
+   * Pages Routerの場合：`pages/work-entry/prototype.tsx` を新規作成
+
+2. ページ実装
+
+   * 下記の **コンポーネントコード** をファイルに貼り付け。
+   * 先頭に **`"use client"`** を置き、**未使用import**が出ないよう調整済みのコードを使用すること。
+   * `crypto.randomUUID()` 未定義環境に備え、`genId()` フォールバックを同梱。
+
+3. ビルド & 動作確認
+
+   * ページを開き、**個別/曖昧/セット**の各タブで明細に追加できること。
+   * 「タイヤ×交換」などで単価の**提案価格**が出ることを確認。
+   * 合計金額が正しく増減することを確認。
+
+4. 受け入れ基準（Doneの条件）
+
+   * ページ遷移でエラーが出ない（サーバ/クライアント境界のエラーなし）
+   * 3モード（structured/fuzzy/set）が追加でき、一覧に反映
+   * 価格提案が表示される（pricebook優先→履歴中央値）
+   * セットの**子作業**は表示のみ（**金額なし**）
+
+## よくあるエラーの回避ポイント
+
+* ❗**`use client` の不足**で `useState/useMemo` が使えない → 先頭に必ず記述
+* ❗**shadcn/ui の未導入** → あるいは相対パスに差し替え（最優先は動作）
+* ❗**`@` エイリアス未設定** → 相対パスに置換 or `tsconfig.json` の `paths` 設定
+* ❗**`window` 直参照** → 本実装では **ステート**で管理し、`window` は使用しない
+* ❗**`crypto.randomUUID` 未対応** → `genId()` フォールバックを同梱
+
+---
+
+## コンポーネントコード（貼り付け用：page.tsx / prototype.tsx）
+
+```tsx
+"use client";
+import React, { useMemo, useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Separator } from "@/components/ui/separator";
+import { Trash2, Plus, ClipboardList, History } from "lucide-react";
+
+// ---------- util ----------
+const genId = () =>
+  typeof crypto !== "undefined" && (crypto as any).randomUUID
+    ? (crypto as any).randomUUID()
+    : Math.random().toString(36).slice(2);
+
+// ---------- テスト辞書 ----------
+const ACTIONS = ["交換","脱着","取付","修理","調整","点検","清掃","溶接","張替","入替","塗装","ASSY"];
+const TARGETS = ["タイヤ","ホイール","ライト","コーナーパネル","フラッシャー","バンパー","ライニング","スプリングシート"];
+const POSITIONS = ["（指定なし）","右","左","前","後","右前","左前","右後","左後","左右","前後"];
+
+// ---------- 価格（pricebook優先 → 履歴中央値） ----------
+const PRICEBOOK = [
+  { action: "交換", target: "タイヤ", price: 5500 },
+  { action: "脱着", target: "ホイール", price: 3000 },
+  { action: "脱着", target: "コーナーパネル", price: 8000 },
+  { action: "取付", target: "フラッシャー", price: 4500 },
+  { action: "修理", target: "バンパー", price: 12000 },
+  { action: "張替", target: "ライニング", price: 9000 },
+  { action: "溶接", target: "スプリングシート", price: 15000 },
+];
+const HISTORY = [
+  { action: "交換", target: "タイヤ", unitPrice: 5200 },
+  { action: "交換", target: "タイヤ", unitPrice: 5600 },
+  { action: "交換", target: "タイヤ", unitPrice: 5400 },
+  { action: "交換", target: "タイヤ", unitPrice: 5500 },
+  { action: "脱着", target: "ホイール", unitPrice: 3200 },
+  { action: "脱着", target: "ホイール", unitPrice: 3000 },
+  { action: "脱着", target: "ホイール", unitPrice: 2800 },
+  { action: "取付", target: "フラッシャー", unitPrice: 4500 },
+  { action: "脱着", target: "コーナーパネル", unitPrice: 7800 },
+  { action: "脱着", target: "コーナーパネル", unitPrice: 8200 },
+];
+function median(nums: number[]): number | null {
+  if (!nums.length) return null;
+  const sorted = [...nums].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 ? sorted[mid] : Math.round((sorted[mid - 1] + sorted[mid]) / 2);
+}
+function suggestPrice(action?: string, target?: string): number | null {
+  if (!action || !target) return null;
+  const exact = PRICEBOOK.find(p => p.action === action && p.target === target);
+  if (exact) return exact.price;
+  const hist = HISTORY.filter(h => h.action === action && h.target === target).map(h => h.unitPrice);
+  return median(hist);
+}
+function formatJPY(n: number | string) {
+  const num = typeof n === "string" ? Number(n || 0) : n;
+  return new Intl.NumberFormat("ja-JP").format(num);
+}
+
+// ---------- 型 ----------
+interface LineItem {
+  id: string;
+  type: "structured" | "fuzzy" | "set";
+  label: string;
+  action?: string;
+  target?: string;
+  position?: string;
+  unitPrice: number;
+  quantity: number;
+  amount: number;
+  details?: Array<{ action?: string; target?: string; position?: string; label: string }>;
+}
+
+export default function WorkEntryPrototype() {
+  // structured
+  const [action, setAction] = useState<string | undefined>();
+  const [target, setTarget] = useState<string | undefined>();
+  const [position, setPosition] = useState<string>("（指定なし）");
+  const suggested = useMemo(() => suggestPrice(action, target), [action, target]);
+  const [unitPrice, setUnitPrice] = useState<number>(0);
+  const [qty, setQty] = useState<number>(1);
+
+  // fuzzy
+  const [fuzzyLabel, setFuzzyLabel] = useState("");
+  const [fuzzyPrice, setFuzzyPrice] = useState<number>(0);
+  const [fuzzyQty, setFuzzyQty] = useState<number>(1);
+
+  // set
+  const [setName, setSetName] = useState("");
+  const [setPrice, setSetPrice] = useState<number>(0);
+  const [setQty, setSetQty] = useState<number>(1);
+  const [setDetails, setSetDetails] = useState<Array<{ action?: string; target?: string; position?: string; label: string }>>([]);
+  // 子作業の一時状態（window未使用）
+  const [detailTarget, setDetailTarget] = useState<string | undefined>();
+  const [detailAction, setDetailAction] = useState<string | undefined>();
+  const [detailPosition, setDetailPosition] = useState<string>("（指定なし）");
+
+  // 全明細
+  const [items, setItems] = useState<LineItem[]>([]);
+
+  // 提案単価の自動反映（未入力時のみ）
+  React.useEffect(() => {
+    if (suggested != null && (unitPrice === 0 || Number.isNaN(unitPrice))) setUnitPrice(suggested);
+  }, [suggested]);
+
+  function composedLabel(t?: string, a?: string, p?: string) {
+    const pos = p && p !== "（指定なし）" ? ` ${p}` : "";
+    return `${t ?? ""}${a ?? ""}${pos}`.trim();
+  }
+
+  function addStructured() {
+    if (!action || !target) return;
+    const label = composedLabel(target, action, position);
+    const amount = Math.round((unitPrice || 0) * (qty || 0));
+    setItems(prev => [
+      {
+        id: genId(),
+        type: "structured",
+        label,
+        action,
+        target,
+        position,
+        unitPrice: unitPrice || 0,
+        quantity: qty || 0,
+        amount,
+      },
+      ...prev,
+    ]);
+  }
+
+  function addFuzzy() {
+    if (!fuzzyLabel.trim()) return;
+    const amount = Math.round((fuzzyPrice || 0) * (fuzzyQty || 0));
+    setItems(prev => [
+      {
+        id: genId(),
+        type: "fuzzy",
+        label: fuzzyLabel.trim(),
+        unitPrice: fuzzyPrice || 0,
+        quantity: fuzzyQty || 0,
+        amount,
+      },
+      ...prev,
+    ]);
+  }
+
+  function addSet() {
+    if (!setName.trim()) return;
+    setItems(prev => [
+      {
+        id: genId(),
+        type: "set",
+        label: setName.trim(),
+        unitPrice: setPrice || 0,
+        quantity: setQty || 0,
+        amount: Math.round((setPrice || 0) * (setQty || 0)),
+        details: [...setDetails],
+      },
+      ...prev,
+    ]);
+    setSetDetails([]);
+    setSetName("");
+    setSetPrice(0);
+    setSetQty(1);
+  }
+
+  function addSetDetail(a?: string, t?: string, p?: string) {
+    if (!t && !a) return;
+    const label = composedLabel(t, a, p);
+    setSetDetails(prev => [...prev, { action: a, target: t, position: p, label }]);
+  }
+
+  function removeItem(id: string) {
+    setItems(prev => prev.filter(i => i.id !== id));
+  }
+
+  const totalAmount = useMemo(() => items.reduce((s, i) => s + (i.amount || 0), 0), [items]);
+
+  return (
+    <div className="mx-auto max-w-6xl p-6 space-y-6">
+      <Card className="shadow-sm">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-xl">
+            <ClipboardList className="h-5 w-5" /> 作業入力プロトタイプ（辞書3段 + fuzzy + セット）
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <Tabs defaultValue="structured" className="w-full">
+            <TabsList>
+              <TabsTrigger value="structured">個別（structured）</TabsTrigger>
+              <TabsTrigger value="fuzzy">曖昧（fuzzy）</TabsTrigger>
+              <TabsTrigger value="set">セット</TabsTrigger>
+            </TabsList>
+
+            {/* Structured */}
+            <TabsContent value="structured" className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-3 items-end">
+                <div>
+                  <Label>対象（target）</Label>
+                  <Select onValueChange={setTarget} value={target}>
+                    <SelectTrigger><SelectValue placeholder="選択" /></SelectTrigger>
+                    <SelectContent>
+                      {TARGETS.map(t => (<SelectItem key={t} value={t}>{t}</SelectItem>))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>動作（action）</Label>
+                  <Select onValueChange={setAction} value={action}>
+                    <SelectTrigger><SelectValue placeholder="選択" /></SelectTrigger>
+                    <SelectContent>
+                      {ACTIONS.map(a => (<SelectItem key={a} value={a}>{a}</SelectItem>))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>位置（position）</Label>
+                  <Select onValueChange={setPosition} value={position}>
+                    <SelectTrigger><SelectValue placeholder="（指定なし）" /></SelectTrigger>
+                    <SelectContent>
+                      {POSITIONS.map(p => (<SelectItem key={p} value={p}>{p}</SelectItem>))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>単価</Label>
+                  <Input type="number" value={unitPrice} onChange={e => setUnitPrice(Number(e.target.value))} />
+                  {suggested != null && (
+                    <div className="mt-1 text-xs text-muted-foreground">提案: ¥{formatJPY(suggested)}</div>
+                  )}
+                </div>
+                <div>
+                  <Label>数量</Label>
+                  <Input type="number" value={qty} onChange={e => setQty(Number(e.target.value))} />
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="text-sm text-muted-foreground">
+                  ラベル試写: <span className="font-medium">{composedLabel(target, action, position) || "（未選択）"}</span>
+                </div>
+                <Button onClick={addStructured} className="gap-2"><Plus className="h-4 w-4"/>明細に追加</Button>
+              </div>
+            </TabsContent>
+
+            {/* Fuzzy */}
+            <TabsContent value="fuzzy" className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
+                <div className="md:col-span-2">
+                  <Label>自由入力（raw_label）</Label>
+                  <Input value={fuzzyLabel} onChange={e => setFuzzyLabel(e.target.value)} placeholder="例：フロントバンパー" />
+                </div>
+                <div>
+                  <Label>単価</Label>
+                  <Input type="number" value={fuzzyPrice} onChange={e => setFuzzyPrice(Number(e.target.value))} />
+                </div>
+                <div>
+                  <Label>数量</Label>
+                  <Input type="number" value={fuzzyQty} onChange={e => setFuzzyQty(Number(e.target.value))} />
+                </div>
+              </div>
+              <div className="flex items-center justify-end">
+                <Button onClick={addFuzzy} className="gap-2"><Plus className="h-4 w-4"/>明細に追加</Button>
+              </div>
+            </TabsContent>
+
+            {/* Set */}
+            <TabsContent value="set" className="space-y-4">
+              <Card className="border-dashed">
+                <CardHeader><CardTitle className="text-base">セットの親</CardTitle></CardHeader>
+                <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div className="md:col-span-3">
+                    <Label>セット名</Label>
+                    <Input value={setName} onChange={e => setSetName(e.target.value)} placeholder="例：外装修理セット" />
+                  </div>
+                  <div>
+                    <Label>単価（セット価格）</Label>
+                    <Input type="number" value={setPrice} onChange={e => setSetPrice(Number(e.target.value))} />
+                  </div>
+                  <div>
+                    <Label>数量</Label>
+                    <Input type="number" value={setQty} onChange={e => setSetQty(Number(e.target.value))} />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="border-dashed">
+                <CardHeader><CardTitle className="text-base">セット詳細（子作業・金額なし）</CardTitle></CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="grid grid-cols-1 md:grid-cols-5 gap-3 items-end">
+                    <div>
+                      <Label>対象</Label>
+                      <Select onValueChange={setDetailTarget} value={detailTarget}>
+                        <SelectTrigger><SelectValue placeholder="選択" /></SelectTrigger>
+                        <SelectContent>
+                          {TARGETS.map(t => (<SelectItem key={t} value={t}>{t}</SelectItem>))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label>動作</Label>
+                      <Select onValueChange={setDetailAction} value={detailAction}>
+                        <SelectTrigger><SelectValue placeholder="選択" /></SelectTrigger>
+                        <SelectContent>
+                          {ACTIONS.map(a => (<SelectItem key={a} value={a}>{a}</SelectItem>))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label>位置</Label>
+                      <Select onValueChange={setDetailPosition} value={detailPosition}>
+                        <SelectTrigger><SelectValue placeholder="（指定なし）" /></SelectTrigger>
+                        <SelectContent>
+                          {POSITIONS.map(p => (<SelectItem key={p} value={p}>{p}</SelectItem>))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="md:col-span-2 flex justify-end">
+                      <Button variant="secondary" className="mt-6 gap-2"
+                        onClick={() => addSetDetail(detailAction, detailTarget, detailPosition)}>
+                        <Plus className="h-4 w-4"/> セット詳細に追加
+                      </Button>
+                    </div>
+                  </div>
+
+                  {setDetails.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {setDetails.map((d, i) => (<Badge key={i} variant="secondary">{d.label}</Badge>))}
+                    </div>
+                  ) : (
+                    <div className="text-sm text-muted-foreground">子作業を追加するとここに表示されます</div>
+                  )}
+                </CardContent>
+              </Card>
+
+              <div className="flex items-center justify-end">
+                <Button onClick={addSet} className="gap-2"><Plus className="h-4 w-4"/>セットを明細に追加</Button>
+              </div>
+            </TabsContent>
+          </Tabs>
+
+          <Separator />
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <History className="h-4 w-4"/> 明細（プレビュー）
+                <span className="ml-auto text-sm text-muted-foreground">合計 ¥{formatJPY(totalAmount)}</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {items.length === 0 ? (
+                <div className="text-sm text-muted-foreground">まだ明細はありません</div>
+              ) : (
+                <div className="space-y-3">
+                  {items.map(item => (
+                    <div key={item.id} className="grid grid-cols-12 gap-2 items-start rounded-xl border p-3">
+                      <div className="col-span-12 md:col-span-7">
+                        <div className="flex items-center gap-2">
+                          <Badge variant={item.type === "structured" ? "default" : item.type === "set" ? "secondary" : "outline"}>
+                            {item.type}
+                          </Badge>
+                          <div className="font-medium">{item.label}</div>
+                        </div>
+                        {item.type === "structured" && (
+                          <div className="mt-1 text-xs text-muted-foreground">
+                            {item.target} / {item.action} {item.position && item.position !== "（指定なし）" ? `/ ${item.position}` : ""}
+                          </div>
+                        )}
+                        {item.type === "set" && item.details && item.details.length > 0 && (
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            {item.details.map((d, i) => <Badge key={i} variant="outline">{d.label}</Badge>)}
+                          </div>
+                        )}
+                      </div>
+                      <div className="col-span-12 md:col-span-4 text-right">
+                        <div className="text-sm">単価 ¥{formatJPY(item.unitPrice)} × 数量 {item.quantity}</div>
+                        <div className="text-lg font-semibold">¥{formatJPY(item.amount)}</div>
+                      </div>
+                      <div className="col-span-12 md:col-span-1 flex justify-end">
+                        <Button variant="ghost" size="icon" onClick={() => removeItem(item.id)}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+```
+
+## 動作テスト観点
+
+* **Structured**：`タイヤ / 交換 / 右前` を選択 → 単価提案が表示 → 明細追加で一覧に1行追加
+* **Fuzzy**：`フロントバンパー` と金額・数量を入力 → 追加で一覧に1行追加
+* **Set**：親に「外装修理セット」、子に `コーナーパネル / 脱着 / 右` を追加 → 親1行＋子バッジ表示、金額は親のみ
+

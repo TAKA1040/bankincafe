@@ -1,0 +1,87 @@
+import { useRouter } from 'next/router'
+import styles from './invoice-create/invoice-create.module.css'
+import InvoiceHeader from './invoice-create/components/InvoiceHeader'
+import BasicInfoSection from './invoice-create/components/BasicInfoSection'
+import WorkItemsSection from './invoice-create/components/WorkItemsSection'
+import CalculationSection from './invoice-create/components/CalculationSection'
+import SaveSection from './invoice-create/components/SaveSection'
+import { useInvoiceForm } from './invoice-create/hooks/useInvoiceForm'
+import { useWorkItems } from './invoice-create/hooks/useWorkItems'
+
+export default function InvoiceCreatePage() {
+  const router = useRouter()
+  
+  const {
+    billingDate,
+    setBillingDate,
+    customerCategory,
+    customerName,
+    setCustomerName,
+    subject,
+    setSubject,
+    registrationNumber,
+    setRegistrationNumber,
+    orderNumber,
+    setOrderNumber,
+    errors,
+    setErrors,
+    loading,
+    handleCustomerTypeChange,
+    handleSave
+  } = useInvoiceForm()
+
+  const {
+    workItems,
+    addWorkItem,
+    updateWorkItem,
+    removeWorkItem,
+    subtotal,
+    tax,
+    total
+  } = useWorkItems()
+
+  return (
+    <div className={styles.container}>
+      <div className={styles.content}>
+        <InvoiceHeader onBack={() => router.push('/')} />
+        
+        <BasicInfoSection
+          billingDate={billingDate}
+          setBillingDate={setBillingDate}
+          customerCategory={customerCategory}
+          handleCustomerTypeChange={handleCustomerTypeChange}
+          customerName={customerName}
+          setCustomerName={setCustomerName}
+          subject={subject}
+          setSubject={setSubject}
+          registrationNumber={registrationNumber}
+          setRegistrationNumber={setRegistrationNumber}
+          orderNumber={orderNumber}
+          setOrderNumber={setOrderNumber}
+          errors={errors}
+          setErrors={setErrors}
+        />
+
+        <WorkItemsSection
+          workItems={workItems}
+          addWorkItem={addWorkItem}
+          updateWorkItem={updateWorkItem}
+          removeWorkItem={removeWorkItem}
+        />
+
+        {workItems.length > 0 && (
+          <CalculationSection
+            subtotal={subtotal}
+            tax={tax}
+            total={total}
+          />
+        )}
+
+        <SaveSection
+          onSave={(isDraft) => handleSave(isDraft, workItems)}
+          loading={loading}
+        />
+      </div>
+    </div>
+  )
+}
