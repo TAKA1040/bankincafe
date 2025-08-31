@@ -1,294 +1,61 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useMemo, useEffect, Fragment } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, BarChart3, Download, TrendingUp, Calendar, DollarSign } from 'lucide-react'
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts'
+import { ArrowLeft, BarChart3, Download, TrendingUp, Calendar, DollarSign, RefreshCw } from 'lucide-react'
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
+import { useSalesData } from '@/hooks/useSalesData'
+import { supabase } from '@/lib/supabase'
 
-// 型定義
-interface Invoice {
-  id: number
-  invoice_year: number
-  invoice_month: number
-  customer_name: string
-  subject: string
-  total_amount: number
-  status: 'draft' | 'sent' | 'paid' | 'cancelled'
-  created_at: string
-}
 
-interface MonthlySales {
-  month: string
-  year: number
-  monthNum: number
-  amount: number
-  count: number
-}
-
-interface CustomerSales {
-  customer_name: string
-  total_amount: number
-  invoice_count: number
-  percentage: number
-}
-
-interface SalesStatistics {
-  totalSales: number
-  totalInvoices: number
-  averageAmount: number
-  paidAmount: number
-  unpaidAmount: number
-  topCustomer: string
-  topMonth: string
-}
-
-// SalesDBクラス
-class SalesDB {
-  private data: Invoice[]
-
-  constructor() {
-    this.data = this.loadData()
-  }
-
-  private loadData(): Invoice[] {
-    try {
-      const stored = localStorage.getItem('bankin_invoices')
-      return stored ? JSON.parse(stored) : this.getDefaultData()
-    } catch {
-      return this.getDefaultData()
-    }
-  }
-
-  private getDefaultData(): Invoice[] {
-    return [
-      {
-        id: 1,
-        invoice_year: 2024,
-        invoice_month: 1,
-        customer_name: 'テクノロジー株式会社',
-        subject: 'Webサイト制作',
-        total_amount: 110000,
-        status: 'paid',
-        created_at: '2024-01-15T10:00:00.000Z'
-      },
-      {
-        id: 2,
-        invoice_year: 2024,
-        invoice_month: 2,
-        customer_name: 'サンプル商事株式会社B',
-        subject: 'システム保守',
-        total_amount: 55000,
-        status: 'paid',
-        created_at: '2024-02-10T14:30:00.000Z'
-      },
-      {
-        id: 3,
-        invoice_year: 2024,
-        invoice_month: 3,
-        customer_name: '株式会社UDトラックス',
-        subject: 'データベース設計',
-        total_amount: 88000,
-        status: 'sent',
-        created_at: '2024-03-05T09:15:00.000Z'
-      },
-      {
-        id: 4,
-        invoice_year: 2024,
-        invoice_month: 1,
-        customer_name: 'テクノロジー株式会社',
-        subject: 'SEO対策',
-        total_amount: 33000,
-        status: 'paid',
-        created_at: '2024-01-20T16:00:00.000Z'
-      },
-      {
-        id: 5,
-        invoice_year: 2024,
-        invoice_month: 2,
-        customer_name: 'サンプル商事株式会社B',
-        subject: 'サーバー構築',
-        total_amount: 132000,
-        status: 'paid',
-        created_at: '2024-02-25T11:30:00.000Z'
-      },
-      {
-        id: 6,
-        invoice_year: 2024,
-        invoice_month: 4,
-        customer_name: 'モバイル株式会社',
-        subject: 'モバイルアプリ開発',
-        total_amount: 165000,
-        status: 'draft',
-        created_at: '2024-04-10T13:45:00.000Z'
-      }
-    ]
-  }
-
-  getMonthlySales(year?: number): MonthlySales[] {
-    const filteredData = year ? this.data.filter(invoice => invoice.invoice_year === year) : this.data
-    
-    const monthlyMap = new Map<string, MonthlySales>()
-    
-    filteredData.forEach(invoice => {
-      const key = `${invoice.invoice_year}-${invoice.invoice_month}`
-      const existing = monthlyMap.get(key)
-      
-      if (existing) {
-        existing.amount += invoice.total_amount
-        existing.count += 1
-      } else {
-        monthlyMap.set(key, {
-          month: `${invoice.invoice_year}年${invoice.invoice_month}月`,
-          year: invoice.invoice_year,
-          monthNum: invoice.invoice_month,
-          amount: invoice.total_amount,
-          count: 1
-        })
-      }
-    })
-    
-    return Array.from(monthlyMap.values()).sort((a, b) => {
-      if (a.year !== b.year) return a.year - b.year
-      return a.monthNum - b.monthNum
-    })
-  }
-
-  getCustomerSales(year?: number): CustomerSales[] {
-    const filteredData = year ? this.data.filter(invoice => invoice.invoice_year === year) : this.data
-    const totalAmount = filteredData.reduce((sum, invoice) => sum + invoice.total_amount, 0)
-    
-    const customerMap = new Map<string, CustomerSales>()
-    
-    filteredData.forEach(invoice => {
-      const existing = customerMap.get(invoice.customer_name)
-      
-      if (existing) {
-        existing.total_amount += invoice.total_amount
-        existing.invoice_count += 1
-      } else {
-        customerMap.set(invoice.customer_name, {
-          customer_name: invoice.customer_name,
-          total_amount: invoice.total_amount,
-          invoice_count: 1,
-          percentage: 0
-        })
-      }
-    })
-    
-    const customers = Array.from(customerMap.values())
-    customers.forEach(customer => {
-      customer.percentage = totalAmount > 0 ? (customer.total_amount / totalAmount) * 100 : 0
-    })
-    
-    return customers.sort((a, b) => b.total_amount - a.total_amount)
-  }
-
-  getStatistics(year?: number): SalesStatistics {
-    const filteredData = year ? this.data.filter(invoice => invoice.invoice_year === year) : this.data
-    
-    if (filteredData.length === 0) {
-      return {
-        totalSales: 0,
-        totalInvoices: 0,
-        averageAmount: 0,
-        paidAmount: 0,
-        unpaidAmount: 0,
-        topCustomer: '',
-        topMonth: ''
-      }
-    }
-
-    const totalSales = filteredData.reduce((sum, invoice) => sum + invoice.total_amount, 0)
-    const paidAmount = filteredData
-      .filter(invoice => invoice.status === 'paid')
-      .reduce((sum, invoice) => sum + invoice.total_amount, 0)
-    const unpaidAmount = totalSales - paidAmount
-    const averageAmount = Math.round(totalSales / filteredData.length)
-
-    // 顧客別売上
-    const customerSales = this.getCustomerSales(year)
-    const topCustomer = customerSales[0]?.customer_name || ''
-
-    // 月別売上
-    const monthlySales = this.getMonthlySales(year)
-    const topMonth = monthlySales.sort((a, b) => b.amount - a.amount)[0]?.month || ''
-
-    return {
-      totalSales,
-      totalInvoices: filteredData.length,
-      averageAmount,
-      paidAmount,
-      unpaidAmount,
-      topCustomer,
-      topMonth
-    }
-  }
-
-  getAvailableYears(): number[] {
-    const years = [...new Set(this.data.map(invoice => invoice.invoice_year))]
-    return years.sort((a, b) => b - a)
-  }
-
-  exportToCSV(year?: number): void {
-    const filteredData = year ? this.data.filter(invoice => invoice.invoice_year === year) : this.data
-    
-    const headers = [
-      '請求書ID', '請求年', '請求月', '顧客名', '件名', '金額', 'ステータス', '作成日'
-    ]
-    
-    const rows = filteredData.map(invoice => [
-      invoice.id.toString(),
-      invoice.invoice_year.toString(),
-      invoice.invoice_month.toString(),
-      `"${invoice.customer_name.replace(/"/g, '""')}"`,
-      `"${invoice.subject.replace(/"/g, '""')}"`,
-      invoice.total_amount.toString(),
-      this.getStatusLabel(invoice.status),
-      new Date(invoice.created_at).toLocaleDateString('ja-JP')
-    ])
-
-    const csvContent = [headers.join(','), ...rows.map(row => row.join(','))].join('\n')
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-    const url = URL.createObjectURL(blob)
-    
-    const link = document.createElement('a')
-    link.href = url
-    link.download = `売上データ_${year || '全年度'}_${new Date().toISOString().split('T')[0]}.csv`
-    link.click()
-    
-    setTimeout(() => URL.revokeObjectURL(url), 100)
-  }
-
-  private getStatusLabel(status: Invoice['status']): string {
-    const statusMap = {
-      draft: '下書き',
-      sent: '送信済み',
-      paid: '支払済み',
-      cancelled: 'キャンセル'
-    }
-    return statusMap[status] || status
-  }
-}
 
 export default function SalesManagementPage() {
   const router = useRouter()
-  const [db] = useState(() => new SalesDB())
+  const { 
+    invoices, 
+    loading, 
+    error, 
+    getMonthlySales, 
+    getCustomerSales, 
+    getStatistics, 
+    getAvailableYears, 
+    exportToCSV,
+    refetch 
+  } = useSalesData()
+  
   const [selectedYear, setSelectedYear] = useState<number | undefined>(new Date().getFullYear())
   const [viewMode, setViewMode] = useState<'monthly' | 'customer'>('monthly')
 
-  const availableYears = useMemo(() => db.getAvailableYears(), [db])
-  const statistics = useMemo(() => db.getStatistics(selectedYear), [db, selectedYear])
-  const monthlySales = useMemo(() => db.getMonthlySales(selectedYear), [db, selectedYear])
-  const customerSales = useMemo(() => db.getCustomerSales(selectedYear), [db, selectedYear])
+  const availableYears = useMemo(() => getAvailableYears(), [getAvailableYears])
+  const statistics = useMemo(() => getStatistics(selectedYear), [getStatistics, selectedYear])
+  const monthlySales = useMemo(() => getMonthlySales(selectedYear), [getMonthlySales, selectedYear])
+  const customerSales = useMemo(() => getCustomerSales(selectedYear), [getCustomerSales, selectedYear])
 
   const handleBack = () => router.push('/')
 
   const handleExportCSV = () => {
-    db.exportToCSV(selectedYear)
+    exportToCSV(selectedYear)
   }
 
   // グラフ用のカラーパレット
   const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4', '#84CC16', '#F97316']
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="bg-white p-6 rounded-lg shadow-sm max-w-md">
+          <h1 className="text-xl font-bold text-red-600 mb-2">エラーが発生しました</h1>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <button 
+            onClick={refetch}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          >
+            再試行
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">

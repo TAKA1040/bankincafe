@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { FileText, Users, Search, Clock, BarChart3, Plus, Calculator, TrendingUp, Settings, Hash } from 'lucide-react'
+import { FileText, Users, Search, Clock, BarChart3, Plus, Calculator, TrendingUp, Settings, Hash, BookOpen, Edit3 } from 'lucide-react'
 
 export default function HomePage() {
   const router = useRouter()
@@ -87,6 +87,24 @@ export default function HomePage() {
       color: 'bg-indigo-600 hover:bg-indigo-700 shadow-lg',
       textColor: 'text-white',
       category: 'analysis'
+    },
+    {
+      title: '作業辞書管理',
+      description: '作業項目・動作・位置の辞書管理',
+      icon: BookOpen,
+      path: '/work-dictionary',
+      color: 'bg-purple-600 hover:bg-purple-700 shadow-lg',
+      textColor: 'text-white',
+      category: 'settings'
+    },
+    {
+      title: '作業項目入力',
+      description: 'プログレッシブフィルタによる作業入力',
+      icon: Edit3,
+      path: '/work-entry',
+      color: 'bg-cyan-600 hover:bg-cyan-700 shadow-lg',
+      textColor: 'text-white',
+      category: 'primary'
     }
   ]
 
