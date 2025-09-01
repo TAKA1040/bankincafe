@@ -101,7 +101,7 @@ export default function HomePage() {
       title: '作業項目入力',
       description: 'プログレッシブフィルタによる作業入力',
       icon: Edit3,
-      path: '/work-entry',
+      path: '/work-entry/prototype2',
       color: 'bg-cyan-600 hover:bg-cyan-700 shadow-lg',
       textColor: 'text-white',
       category: 'primary'

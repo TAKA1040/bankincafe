@@ -13,6 +13,11 @@ export interface SalesInvoice {
   payment_status: 'unpaid' | 'paid' | 'partial'
   payment_date: string | null
   created_at: string | null
+  // For UI layout
+  purchase_order_number: string | null 
+  registration_number: string | null
+  order_number: string | null
+  remaining_amount: number | null
 }
 
 export interface MonthlySales {
@@ -106,7 +111,12 @@ export function useSalesData() {
         status: (invoice.status as 'draft' | 'finalized' | 'cancelled') || 'draft',
         payment_status: (invoice.payment_status as 'unpaid' | 'paid' | 'partial') || 'unpaid',
         payment_date: invoice.payment_date || null,
-        created_at: invoice.created_at
+        created_at: invoice.created_at,
+        // Dummy data for UI layout
+        purchase_order_number: null,
+        registration_number: null,
+        order_number: null,
+        remaining_amount: null,
       }))
 
       setInvoices(salesInvoices)
@@ -318,6 +328,74 @@ export function useSalesData() {
     setTimeout(() => URL.revokeObjectURL(url), 100)
   }, [invoices])
 
+  const getPaymentStatusSummary = useCallback((year?: number) => {
+    let filteredData = invoices;
+    if (year) {
+      filteredData = invoices.filter(invoice => {
+        if (!invoice.issue_date) return false;
+        const invoiceYear = new Date(invoice.issue_date).getFullYear();
+        return invoiceYear === year;
+      });
+    }
+
+    const summary = {
+      unpaid: { count: 0, total: 0 },
+      paid: { count: 0, total: 0 },
+    };
+
+    for (const invoice of filteredData) {
+      if (invoice.payment_status === 'unpaid') {
+        summary.unpaid.count++;
+        summary.unpaid.total += invoice.total_amount;
+      } else if (invoice.payment_status === 'paid') {
+        summary.paid.count++;
+        summary.paid.total += invoice.total_amount;
+      }
+    }
+    return summary;
+  }, [invoices]);
+
+  const updateInvoicesPaymentStatus = useCallback(async (invoiceIds: string[], paymentDate: string) => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const { error } = await supabase
+        .from('invoices')
+        .update({
+          payment_status: 'paid',
+          payment_date: paymentDate,
+        })
+        .in('invoice_id', invoiceIds);
+
+      if (error) {
+        const isInvalidColumn = error && (
+            (error as any).code === '42703' ||
+            String((error as any).message || '').toLowerCase().includes('column') &&
+            String((error as any).message || '').includes('payment_date')
+        );
+
+        if (isInvalidColumn) {
+            const { error: fallbackError } = await supabase
+                .from('invoices')
+                .update({ payment_status: 'paid' })
+                .in('invoice_id', invoiceIds);
+            if (fallbackError) throw fallbackError;
+        } else {
+            throw error;
+        }
+      }
+
+      await fetchInvoices();
+      return true;
+    } catch (err) {
+      console.error('Failed to update payment status:', err);
+      setError(err instanceof Error ? err.message : '入金状況の更新に失敗しました');
+      setLoading(false);
+      return false;
+    }
+  }, [fetchInvoices]);
+
   // 初期データロード
   useEffect(() => {
     fetchInvoices()
@@ -332,6 +410,8 @@ export function useSalesData() {
     getStatistics,
     getAvailableYears,
     exportToCSV,
-    refetch: fetchInvoices
+    refetch: fetchInvoices,
+    getPaymentStatusSummary,
+    updateInvoicesPaymentStatus
   }
 }
