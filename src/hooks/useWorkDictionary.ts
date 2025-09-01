@@ -7,6 +7,7 @@ import { supabase } from '@/lib/supabase'
 export interface Target {
   id: number
   name: string
+  reading?: string
   sort_order: number
 }
 

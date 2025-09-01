@@ -109,7 +109,7 @@ export default function WorkDictionaryPage() {
   }
 
   // 対象の保存
-  const saveTarget = async (data: { name: string, sort_order: number }) => {
+  const saveTarget = async (data: { name: string, reading?: string, sort_order: number }) => {
     try {
       setSaving(true)
       
@@ -462,22 +462,34 @@ export default function WorkDictionaryPage() {
       const currentIndex = sortedItems.findIndex(item => item.id === id)
       
       if (direction === 'up' && currentIndex > 0) {
-        // 上に移動：前の項目と順序を交換
         const prevItem = sortedItems[currentIndex - 1]
-        const newCurrentOrder = prevItem.sort_order
-        const newPrevOrder = currentItem.sort_order
         
-        await supabase.from(table).update({ sort_order: newCurrentOrder }).eq('id', currentItem.id)
-        await supabase.from(table).update({ sort_order: newPrevOrder }).eq('id', prevItem.id)
+        // 3段階で順序を入れ替え（一時的な値を使用）
+        const tempSortOrder = Math.max(...sortedItems.map(s => s.sort_order)) + 1000
+        
+        // 1. 現在のアイテムを一時的な値に設定
+        await supabase.from(table).update({ sort_order: tempSortOrder }).eq('id', currentItem.id)
+        
+        // 2. 前のアイテムを現在のアイテムの元の順序に設定
+        await supabase.from(table).update({ sort_order: currentItem.sort_order }).eq('id', prevItem.id)
+        
+        // 3. 現在のアイテムを前のアイテムの元の順序に設定
+        await supabase.from(table).update({ sort_order: prevItem.sort_order }).eq('id', currentItem.id)
         
       } else if (direction === 'down' && currentIndex < sortedItems.length - 1) {
-        // 下に移動：次の項目と順序を交換
         const nextItem = sortedItems[currentIndex + 1]
-        const newCurrentOrder = nextItem.sort_order
-        const newNextOrder = currentItem.sort_order
         
-        await supabase.from(table).update({ sort_order: newCurrentOrder }).eq('id', currentItem.id)
-        await supabase.from(table).update({ sort_order: newNextOrder }).eq('id', nextItem.id)
+        // 3段階で順序を入れ替え（一時的な値を使用）
+        const tempSortOrder = Math.max(...sortedItems.map(s => s.sort_order)) + 1000
+        
+        // 1. 現在のアイテムを一時的な値に設定
+        await supabase.from(table).update({ sort_order: tempSortOrder }).eq('id', currentItem.id)
+        
+        // 2. 次のアイテムを現在のアイテムの元の順序に設定
+        await supabase.from(table).update({ sort_order: currentItem.sort_order }).eq('id', nextItem.id)
+        
+        // 3. 現在のアイテムを次のアイテムの元の順序に設定
+        await supabase.from(table).update({ sort_order: nextItem.sort_order }).eq('id', currentItem.id)
       }
       
       await loadAllData()
@@ -523,7 +535,18 @@ export default function WorkDictionaryPage() {
     onCancel: () => void
   }) => {
     const [name, setName] = useState(item?.name || '')
+    const [reading, setReading] = useState(type === 'target' ? (item?.reading || '') : '')
     const [sortOrder, setSortOrder] = useState(item?.sort_order || 0)
+    
+
+    // タイプが変更された際に読み仮名をリセット
+    useEffect(() => {
+      if (type !== 'target') {
+        setReading('')
+      } else {
+        setReading(item?.reading || '')
+      }
+    }, [type, item?.reading])
 
     const handleSubmit = (e: React.FormEvent) => {
       e.preventDefault()
@@ -531,12 +554,16 @@ export default function WorkDictionaryPage() {
         alert('名前を入力してください')
         return
       }
-      onSave({ name: name.trim(), sort_order: sortOrder })
+      const saveData: any = { name: name.trim(), sort_order: sortOrder }
+      if (type === 'target') {
+        saveData.reading = reading.trim()
+      }
+      onSave(saveData)
     }
 
     return (
       <tr className="bg-yellow-50">
-        <td colSpan={5} className="px-4 py-2">
+        <td colSpan={type === 'target' ? 6 : 5} className="px-4 py-2">
           <form onSubmit={handleSubmit} className="flex items-center gap-2">
             <div className="text-sm text-gray-600 min-w-8">ID</div>
             <input
@@ -547,6 +574,15 @@ export default function WorkDictionaryPage() {
               placeholder="名前を入力"
               autoFocus
             />
+            {(type === 'target') ? (
+              <input
+                type="text"
+                value={reading}
+                onChange={(e) => setReading(e.target.value)}
+                className="flex-1 px-2 py-1 border rounded"
+                placeholder="読み仮名を入力（ひらがな）"
+              />
+            ) : null}
             <input
               type="number"
               value={sortOrder}
@@ -771,6 +807,7 @@ export default function WorkDictionaryPage() {
                       <tr className="bg-gray-100">
                         <th className="border border-gray-300 px-4 py-2 text-left">ID</th>
                         <th className="border border-gray-300 px-4 py-2 text-left">名前</th>
+                        <th className="border border-gray-300 px-4 py-2 text-left">読み仮名</th>
                         <th className="border border-gray-300 px-4 py-2 text-left">順序</th>
                         <th className="border border-gray-300 px-4 py-2 text-left">順序変更</th>
                         <th className="border border-gray-300 px-4 py-2 text-left">操作</th>
@@ -797,6 +834,9 @@ export default function WorkDictionaryPage() {
                           <tr key={target.id} className="hover:bg-gray-50">
                             <td className="border border-gray-300 px-4 py-2">{target.id}</td>
                             <td className="border border-gray-300 px-4 py-2">{target.name}</td>
+                            <td className="border border-gray-300 px-4 py-2">
+                              {target.reading || (hasKanji(target.name) ? '（読み仮名なし）' : '')}
+                            </td>
                             <td className="border border-gray-300 px-4 py-2">{target.sort_order}</td>
                             <td className="border border-gray-300 px-4 py-2">
                               <div className="flex gap-1">

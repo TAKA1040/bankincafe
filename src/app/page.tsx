@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { FileText, Users, Search, Clock, BarChart3, Plus, Calculator, TrendingUp, Settings, Hash, BookOpen, Edit3 } from 'lucide-react'
+import { FileText, Users, Search, Clock, BarChart3, Plus, Calculator, TrendingUp, Settings, Hash, BookOpen, Edit3, Building2 } from 'lucide-react'
 
 export default function HomePage() {
   const router = useRouter()
@@ -33,6 +33,15 @@ export default function HomePage() {
       color: 'bg-violet-600 hover:bg-violet-700 shadow-lg',
       textColor: 'text-white',
       category: 'management'
+    },
+    {
+      title: '会社情報設定',
+      description: '会社情報・請求書発行元情報の設定',
+      icon: Building2,
+      path: '/company-settings',
+      color: 'bg-slate-600 hover:bg-slate-700 shadow-lg',
+      textColor: 'text-white',
+      category: 'settings'
     },
     {
       title: '顧客カテゴリ設定',

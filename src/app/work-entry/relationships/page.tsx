@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 // 現在のハードコーディングされたデータをインポート（実際は共通化が必要）
 const TARGETS = ["タイヤ","ホイール","ライト","コーナーパネル","フラッシャー","バンパー","ライニング","スプリングシート"]

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo, useEffect } from 'react'
-import { Input } from '@/components/ui/Input'
+import { Input } from '@/components/ui/input'
 import { WorkItemDB, WorkItem, WorkItemSuggestion } from '@/components/work-entry/WorkItemDB'
 
 // 基本データ
