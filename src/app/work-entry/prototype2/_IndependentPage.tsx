@@ -18,6 +18,46 @@ function formatJPY(n: number | string) {
   return new Intl.NumberFormat("ja-JP").format(num);
 }
 
+// 位置組み合わせユーティリティ
+function combinePositions(positions: string[]): string {
+  if (positions.length === 0) return "";
+  if (positions.length === 1) return positions[0];
+  
+  // 特定の組み合わせパターンを優先処理
+  const posSet = new Set(positions);
+  
+  // 左右の組み合わせ
+  if (posSet.has("左") && posSet.has("右")) {
+    const remaining = positions.filter(p => p !== "左" && p !== "右");
+    if (remaining.length === 0) return "左右";
+    return remaining.join("") + "左右";
+  }
+  
+  // 前後の組み合わせ  
+  if (posSet.has("前") && posSet.has("後")) {
+    const remaining = positions.filter(p => p !== "前" && p !== "後");
+    if (remaining.length === 0) return "前後";
+    return remaining.join("") + "前後";
+  }
+  
+  // 上下の組み合わせ
+  if (posSet.has("上") && posSet.has("下")) {
+    const remaining = positions.filter(p => p !== "上" && p !== "下");
+    if (remaining.length === 0) return "上下";
+    return remaining.join("") + "上下";
+  }
+  
+  // 内外の組み合わせ
+  if (posSet.has("内") && posSet.has("外")) {
+    const remaining = positions.filter(p => p !== "内" && p !== "外");
+    if (remaining.length === 0) return "内外";
+    return remaining.join("") + "内外";
+  }
+  
+  // その他の組み合わせは順番に結合
+  return positions.join("");
+}
+
 function normalizeText(text: string): string {
   return text
     .toLowerCase()
@@ -132,6 +172,7 @@ export default function WorkEntryPrototype2() {
   const [target, setTarget] = useState("");
   const [action, setAction] = useState<string | undefined>();
   const [position, setPosition] = useState<string | undefined>();
+  const [selectedPositions, setSelectedPositions] = useState<string[]>([]);
   const [memo, setMemo] = useState("");
   const [unitPrice, setUnitPrice] = useState(0);
   const [qty, setQty] = useState(1);
@@ -192,6 +233,7 @@ export default function WorkEntryPrototype2() {
   const [detailTarget, setDetailTarget] = useState("");
   const [detailAction, setDetailAction] = useState("");
   const [detailPosition, setDetailPosition] = useState("");
+  const [selectedDetailPositions, setSelectedDetailPositions] = useState<string[]>([]);
   const [detailMemo, setDetailMemo] = useState("");
   const [detailQuantity, setDetailQuantity] = useState<number>(1);
   const [isDetailTargetConfirmed, setIsDetailTargetConfirmed] = useState(false);
@@ -359,12 +401,24 @@ export default function WorkEntryPrototype2() {
     }
   }
   function handlePositionSuggestionSelect(s: string) {
+    // 入力フィールドから直接選択した場合は単一選択モード
     setPosition(s);
+    setSelectedPositions([s]); // 選択状態も更新
     setShowPositionSuggestions(false);
     setSelectedPositionSuggestionIndex(-1);
   }
   function handlePositionSelect(p: string) {
-    handlePositionSuggestionSelect(p);
+    // 複数選択モード：選択済みなら削除、未選択なら追加
+    setSelectedPositions(prev => {
+      const newSelected = prev.includes(p) 
+        ? prev.filter(pos => pos !== p)
+        : [...prev, p];
+      
+      // 組み合わせた位置を入力フィールドに設定
+      const combined = combinePositions(newSelected);
+      setPosition(combined || undefined);
+      return newSelected;
+    });
   }
 
   // set detail handlers
@@ -491,9 +545,25 @@ export default function WorkEntryPrototype2() {
     }
   }
   function handleDetailPositionSuggestionSelect(s: string) {
+    // 入力フィールドから直接選択した場合は単一選択モード
     setDetailPosition(s);
+    setSelectedDetailPositions([s]); // 選択状態も更新
     setShowDetailPositionSuggestions(false);
     setSelectedDetailPositionSuggestionIndex(-1);
+  }
+  
+  function handleDetailPositionSelect(p: string) {
+    // 複数選択モード：選択済みなら削除、未選択なら追加
+    setSelectedDetailPositions(prev => {
+      const newSelected = prev.includes(p) 
+        ? prev.filter(pos => pos !== p)
+        : [...prev, p];
+      
+      // 組み合わせた位置を入力フィールドに設定
+      const combined = combinePositions(newSelected);
+      setDetailPosition(combined);
+      return newSelected;
+    });
   }
 
   // add/save
@@ -783,8 +853,8 @@ export default function WorkEntryPrototype2() {
                             type="button"
                             onClick={() => handlePositionSelect(p)}
                             className={`px-2 py-1 text-xs rounded border transition-colors ${
-                              position === p
-                                ? "bg-blue-100 border-blue-300 text-blue-800"
+                              selectedPositions.includes(p)
+                                ? "bg-blue-500 text-white border-blue-600"
                                 : "bg-gray-100 hover:bg-blue-100 border-gray-300"
                             }`}
                           >
@@ -1003,10 +1073,10 @@ export default function WorkEntryPrototype2() {
                           <button
                             key={p}
                             type="button"
-                            onClick={() => setDetailPosition(p)}
+                            onClick={() => handleDetailPositionSelect(p)}
                             className={`px-2 py-1 text-xs rounded border transition-colors ${
-                              detailPosition === p
-                                ? "bg-blue-100 border-blue-300 text-blue-800"
+                              selectedDetailPositions.includes(p)
+                                ? "bg-blue-500 text-white border-blue-600"
                                 : "bg-gray-100 hover:bg-blue-100 border-gray-300"
                             }`}
                           >

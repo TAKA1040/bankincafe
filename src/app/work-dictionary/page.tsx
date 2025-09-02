@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { Settings, Plus, Trash2, Edit2, Save, X, ArrowLeft, ArrowUp, ArrowDown } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
@@ -28,7 +28,17 @@ export default function WorkDictionaryPage() {
   const [priceSuggestions, setPriceSuggestions] = useState<PriceSuggestion[]>([])
   
   // 編集状態
-  const [editingItem, setEditingItem] = useState<any>(null)
+  type EditingItem = any // TODO: 適切な型定義に変更予定
+  const [editingItem, setEditingItem] = useState<EditingItem>(null)
+  
+  // エラーハンドリング用の状態
+  const [error, setError] = useState<string | null>(null)
+  
+  // エラー表示用のヘルパー
+  const showError = useCallback((message: string) => {
+    setError(message)
+    setTimeout(() => setError(null), 5000)
+  }, [])
   const [isAdding, setIsAdding] = useState(false)
   
   // フィルタリング状態
@@ -46,11 +56,7 @@ export default function WorkDictionaryPage() {
   const [saving, setSaving] = useState(false)
 
   // データ読み込み
-  useEffect(() => {
-    loadAllData()
-  }, [])
-
-  const loadAllData = async () => {
+  const loadAllData = useCallback(async () => {
     try {
       setLoading(true)
       
@@ -102,14 +108,18 @@ export default function WorkDictionaryPage() {
       
     } catch (error) {
       console.error('データ読み込みエラー:', error)
-      alert('データの読み込みに失敗しました')
+      showError('データの読み込みに失敗しました。ページをリロードしてください。')
     } finally {
       setLoading(false)
     }
-  }
+  }, [showError])
+
+  useEffect(() => {
+    loadAllData()
+  }, [loadAllData])
 
   // 対象の保存
-  const saveTarget = async (data: { name: string, reading?: string, sort_order: number }) => {
+  const saveTarget = useCallback(async (data: { name: string, reading?: string, sort_order: number }) => {
     try {
       setSaving(true)
       
@@ -152,14 +162,14 @@ export default function WorkDictionaryPage() {
       
     } catch (error) {
       console.error('保存エラー:', error)
-      alert('保存に失敗しました')
+      showError('保存に失敗しました。もう一度お試しください。')
     } finally {
       setSaving(false)
     }
-  }
+  }, [editingItem, readingMappings, loadAllData, showError])
 
   // 動作の保存
-  const saveAction = async (data: { name: string, sort_order: number }) => {
+  const saveAction = useCallback(async (data: { name: string, sort_order: number }) => {
     try {
       setSaving(true)
       
@@ -202,14 +212,14 @@ export default function WorkDictionaryPage() {
       
     } catch (error) {
       console.error('保存エラー:', error)
-      alert('保存に失敗しました')
+      showError('保存に失敗しました。もう一度お試しください。')
     } finally {
       setSaving(false)
     }
-  }
+  }, [editingItem, readingMappings, loadAllData, showError])
 
   // 位置の保存
-  const savePosition = async (data: { name: string, sort_order: number }) => {
+  const savePosition = useCallback(async (data: { name: string, sort_order: number }) => {
     try {
       setSaving(true)
       
@@ -252,14 +262,14 @@ export default function WorkDictionaryPage() {
       
     } catch (error) {
       console.error('保存エラー:', error)
-      alert('保存に失敗しました')
+      showError('保存に失敗しました。もう一度お試しください。')
     } finally {
       setSaving(false)
     }
-  }
+  }, [editingItem, readingMappings, loadAllData, showError])
 
   // 読み仮名の保存
-  const saveReading = async (data: { word: string, reading_hiragana: string, reading_katakana: string, word_type: 'target' | 'action' | 'position' }) => {
+  const saveReading = useCallback(async (data: { word: string, reading_hiragana: string, reading_katakana: string, word_type: 'target' | 'action' | 'position' }) => {
     try {
       setSaving(true)
       
@@ -285,11 +295,11 @@ export default function WorkDictionaryPage() {
       
     } catch (error) {
       console.error('保存エラー:', error)
-      alert('保存に失敗しました')
+      showError('保存に失敗しました。もう一度お試しください。')
     } finally {
       setSaving(false)
     }
-  }
+  }, [editingItem, loadAllData, showError])
 
   // 対象↔動作関連の保存
   const saveTargetAction = async (targetId: number, actionId: number) => {
@@ -449,58 +459,142 @@ export default function WorkDictionaryPage() {
     }
   }
 
-  // 順序変更機能
-  const changeSortOrder = async (table: 'targets' | 'actions' | 'positions', id: number, direction: 'up' | 'down') => {
+  // 順序正規化関数（重複を解決して連番にする）
+  const normalizeSortOrder = useCallback(async (table: 'targets' | 'actions' | 'positions') => {
+    try {
+      const { data: items, error } = await supabase
+        .from(table)
+        .select('id, sort_order')
+        .eq('is_active', true)
+        .order('sort_order, id') // sort_order同じ場合はidでソート
+      
+      if (error) throw error
+      if (!items || items.length === 0) return
+      
+      // 連番になっていない、または重複がある場合のみ更新
+      const needsUpdate = items.some((item, index) => item.sort_order !== index + 1)
+      
+      if (needsUpdate) {
+        console.log(`${table}の順序を正規化中...`)
+        
+        // 一時的な大きな値を使用して重複を回避
+        const tempOffset = 10000
+        
+        // 段院1: 一時的な値に変更
+        for (let i = 0; i < items.length; i++) {
+          await supabase
+            .from(table)
+            .update({ sort_order: tempOffset + i })
+            .eq('id', items[i].id)
+        }
+        
+        // 段院2: 正しい連番に変更
+        for (let i = 0; i < items.length; i++) {
+          await supabase
+            .from(table)
+            .update({ sort_order: i + 1 })
+            .eq('id', items[i].id)
+        }
+        
+        console.log(`✅ ${table}の順序正規化完了`)
+      }
+      
+    } catch (error) {
+      console.error(`${table}の順序正規化エラー:`, error)
+      throw error
+    }
+  }, [])
+  
+  // 改善された順序変更機能
+  const changeSortOrder = useCallback(async (table: 'targets' | 'actions' | 'positions', id: number, direction: 'up' | 'down') => {
     try {
       setSaving(true)
       
-      const dataArray = table === 'targets' ? targets : table === 'actions' ? actions : positions
-      const currentItem = dataArray.find(item => item.id === id)
-      if (!currentItem) return
+      // まず順序を正規化
+      await normalizeSortOrder(table)
       
-      const sortedItems = [...dataArray].sort((a, b) => a.sort_order - b.sort_order)
-      const currentIndex = sortedItems.findIndex(item => item.id === id)
+      // 最新データを取得
+      const { data: items, error } = await supabase
+        .from(table)
+        .select('id, sort_order')
+        .eq('is_active', true)
+        .order('sort_order')
+      
+      if (error) throw error
+      if (!items) return
+      
+      const currentIndex = items.findIndex(item => item.id === id)
+      if (currentIndex === -1) return
+      
+      const currentItem = items[currentIndex]
+      let targetIndex = -1
       
       if (direction === 'up' && currentIndex > 0) {
-        const prevItem = sortedItems[currentIndex - 1]
+        targetIndex = currentIndex - 1
+      } else if (direction === 'down' && currentIndex < items.length - 1) {
+        targetIndex = currentIndex + 1
+      }
+      
+      if (targetIndex === -1) return // 移動不可
+      
+      const targetItem = items[targetIndex]
+      
+      // シンプルなスワップ（正規化済みなので連番が保証されている）
+      const updates = [
+        { id: currentItem.id, sort_order: targetItem.sort_order },
+        { id: targetItem.id, sort_order: currentItem.sort_order }
+      ]
+      
+      // 一括更新
+      for (const update of updates) {
+        const { error: updateError } = await supabase
+          .from(table)
+          .update({ sort_order: update.sort_order })
+          .eq('id', update.id)
         
-        // 3段階で順序を入れ替え（一時的な値を使用）
-        const tempSortOrder = Math.max(...sortedItems.map(s => s.sort_order)) + 1000
-        
-        // 1. 現在のアイテムを一時的な値に設定
-        await supabase.from(table).update({ sort_order: tempSortOrder }).eq('id', currentItem.id)
-        
-        // 2. 前のアイテムを現在のアイテムの元の順序に設定
-        await supabase.from(table).update({ sort_order: currentItem.sort_order }).eq('id', prevItem.id)
-        
-        // 3. 現在のアイテムを前のアイテムの元の順序に設定
-        await supabase.from(table).update({ sort_order: prevItem.sort_order }).eq('id', currentItem.id)
-        
-      } else if (direction === 'down' && currentIndex < sortedItems.length - 1) {
-        const nextItem = sortedItems[currentIndex + 1]
-        
-        // 3段階で順序を入れ替え（一時的な値を使用）
-        const tempSortOrder = Math.max(...sortedItems.map(s => s.sort_order)) + 1000
-        
-        // 1. 現在のアイテムを一時的な値に設定
-        await supabase.from(table).update({ sort_order: tempSortOrder }).eq('id', currentItem.id)
-        
-        // 2. 次のアイテムを現在のアイテムの元の順序に設定
-        await supabase.from(table).update({ sort_order: currentItem.sort_order }).eq('id', nextItem.id)
-        
-        // 3. 現在のアイテムを次のアイテムの元の順序に設定
-        await supabase.from(table).update({ sort_order: nextItem.sort_order }).eq('id', currentItem.id)
+        if (updateError) throw updateError
       }
       
       await loadAllData()
       
     } catch (error) {
       console.error('順序変更エラー:', error)
-      alert('順序の変更に失敗しました')
+      showError('順序の変更に失敗しました。もう一度お試しください。')
     } finally {
       setSaving(false)
     }
-  }
+  }, [normalizeSortOrder, loadAllData, showError])
+
+  // 全マスタ一括整列機能
+  const normalizeAllSortOrders = useCallback(async () => {
+    if (!confirm('全てのマスタの順序を整列しますか？\n（重複や欠番を修正し、連番に整理します）')) {
+      return
+    }
+    
+    try {
+      setSaving(true)
+      console.log('🔧 全マスタ順序整列開始...')
+      
+      // 全マスタの順序を正規化
+      await normalizeSortOrder('targets')
+      await normalizeSortOrder('actions')  
+      await normalizeSortOrder('positions')
+      
+      // データを再読み込み
+      await loadAllData()
+      
+      // 成功メッセージ
+      const successMessage = '✅ 順序整列完了！\n全てのマスタが連番に整理されました。'
+      alert(successMessage)
+      console.log('🎉 全マスタ順序整列完了')
+      
+    } catch (error) {
+      console.error('❌ 整列エラー:', error)
+      showError('順序の整列に失敗しました。もう一度お試しください。')
+    } finally {
+      setSaving(false)
+    }
+  }, [normalizeSortOrder, loadAllData, showError])
 
   // 削除処理
   const deleteItem = async (table: string, id: number) => {
@@ -527,6 +621,43 @@ export default function WorkDictionaryPage() {
     }
   }
 
+  // フィルタリングされたデータ（パフォーマンス最適化）
+  const filteredTargetActions = useMemo(() => 
+    targetActions.filter(ta => !selectedTargetFilter || ta.target_id === selectedTargetFilter),
+    [targetActions, selectedTargetFilter]
+  )
+
+  const filteredActionPositions = useMemo(() => 
+    actionPositions.filter(ap => !selectedActionFilter || ap.action_id === selectedActionFilter),
+    [actionPositions, selectedActionFilter]
+  )
+
+  // エラー表示コンポーネント
+  const ErrorMessage = () => {
+    if (!error) return null
+    
+    return (
+      <div className="fixed top-4 right-4 z-50 max-w-md">
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg shadow-lg flex items-center gap-2">
+          <div className="flex-shrink-0">
+            <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+            </svg>
+          </div>
+          <div className="flex-grow text-sm">{error}</div>
+          <button
+            onClick={() => setError(null)}
+            className="flex-shrink-0 text-red-500 hover:text-red-700"
+          >
+            <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   // 編集フォームコンポーネント
   const EditForm = ({ type, item, onSave, onCancel }: {
     type: 'target' | 'action' | 'position'
@@ -534,19 +665,21 @@ export default function WorkDictionaryPage() {
     onSave: (data: any) => void
     onCancel: () => void
   }) => {
+    // 初期値を直接設定（useEffectを削除してパフォーマンス改善）
     const [name, setName] = useState(item?.name || '')
     const [reading, setReading] = useState(type === 'target' ? (item?.reading || '') : '')
-    const [sortOrder, setSortOrder] = useState(item?.sort_order || 0)
+    // 新規追加時のデフォルト順序を最大値+1に設定
+    const getDefaultSortOrder = useCallback(() => {
+      if (item?.sort_order) return item.sort_order
+      
+      const dataArray = type === 'target' ? targets : type === 'action' ? actions : positions
+      if (dataArray.length === 0) return 1
+      
+      const maxSortOrder = Math.max(...dataArray.map(item => item.sort_order || 0))
+      return maxSortOrder + 1
+    }, [type, item?.sort_order])
     
-
-    // タイプが変更された際に読み仮名をリセット
-    useEffect(() => {
-      if (type !== 'target') {
-        setReading('')
-      } else {
-        setReading(item?.reading || '')
-      }
-    }, [type, item?.reading])
+    const [sortOrder, setSortOrder] = useState(getDefaultSortOrder())
 
     const handleSubmit = (e: React.FormEvent) => {
       e.preventDefault()
@@ -709,6 +842,7 @@ export default function WorkDictionaryPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <ErrorMessage />
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* ヘッダー */}
         <header className="bg-white rounded-lg shadow-sm p-6 mb-6">
@@ -1141,14 +1275,23 @@ export default function WorkDictionaryPage() {
                                   <Edit2 size={16} />
                                 </button>
                                 <button
-                                  onClick={() => {
+                                  onClick={async () => {
                                     if (!confirm('本当に削除しますか？')) return
-                                    supabase
-                                      .from('reading_mappings')
-                                      .delete()
-                                      .eq('word', reading.word)
-                                      .eq('word_type', reading.word_type)
-                                      .then(() => loadAllData())
+                                    try {
+                                      setSaving(true)
+                                      const { error } = await supabase
+                                        .from('reading_mappings')
+                                        .delete()
+                                        .eq('word', reading.word)
+                                        .eq('word_type', reading.word_type)
+                                      if (error) throw error
+                                      await loadAllData()
+                                    } catch (error) {
+                                      console.error('削除エラー:', error)
+                                      showError('削除に失敗しました。もう一度お試しください。')
+                                    } finally {
+                                      setSaving(false)
+                                    }
                                   }}
                                   disabled={saving}
                                   className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600 disabled:opacity-50"
@@ -1311,9 +1454,7 @@ export default function WorkDictionaryPage() {
                           </tr>
                         </thead>
                         <tbody>
-                          {targetActions
-                            .filter(ta => !selectedTargetFilter || ta.target_id === selectedTargetFilter)
-                            .map((ta, index) => (
+                          {filteredTargetActions.map((ta, index) => (
                             <tr key={index} className="hover:bg-gray-50">
                               <td className="border border-gray-300 px-4 py-2">
                                 <span className={`px-2 py-1 rounded ${selectedTargetFilter === ta.target_id ? 'bg-blue-100 text-blue-800' : ''}`}>
@@ -1332,7 +1473,7 @@ export default function WorkDictionaryPage() {
                               </td>
                             </tr>
                           ))}
-                          {targetActions.filter(ta => !selectedTargetFilter || ta.target_id === selectedTargetFilter).length === 0 && (
+                          {filteredTargetActions.length === 0 && (
                             <tr>
                               <td colSpan={3} className="border border-gray-300 px-4 py-8 text-center text-gray-500">
                                 {selectedTargetFilter ? '選択した対象に関連する動作がありません' : '関連が登録されていません'}
@@ -1485,9 +1626,7 @@ export default function WorkDictionaryPage() {
                           </tr>
                         </thead>
                         <tbody>
-                          {actionPositions
-                            .filter(ap => !selectedActionFilter || ap.action_id === selectedActionFilter)
-                            .map((ap, index) => (
+                          {filteredActionPositions.map((ap, index) => (
                             <tr key={index} className="hover:bg-gray-50">
                               <td className="border border-gray-300 px-4 py-2">
                                 <span className={`px-2 py-1 rounded ${selectedActionFilter === ap.action_id ? 'bg-green-100 text-green-800' : ''}`}>
@@ -1506,7 +1645,7 @@ export default function WorkDictionaryPage() {
                               </td>
                             </tr>
                           ))}
-                          {actionPositions.filter(ap => !selectedActionFilter || ap.action_id === selectedActionFilter).length === 0 && (
+                          {filteredActionPositions.length === 0 && (
                             <tr>
                               <td colSpan={3} className="border border-gray-300 px-4 py-8 text-center text-gray-500">
                                 {selectedActionFilter ? '選択した動作に関連する位置がありません' : '関連が登録されていません'}
@@ -1520,6 +1659,25 @@ export default function WorkDictionaryPage() {
                 </div>
               </div>
             )}
+          </div>
+          
+          {/* 管理者向け整列ボタン（こっそり配置） */}
+          <div className="mt-8 pt-4 border-t border-gray-200">
+            <div className="flex justify-end">
+              <button
+                onClick={normalizeAllSortOrders}
+                disabled={saving || loading}
+                className="px-3 py-1 text-xs bg-gray-100 text-gray-600 rounded hover:bg-gray-200 disabled:opacity-50 transition-colors duration-200"
+                title="全マスタの順序を整列（重複解決・連番化）"
+              >
+                {saving ? '整列中...' : '🔧 順序整列'}
+              </button>
+            </div>
+            <div className="text-right mt-1">
+              <span className="text-xs text-gray-400">
+                管理者用：順序の重複や欠番を修正
+              </span>
+            </div>
           </div>
         </div>
       </div>
