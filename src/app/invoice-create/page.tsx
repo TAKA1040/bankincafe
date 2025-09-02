@@ -4,16 +4,58 @@ import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Plus, Trash2, Save, Search, Calculator } from 'lucide-react'
 
+// 位置組み合わせユーティリティ
+function combinePositions(positions: string[]): string {
+  if (positions.length === 0) return "";
+  if (positions.length === 1) return positions[0];
+  
+  // 特定の組み合わせパターンを優先処理
+  const posSet = new Set(positions);
+  
+  // 左右の組み合わせ
+  if (posSet.has("左") && posSet.has("右")) {
+    const remaining = positions.filter(p => p !== "左" && p !== "右");
+    if (remaining.length === 0) return "左右";
+    return remaining.join("") + "左右";
+  }
+  
+  // 前後の組み合わせ  
+  if (posSet.has("前") && posSet.has("後")) {
+    const remaining = positions.filter(p => p !== "前" && p !== "後");
+    if (remaining.length === 0) return "前後";
+    return remaining.join("") + "前後";
+  }
+  
+  // 上下の組み合わせ
+  if (posSet.has("上") && posSet.has("下")) {
+    const remaining = positions.filter(p => p !== "上" && p !== "下");
+    if (remaining.length === 0) return "上下";
+    return remaining.join("") + "上下";
+  }
+  
+  // 内外の組み合わせ
+  if (posSet.has("内") && posSet.has("外")) {
+    const remaining = positions.filter(p => p !== "内" && p !== "外");
+    if (remaining.length === 0) return "内外";
+    return remaining.join("") + "内外";
+  }
+  
+  // その他の組み合わせは順番に結合
+  return positions.join("");
+}
+
 // 型定義
 interface WorkItem {
   id: number
   type: 'individual' | 'set'
   work_name: string
+  position?: string
   unit_price: number
   quantity: number
   amount: number
   memo: string
   set_details?: string[]
+  detail_positions?: string[]
 }
 
 interface CustomerCategory {
@@ -452,12 +494,17 @@ export default function InvoiceCreatePage() {
       id: newId,
       type: type,
       work_name: '',
+      position: '',
       unit_price: 0,
       quantity: 1,
       amount: 0,
       memo: '',
-      set_details: type === 'set' ? [''] : []
+      set_details: type === 'set' ? [''] : [],
+      detail_positions: []
     }])
+    // 新しい作業項目の位置選択状態を初期化
+    setSelectedPositions(prev => ({ ...prev, [newId]: [] }))
+    setSelectedDetailPositions(prev => ({ ...prev, [newId]: {} }))
   }
 
   // 作業項目削除
@@ -526,6 +573,51 @@ export default function InvoiceCreatePage() {
         )
       } : item
     ))
+  }
+  
+  // 位置選択ハンドラー
+  const handlePositionSelect = (itemId: number, position: string) => {
+    setSelectedPositions(prev => {
+      const itemPositions = prev[itemId] || [];
+      const newSelected = itemPositions.includes(position) 
+        ? itemPositions.filter(p => p !== position)
+        : [...itemPositions, position];
+      
+      const combined = combinePositions(newSelected);
+      
+      setWorkItems(prevItems => prevItems.map(item =>
+        item.id === itemId ? { ...item, position: combined } : item
+      ));
+      
+      return { ...prev, [itemId]: newSelected };
+    });
+  }
+  
+  // セット詳細位置選択ハンドラー
+  const handleDetailPositionSelect = (itemId: number, detailIndex: number, position: string) => {
+    setSelectedDetailPositions(prev => {
+      const itemDetails = prev[itemId] || {};
+      const detailPositions = itemDetails[detailIndex] || [];
+      const newSelected = detailPositions.includes(position)
+        ? detailPositions.filter(p => p !== position)
+        : [...detailPositions, position];
+      
+      const combined = combinePositions(newSelected);
+      
+      setWorkItems(prevItems => prevItems.map(item => {
+        if (item.id === itemId && item.type === 'set') {
+          const updatedDetailPositions = [...(item.detail_positions || [])];
+          updatedDetailPositions[detailIndex] = combined;
+          return { ...item, detail_positions: updatedDetailPositions };
+        }
+        return item;
+      }));
+      
+      return { 
+        ...prev, 
+        [itemId]: { ...itemDetails, [detailIndex]: newSelected }
+      };
+    });
   }
 
   // 保存処理
@@ -1094,6 +1186,37 @@ export default function InvoiceCreatePage() {
                       </div>
                     </div>
                     
+                    {/* 位置選択 */}
+                    <div className="mt-4">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        位置 (複数選択可)
+                      </label>
+                      <div className="flex flex-wrap gap-2">
+                        {POSITIONS.map((position) => {
+                          const isSelected = (selectedPositions[item.id] || []).includes(position);
+                          return (
+                            <button
+                              key={position}
+                              type="button"
+                              onClick={() => handlePositionSelect(item.id, position)}
+                              className={`px-3 py-1 text-sm rounded border transition-colors ${
+                                isSelected
+                                  ? 'bg-blue-500 text-white border-blue-600'
+                                  : 'bg-gray-100 hover:bg-blue-100 border-gray-300'
+                              }`}
+                            >
+                              {position}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      {item.position && (
+                        <div className="mt-2 text-sm text-gray-600">
+                          選択中: <span className="font-medium">{item.position}</span>
+                        </div>
+                      )}
+                    </div>
+                    
                     {/* セット詳細（セット作業のみ） */}
                     {item.type === 'set' && (
                       <div className="mt-4">
@@ -1109,27 +1232,59 @@ export default function InvoiceCreatePage() {
                             + 詳細追加
                           </button>
                         </div>
-                        <div className="space-y-2">
+                        <div className="space-y-4">
                           {(item.set_details || []).map((detail, detailIndex) => (
-                            <div key={detailIndex} className="flex gap-2">
-                              <input
-                                type="text"
-                                value={detail}
-                                onChange={(e) => handleSetDetailChange(item.id, detailIndex, e.target.value)}
-                                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                                placeholder={`詳細項目 ${detailIndex + 1}`}
-                                required
-                              />
-                              {(item.set_details || []).length > 1 && (
-                                <button
-                                  type="button"
-                                  onClick={() => removeSetDetail(item.id, detailIndex)}
-                                  className="px-2 py-2 text-red-600 hover:bg-red-50 rounded transition-colors"
-                                  title="この詳細を削除"
-                                >
-                                  <Trash2 size={16} />
-                                </button>
-                              )}
+                            <div key={detailIndex} className="border border-gray-200 rounded-lg p-3 bg-white">
+                              <div className="flex gap-2 mb-3">
+                                <input
+                                  type="text"
+                                  value={detail}
+                                  onChange={(e) => handleSetDetailChange(item.id, detailIndex, e.target.value)}
+                                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                                  placeholder={`詳細項目 ${detailIndex + 1}`}
+                                  required
+                                />
+                                {(item.set_details || []).length > 1 && (
+                                  <button
+                                    type="button"
+                                    onClick={() => removeSetDetail(item.id, detailIndex)}
+                                    className="px-2 py-2 text-red-600 hover:bg-red-50 rounded transition-colors"
+                                    title="この詳細を削除"
+                                  >
+                                    <Trash2 size={16} />
+                                  </button>
+                                )}
+                              </div>
+                              {/* 詳細項目の位置選択 */}
+                              <div>
+                                <label className="block text-xs font-medium text-gray-600 mb-1">
+                                  位置 (複数選択可)
+                                </label>
+                                <div className="flex flex-wrap gap-1">
+                                  {POSITIONS.map((position) => {
+                                    const isSelected = ((selectedDetailPositions[item.id] || {})[detailIndex] || []).includes(position);
+                                    return (
+                                      <button
+                                        key={position}
+                                        type="button"
+                                        onClick={() => handleDetailPositionSelect(item.id, detailIndex, position)}
+                                        className={`px-2 py-1 text-xs rounded border transition-colors ${
+                                          isSelected
+                                            ? 'bg-blue-500 text-white border-blue-600'
+                                            : 'bg-gray-100 hover:bg-blue-100 border-gray-300'
+                                        }`}
+                                      >
+                                        {position}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                                {((item.detail_positions || [])[detailIndex]) && (
+                                  <div className="mt-1 text-xs text-gray-500">
+                                    選択中: <span className="font-medium">{(item.detail_positions || [])[detailIndex]}</span>
+                                  </div>
+                                )}
+                              </div>
                             </div>
                           ))}
                         </div>
