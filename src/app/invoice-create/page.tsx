@@ -312,6 +312,9 @@ export default function InvoiceCreatePage() {
   const [subjectDb, setSubjectDb] = useState<SubjectMasterDB | null>(null)
   const [registrationDb, setRegistrationDb] = useState<RegistrationMasterDB | null>(null)
   
+  // 位置マスターデータ
+  const POSITIONS = ['前', '後', '左', '右', '上', '下', '内', '外']
+  
   // 基本情報の状態
   const [invoiceYear, setInvoiceYear] = useState(new Date().getFullYear())
   const [invoiceMonth, setInvoiceMonth] = useState(new Date().getMonth() + 1)
@@ -327,8 +330,12 @@ export default function InvoiceCreatePage() {
   
   // 作業項目の状態
   const [workItems, setWorkItems] = useState<WorkItem[]>([
-    { id: 1, type: 'individual', work_name: '', unit_price: 0, quantity: 1, amount: 0, memo: '', set_details: [] }
+    { id: 1, type: 'individual', work_name: '', position: '', unit_price: 0, quantity: 1, amount: 0, memo: '', set_details: [], detail_positions: [] }
   ])
+  
+  // 位置選択関連の状態
+  const [selectedPositions, setSelectedPositions] = useState<{ [key: number]: string[] }>({ 1: [] })  
+  const [selectedDetailPositions, setSelectedDetailPositions] = useState<{ [key: number]: { [detailIndex: number]: string[] } }>({ 1: {} })
   
   // サジェスト関連の状態
   const [customerSuggestions, setCustomerSuggestions] = useState<string[]>([])
