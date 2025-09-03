@@ -1,0 +1,24 @@
+[
+  {
+    "original": "バンパー塗装",
+    "price": 8000,
+    "invoiceId": null,
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "塗装"
+          ],
+          "remainingText": "バンパー"
+        }
+      }
+    ]
+  }
+]

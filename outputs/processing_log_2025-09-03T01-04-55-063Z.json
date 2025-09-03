@@ -1,0 +1,221 @@
+[
+  {
+    "timestamp": "2025-09-03T01:04:55.060Z",
+    "original": "左前ドア鈑金修理",
+    "result": {
+      "original": "左前ドア鈑金修理",
+      "price": 15000,
+      "invoiceId": null,
+      "items": [
+        {
+          "target": "ドア",
+          "action": "鈑金",
+          "positions": [
+            "左"
+          ],
+          "memo": "前",
+          "unitPrice": null
+        },
+        {
+          "target": "ドア",
+          "action": "修理",
+          "positions": [
+            "左"
+          ],
+          "memo": "前",
+          "unitPrice": null
+        }
+      ],
+      "isSet": true,
+      "status": "success",
+      "errors": [],
+      "setName": "左前ドア鈑金修理",
+      "setPrice": 15000
+    },
+    "processingSteps": {
+      "positions": [
+        "左"
+      ],
+      "target": "ドア",
+      "actions": [
+        "鈑金",
+        "修理"
+      ]
+    }
+  },
+  {
+    "timestamp": "2025-09-03T01:04:55.062Z",
+    "original": "バンパー塗装",
+    "result": {
+      "original": "バンパー塗装",
+      "price": 8000,
+      "invoiceId": null,
+      "items": [],
+      "isSet": false,
+      "status": "failed",
+      "errors": [
+        {
+          "reason": "insufficient_data",
+          "details": {
+            "hasTarget": false,
+            "hasActions": true,
+            "foundTarget": "",
+            "foundActions": [
+              "塗装"
+            ],
+            "remainingText": "バンパー"
+          }
+        }
+      ]
+    },
+    "processingSteps": {
+      "positions": [],
+      "target": "",
+      "actions": [
+        "塗装"
+      ]
+    }
+  },
+  {
+    "timestamp": "2025-09-03T01:04:55.062Z",
+    "original": "右サイドミラー交換",
+    "result": {
+      "original": "右サイドミラー交換",
+      "price": 5000,
+      "invoiceId": null,
+      "items": [
+        {
+          "target": "サイドミラー",
+          "action": "交換",
+          "positions": [
+            "右"
+          ],
+          "memo": "",
+          "unitPrice": 5000
+        }
+      ],
+      "isSet": false,
+      "status": "success",
+      "errors": []
+    },
+    "processingSteps": {
+      "positions": [
+        "右"
+      ],
+      "target": "サイドミラー",
+      "actions": [
+        "交換"
+      ]
+    }
+  },
+  {
+    "timestamp": "2025-09-03T01:04:55.062Z",
+    "original": "エンジンオイル交換",
+    "result": {
+      "original": "エンジンオイル交換",
+      "price": 3000,
+      "invoiceId": null,
+      "items": [
+        {
+          "target": "エンジン",
+          "action": "交換",
+          "positions": [],
+          "memo": "オイル",
+          "unitPrice": 3000
+        }
+      ],
+      "isSet": false,
+      "status": "success",
+      "errors": []
+    },
+    "processingSteps": {
+      "positions": [],
+      "target": "エンジン",
+      "actions": [
+        "交換"
+      ]
+    }
+  },
+  {
+    "timestamp": "2025-09-03T01:04:55.062Z",
+    "original": "左前ドア鈑金修理（バンパー調整含む）",
+    "result": {
+      "original": "左前ドア鈑金修理（バンパー調整含む）",
+      "price": 25000,
+      "invoiceId": null,
+      "items": [
+        {
+          "target": "ドア",
+          "action": "鈑金",
+          "positions": [
+            "左"
+          ],
+          "memo": "前（バンパー調整含む）",
+          "unitPrice": null
+        },
+        {
+          "target": "ドア",
+          "action": "修理",
+          "positions": [
+            "左"
+          ],
+          "memo": "前（バンパー調整含む）",
+          "unitPrice": null
+        }
+      ],
+      "isSet": true,
+      "status": "success",
+      "errors": [],
+      "setName": "左前ドア鈑金修理（バンパー調整含む）",
+      "setPrice": 25000
+    },
+    "processingSteps": {
+      "positions": [
+        "左"
+      ],
+      "target": "ドア",
+      "actions": [
+        "鈑金",
+        "修理"
+      ]
+    }
+  },
+  {
+    "timestamp": "2025-09-03T01:04:55.062Z",
+    "original": "ヘッドライト清掃点検",
+    "result": {
+      "original": "ヘッドライト清掃点検",
+      "price": 2000,
+      "invoiceId": null,
+      "items": [
+        {
+          "target": "ヘッドライト",
+          "action": "点検",
+          "positions": [],
+          "memo": "",
+          "unitPrice": null
+        },
+        {
+          "target": "ヘッドライト",
+          "action": "清掃",
+          "positions": [],
+          "memo": "",
+          "unitPrice": null
+        }
+      ],
+      "isSet": true,
+      "status": "success",
+      "errors": [],
+      "setName": "ヘッドライト清掃点検",
+      "setPrice": 2000
+    },
+    "processingSteps": {
+      "positions": [],
+      "target": "ヘッドライト",
+      "actions": [
+        "点検",
+        "清掃"
+      ]
+    }
+  }
+]

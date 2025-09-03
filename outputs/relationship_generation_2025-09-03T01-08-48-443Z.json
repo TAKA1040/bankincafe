@@ -1,0 +1,35 @@
+{
+  "timestamp": "2025-09-03T01:08:48.443Z",
+  "results": {
+    "results": {
+      "insertedTargetActions": 3,
+      "insertedActionPositions": 1
+    },
+    "coverage": {
+      "actualRelations": 258,
+      "totalPossible": 2268,
+      "coverageRate": "11.4"
+    },
+    "stats": {
+      "newTargetActions": 3,
+      "newActionPositions": 1,
+      "skippedTargetActions": 0,
+      "skippedActionPositions": 0,
+      "totalCombinations": 0
+    }
+  },
+  "stats": {
+    "newTargetActions": 3,
+    "newActionPositions": 1,
+    "skippedTargetActions": 0,
+    "skippedActionPositions": 0,
+    "totalCombinations": 0
+  },
+  "summary": {
+    "newTargetActionsAdded": 3,
+    "newActionPositionsAdded": 1,
+    "finalCoverageRate": "11.4",
+    "totalPossibleCombinations": 2268,
+    "actualRelations": 258
+  }
+}
