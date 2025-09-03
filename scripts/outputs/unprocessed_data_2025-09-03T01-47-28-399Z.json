@@ -1,0 +1,952 @@
+[
+  {
+    "original": "DPFマフラーセンサーボルト折れ込み修理",
+    "price": 0,
+    "invoiceId": "25043370-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "修理"
+          ],
+          "remainingText": "DPFマフラーセンサーボルト折れ込み"
+        }
+      }
+    ]
+  },
+  {
+    "original": "DPFマフラーセンサーボルト折れ込み修理",
+    "price": 0,
+    "invoiceId": "25043370-2",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "修理"
+          ],
+          "remainingText": "DPFマフラーセンサーボルト折れ込み"
+        }
+      }
+    ]
+  },
+  {
+    "original": "フロントリッド・グリル脱着・フロントキャブサスマウントリンク脱着リンクブッシュ嚙み込み取外し交換",
+    "price": 0,
+    "invoiceId": "25043372-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "交換",
+            "脱着"
+          ],
+          "remainingText": "リッド・グリル・フロントキャブサスマウントリンク脱着リンクブッシュ嚙み込み取外し"
+        }
+      }
+    ]
+  },
+  {
+    "original": "リヤバンパー折損鈑金修理",
+    "price": 0,
+    "invoiceId": "25043374-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "鈑金",
+            "修理"
+          ],
+          "remainingText": "リヤバンパー折損"
+        }
+      }
+    ]
+  },
+  {
+    "original": "タンクバンドマス締め",
+    "price": 0,
+    "invoiceId": "25043375-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": false,
+          "foundTarget": "",
+          "foundActions": [],
+          "remainingText": "タンクバンドマス締め"
+        }
+      }
+    ]
+  },
+  {
+    "original": "アドブルーキャップ分解取替加工",
+    "price": 0,
+    "invoiceId": "25043376-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "取替",
+            "加工",
+            "分解"
+          ],
+          "remainingText": "アドブルーキャップ"
+        }
+      }
+    ]
+  },
+  {
+    "original": "フロントリッド・グリル・キャブマウントリンク脱着・リンクブッシュ前後切断取替加工",
+    "price": 0,
+    "invoiceId": "25043378-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "取替",
+            "加工",
+            "脱着",
+            "切断"
+          ],
+          "remainingText": "リッド・グリル・キャブマウントリンク・リンクブッシュ前後"
+        }
+      }
+    ]
+  },
+  {
+    "original": "センターシート張替加工",
+    "price": 0,
+    "invoiceId": "25043379-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "加工",
+            "張替"
+          ],
+          "remainingText": "シート"
+        }
+      }
+    ]
+  },
+  {
+    "original": "天井周りコーキング処理",
+    "price": 0,
+    "invoiceId": "25043379-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": false,
+          "foundTarget": "",
+          "foundActions": [],
+          "remainingText": "天井周りコーキング処理"
+        }
+      }
+    ]
+  },
+  {
+    "original": "ホイール塗装4本",
+    "price": 0,
+    "invoiceId": "25043385-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "塗装"
+          ],
+          "remainingText": "ホイール4本"
+        }
+      }
+    ]
+  },
+  {
+    "original": "取消",
+    "price": 0,
+    "invoiceId": "25043385-2",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": false,
+          "foundTarget": "",
+          "foundActions": [],
+          "remainingText": "取消"
+        }
+      }
+    ]
+  },
+  {
+    "original": "左右当たりゴム取外し加工",
+    "price": 0,
+    "invoiceId": "25053381-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "加工"
+          ],
+          "remainingText": "右当たりゴム取外し"
+        }
+      }
+    ]
+  },
+  {
+    "original": "フロンバンパー脱着・左右フォグランプステイ取り外し・ガードバンパーボルトワッシャー4枚製作取付",
+    "price": 0,
+    "invoiceId": "25053381-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "取り外し",
+            "脱着",
+            "取付",
+            "製作"
+          ],
+          "remainingText": "フロンバンパー・左右フォグランプステイ・ガードバンパーボルトワッシャー4枚"
+        }
+      }
+    ]
+  },
+  {
+    "original": "センタースロットル・レール鈑金加工",
+    "price": 0,
+    "invoiceId": "25053382-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "鈑金",
+            "加工"
+          ],
+          "remainingText": "スロットル・レール"
+        }
+      }
+    ]
+  },
+  {
+    "original": "工場内清掃代行",
+    "price": 0,
+    "invoiceId": "25053383-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "清掃"
+          ],
+          "remainingText": "工場内代行"
+        }
+      }
+    ]
+  },
+  {
+    "original": "プラットホームブッシュ張替加工",
+    "price": 0,
+    "invoiceId": "25053384-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "加工",
+            "張替"
+          ],
+          "remainingText": "プラットホームブッシュ"
+        }
+      }
+    ]
+  },
+  {
+    "original": "ホイール塗装4本",
+    "price": 0,
+    "invoiceId": "25053386-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "塗装"
+          ],
+          "remainingText": "ホイール4本"
+        }
+      }
+    ]
+  },
+  {
+    "original": "左右大型反射板取替(傘リベット8本込み）",
+    "price": 0,
+    "invoiceId": "25053387-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "取替"
+          ],
+          "remainingText": "右大型反射板(傘リベット8本込み）"
+        }
+      }
+    ]
+  },
+  {
+    "original": "右後ろシリンダーピン折れ込み取替加工・蝶番点検",
+    "price": 0,
+    "invoiceId": "25053388-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "取替",
+            "加工",
+            "点検"
+          ],
+          "remainingText": "ろシリンダーピン折れ込み・蝶番"
+        }
+      }
+    ]
+  },
+  {
+    "original": "内装脱着貼替加工",
+    "price": 0,
+    "invoiceId": "25053389-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "加工",
+            "脱着"
+          ],
+          "remainingText": "装貼替"
+        }
+      }
+    ]
+  },
+  {
+    "original": "錆止め塗装",
+    "price": 0,
+    "invoiceId": "25053389-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "錆止め",
+            "塗装"
+          ],
+          "remainingText": ""
+        }
+      }
+    ]
+  },
+  {
+    "original": "クロスメンバー亀裂2ヵ所カット溶接",
+    "price": 0,
+    "invoiceId": "25053390-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "溶接"
+          ],
+          "remainingText": "クロスメンバー亀裂2ヵ所カット"
+        }
+      }
+    ]
+  },
+  {
+    "original": "左ウィングキャッチ受け鈑金・シート1部脱着リベット打ち替え加工",
+    "price": 0,
+    "invoiceId": "25053391-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "鈑金",
+            "加工",
+            "脱着"
+          ],
+          "remainingText": "ウィングキャッチ受け・シート1部リベット打ち替え"
+        }
+      }
+    ]
+  },
+  {
+    "original": "クロスメンバー亀裂カット溶接",
+    "price": 0,
+    "invoiceId": "25053393-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "溶接"
+          ],
+          "remainingText": "クロスメンバー亀裂カット"
+        }
+      }
+    ]
+  },
+  {
+    "original": "左後ろセイコーラック取替加工",
+    "price": 0,
+    "invoiceId": "25053394-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "取替",
+            "加工"
+          ],
+          "remainingText": "後ろセイコーラック"
+        }
+      }
+    ]
+  },
+  {
+    "original": "持ち込みマフラー分解脱着・UDPC・DOC清掃付替え加工・折れ込みボルト修理4本・フェンダー脱着",
+    "price": 0,
+    "invoiceId": "25053395-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "加工",
+            "修理",
+            "脱着",
+            "付替",
+            "清掃",
+            "分解"
+          ],
+          "remainingText": "持ち込みマフラー・UDPC・DOCえ・折れ込みボルト4本・フェンダー脱着"
+        }
+      }
+    ]
+  },
+  {
+    "original": "ドライバーシートリクライニング取替",
+    "price": 0,
+    "invoiceId": "25053396-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "取替"
+          ],
+          "remainingText": "ドライバーシートリクライニング"
+        }
+      }
+    ]
+  },
+  {
+    "original": "タンクバンド２本取替",
+    "price": 0,
+    "invoiceId": "25053396-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "取替"
+          ],
+          "remainingText": "タンクバンド２本"
+        }
+      }
+    ]
+  },
+  {
+    "original": "リヤゲート嚙み込み修理・ダンプキャッチ2個分解修理・キャッチロックボールジョイント取付加工溶接・ポール2本曲がり直し亀裂溶接",
+    "price": 0,
+    "invoiceId": "25053397-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "曲がり直し",
+            "加工",
+            "修理",
+            "溶接",
+            "取付",
+            "分解"
+          ],
+          "remainingText": "リヤゲート嚙み込み・ダンプキャッチ2個修理・キャッチロックボールジョイント・ポール2本亀裂溶接"
+        }
+      }
+    ]
+  },
+  {
+    "original": "ウィング蝶番点検グリスアップ・枠骨異音点検ボルト取付加工３ヶ所",
+    "price": 0,
+    "invoiceId": "25053398-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "加工",
+            "取付",
+            "点検"
+          ],
+          "remainingText": "ウィング蝶番グリスアップ・枠骨異音点検ボルト３ヶ所"
+        }
+      }
+    ]
+  },
+  {
+    "original": "左右スケット分解調整4ヶ所",
+    "price": 0,
+    "invoiceId": "25053399-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "調整",
+            "分解"
+          ],
+          "remainingText": "右スケット4ヶ所"
+        }
+      }
+    ]
+  },
+  {
+    "original": "駐車ブレーキブラケット亀裂2ヵ所カット溶整",
+    "price": 0,
+    "invoiceId": "25053400-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": true,
+          "hasActions": false,
+          "foundTarget": "ブラケット",
+          "foundActions": [],
+          "remainingText": "駐車ブレーキ亀裂2ヵ所カット溶整"
+        }
+      }
+    ]
+  },
+  {
+    "original": "右ストッパー交換・ボルト嚙み込み修理",
+    "price": 0,
+    "invoiceId": "25053401-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "交換",
+            "修理"
+          ],
+          "remainingText": "ストッパー・ボルト嚙み込み"
+        }
+      }
+    ]
+  },
+  {
+    "original": "右ストッパー交換",
+    "price": 0,
+    "invoiceId": "25053401-2",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "交換"
+          ],
+          "remainingText": "ストッパー"
+        }
+      }
+    ]
+  },
+  {
+    "original": "左右スケット4個調整",
+    "price": 0,
+    "invoiceId": "25053404-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "調整"
+          ],
+          "remainingText": "右スケット4個"
+        }
+      }
+    ]
+  },
+  {
+    "original": "クロスメンバー亀裂溶接",
+    "price": 0,
+    "invoiceId": "25053408-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "溶接"
+          ],
+          "remainingText": "クロスメンバー亀裂"
+        }
+      }
+    ]
+  },
+  {
+    "original": "右ステップパネル取替鈑金",
+    "price": 0,
+    "invoiceId": "25053409-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "鈑金",
+            "取替"
+          ],
+          "remainingText": "ステップパネル"
+        }
+      }
+    ]
+  },
+  {
+    "original": "右ロアフェンダー取替・取り付け修正",
+    "price": 0,
+    "invoiceId": "25053409-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "取替",
+            "修正"
+          ],
+          "remainingText": "フェンダー・取り付け"
+        }
+      }
+    ]
+  },
+  {
+    "original": "リヤナンバーボルト折れ込み修理",
+    "price": 0,
+    "invoiceId": "25053410-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "修理"
+          ],
+          "remainingText": "リヤナンバーボルト折れ込み"
+        }
+      }
+    ]
+  },
+  {
+    "original": "コンテナロックガード取替",
+    "price": 0,
+    "invoiceId": "25053411-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "取替"
+          ],
+          "remainingText": "コンテナロックガード"
+        }
+      }
+    ]
+  },
+  {
+    "original": "右後ろウィングキャッチ受け・コーナーガード取り替え加工",
+    "price": 0,
+    "invoiceId": "25053412-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "加工"
+          ],
+          "remainingText": "ろウィングキャッチ受け・コーナーガード取り替え"
+        }
+      }
+    ]
+  },
+  {
+    "original": "右後ろ煽りスケット応急取外し",
+    "price": 0,
+    "invoiceId": "25053415-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": false,
+          "foundTarget": "",
+          "foundActions": [],
+          "remainingText": "ろ煽りスケット応急取外し"
+        }
+      }
+    ]
+  }
+]

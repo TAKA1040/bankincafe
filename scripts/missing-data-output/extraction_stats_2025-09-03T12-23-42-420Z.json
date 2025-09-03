@@ -1,0 +1,11 @@
+{
+  "timestamp": "2025-09-03T12:23:42.429Z",
+  "source_file": "../請求書システム画像/hondata/dada2.csv",
+  "total_extracted": 2310,
+  "has_customer_name": 2310,
+  "has_billing_date": 2310,
+  "files": {
+    "data": "missing-data-output\\missing_invoice_data_2025-09-03T12-23-42-420Z.json",
+    "sql": "missing-data-output\\update_missing_invoice_data_2025-09-03T12-23-42-420Z.sql"
+  }
+}

@@ -51,9 +51,53 @@ export default function WorkDictionaryPage() {
   const [selectedActions, setSelectedActions] = useState<Set<number>>(new Set())
   const [selectedPositions, setSelectedPositions] = useState<Set<number>>(new Set())
   
+  // 展開状態管理（関連設定一覧用）
+  const [expandedTargets, setExpandedTargets] = useState<Set<number>>(new Set())
+  const [expandedActions, setExpandedActions] = useState<Set<number>>(new Set())
+  
   // ローディング状態
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+
+  // 展開/折りたたみ制御
+  const toggleTargetExpansion = (targetId: number) => {
+    const newExpanded = new Set(expandedTargets)
+    if (newExpanded.has(targetId)) {
+      newExpanded.delete(targetId)
+    } else {
+      newExpanded.add(targetId)
+    }
+    setExpandedTargets(newExpanded)
+  }
+
+  const toggleActionExpansion = (actionId: number) => {
+    const newExpanded = new Set(expandedActions)
+    if (newExpanded.has(actionId)) {
+      newExpanded.delete(actionId)
+    } else {
+      newExpanded.add(actionId)
+    }
+    setExpandedActions(newExpanded)
+  }
+
+  // 全展開/全折りたたみ制御
+  const expandAllTargets = () => {
+    const allTargetIds = new Set(targetActions.map(ta => ta.target_id))
+    setExpandedTargets(allTargetIds)
+  }
+
+  const collapseAllTargets = () => {
+    setExpandedTargets(new Set())
+  }
+
+  const expandAllActions = () => {
+    const allActionIds = new Set(actionPositions.map(ap => ap.action_id))
+    setExpandedActions(allActionIds)
+  }
+
+  const collapseAllActions = () => {
+    setExpandedActions(new Set())
+  }
 
   // データ読み込み
   const loadAllData = useCallback(async () => {
@@ -1316,7 +1360,23 @@ export default function WorkDictionaryPage() {
                   {/* 対象→動作の関連 */}
                   <div>
                     <div className="mb-4">
-                      <h3 className="text-lg font-semibold mb-2">対象→動作の関連</h3>
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="text-lg font-semibold">対象→動作の関連</h3>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={expandAllTargets}
+                            className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
+                          >
+                            全展開
+                          </button>
+                          <button
+                            onClick={collapseAllTargets}
+                            className="px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
+                          >
+                            全折りたたみ
+                          </button>
+                        </div>
+                      </div>
                       <div className="text-sm text-gray-600 mb-4">
                         対象に対してどの動作が可能かを設定
                       </div>
@@ -1444,51 +1504,116 @@ export default function WorkDictionaryPage() {
                       )}
                     </div>
                     
-                    <div className="overflow-x-auto">
-                      <table className="w-full border-collapse border border-gray-300">
-                        <thead>
-                          <tr className="bg-gray-100">
-                            <th className="border border-gray-300 px-4 py-2 text-left">対象</th>
-                            <th className="border border-gray-300 px-4 py-2 text-left">動作</th>
-                            <th className="border border-gray-300 px-4 py-2 text-left">操作</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {filteredTargetActions.map((ta, index) => (
-                            <tr key={index} className="hover:bg-gray-50">
-                              <td className="border border-gray-300 px-4 py-2">
-                                <span className={`px-2 py-1 rounded ${selectedTargetFilter === ta.target_id ? 'bg-blue-100 text-blue-800' : ''}`}>
-                                  {ta.target_name}
-                                </span>
-                              </td>
-                              <td className="border border-gray-300 px-4 py-2">{ta.action_name}</td>
-                              <td className="border border-gray-300 px-4 py-2">
-                                <button
-                                  onClick={() => deleteTargetAction(ta.target_id, ta.action_id)}
-                                  disabled={saving}
-                                  className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600 disabled:opacity-50"
-                                >
-                                  <Trash2 size={16} />
-                                </button>
-                              </td>
-                            </tr>
-                          ))}
-                          {filteredTargetActions.length === 0 && (
-                            <tr>
-                              <td colSpan={3} className="border border-gray-300 px-4 py-8 text-center text-gray-500">
-                                {selectedTargetFilter ? '選択した対象に関連する動作がありません' : '関連が登録されていません'}
-                              </td>
-                            </tr>
-                          )}
-                        </tbody>
-                      </table>
+                    <div className="space-y-2">
+                      {(() => {
+                        // 対象ごとにグループ化
+                        const groupedByTarget = filteredTargetActions.reduce((acc, ta) => {
+                          if (!acc[ta.target_id]) {
+                            acc[ta.target_id] = {
+                              target_name: ta.target_name,
+                              actions: []
+                            }
+                          }
+                          acc[ta.target_id].actions.push(ta)
+                          return acc
+                        }, {} as Record<number, { target_name: string, actions: typeof filteredTargetActions }>)
+
+                        const targetGroups = Object.entries(groupedByTarget)
+
+                        if (targetGroups.length === 0) {
+                          return (
+                            <div className="border border-gray-300 px-4 py-8 text-center text-gray-500 rounded-lg">
+                              {selectedTargetFilter ? '選択した対象に関連する動作がありません' : '関連が登録されていません'}
+                            </div>
+                          )
+                        }
+
+                        return targetGroups.map(([targetIdStr, group]) => {
+                          const targetId = parseInt(targetIdStr)
+                          const isExpanded = expandedTargets.has(targetId)
+                          
+                          return (
+                            <div key={targetId} className="border border-gray-300 rounded-lg">
+                              {/* ヘッダー行（展開/折りたたみボタン） */}
+                              <div 
+                                className="flex items-center justify-between px-4 py-3 bg-gray-50 cursor-pointer hover:bg-gray-100 rounded-t-lg"
+                                onClick={() => toggleTargetExpansion(targetId)}
+                              >
+                                <div className="flex items-center gap-3">
+                                  <span className="text-lg">
+                                    {isExpanded ? '▼' : '▶'}
+                                  </span>
+                                  <span className="font-medium text-gray-900">
+                                    {group.target_name}
+                                  </span>
+                                  <span className="px-2 py-1 text-sm bg-blue-100 text-blue-700 rounded-full">
+                                    {group.actions.length}個の動作
+                                  </span>
+                                </div>
+                              </div>
+                              
+                              {/* 展開された内容 */}
+                              {isExpanded && (
+                                <div className="border-t border-gray-200">
+                                  <table className="w-full">
+                                    <thead className="bg-gray-50">
+                                      <tr>
+                                        <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">動作</th>
+                                        <th className="px-4 py-2 text-left text-sm font-medium text-gray-700 w-20">操作</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      {group.actions.map((ta, index) => (
+                                        <tr key={index} className="hover:bg-gray-50 border-t border-gray-100">
+                                          <td className="px-4 py-2 text-sm text-gray-900">
+                                            {ta.action_name}
+                                          </td>
+                                          <td className="px-4 py-2">
+                                            <button
+                                              onClick={(e) => {
+                                                e.stopPropagation()
+                                                deleteTargetAction(ta.target_id, ta.action_id)
+                                              }}
+                                              disabled={saving}
+                                              className="p-1 text-red-600 hover:text-red-800 hover:bg-red-50 rounded disabled:opacity-50"
+                                              title="削除"
+                                            >
+                                              <Trash2 size={16} />
+                                            </button>
+                                          </td>
+                                        </tr>
+                                      ))}
+                                    </tbody>
+                                  </table>
+                                </div>
+                              )}
+                            </div>
+                          )
+                        })
+                      })()}
                     </div>
                   </div>
 
                   {/* 動作→位置の関連 */}
                   <div>
                     <div className="mb-4">
-                      <h3 className="text-lg font-semibold mb-2">動作→位置の関連</h3>
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="text-lg font-semibold">動作→位置の関連</h3>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={expandAllActions}
+                            className="px-2 py-1 text-xs bg-green-100 text-green-700 rounded hover:bg-green-200"
+                          >
+                            全展開
+                          </button>
+                          <button
+                            onClick={collapseAllActions}
+                            className="px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
+                          >
+                            全折りたたみ
+                          </button>
+                        </div>
+                      </div>
                       <div className="text-sm text-gray-600 mb-4">
                         動作に対してどの位置が可能かを設定
                       </div>
@@ -1616,44 +1741,93 @@ export default function WorkDictionaryPage() {
                       )}
                     </div>
                     
-                    <div className="overflow-x-auto">
-                      <table className="w-full border-collapse border border-gray-300">
-                        <thead>
-                          <tr className="bg-gray-100">
-                            <th className="border border-gray-300 px-4 py-2 text-left">動作</th>
-                            <th className="border border-gray-300 px-4 py-2 text-left">位置</th>
-                            <th className="border border-gray-300 px-4 py-2 text-left">操作</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {filteredActionPositions.map((ap, index) => (
-                            <tr key={index} className="hover:bg-gray-50">
-                              <td className="border border-gray-300 px-4 py-2">
-                                <span className={`px-2 py-1 rounded ${selectedActionFilter === ap.action_id ? 'bg-green-100 text-green-800' : ''}`}>
-                                  {ap.action_name}
-                                </span>
-                              </td>
-                              <td className="border border-gray-300 px-4 py-2">{ap.position_name}</td>
-                              <td className="border border-gray-300 px-4 py-2">
-                                <button
-                                  onClick={() => deleteActionPosition(ap.action_id, ap.position_id)}
-                                  disabled={saving}
-                                  className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600 disabled:opacity-50"
-                                >
-                                  <Trash2 size={16} />
-                                </button>
-                              </td>
-                            </tr>
-                          ))}
-                          {filteredActionPositions.length === 0 && (
-                            <tr>
-                              <td colSpan={3} className="border border-gray-300 px-4 py-8 text-center text-gray-500">
-                                {selectedActionFilter ? '選択した動作に関連する位置がありません' : '関連が登録されていません'}
-                              </td>
-                            </tr>
-                          )}
-                        </tbody>
-                      </table>
+                    <div className="space-y-2">
+                      {(() => {
+                        // 動作ごとにグループ化
+                        const groupedByAction = filteredActionPositions.reduce((acc, ap) => {
+                          if (!acc[ap.action_id]) {
+                            acc[ap.action_id] = {
+                              action_name: ap.action_name,
+                              positions: []
+                            }
+                          }
+                          acc[ap.action_id].positions.push(ap)
+                          return acc
+                        }, {} as Record<number, { action_name: string, positions: typeof filteredActionPositions }>)
+
+                        const actionGroups = Object.entries(groupedByAction)
+
+                        if (actionGroups.length === 0) {
+                          return (
+                            <div className="border border-gray-300 px-4 py-8 text-center text-gray-500 rounded-lg">
+                              {selectedActionFilter ? '選択した動作に関連する位置がありません' : '関連が登録されていません'}
+                            </div>
+                          )
+                        }
+
+                        return actionGroups.map(([actionIdStr, group]) => {
+                          const actionId = parseInt(actionIdStr)
+                          const isExpanded = expandedActions.has(actionId)
+                          
+                          return (
+                            <div key={actionId} className="border border-gray-300 rounded-lg">
+                              {/* ヘッダー行（展開/折りたたみボタン） */}
+                              <div 
+                                className="flex items-center justify-between px-4 py-3 bg-gray-50 cursor-pointer hover:bg-gray-100 rounded-t-lg"
+                                onClick={() => toggleActionExpansion(actionId)}
+                              >
+                                <div className="flex items-center gap-3">
+                                  <span className="text-lg">
+                                    {isExpanded ? '▼' : '▶'}
+                                  </span>
+                                  <span className="font-medium text-gray-900">
+                                    {group.action_name}
+                                  </span>
+                                  <span className="px-2 py-1 text-sm bg-green-100 text-green-700 rounded-full">
+                                    {group.positions.length}個の位置
+                                  </span>
+                                </div>
+                              </div>
+                              
+                              {/* 展開された内容 */}
+                              {isExpanded && (
+                                <div className="border-t border-gray-200">
+                                  <table className="w-full">
+                                    <thead className="bg-gray-50">
+                                      <tr>
+                                        <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">位置</th>
+                                        <th className="px-4 py-2 text-left text-sm font-medium text-gray-700 w-20">操作</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      {group.positions.map((ap, index) => (
+                                        <tr key={index} className="hover:bg-gray-50 border-t border-gray-100">
+                                          <td className="px-4 py-2 text-sm text-gray-900">
+                                            {ap.position_name}
+                                          </td>
+                                          <td className="px-4 py-2">
+                                            <button
+                                              onClick={(e) => {
+                                                e.stopPropagation()
+                                                deleteActionPosition(ap.action_id, ap.position_id)
+                                              }}
+                                              disabled={saving}
+                                              className="p-1 text-red-600 hover:text-red-800 hover:bg-red-50 rounded disabled:opacity-50"
+                                              title="削除"
+                                            >
+                                              <Trash2 size={16} />
+                                            </button>
+                                          </td>
+                                        </tr>
+                                      ))}
+                                    </tbody>
+                                  </table>
+                                </div>
+                              )}
+                            </div>
+                          )
+                        })
+                      })()}
                     </div>
                   </div>
                 </div>

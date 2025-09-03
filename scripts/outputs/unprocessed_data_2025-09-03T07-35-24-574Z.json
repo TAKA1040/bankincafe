@@ -1,0 +1,1466 @@
+[
+  {
+    "original": "右ステンリヤフェンダー2枚取替加工",
+    "price": 13000,
+    "invoiceId": "22051560-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "取替",
+            "加工"
+          ],
+          "remainingText": "ステンリヤフェンダー2枚"
+        }
+      }
+    ]
+  },
+  {
+    "original": "右フェンダーカバー傷面取り仕上",
+    "price": 2000,
+    "invoiceId": "22051560-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "カバー",
+            "面取り"
+          ],
+          "remainingText": "フェンダー傷仕上"
+        }
+      }
+    ]
+  },
+  {
+    "original": "マーカーランプ2個取替・戸当たりゴム脱着",
+    "price": 3000,
+    "invoiceId": "22051560-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "取替",
+            "脱着"
+          ],
+          "remainingText": "マーカーランプ2個・戸当たりゴム"
+        }
+      }
+    ]
+  },
+  {
+    "original": "右センターキャッチASSY脱着分解塗装・床枠塗装・スケット脱着塗装",
+    "price": 75000,
+    "invoiceId": "22051560-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "脱着",
+            "塗装",
+            "分解"
+          ],
+          "remainingText": "センターキャッチASSY・床枠塗装・スケット脱着塗装"
+        }
+      }
+    ]
+  },
+  {
+    "original": "DPFマフラーセンサーボルト折れ込み取外し加工",
+    "price": 5000,
+    "invoiceId": "22061561-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "加工"
+          ],
+          "remainingText": "DPFマフラーセンサーボルト折れ込み取外し"
+        }
+      }
+    ]
+  },
+  {
+    "original": "折れ込みボルト応急製作溶接",
+    "price": 5000,
+    "invoiceId": "22061562-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "溶接",
+            "製作"
+          ],
+          "remainingText": "折れ込みボルト応急"
+        }
+      }
+    ]
+  },
+  {
+    "original": "左右前後ウィングドアーストリップゴム接着材剝ぎ取り･ストリップゴム接着貼替",
+    "price": 9000,
+    "invoiceId": "22061564-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": true,
+          "hasActions": false,
+          "foundTarget": "ドア",
+          "foundActions": [],
+          "remainingText": "右前後ウィングーストリップゴム接着材剝ぎ取り･ストリップゴム接着貼替"
+        }
+      }
+    ]
+  },
+  {
+    "original": "右後ろウィングキャッチ受けボルト切断取替加工",
+    "price": 5000,
+    "invoiceId": "22061565-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "取替",
+            "加工",
+            "切断"
+          ],
+          "remainingText": "ろウィングキャッチ受けボルト"
+        }
+      }
+    ]
+  },
+  {
+    "original": "左右反射板取替加工",
+    "price": 4500,
+    "invoiceId": "22061566-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "取替",
+            "加工"
+          ],
+          "remainingText": "右反射板"
+        }
+      }
+    ]
+  },
+  {
+    "original": "左フロント･リヤフェンダー脱着泥除けゴム取替2枚",
+    "price": 5000,
+    "invoiceId": "22061568-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "取替",
+            "脱着"
+          ],
+          "remainingText": "フロント･リヤフェンダー泥除けゴム2枚"
+        }
+      }
+    ]
+  },
+  {
+    "original": "5㎜ズック入り平ゴム１枚",
+    "price": 6500,
+    "invoiceId": "22061568-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": false,
+          "foundTarget": "",
+          "foundActions": [],
+          "remainingText": "5㎜ズック入り平ゴム１枚"
+        }
+      }
+    ]
+  },
+  {
+    "original": "右メッキフィニッシャー取替･コーナーカバー取替",
+    "price": 5500,
+    "invoiceId": "22061569-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "カバー",
+            "取替"
+          ],
+          "remainingText": "メッキフィニッシャー･コーナー取替"
+        }
+      }
+    ]
+  },
+  {
+    "original": "右ドアー磨き上げ･看板取外し",
+    "price": 8000,
+    "invoiceId": "22061569-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": true,
+          "hasActions": false,
+          "foundTarget": "ドア",
+          "foundActions": [],
+          "remainingText": "ー磨き上げ･看板取外し"
+        }
+      }
+    ]
+  },
+  {
+    "original": "左右フレームアウトリガー取り付け部分鈑金補強プレート制作取付溶接",
+    "price": 48000,
+    "invoiceId": "22061570-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "鈑金",
+            "溶接",
+            "取付"
+          ],
+          "remainingText": "右フレームアウトリガー取り付け部分補強プレート制作"
+        }
+      }
+    ]
+  },
+  {
+    "original": "1番メンバー切断曲がり直し・亀裂カット溶接",
+    "price": 18000,
+    "invoiceId": "22061570-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "曲がり直し",
+            "溶接",
+            "切断"
+          ],
+          "remainingText": "メンバー・亀裂カット"
+        }
+      }
+    ]
+  },
+  {
+    "original": "りん木入れ曲がり直し修正",
+    "price": 8000,
+    "invoiceId": "22061570-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "曲がり直し",
+            "修正"
+          ],
+          "remainingText": "りん木入れ"
+        }
+      }
+    ]
+  },
+  {
+    "original": "左前枠骨切断鈑金溶接",
+    "price": 18000,
+    "invoiceId": "22061570-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "鈑金",
+            "溶接",
+            "切断"
+          ],
+          "remainingText": "前枠骨"
+        }
+      }
+    ]
+  },
+  {
+    "original": "左ロープフック曲がり直し",
+    "price": 2000,
+    "invoiceId": "22061570-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "曲がり直し"
+          ],
+          "remainingText": "ロープフック"
+        }
+      }
+    ]
+  },
+  {
+    "original": "右前コンテナロックフレーム曲がり直し鈑金",
+    "price": 9000,
+    "invoiceId": "22061570-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "曲がり直し",
+            "鈑金"
+          ],
+          "remainingText": "前コンテナロックフレーム"
+        }
+      }
+    ]
+  },
+  {
+    "original": "黒･青塗装",
+    "price": 15000,
+    "invoiceId": "22061570-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "塗装"
+          ],
+          "remainingText": "黒･青"
+        }
+      }
+    ]
+  },
+  {
+    "original": "青塗料",
+    "price": 8000,
+    "invoiceId": "22061570-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": false,
+          "foundTarget": "",
+          "foundActions": [],
+          "remainingText": "青塗料"
+        }
+      }
+    ]
+  },
+  {
+    "original": "反射板脱着曲がり直しリベット打ち替え･ステップバンパー曲がり直し鈑金",
+    "price": 12000,
+    "invoiceId": "22061572-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "曲がり直し",
+            "鈑金",
+            "脱着"
+          ],
+          "remainingText": "反射板リベット打ち替え･ステップバンパー曲がり直し"
+        }
+      }
+    ]
+  },
+  {
+    "original": "高圧洗浄ガン脱着・折れ込みノズル取外し加工",
+    "price": 5000,
+    "invoiceId": "22061575-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "加工",
+            "脱着"
+          ],
+          "remainingText": "高圧洗浄ガン・折れ込みノズル取外し"
+        }
+      }
+    ]
+  },
+  {
+    "original": "出張",
+    "price": 3000,
+    "invoiceId": "22061575-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": false,
+          "foundTarget": "",
+          "foundActions": [],
+          "remainingText": "出張"
+        }
+      }
+    ]
+  },
+  {
+    "original": "バックカメラ中央移設加工",
+    "price": 5000,
+    "invoiceId": "22061576-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "加工"
+          ],
+          "remainingText": "バックカメラ中央移設"
+        }
+      }
+    ]
+  },
+  {
+    "original": "センター泥除けプレート脱着切断加工・塗装",
+    "price": 18000,
+    "invoiceId": "22061576-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "加工",
+            "脱着",
+            "切断",
+            "塗装"
+          ],
+          "remainingText": "泥除けプレート・"
+        }
+      }
+    ]
+  },
+  {
+    "original": "左右反射板プレート制作取付加工・反射板取替・塗装",
+    "price": 56000,
+    "invoiceId": "22061576-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "取替",
+            "加工",
+            "取付",
+            "塗装"
+          ],
+          "remainingText": "右反射板プレート制作・反射板・"
+        }
+      }
+    ]
+  },
+  {
+    "original": "バックカメラ中央移設加工",
+    "price": 5000,
+    "invoiceId": "22061577-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "加工"
+          ],
+          "remainingText": "バックカメラ中央移設"
+        }
+      }
+    ]
+  },
+  {
+    "original": "センター泥除けプレート脱着切断加工・塗装",
+    "price": 18000,
+    "invoiceId": "22061577-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "加工",
+            "脱着",
+            "切断",
+            "塗装"
+          ],
+          "remainingText": "泥除けプレート・"
+        }
+      }
+    ]
+  },
+  {
+    "original": "左右反射板プレート制作取付加工・反射板移設・塗装",
+    "price": 56000,
+    "invoiceId": "22061577-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "加工",
+            "取付",
+            "塗装"
+          ],
+          "remainingText": "右反射板プレート制作・反射板移設・"
+        }
+      }
+    ]
+  },
+  {
+    "original": "リヤゲート表裏亀裂カット溶接21カ所",
+    "price": 42000,
+    "invoiceId": "22061579-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "溶接"
+          ],
+          "remainingText": "リヤゲート表裏亀裂カット21カ所"
+        }
+      }
+    ]
+  },
+  {
+    "original": "戸当たりゴム取替1個・ワッシャー製作１枚・溶接ナット切断仕上2カ所",
+    "price": 6000,
+    "invoiceId": "22061579-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "取替",
+            "溶接",
+            "製作",
+            "切断"
+          ],
+          "remainingText": "戸当たりゴム1個・ワッシャー１枚・ナット仕上2カ所"
+        }
+      }
+    ]
+  },
+  {
+    "original": "持込み塗料塗装",
+    "price": 5000,
+    "invoiceId": "22061579-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "塗装"
+          ],
+          "remainingText": "持込み塗料"
+        }
+      }
+    ]
+  },
+  {
+    "original": "サブタンク燃料移し替え",
+    "price": 3000,
+    "invoiceId": "22061580-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": false,
+          "foundTarget": "",
+          "foundActions": [],
+          "remainingText": "サブタンク燃料移し替え"
+        }
+      }
+    ]
+  },
+  {
+    "original": "ウィング幌シート雨漏れ点検6カ所補修テープ貼付",
+    "price": 12000,
+    "invoiceId": "22061581-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "点検",
+            "貼付",
+            "補修"
+          ],
+          "remainingText": "ウィング幌シート雨漏れ6カ所テープ"
+        }
+      }
+    ]
+  },
+  {
+    "original": "リヤステップバンパーASSY取替",
+    "price": 6000,
+    "invoiceId": "22061582-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "取替"
+          ],
+          "remainingText": "リヤステップバンパーASSY"
+        }
+      }
+    ]
+  },
+  {
+    "original": "右センタープラットホームゴム取替・他ゴム脱着・ボルト折れ込み取外し加工",
+    "price": 10000,
+    "invoiceId": "22061582-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "取替",
+            "加工",
+            "脱着"
+          ],
+          "remainingText": "センタープラットホームゴム・他ゴム・ボルト折れ込み取外し"
+        }
+      }
+    ]
+  },
+  {
+    "original": "右テールランプ・バックランプ脱着",
+    "price": 4000,
+    "invoiceId": "22061582-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "脱着"
+          ],
+          "remainingText": "テールランプ・バックランプ"
+        }
+      }
+    ]
+  },
+  {
+    "original": "床枠曲がり直し鈑金",
+    "price": 18000,
+    "invoiceId": "22061582-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "曲がり直し",
+            "鈑金"
+          ],
+          "remainingText": "床枠"
+        }
+      }
+    ]
+  },
+  {
+    "original": "床枠塗装",
+    "price": 12000,
+    "invoiceId": "22061582-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "塗装"
+          ],
+          "remainingText": "床枠"
+        }
+      }
+    ]
+  },
+  {
+    "original": "観音扉枠ゴム修正",
+    "price": 3000,
+    "invoiceId": "22061583-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "修正"
+          ],
+          "remainingText": "観音扉枠ゴム"
+        }
+      }
+    ]
+  },
+  {
+    "original": "リヤステップバンパーASSY取替・縞鋼板脱着鈑金・左フレーム取付部分曲がり直し",
+    "price": 20000,
+    "invoiceId": "22061587-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "曲がり直し",
+            "鈑金",
+            "取替",
+            "脱着",
+            "取付"
+          ],
+          "remainingText": "リヤステップバンパーASSY・縞鋼板・左フレーム部分"
+        }
+      }
+    ]
+  },
+  {
+    "original": "反射板脱着曲がり直し付替え加工",
+    "price": 6500,
+    "invoiceId": "22061587-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "曲がり直し",
+            "加工",
+            "脱着",
+            "付替"
+          ],
+          "remainingText": "反射板え"
+        }
+      }
+    ]
+  },
+  {
+    "original": "左ステン床枠応急曲がり直し",
+    "price": 8000,
+    "invoiceId": "22061587-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "曲がり直し"
+          ],
+          "remainingText": "ステン床枠応急"
+        }
+      }
+    ]
+  },
+  {
+    "original": "左テールランプ脱着・レンズ取替・取付部分修正",
+    "price": 8000,
+    "invoiceId": "22061587-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "取替",
+            "脱着",
+            "取付",
+            "修正"
+          ],
+          "remainingText": "テールランプ・レンズ・部分"
+        }
+      }
+    ]
+  },
+  {
+    "original": "床板前側破損部分張替加工",
+    "price": 48000,
+    "invoiceId": "22061588-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "加工",
+            "張替"
+          ],
+          "remainingText": "床板前側破損部分"
+        }
+      }
+    ]
+  },
+  {
+    "original": "躍場左縞鋼板脱着曲がり直し・枠骨曲がり直し・ボルト1本ステンナット取付",
+    "price": 6500,
+    "invoiceId": "22061590-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "曲がり直し",
+            "脱着",
+            "取付"
+          ],
+          "remainingText": "躍場左縞鋼板・枠骨曲がり直し・ボルト1本ステンナット"
+        }
+      }
+    ]
+  },
+  {
+    "original": "躍場左縞鋼板脱着曲がり直し・枠骨曲がり直し・ボルト1本ステンナット取付",
+    "price": 6500,
+    "invoiceId": "22061590-2",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "曲がり直し",
+            "脱着",
+            "取付"
+          ],
+          "remainingText": "躍場左縞鋼板・枠骨曲がり直し・ボルト1本ステンナット"
+        }
+      }
+    ]
+  },
+  {
+    "original": "スケット点検調整4ヶ所",
+    "price": 6000,
+    "invoiceId": "22061592-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "点検",
+            "調整"
+          ],
+          "remainingText": "スケット4ヶ所"
+        }
+      }
+    ]
+  },
+  {
+    "original": "左右リヤナンバー灯取替・ガード脱着曲がり直し2枚",
+    "price": 8000,
+    "invoiceId": "22061593-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "曲がり直し",
+            "取替",
+            "脱着"
+          ],
+          "remainingText": "右リヤナンバー灯・ガード2枚"
+        }
+      }
+    ]
+  },
+  {
+    "original": "右泥除けステンガード枠折損部修正ステン溶接",
+    "price": 5000,
+    "invoiceId": "22061593-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "溶接",
+            "修正"
+          ],
+          "remainingText": "泥除けステンガード枠折損部ステン"
+        }
+      }
+    ]
+  },
+  {
+    "original": "左観音扉2カ所鈑金・蝶番脱着曲がり直し・建付け調整・作業部塗装",
+    "price": 22000,
+    "invoiceId": "22061594-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "曲がり直し",
+            "鈑金",
+            "脱着",
+            "調整",
+            "塗装"
+          ],
+          "remainingText": "観音扉2カ所・蝶番・建付け・作業部"
+        }
+      }
+    ]
+  },
+  {
+    "original": "左観音扉2カ所鈑金・蝶番脱着曲がり直し・建付け調整・作業部塗装",
+    "price": 28000,
+    "invoiceId": "22061594-2",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "曲がり直し",
+            "鈑金",
+            "脱着",
+            "調整",
+            "塗装"
+          ],
+          "remainingText": "観音扉2カ所・蝶番・建付け・作業部"
+        }
+      }
+    ]
+  },
+  {
+    "original": "右メッキフィニッシャー取替・バンパーグリル脱着・メッキセンターバンパー鈑金",
+    "price": 15000,
+    "invoiceId": "22061595-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "鈑金",
+            "取替",
+            "脱着"
+          ],
+          "remainingText": "メッキフィニッシャー・バンパーグリル・メッキセンターバンパー"
+        }
+      }
+    ]
+  },
+  {
+    "original": "右前ピラー引出し修正",
+    "price": 22000,
+    "invoiceId": "22061595-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "引出し",
+            "修正"
+          ],
+          "remainingText": "前ピラー"
+        }
+      }
+    ]
+  },
+  {
+    "original": "インナーバンパー鈑金",
+    "price": 15000,
+    "invoiceId": "22061595-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "鈑金"
+          ],
+          "remainingText": "バンパー"
+        }
+      }
+    ]
+  },
+  {
+    "original": "バックカメラ中央移設加工",
+    "price": 5000,
+    "invoiceId": "22061596-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "加工"
+          ],
+          "remainingText": "バックカメラ中央移設"
+        }
+      }
+    ]
+  },
+  {
+    "original": "センター泥除けプレート脱着切断加工・塗装",
+    "price": 18000,
+    "invoiceId": "22061596-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "加工",
+            "脱着",
+            "切断",
+            "塗装"
+          ],
+          "remainingText": "泥除けプレート・"
+        }
+      }
+    ]
+  },
+  {
+    "original": "左右反射板プレート制作取付加工・反射板取替・塗装",
+    "price": 56000,
+    "invoiceId": "22061596-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "取替",
+            "加工",
+            "取付",
+            "塗装"
+          ],
+          "remainingText": "右反射板プレート制作・反射板・"
+        }
+      }
+    ]
+  },
+  {
+    "original": "左右観音扉取替・子部品脱着付替え加工・ステンフックカット付け替え溶接",
+    "price": 32000,
+    "invoiceId": "22061597-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "取替",
+            "加工",
+            "脱着",
+            "溶接",
+            "付替"
+          ],
+          "remainingText": "右観音扉・子部品え・ステンフックカット付け替え"
+        }
+      }
+    ]
+  },
+  {
+    "original": "リヤ床枠中央右曲げ鋼板製作切替加工溶接・テールランプ穴切断加工",
+    "price": 48000,
+    "invoiceId": "22061597-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "加工",
+            "溶接",
+            "製作",
+            "切断",
+            "切替"
+          ],
+          "remainingText": "リヤ床枠中央右曲げ鋼板・テールランプ穴加工"
+        }
+      }
+    ]
+  },
+  {
+    "original": "プラットホームゴム3本取替加工",
+    "price": 8000,
+    "invoiceId": "22061597-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "取替",
+            "加工"
+          ],
+          "remainingText": "プラットホームゴム3本"
+        }
+      }
+    ]
+  },
+  {
+    "original": "ステップバンパーASSY取替・アルミセンターカバー脱着鈑金塗装",
+    "price": 18000,
+    "invoiceId": "22061597-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "カバー",
+            "鈑金",
+            "取替",
+            "脱着",
+            "塗装"
+          ],
+          "remainingText": "ステップバンパーASSY・アルミセンター"
+        }
+      }
+    ]
+  }
+]

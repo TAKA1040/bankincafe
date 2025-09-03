@@ -1,0 +1,4097 @@
+[
+  {
+    "original": "ニップル折れ込み・タップ掛け取替作業",
+    "price": 5000,
+    "invoiceId": "24062770-2",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "取替"
+          ],
+          "remainingText": "ニップル折れ込み・タップ掛け作業"
+        }
+      }
+    ]
+  },
+  {
+    "original": "左ミラーモーター取替・アーム脱着塗装・アーム可動域加工・ミラー付替え",
+    "price": 28000,
+    "invoiceId": "24062772-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "取替",
+            "加工",
+            "脱着",
+            "塗装",
+            "付替"
+          ],
+          "remainingText": "ミラーモーター・アーム・アーム可動域・ミラーえ"
+        }
+      }
+    ]
+  },
+  {
+    "original": "左右リヤショック２本取替",
+    "price": 13000,
+    "invoiceId": "24062773-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "取替"
+          ],
+          "remainingText": "右リヤショック２本"
+        }
+      }
+    ]
+  },
+  {
+    "original": "ラテラルロッド交換",
+    "price": 20000,
+    "invoiceId": "24062773-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "交換"
+          ],
+          "remainingText": "ラテラルロッド"
+        }
+      }
+    ]
+  },
+  {
+    "original": "左右リヤフレーム腐食部分補強材制作取付溶接2カ所・左右配線・マーカーランプ脱着",
+    "price": 58000,
+    "invoiceId": "24062775-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "脱着",
+            "溶接",
+            "取付"
+          ],
+          "remainingText": "右リヤフレーム腐食部分補強材制作2カ所・左右配線・マーカーランプ"
+        }
+      }
+    ]
+  },
+  {
+    "original": "ライニング12枚張替",
+    "price": 19200,
+    "invoiceId": "24062776-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "張替"
+          ],
+          "remainingText": "ライニング12枚"
+        }
+      }
+    ]
+  },
+  {
+    "original": "メッキガーニッシュ張り・バイザー貼付",
+    "price": 9000,
+    "invoiceId": "24062777-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "貼付"
+          ],
+          "remainingText": "メッキガーニッシュ張り・バイザー"
+        }
+      }
+    ]
+  },
+  {
+    "original": "メッキガーニッシュ張り・バイザー貼付",
+    "price": 9000,
+    "invoiceId": "24062777-2",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "貼付"
+          ],
+          "remainingText": "メッキガーニッシュ張り・バイザー"
+        }
+      }
+    ]
+  },
+  {
+    "original": "プラットホームゴム貼付",
+    "price": 15000,
+    "invoiceId": "24062778-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "貼付"
+          ],
+          "remainingText": "プラットホームゴム"
+        }
+      }
+    ]
+  },
+  {
+    "original": "プラットホームゴム貼付",
+    "price": 15000,
+    "invoiceId": "24062779-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "貼付"
+          ],
+          "remainingText": "プラットホームゴム"
+        }
+      }
+    ]
+  },
+  {
+    "original": "ボデー右後ろ支柱塗装",
+    "price": 20000,
+    "invoiceId": "24062780-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "塗装"
+          ],
+          "remainingText": "ボデー右後ろ支柱"
+        }
+      }
+    ]
+  },
+  {
+    "original": "ボデー右後ろ支柱塗装",
+    "price": 28000,
+    "invoiceId": "24062780-2",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "塗装"
+          ],
+          "remainingText": "ボデー右後ろ支柱"
+        }
+      }
+    ]
+  },
+  {
+    "original": "プラットホーム取付折損ボルト取替加工2本",
+    "price": 10000,
+    "invoiceId": "24062781-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "取替",
+            "加工",
+            "取付"
+          ],
+          "remainingText": "プラットホーム折損ボルト2本"
+        }
+      }
+    ]
+  },
+  {
+    "original": "右セイコーラック分解アーム脱着折損修理・左右穴掘りボルト留め加工",
+    "price": 22000,
+    "invoiceId": "24062782-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "加工",
+            "修理",
+            "脱着",
+            "分解"
+          ],
+          "remainingText": "セイコーラックアーム折損・左右穴掘りボルト留め"
+        }
+      }
+    ]
+  },
+  {
+    "original": "ロープ縛り直し",
+    "price": 6000,
+    "invoiceId": "24062784-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": false,
+          "foundTarget": "",
+          "foundActions": [],
+          "remainingText": "ロープ縛り直し"
+        }
+      }
+    ]
+  },
+  {
+    "original": "ライニング16枚張替",
+    "price": 25600,
+    "invoiceId": "24062786-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "張替"
+          ],
+          "remainingText": "ライニング16枚"
+        }
+      }
+    ]
+  },
+  {
+    "original": "ライニング8枚張替",
+    "price": 12800,
+    "invoiceId": "24062787-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "張替"
+          ],
+          "remainingText": "ライニング8枚"
+        }
+      }
+    ]
+  },
+  {
+    "original": "左後ろスケット取り外し嚙み込みボルト切断",
+    "price": 7000,
+    "invoiceId": "24062788-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "取り外し",
+            "切断"
+          ],
+          "remainingText": "後ろスケット嚙み込みボルト"
+        }
+      }
+    ]
+  },
+  {
+    "original": "ジョルダー折損修正溶接・補強材取付加工溶接",
+    "price": 32000,
+    "invoiceId": "24062789-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "加工",
+            "溶接",
+            "取付",
+            "修正"
+          ],
+          "remainingText": "ジョルダー折損・補強材溶接"
+        }
+      }
+    ]
+  },
+  {
+    "original": "インナーリブ2本製作取付加工溶接",
+    "price": 48000,
+    "invoiceId": "24062789-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "加工",
+            "溶接",
+            "取付",
+            "製作"
+          ],
+          "remainingText": "リブ2本"
+        }
+      }
+    ]
+  },
+  {
+    "original": "他ジョルダー折損溶接",
+    "price": 8000,
+    "invoiceId": "24062789-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "溶接"
+          ],
+          "remainingText": "他ジョルダー折損"
+        }
+      }
+    ]
+  },
+  {
+    "original": "錆止め塗装",
+    "price": 3800,
+    "invoiceId": "24062789-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "錆止め",
+            "塗装"
+          ],
+          "remainingText": ""
+        }
+      }
+    ]
+  },
+  {
+    "original": "荷台床破損部分張替加工",
+    "price": 42000,
+    "invoiceId": "24062791-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "加工",
+            "張替"
+          ],
+          "remainingText": "床破損部分"
+        }
+      }
+    ]
+  },
+  {
+    "original": "アピトン床板",
+    "price": 8300,
+    "invoiceId": "24062791-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": false,
+          "foundTarget": "",
+          "foundActions": [],
+          "remainingText": "アピトン床板"
+        }
+      }
+    ]
+  },
+  {
+    "original": "左右大型反射板取替",
+    "price": 6000,
+    "invoiceId": "24062793-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "取替"
+          ],
+          "remainingText": "右大型反射板"
+        }
+      }
+    ]
+  },
+  {
+    "original": "リヤゲートキャッチ左右脱着修正",
+    "price": 18000,
+    "invoiceId": "24062795-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "脱着",
+            "修正"
+          ],
+          "remainingText": "リヤゲートキャッチ左右"
+        }
+      }
+    ]
+  },
+  {
+    "original": "外装点検・ラッシングベルト取り外し",
+    "price": 10000,
+    "invoiceId": "24062796-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "取り外し",
+            "点検"
+          ],
+          "remainingText": "装・ラッシングベルト"
+        }
+      }
+    ]
+  },
+  {
+    "original": "左セイコーラック取り外し・右セイコーラック左に移設加工",
+    "price": 18000,
+    "invoiceId": "24062798-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "取り外し",
+            "加工"
+          ],
+          "remainingText": "セイコーラック・右セイコーラック左に移設"
+        }
+      }
+    ]
+  },
+  {
+    "original": "部品組替作業",
+    "price": 90000,
+    "invoiceId": "24062799-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "組替"
+          ],
+          "remainingText": "部品作業"
+        }
+      }
+    ]
+  },
+  {
+    "original": "右後ろ床枠曲がり直し・パ手入れ鈑金",
+    "price": 45000,
+    "invoiceId": "24062800-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "曲がり直し",
+            "鈑金"
+          ],
+          "remainingText": "ろ床枠・パ手入れ"
+        }
+      }
+    ]
+  },
+  {
+    "original": "アルミバンパーASSY交換・ステイ脱着修正",
+    "price": 12000,
+    "invoiceId": "24062800-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "交換",
+            "脱着",
+            "修正"
+          ],
+          "remainingText": "アルミバンパーASSY・ステイ"
+        }
+      }
+    ]
+  },
+  {
+    "original": "右後ろ泥除けゴム取替加工",
+    "price": 4000,
+    "invoiceId": "24062800-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "取替",
+            "加工"
+          ],
+          "remainingText": "ろ泥除けゴム"
+        }
+      }
+    ]
+  },
+  {
+    "original": "床枠塗装",
+    "price": 38000,
+    "invoiceId": "24062800-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "塗装"
+          ],
+          "remainingText": "床枠"
+        }
+      }
+    ]
+  },
+  {
+    "original": "塗料",
+    "price": 27600,
+    "invoiceId": "24062800-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": false,
+          "foundTarget": "",
+          "foundActions": [],
+          "remainingText": "塗料"
+        }
+      }
+    ]
+  },
+  {
+    "original": "インターロックスイッチ脱着・レバープレート製作取付加工",
+    "price": 15000,
+    "invoiceId": "24062801-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "加工",
+            "脱着",
+            "取付",
+            "製作"
+          ],
+          "remainingText": "インターロックスイッチ・レバープレート"
+        }
+      }
+    ]
+  },
+  {
+    "original": "ライニング8枚張替",
+    "price": 12800,
+    "invoiceId": "24062802-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "張替"
+          ],
+          "remainingText": "ライニング8枚"
+        }
+      }
+    ]
+  },
+  {
+    "original": "床フックケース脱着・清掃",
+    "price": 6000,
+    "invoiceId": "24062803-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "脱着",
+            "清掃"
+          ],
+          "remainingText": "床フックケース・"
+        }
+      }
+    ]
+  },
+  {
+    "original": "歯止め入れ付替え・リフレクター交換・ブッシュゴム取替",
+    "price": 12000,
+    "invoiceId": "24062804-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "取替",
+            "交換",
+            "付替"
+          ],
+          "remainingText": "歯止め入れえ・リフレクター・ブッシュゴム"
+        }
+      }
+    ]
+  },
+  {
+    "original": "ステン工具箱脱着亀裂ステン溶接・工具箱曲がり修正・キャッチ・蓋曲がり直し",
+    "price": 38000,
+    "invoiceId": "24062804-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "曲がり直し",
+            "脱着",
+            "溶接",
+            "修正"
+          ],
+          "remainingText": "ステン工具箱亀裂ステン・工具箱曲がり・キャッチ・蓋"
+        }
+      }
+    ]
+  },
+  {
+    "original": "セイコーラック取替",
+    "price": 7000,
+    "invoiceId": "24062804-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "取替"
+          ],
+          "remainingText": "セイコーラック"
+        }
+      }
+    ]
+  },
+  {
+    "original": "鳥居シート載せ左右亀裂溶接2ヶ所・塗装・滑り止めテープ張替",
+    "price": 20000,
+    "invoiceId": "24062805-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "溶接",
+            "塗装",
+            "張替"
+          ],
+          "remainingText": "鳥居シート載せ左右亀裂2ヶ所・・滑り止めテープ"
+        }
+      }
+    ]
+  },
+  {
+    "original": "観音扉コンパネ立て修正・リベット穴掘り留め･コーキング処理",
+    "price": 10000,
+    "invoiceId": "24062806-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "修正"
+          ],
+          "remainingText": "観音扉コンパネ立て・リベット穴掘り留め･コーキング処理"
+        }
+      }
+    ]
+  },
+  {
+    "original": "ドライバーシートサスペンション交換",
+    "price": 8000,
+    "invoiceId": "24062807-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "交換"
+          ],
+          "remainingText": "ドライバーシートサスペンション"
+        }
+      }
+    ]
+  },
+  {
+    "original": "ライニング8枚張替",
+    "price": 6400,
+    "invoiceId": "24062808-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "張替"
+          ],
+          "remainingText": "ライニング8枚"
+        }
+      }
+    ]
+  },
+  {
+    "original": "ライニング8枚張替",
+    "price": 12800,
+    "invoiceId": "24062808-2",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "張替"
+          ],
+          "remainingText": "ライニング8枚"
+        }
+      }
+    ]
+  },
+  {
+    "original": "ライニング8枚張替",
+    "price": 12800,
+    "invoiceId": "24062809-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "張替"
+          ],
+          "remainingText": "ライニング8枚"
+        }
+      }
+    ]
+  },
+  {
+    "original": "左後ろセイコーラック取替・嚙み込みボルト切断",
+    "price": 8000,
+    "invoiceId": "24062810-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "取替",
+            "切断"
+          ],
+          "remainingText": "後ろセイコーラック・嚙み込みボルト"
+        }
+      }
+    ]
+  },
+  {
+    "original": "キャブブリッジ右クッション脱着・ブリッジ亀裂溶接",
+    "price": 15000,
+    "invoiceId": "24062811-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "脱着",
+            "溶接"
+          ],
+          "remainingText": "キャブブリッジ右クッション・ブリッジ亀裂"
+        }
+      }
+    ]
+  },
+  {
+    "original": "右リヤフェンダー穴掘り取替加工",
+    "price": 10000,
+    "invoiceId": "24062812-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "取替",
+            "加工"
+          ],
+          "remainingText": "リヤフェンダー穴掘り"
+        }
+      }
+    ]
+  },
+  {
+    "original": "左右バックランプ交換2ヶ",
+    "price": 2400,
+    "invoiceId": "24062812-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "交換"
+          ],
+          "remainingText": "右バックランプ2ヶ"
+        }
+      }
+    ]
+  },
+  {
+    "original": "左テールランプレンズ交換",
+    "price": 600,
+    "invoiceId": "24062812-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "交換"
+          ],
+          "remainingText": "テールランプレンズ"
+        }
+      }
+    ]
+  },
+  {
+    "original": "右リヤフェンダー穴掘り取替加工",
+    "price": 10000,
+    "invoiceId": "24062812-2",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "取替",
+            "加工"
+          ],
+          "remainingText": "リヤフェンダー穴掘り"
+        }
+      }
+    ]
+  },
+  {
+    "original": "左右ウィング前後4ヶ所ウェザーストリップゴム清掃貼り付け修理",
+    "price": 40000,
+    "invoiceId": "24062813-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "修理",
+            "清掃"
+          ],
+          "remainingText": "右ウィング前後4ヶ所ウェザーストリップゴム貼り付け"
+        }
+      }
+    ]
+  },
+  {
+    "original": "燃料ホース応急引替え",
+    "price": 8000,
+    "invoiceId": "24062814-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": true,
+          "hasActions": false,
+          "foundTarget": "ホース",
+          "foundActions": [],
+          "remainingText": "燃料応急引替え"
+        }
+      }
+    ]
+  },
+  {
+    "original": "ライニング8枚張替",
+    "price": 12800,
+    "invoiceId": "24062816-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "張替"
+          ],
+          "remainingText": "ライニング8枚"
+        }
+      }
+    ]
+  },
+  {
+    "original": "左リヤショックアブソーバー取替",
+    "price": 6000,
+    "invoiceId": "24062819-2",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "取替"
+          ],
+          "remainingText": "リヤショックアブソーバー"
+        }
+      }
+    ]
+  },
+  {
+    "original": "フレーム間清掃",
+    "price": 8000,
+    "invoiceId": "24062820-2",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "清掃"
+          ],
+          "remainingText": "フレーム間"
+        }
+      }
+    ]
+  },
+  {
+    "original": "左右バックランプ2ヶ交換",
+    "price": 2400,
+    "invoiceId": "24062821-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "交換"
+          ],
+          "remainingText": "右バックランプ2ヶ"
+        }
+      }
+    ]
+  },
+  {
+    "original": "左テールランプレンズ交換",
+    "price": 600,
+    "invoiceId": "24062821-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "交換"
+          ],
+          "remainingText": "テールランプレンズ"
+        }
+      }
+    ]
+  },
+  {
+    "original": "鳥居穴あき応急鉄板張り加工",
+    "price": 25000,
+    "invoiceId": "24062823-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "加工"
+          ],
+          "remainingText": "鳥居穴あき応急鉄板張り"
+        }
+      }
+    ]
+  },
+  {
+    "original": "サイドバンパーリベット打ち替え",
+    "price": 800,
+    "invoiceId": "24062824-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": false,
+          "foundTarget": "",
+          "foundActions": [],
+          "remainingText": "バンパーリベット打ち替え"
+        }
+      }
+    ]
+  },
+  {
+    "original": "ウィング左後ろシリンダー交換",
+    "price": 18000,
+    "invoiceId": "24072829-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "交換"
+          ],
+          "remainingText": "ウィング左後ろシリンダー"
+        }
+      }
+    ]
+  },
+  {
+    "original": "ウィング雨漏れ点検・ウィングルーフ応急雨漏れ修理（部品代金込み）",
+    "price": 60000,
+    "invoiceId": "24072830-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "修理",
+            "点検"
+          ],
+          "remainingText": "ウィング雨漏れ・ウィングルーフ応急雨漏れ（部品代金込み）"
+        }
+      }
+    ]
+  },
+  {
+    "original": "左テールランプASSY交換・右テールランプレンズ交換・リフレクター取付",
+    "price": 3000,
+    "invoiceId": "24072831-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "交換",
+            "取付"
+          ],
+          "remainingText": "テールランプASSY・右テールランプレンズ交換・リフレクター"
+        }
+      }
+    ]
+  },
+  {
+    "original": "ライニング8枚張替",
+    "price": 12800,
+    "invoiceId": "24072831-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "張替"
+          ],
+          "remainingText": "ライニング8枚"
+        }
+      }
+    ]
+  },
+  {
+    "original": "左後ろスケット交換・フェンダー脱着",
+    "price": 8000,
+    "invoiceId": "24072832-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "交換",
+            "脱着"
+          ],
+          "remainingText": "後ろスケット・フェンダー"
+        }
+      }
+    ]
+  },
+  {
+    "original": "左右スケット脱着入替4ヶ所・左右フェンダー脱着4ヶ所・スケット応急修理1ヶ",
+    "price": 48000,
+    "invoiceId": "24072833-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "修理",
+            "脱着"
+          ],
+          "remainingText": "右スケット入替4ヶ所・左右フェンダー脱着4ヶ所・スケット応急1ヶ"
+        }
+      }
+    ]
+  },
+  {
+    "original": "左右メンバーボルト8本切断取替加工",
+    "price": 28000,
+    "invoiceId": "24072834-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "取替",
+            "加工",
+            "切断"
+          ],
+          "remainingText": "右メンバーボルト8本"
+        }
+      }
+    ]
+  },
+  {
+    "original": "エアーバルブ取替",
+    "price": 32000,
+    "invoiceId": "24072835-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "取替"
+          ],
+          "remainingText": "エアーバルブ"
+        }
+      }
+    ]
+  },
+  {
+    "original": "キャブショック交換",
+    "price": 3000,
+    "invoiceId": "24072835-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "交換"
+          ],
+          "remainingText": "キャブショック"
+        }
+      }
+    ]
+  },
+  {
+    "original": "ライニング4枚張替",
+    "price": 6400,
+    "invoiceId": "24072835-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "張替"
+          ],
+          "remainingText": "ライニング4枚"
+        }
+      }
+    ]
+  },
+  {
+    "original": "ライニング8枚張替",
+    "price": 9600,
+    "invoiceId": "24072836-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "張替"
+          ],
+          "remainingText": "ライニング8枚"
+        }
+      }
+    ]
+  },
+  {
+    "original": "エアードライヤー交換",
+    "price": 18000,
+    "invoiceId": "24072837-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "交換"
+          ],
+          "remainingText": "エアードライヤー"
+        }
+      }
+    ]
+  },
+  {
+    "original": "エアードライヤー交換",
+    "price": 18000,
+    "invoiceId": "24072838-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "交換"
+          ],
+          "remainingText": "エアードライヤー"
+        }
+      }
+    ]
+  },
+  {
+    "original": "エアードライヤー・オイルミスト交換",
+    "price": 32000,
+    "invoiceId": "24072839-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "交換"
+          ],
+          "remainingText": "エアードライヤー・オイルミスト"
+        }
+      }
+    ]
+  },
+  {
+    "original": "右後ろウィングキャッチ・右前キャッチ受け取替",
+    "price": 7000,
+    "invoiceId": "24072840-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "取替"
+          ],
+          "remainingText": "ろウィングキャッチ・右前キャッチ受け"
+        }
+      }
+    ]
+  },
+  {
+    "original": "左右ウィング前後4ヶ所蝶番ピン取替加工",
+    "price": 42000,
+    "invoiceId": "24072842-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "取替",
+            "加工"
+          ],
+          "remainingText": "右ウィング前後4ヶ所蝶番ピン"
+        }
+      }
+    ]
+  },
+  {
+    "original": "左3番中柱脱着曲がり直し鈑金",
+    "price": 24000,
+    "invoiceId": "24072842-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "曲がり直し",
+            "鈑金",
+            "脱着"
+          ],
+          "remainingText": "3番中柱"
+        }
+      }
+    ]
+  },
+  {
+    "original": "左後ろテールランプ防振ゴム３ヶ所取替加工",
+    "price": 9000,
+    "invoiceId": "24072843-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "取替",
+            "加工"
+          ],
+          "remainingText": "後ろテールランプ防振ゴム３ヶ所"
+        }
+      }
+    ]
+  },
+  {
+    "original": "左後ろスケット修理",
+    "price": 6000,
+    "invoiceId": "24072844-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "修理"
+          ],
+          "remainingText": "後ろスケット"
+        }
+      }
+    ]
+  },
+  {
+    "original": "カプラーロックスイッチ加工",
+    "price": 12000,
+    "invoiceId": "24072845-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "加工"
+          ],
+          "remainingText": "カプラーロックスイッチ"
+        }
+      }
+    ]
+  },
+  {
+    "original": "リレーバルブ取替",
+    "price": 8000,
+    "invoiceId": "24072846-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "取替"
+          ],
+          "remainingText": "リレーバルブ"
+        }
+      }
+    ]
+  },
+  {
+    "original": "コボレーンシート補修・リベット打ち替え",
+    "price": 25000,
+    "invoiceId": "24072847-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "補修"
+          ],
+          "remainingText": "コボレーンシート・リベット打ち替え"
+        }
+      }
+    ]
+  },
+  {
+    "original": "ライニング4枚張替",
+    "price": 6400,
+    "invoiceId": "24072848-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "張替"
+          ],
+          "remainingText": "ライニング4枚"
+        }
+      }
+    ]
+  },
+  {
+    "original": "折損修正溶接",
+    "price": 8000,
+    "invoiceId": "24072849-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "溶接",
+            "修正"
+          ],
+          "remainingText": "折損"
+        }
+      }
+    ]
+  },
+  {
+    "original": "フレーム亀裂7カ所表裏カット溶接",
+    "price": 42000,
+    "invoiceId": "24072850-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "溶接"
+          ],
+          "remainingText": "フレーム亀裂7カ所表裏カット"
+        }
+      }
+    ]
+  },
+  {
+    "original": "リレーバルブ取替",
+    "price": 8000,
+    "invoiceId": "24072853-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "取替"
+          ],
+          "remainingText": "リレーバルブ"
+        }
+      }
+    ]
+  },
+  {
+    "original": "エアードライヤー及びオイルミスト取替",
+    "price": 32000,
+    "invoiceId": "24072854-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "取替"
+          ],
+          "remainingText": "エアードライヤー及びオイルミスト"
+        }
+      }
+    ]
+  },
+  {
+    "original": "ナンバープレートボルト取付ボルト取外し・ねじ山修正",
+    "price": 10000,
+    "invoiceId": "24072855-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "取付",
+            "修正"
+          ],
+          "remainingText": "ナンバープレートボルトボルト取外し・ねじ山"
+        }
+      }
+    ]
+  },
+  {
+    "original": "ナンバープレート取付ボルト取外し・ねじ山修正",
+    "price": 10000,
+    "invoiceId": "24072856-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "取付",
+            "修正"
+          ],
+          "remainingText": "ナンバープレートボルト取外し・ねじ山"
+        }
+      }
+    ]
+  },
+  {
+    "original": "ライニング8枚張替",
+    "price": 12800,
+    "invoiceId": "24072857-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "張替"
+          ],
+          "remainingText": "ライニング8枚"
+        }
+      }
+    ]
+  },
+  {
+    "original": "車幅灯ASSY交換",
+    "price": 2000,
+    "invoiceId": "24072857-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "交換"
+          ],
+          "remainingText": "車幅灯ASSY"
+        }
+      }
+    ]
+  },
+  {
+    "original": "車幅灯取付ボルト折れ込み修理2カ所",
+    "price": 6000,
+    "invoiceId": "24072857-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "修理",
+            "取付"
+          ],
+          "remainingText": "車幅灯ボルト折れ込み2カ所"
+        }
+      }
+    ]
+  },
+  {
+    "original": "フレームメンバー2本折損部11カ所補強取付加工溶接",
+    "price": 77000,
+    "invoiceId": "24072858-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "加工",
+            "溶接",
+            "取付"
+          ],
+          "remainingText": "フレームメンバー2本折損部11カ所補強"
+        }
+      }
+    ]
+  },
+  {
+    "original": "ライニング8枚張替",
+    "price": 12800,
+    "invoiceId": "24072859-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "張替"
+          ],
+          "remainingText": "ライニング8枚"
+        }
+      }
+    ]
+  },
+  {
+    "original": "ライニング8枚張替",
+    "price": 12800,
+    "invoiceId": "24072860-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "張替"
+          ],
+          "remainingText": "ライニング8枚"
+        }
+      }
+    ]
+  },
+  {
+    "original": "導風板脱着作業",
+    "price": 22000,
+    "invoiceId": "24072863-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "脱着"
+          ],
+          "remainingText": "導風板作業"
+        }
+      }
+    ]
+  },
+  {
+    "original": "右ウィング前後ウェザーストリップゴム清掃貼り付け修理2カ所",
+    "price": 20000,
+    "invoiceId": "24072864-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "修理",
+            "清掃"
+          ],
+          "remainingText": "ウィング前後ウェザーストリップゴム貼り付け2カ所"
+        }
+      }
+    ]
+  },
+  {
+    "original": "左リヤ作業灯ステイ脱着折損補強取付ステン溶接",
+    "price": 10000,
+    "invoiceId": "24072866-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "脱着",
+            "溶接",
+            "取付"
+          ],
+          "remainingText": "リヤ作業灯ステイ折損補強ステン"
+        }
+      }
+    ]
+  },
+  {
+    "original": "ウィング左右前後4ヶ所ウェザーストリップゴム貼替加工",
+    "price": 72000,
+    "invoiceId": "24072867-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "加工"
+          ],
+          "remainingText": "ウィング左右前後4ヶ所ウェザーストリップゴム貼替"
+        }
+      }
+    ]
+  },
+  {
+    "original": "右テールランプステイステン溶接",
+    "price": 15000,
+    "invoiceId": "24072868-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "溶接"
+          ],
+          "remainingText": "テールランプステイステン"
+        }
+      }
+    ]
+  },
+  {
+    "original": "リヤ泥除けゴム取替加工4枚・ステン振れ止め修正",
+    "price": 30000,
+    "invoiceId": "24072870-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "取替",
+            "加工",
+            "修正"
+          ],
+          "remainingText": "リヤ泥除けゴム4枚・ステン振れ止め"
+        }
+      }
+    ]
+  },
+  {
+    "original": "リヤゲート締めフック左右4ヶ所リターンスプリング取替",
+    "price": 12000,
+    "invoiceId": "24072872-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "取替"
+          ],
+          "remainingText": "リヤゲート締めフック左右4ヶ所リターンスプリング"
+        }
+      }
+    ]
+  },
+  {
+    "original": "ライニング14枚張替",
+    "price": 22400,
+    "invoiceId": "24072873-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "張替"
+          ],
+          "remainingText": "ライニング14枚"
+        }
+      }
+    ]
+  },
+  {
+    "original": "エアードライヤー・オイルミスト取替",
+    "price": 32000,
+    "invoiceId": "24072874-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "取替"
+          ],
+          "remainingText": "エアードライヤー・オイルミスト"
+        }
+      }
+    ]
+  },
+  {
+    "original": "左右キャスターストッパー止めボルトマス締め加工",
+    "price": 24000,
+    "invoiceId": "24072875-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "加工"
+          ],
+          "remainingText": "右キャスターストッパー止めボルトマス締め"
+        }
+      }
+    ]
+  },
+  {
+    "original": "ライニング4枚張替",
+    "price": 6400,
+    "invoiceId": "24072876-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "張替"
+          ],
+          "remainingText": "ライニング4枚"
+        }
+      }
+    ]
+  },
+  {
+    "original": "ブロックドリル",
+    "price": 10000,
+    "invoiceId": "24072878-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": false,
+          "foundTarget": "",
+          "foundActions": [],
+          "remainingText": "ブロックドリル"
+        }
+      }
+    ]
+  },
+  {
+    "original": "左フックピン応急修理",
+    "price": 10000,
+    "invoiceId": "24072880-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "修理"
+          ],
+          "remainingText": "フックピン応急"
+        }
+      }
+    ]
+  },
+  {
+    "original": "キャブサスベローズ交換2個",
+    "price": 6000,
+    "invoiceId": "24072881-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "交換"
+          ],
+          "remainingText": "キャブサスベローズ2個"
+        }
+      }
+    ]
+  },
+  {
+    "original": "エアードライヤー・オイルミスト取替",
+    "price": 32000,
+    "invoiceId": "24072882-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "取替"
+          ],
+          "remainingText": "エアードライヤー・オイルミスト"
+        }
+      }
+    ]
+  },
+  {
+    "original": "リヤバンパー交換",
+    "price": 6000,
+    "invoiceId": "24072882-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "交換"
+          ],
+          "remainingText": "リヤバンパー"
+        }
+      }
+    ]
+  },
+  {
+    "original": "フロントナンバー枠取り外し",
+    "price": 2000,
+    "invoiceId": "24072882-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "取り外し"
+          ],
+          "remainingText": "ナンバー枠"
+        }
+      }
+    ]
+  },
+  {
+    "original": "エアードライヤー・オイルミスト取替",
+    "price": 32000,
+    "invoiceId": "24072882-2",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "取替"
+          ],
+          "remainingText": "エアードライヤー・オイルミスト"
+        }
+      }
+    ]
+  },
+  {
+    "original": "右ミラーアーム交換・ミラー・高速ミラー付替え",
+    "price": 9000,
+    "invoiceId": "24072883-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "交換",
+            "付替"
+          ],
+          "remainingText": "ミラーアーム・ミラー・高速ミラーえ"
+        }
+      }
+    ]
+  },
+  {
+    "original": "リヤバンパー取替",
+    "price": 6000,
+    "invoiceId": "24072885-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "取替"
+          ],
+          "remainingText": "リヤバンパー"
+        }
+      }
+    ]
+  },
+  {
+    "original": "フロントナンバー枠取り外し",
+    "price": 2000,
+    "invoiceId": "24072885-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "取り外し"
+          ],
+          "remainingText": "ナンバー枠"
+        }
+      }
+    ]
+  },
+  {
+    "original": "ライニング6枚張替",
+    "price": 9600,
+    "invoiceId": "24072887-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "張替"
+          ],
+          "remainingText": "ライニング6枚"
+        }
+      }
+    ]
+  },
+  {
+    "original": "ライニング12枚張替",
+    "price": 19200,
+    "invoiceId": "24072888-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "張替"
+          ],
+          "remainingText": "ライニング12枚"
+        }
+      }
+    ]
+  },
+  {
+    "original": "三角リフレクター2枚取替",
+    "price": 2000,
+    "invoiceId": "24072888-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "取替"
+          ],
+          "remainingText": "三角リフレクター2枚"
+        }
+      }
+    ]
+  },
+  {
+    "original": "ボルト折れ込み修理2本",
+    "price": 4000,
+    "invoiceId": "24072888-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "修理"
+          ],
+          "remainingText": "ボルト折れ込み2本"
+        }
+      }
+    ]
+  },
+  {
+    "original": "工具箱コーキング処理",
+    "price": 10000,
+    "invoiceId": "24072889-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": false,
+          "foundTarget": "",
+          "foundActions": [],
+          "remainingText": "工具箱コーキング処理"
+        }
+      }
+    ]
+  },
+  {
+    "original": "ドライバーシート座面脱着固定クリップ取替",
+    "price": 8000,
+    "invoiceId": "24072889-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "取替",
+            "脱着"
+          ],
+          "remainingText": "ドライバーシート座面固定クリップ"
+        }
+      }
+    ]
+  },
+  {
+    "original": "エアダクト脱着・インシュレーター交換",
+    "price": 5000,
+    "invoiceId": "24072890-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "交換",
+            "脱着"
+          ],
+          "remainingText": "エアダクト・インシュレーター"
+        }
+      }
+    ]
+  },
+  {
+    "original": "三角リフレクター取替え",
+    "price": 2000,
+    "invoiceId": "24072896-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "取替"
+          ],
+          "remainingText": "三角リフレクターえ"
+        }
+      }
+    ]
+  },
+  {
+    "original": "右ツイストロックピン折損修理",
+    "price": 12000,
+    "invoiceId": "24072897-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "修理"
+          ],
+          "remainingText": "ツイストロックピン折損"
+        }
+      }
+    ]
+  },
+  {
+    "original": "大型反射板左右交換",
+    "price": 3000,
+    "invoiceId": "24072901-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "交換"
+          ],
+          "remainingText": "大型反射板左右"
+        }
+      }
+    ]
+  },
+  {
+    "original": "右後ろ泥除け振れ止め折損ステン溶接",
+    "price": 10000,
+    "invoiceId": "24072903-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "溶接"
+          ],
+          "remainingText": "ろ泥除け振れ止め折損ステン"
+        }
+      }
+    ]
+  },
+  {
+    "original": "右ウィングガスケット交換",
+    "price": 12000,
+    "invoiceId": "24072915-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "交換"
+          ],
+          "remainingText": "ウィングガスケット"
+        }
+      }
+    ]
+  },
+  {
+    "original": "ガゼットボルト取替加工",
+    "price": 12000,
+    "invoiceId": "24072916-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "取替",
+            "加工"
+          ],
+          "remainingText": "ガゼットボルト"
+        }
+      }
+    ]
+  },
+  {
+    "original": "取消",
+    "price": 0,
+    "invoiceId": "24072978-2",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": false,
+          "foundTarget": "",
+          "foundActions": [],
+          "remainingText": "取消"
+        }
+      }
+    ]
+  },
+  {
+    "original": "取消",
+    "price": 0,
+    "invoiceId": "24072979-2",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": false,
+          "foundTarget": "",
+          "foundActions": [],
+          "remainingText": "取消"
+        }
+      }
+    ]
+  },
+  {
+    "original": "取消",
+    "price": 0,
+    "invoiceId": "24072980-2",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": false,
+          "foundTarget": "",
+          "foundActions": [],
+          "remainingText": "取消"
+        }
+      }
+    ]
+  },
+  {
+    "original": "左右ツイストロック鈑金修理・ピンカット・ガイドステイ製作",
+    "price": 38000,
+    "invoiceId": "24072981-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "鈑金",
+            "修理"
+          ],
+          "remainingText": "右ツイストロック・ピンカット・ガイドステイ製作"
+        }
+      }
+    ]
+  },
+  {
+    "original": "取消",
+    "price": 0,
+    "invoiceId": "24072981-2",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": false,
+          "foundTarget": "",
+          "foundActions": [],
+          "remainingText": "取消"
+        }
+      }
+    ]
+  },
+  {
+    "original": "取消",
+    "price": 0,
+    "invoiceId": "24072982-2",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": false,
+          "foundTarget": "",
+          "foundActions": [],
+          "remainingText": "取消"
+        }
+      }
+    ]
+  },
+  {
+    "original": "自重計取替",
+    "price": 6500,
+    "invoiceId": "24072983-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "取替"
+          ],
+          "remainingText": "自重計"
+        }
+      }
+    ]
+  },
+  {
+    "original": "取消",
+    "price": 0,
+    "invoiceId": "24072983-2",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": false,
+          "foundTarget": "",
+          "foundActions": [],
+          "remainingText": "取消"
+        }
+      }
+    ]
+  },
+  {
+    "original": "取消",
+    "price": 0,
+    "invoiceId": "24072984-2",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": false,
+          "foundTarget": "",
+          "foundActions": [],
+          "remainingText": "取消"
+        }
+      }
+    ]
+  },
+  {
+    "original": "リヤゲート亀裂応急ステン溶接",
+    "price": 68000,
+    "invoiceId": "24072985-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "溶接"
+          ],
+          "remainingText": "リヤゲート亀裂応急ステン"
+        }
+      }
+    ]
+  },
+  {
+    "original": "左右泥除けゴム交換・アルミ押さえステイ製作取付2枚",
+    "price": 20000,
+    "invoiceId": "24072985-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "交換",
+            "取付",
+            "製作"
+          ],
+          "remainingText": "右泥除けゴム・アルミ押さえステイ2枚"
+        }
+      }
+    ]
+  },
+  {
+    "original": "取消",
+    "price": 0,
+    "invoiceId": "24072985-2",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": false,
+          "foundTarget": "",
+          "foundActions": [],
+          "remainingText": "取消"
+        }
+      }
+    ]
+  },
+  {
+    "original": "高速ミラー取り外し",
+    "price": 1000,
+    "invoiceId": "24082904-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "取り外し"
+          ],
+          "remainingText": "高速ミラー"
+        }
+      }
+    ]
+  },
+  {
+    "original": "6㎜コの字曲げ鋼材",
+    "price": 28000,
+    "invoiceId": "24082905-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": false,
+          "foundTarget": "",
+          "foundActions": [],
+          "remainingText": "6㎜コの字曲げ鋼材"
+        }
+      }
+    ]
+  },
+  {
+    "original": "ライニング4枚張替",
+    "price": 6400,
+    "invoiceId": "24082906-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "張替"
+          ],
+          "remainingText": "ライニング4枚"
+        }
+      }
+    ]
+  },
+  {
+    "original": "キャブショック左右2カ所交換",
+    "price": 6000,
+    "invoiceId": "24082906-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "交換"
+          ],
+          "remainingText": "キャブショック左右2カ所"
+        }
+      }
+    ]
+  },
+  {
+    "original": "フォグランプ球取替",
+    "price": 600,
+    "invoiceId": "24082906-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "取替"
+          ],
+          "remainingText": "フォグランプ球"
+        }
+      }
+    ]
+  },
+  {
+    "original": "左ウィングガスケット交換",
+    "price": 12000,
+    "invoiceId": "24082907-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "交換"
+          ],
+          "remainingText": "ウィングガスケット"
+        }
+      }
+    ]
+  },
+  {
+    "original": "テールランプレンズ交換",
+    "price": 5000,
+    "invoiceId": "24082908-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "交換"
+          ],
+          "remainingText": "テールランプレンズ"
+        }
+      }
+    ]
+  },
+  {
+    "original": "タイコマフラー前側亀裂溶接",
+    "price": 16000,
+    "invoiceId": "24082908-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "溶接"
+          ],
+          "remainingText": "タイコマフラー前側亀裂"
+        }
+      }
+    ]
+  },
+  {
+    "original": "左右キャスターストッパー取付加工溶接・塗装",
+    "price": 80000,
+    "invoiceId": "24082909-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "加工",
+            "溶接",
+            "取付",
+            "塗装"
+          ],
+          "remainingText": "右キャスターストッパー・"
+        }
+      }
+    ]
+  },
+  {
+    "original": "コーキング・塗料",
+    "price": 9800,
+    "invoiceId": "24082909-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": false,
+          "foundTarget": "",
+          "foundActions": [],
+          "remainingText": "コーキング・塗料"
+        }
+      }
+    ]
+  },
+  {
+    "original": "フラットバー4本（UD在庫品）",
+    "price": 0,
+    "invoiceId": "24082909-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": false,
+          "foundTarget": "",
+          "foundActions": [],
+          "remainingText": "フラットバー4本（UD在庫品）"
+        }
+      }
+    ]
+  },
+  {
+    "original": "大型反射板取替",
+    "price": 5000,
+    "invoiceId": "24082910-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "取替"
+          ],
+          "remainingText": "大型反射板"
+        }
+      }
+    ]
+  },
+  {
+    "original": "サイドミラー交換",
+    "price": 2000,
+    "invoiceId": "24082911-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "交換"
+          ],
+          "remainingText": "ミラー"
+        }
+      }
+    ]
+  },
+  {
+    "original": "ナンバープレートステイ交換",
+    "price": 10000,
+    "invoiceId": "24082912-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "交換"
+          ],
+          "remainingText": "ナンバープレートステイ"
+        }
+      }
+    ]
+  },
+  {
+    "original": "ハザードランプレンズ2個交換",
+    "price": 1200,
+    "invoiceId": "24082919-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "交換"
+          ],
+          "remainingText": "ハザードランプレンズ2個"
+        }
+      }
+    ]
+  },
+  {
+    "original": "エアードライヤー・オイルミスト取替",
+    "price": 32000,
+    "invoiceId": "24082920-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "取替"
+          ],
+          "remainingText": "エアードライヤー・オイルミスト"
+        }
+      }
+    ]
+  },
+  {
+    "original": "ライニング2枚張替",
+    "price": 3200,
+    "invoiceId": "24082921-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "張替"
+          ],
+          "remainingText": "ライニング2枚"
+        }
+      }
+    ]
+  },
+  {
+    "original": "観音扉塗装",
+    "price": 6000,
+    "invoiceId": "24082922-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "塗装"
+          ],
+          "remainingText": "観音扉"
+        }
+      }
+    ]
+  },
+  {
+    "original": "ファーストステップ取替・取り付け部修正",
+    "price": 10000,
+    "invoiceId": "24082924-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "取替",
+            "修正"
+          ],
+          "remainingText": "ステップ・取り付け部"
+        }
+      }
+    ]
+  },
+  {
+    "original": "煽りスケット左右4個調整・wナット2個取付",
+    "price": 12000,
+    "invoiceId": "24082925-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "取付",
+            "調整"
+          ],
+          "remainingText": "煽りスケット左右4個・wナット2個"
+        }
+      }
+    ]
+  },
+  {
+    "original": "サイドバンパー取付部2カ所穴掘り加工12ボルト2本取付（部品代金込み）",
+    "price": 6000,
+    "invoiceId": "24082926-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "加工",
+            "取付"
+          ],
+          "remainingText": "バンパー部2カ所穴掘り12ボルト2本取付（部品代金込み）"
+        }
+      }
+    ]
+  },
+  {
+    "original": "左サイドバンパー脱着・燃料抜き入れ・ダンク脱着・バンド取替",
+    "price": 22000,
+    "invoiceId": "24082928-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "取替",
+            "脱着"
+          ],
+          "remainingText": "サイドバンパー・燃料抜き入れ・ダンク脱着・バンド"
+        }
+      }
+    ]
+  },
+  {
+    "original": "前後左右車高灯取り外し",
+    "price": 8000,
+    "invoiceId": "24082929-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "取り外し"
+          ],
+          "remainingText": "右車高灯"
+        }
+      }
+    ]
+  },
+  {
+    "original": "左上部作業灯修正・コボレーンスイッチステイ修理",
+    "price": 7000,
+    "invoiceId": "24082930-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "修理",
+            "修正"
+          ],
+          "remainingText": "部作業灯・コボレーンスイッチステイ"
+        }
+      }
+    ]
+  },
+  {
+    "original": "ナンバープレート取付ボルト折れ込み修理",
+    "price": 6000,
+    "invoiceId": "24082931-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "修理",
+            "取付"
+          ],
+          "remainingText": "ナンバープレートボルト折れ込み"
+        }
+      }
+    ]
+  },
+  {
+    "original": "ライニング16枚張替",
+    "price": 25600,
+    "invoiceId": "24082932-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "張替"
+          ],
+          "remainingText": "ライニング16枚"
+        }
+      }
+    ]
+  },
+  {
+    "original": "リヤナンバー灯折れ込み修理電球交換",
+    "price": 6000,
+    "invoiceId": "24082935-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "交換",
+            "修理"
+          ],
+          "remainingText": "リヤナンバー灯折れ込み電球"
+        }
+      }
+    ]
+  },
+  {
+    "original": "中央メンバー左右亀裂カット補強溶接",
+    "price": 12000,
+    "invoiceId": "24082936-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "溶接"
+          ],
+          "remainingText": "メンバー左右亀裂カット補強"
+        }
+      }
+    ]
+  },
+  {
+    "original": "右コンテナロック鈑金・フラッシャー脱着・リフレクター取替え",
+    "price": 12000,
+    "invoiceId": "24082936-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "鈑金",
+            "取替",
+            "脱着"
+          ],
+          "remainingText": "コンテナロック・フラッシャー・リフレクターえ"
+        }
+      }
+    ]
+  },
+  {
+    "original": "塗料・8ミリUバンド２本",
+    "price": 5000,
+    "invoiceId": "24082936-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": false,
+          "foundTarget": "",
+          "foundActions": [],
+          "remainingText": "塗料・8ミリUバンド２本"
+        }
+      }
+    ]
+  },
+  {
+    "original": "左ウィングキャッチ曲がり直し・亀裂溶接",
+    "price": 20000,
+    "invoiceId": "24082937-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "曲がり直し",
+            "溶接"
+          ],
+          "remainingText": "ウィングキャッチ・亀裂"
+        }
+      }
+    ]
+  },
+  {
+    "original": "ウィングキャッチ受け取り付け",
+    "price": 5000,
+    "invoiceId": "24082939-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": false,
+          "foundTarget": "",
+          "foundActions": [],
+          "remainingText": "ウィングキャッチ受け取り付け"
+        }
+      }
+    ]
+  },
+  {
+    "original": "右ウィングウェザーストリップゴム交換",
+    "price": 12000,
+    "invoiceId": "24082940-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "交換"
+          ],
+          "remainingText": "ウィングウェザーストリップゴム"
+        }
+      }
+    ]
+  },
+  {
+    "original": "コボレーン押え破損部分応急処置",
+    "price": 8000,
+    "invoiceId": "24082941-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": false,
+          "foundTarget": "",
+          "foundActions": [],
+          "remainingText": "コボレーン押え破損部分応急処置"
+        }
+      }
+    ]
+  },
+  {
+    "original": "キャッチ修正加工",
+    "price": 20000,
+    "invoiceId": "24082942-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "加工",
+            "修正"
+          ],
+          "remainingText": "キャッチ"
+        }
+      }
+    ]
+  },
+  {
+    "original": "メンバー左右亀裂溶接",
+    "price": 10000,
+    "invoiceId": "24082942-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "溶接"
+          ],
+          "remainingText": "メンバー左右亀裂"
+        }
+      }
+    ]
+  },
+  {
+    "original": "プラットホームマス締め点検・ボルト折れ込み修理",
+    "price": 10000,
+    "invoiceId": "24082943-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "修理",
+            "点検"
+          ],
+          "remainingText": "プラットホームマス締め・ボルト折れ込み"
+        }
+      }
+    ]
+  },
+  {
+    "original": "リヤナンバーステイ左右交換・反射板取替・反射板ステイ曲がり直し",
+    "price": 22000,
+    "invoiceId": "24082944-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "曲がり直し",
+            "取替",
+            "交換"
+          ],
+          "remainingText": "リヤナンバーステイ左右・反射板・反射板ステイ"
+        }
+      }
+    ]
+  },
+  {
+    "original": "オイルミスト・エアードライヤー交換",
+    "price": 32000,
+    "invoiceId": "24082947-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "交換"
+          ],
+          "remainingText": "オイルミスト・エアードライヤー"
+        }
+      }
+    ]
+  },
+  {
+    "original": "エアードライヤー・オイルミスト交換",
+    "price": 32000,
+    "invoiceId": "24082948-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "交換"
+          ],
+          "remainingText": "エアードライヤー・オイルミスト"
+        }
+      }
+    ]
+  },
+  {
+    "original": "庫内ジョルダーストッパー曲がり直し・ステン溶接",
+    "price": 10000,
+    "invoiceId": "24082950-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "曲がり直し",
+            "溶接"
+          ],
+          "remainingText": "庫内ジョルダーストッパー・ステン"
+        }
+      }
+    ]
+  },
+  {
+    "original": "左ウィングキャッチ取替",
+    "price": 3000,
+    "invoiceId": "24082951-1",
+    "items": [],
+    "isSet": false,
+    "status": "failed",
+    "errors": [
+      {
+        "reason": "insufficient_data",
+        "details": {
+          "hasTarget": false,
+          "hasActions": true,
+          "foundTarget": "",
+          "foundActions": [
+            "取替"
+          ],
+          "remainingText": "ウィングキャッチ"
+        }
+      }
+    ]
+  }
+]

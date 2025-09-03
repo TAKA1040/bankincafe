@@ -1,0 +1,600 @@
+{
+  "timestamp": "2025-09-03T01:47:33.518Z",
+  "stats": {
+    "individualWorks": 5,
+    "setWorks": 20,
+    "newTargets": 0,
+    "newActions": 0,
+    "newPositions": 0,
+    "errors": 0
+  },
+  "log": [
+    {
+      "type": "set_work",
+      "setId": 11,
+      "original": "リヤフラッシャーASSY取替・ブラケット鈑金修理",
+      "itemCount": 2,
+      "items": [
+        {
+          "target": "ブラケット",
+          "action": "鈑金",
+          "positions": []
+        },
+        {
+          "target": "ブラケット",
+          "action": "修理",
+          "positions": []
+        }
+      ],
+      "timestamp": "2025-09-03T01:47:28.730Z"
+    },
+    {
+      "type": "set_work",
+      "setId": 12,
+      "original": "左ファーストステップ・ロアカバー・リフレクター取替・ステップブラケット脱着修正・左ドアフラッシャー取替",
+      "itemCount": 4,
+      "items": [
+        {
+          "target": "ファーストステップ",
+          "action": "カバー",
+          "positions": [
+            "左"
+          ]
+        },
+        {
+          "target": "ファーストステップ",
+          "action": "取替",
+          "positions": [
+            "左"
+          ]
+        },
+        {
+          "target": "ファーストステップ",
+          "action": "脱着",
+          "positions": [
+            "左"
+          ]
+        },
+        {
+          "target": "ファーストステップ",
+          "action": "修正",
+          "positions": [
+            "左"
+          ]
+        }
+      ],
+      "timestamp": "2025-09-03T01:47:29.091Z"
+    },
+    {
+      "type": "set_work",
+      "setId": 13,
+      "original": "メイン燃料タンクホース延長サブタンク付替え加工",
+      "itemCount": 2,
+      "items": [
+        {
+          "target": "燃料タンク",
+          "action": "加工",
+          "positions": []
+        },
+        {
+          "target": "燃料タンク",
+          "action": "付替",
+          "positions": []
+        }
+      ],
+      "timestamp": "2025-09-03T01:47:29.320Z"
+    },
+    {
+      "type": "set_work",
+      "setId": 14,
+      "original": "右キャブフェンダー回り応急鈑金修理・マッドガード及びステイ取替鈑金加工・タイヤハウスカバー取替加工",
+      "itemCount": 2,
+      "items": [
+        {
+          "target": "タイヤハウスカバー",
+          "action": "鈑金",
+          "positions": [
+            "右"
+          ]
+        },
+        {
+          "target": "タイヤハウスカバー",
+          "action": "修理",
+          "positions": [
+            "右"
+          ]
+        }
+      ],
+      "timestamp": "2025-09-03T01:47:29.544Z"
+    },
+    {
+      "type": "set_work",
+      "setId": 15,
+      "original": "エンジンカバーステイ修正・折損溶接",
+      "itemCount": 2,
+      "items": [
+        {
+          "target": "エンジンカバー",
+          "action": "溶接",
+          "positions": []
+        },
+        {
+          "target": "エンジンカバー",
+          "action": "修正",
+          "positions": []
+        }
+      ],
+      "timestamp": "2025-09-03T01:47:29.797Z"
+    },
+    {
+      "type": "individual_work",
+      "workId": 64,
+      "original": "左バックミラー・ステイ・モーター取替",
+      "target": "バックミラー",
+      "action": "取替",
+      "positions": [
+        "左"
+      ],
+      "timestamp": "2025-09-03T01:47:29.872Z"
+    },
+    {
+      "type": "set_work",
+      "setId": 16,
+      "original": "左ステップカバー・ドアー補修塗装",
+      "itemCount": 3,
+      "items": [
+        {
+          "target": "ドア",
+          "action": "カバー",
+          "positions": [
+            "左"
+          ]
+        },
+        {
+          "target": "ドア",
+          "action": "塗装",
+          "positions": [
+            "左"
+          ]
+        },
+        {
+          "target": "ドア",
+          "action": "補修",
+          "positions": [
+            "左"
+          ]
+        }
+      ],
+      "timestamp": "2025-09-03T01:47:30.144Z"
+    },
+    {
+      "type": "set_work",
+      "setId": 17,
+      "original": "左コーナーパネル・コーナーカバー取替・取り付け部分修正",
+      "itemCount": 3,
+      "items": [
+        {
+          "target": "コーナーパネル",
+          "action": "カバー",
+          "positions": [
+            "左"
+          ]
+        },
+        {
+          "target": "コーナーパネル",
+          "action": "取替",
+          "positions": [
+            "左"
+          ]
+        },
+        {
+          "target": "コーナーパネル",
+          "action": "修正",
+          "positions": [
+            "左"
+          ]
+        }
+      ],
+      "timestamp": "2025-09-03T01:47:30.370Z"
+    },
+    {
+      "type": "set_work",
+      "setId": 18,
+      "original": "インナーバンパー・左フィニッシャー・エンドカバー・ヘッドライト・フォグランプ・フラッシャー取替・他部品組替",
+      "itemCount": 3,
+      "items": [
+        {
+          "target": "ヘッドライト",
+          "action": "カバー",
+          "positions": [
+            "インナー"
+          ]
+        },
+        {
+          "target": "ヘッドライト",
+          "action": "取替",
+          "positions": [
+            "インナー"
+          ]
+        },
+        {
+          "target": "ヘッドライト",
+          "action": "組替",
+          "positions": [
+            "インナー"
+          ]
+        }
+      ],
+      "timestamp": "2025-09-03T01:47:30.614Z"
+    },
+    {
+      "type": "set_work",
+      "setId": 19,
+      "original": "左右ファーストステップブラケット脱着修正・左側ステイ取替",
+      "itemCount": 3,
+      "items": [
+        {
+          "target": "ファーストステップ",
+          "action": "取替",
+          "positions": [
+            "左"
+          ]
+        },
+        {
+          "target": "ファーストステップ",
+          "action": "脱着",
+          "positions": [
+            "左"
+          ]
+        },
+        {
+          "target": "ファーストステップ",
+          "action": "修正",
+          "positions": [
+            "左"
+          ]
+        }
+      ],
+      "timestamp": "2025-09-03T01:47:30.847Z"
+    },
+    {
+      "type": "set_work",
+      "setId": 20,
+      "original": "ボデー左前ドアー脱着鈑金・コーナーポスト切断脱着鈑金",
+      "itemCount": 3,
+      "items": [
+        {
+          "target": "ドア",
+          "action": "鈑金",
+          "positions": []
+        },
+        {
+          "target": "ドア",
+          "action": "脱着",
+          "positions": []
+        },
+        {
+          "target": "ドア",
+          "action": "切断",
+          "positions": []
+        }
+      ],
+      "timestamp": "2025-09-03T01:47:31.145Z"
+    },
+    {
+      "type": "set_work",
+      "setId": 21,
+      "original": "左右ドアウェザーストリップゴム取替・スカッフプレート脱着腐食ビス取替加工",
+      "itemCount": 3,
+      "items": [
+        {
+          "target": "ドア",
+          "action": "取替",
+          "positions": [
+            "左"
+          ]
+        },
+        {
+          "target": "ドア",
+          "action": "加工",
+          "positions": [
+            "左"
+          ]
+        },
+        {
+          "target": "ドア",
+          "action": "脱着",
+          "positions": [
+            "左"
+          ]
+        }
+      ],
+      "timestamp": "2025-09-03T01:47:31.387Z"
+    },
+    {
+      "type": "set_work",
+      "setId": 22,
+      "original": "右ドアー内張脱着・ラッチ取替",
+      "itemCount": 2,
+      "items": [
+        {
+          "target": "ドア",
+          "action": "取替",
+          "positions": [
+            "右"
+          ]
+        },
+        {
+          "target": "ドア",
+          "action": "脱着",
+          "positions": [
+            "右"
+          ]
+        }
+      ],
+      "timestamp": "2025-09-03T01:47:31.564Z"
+    },
+    {
+      "type": "set_work",
+      "setId": 23,
+      "original": "サイドガード脱着・燃料タンク2個脱着入替・付属品付替え",
+      "itemCount": 2,
+      "items": [
+        {
+          "target": "燃料タンク",
+          "action": "脱着",
+          "positions": [
+            "サイド"
+          ]
+        },
+        {
+          "target": "燃料タンク",
+          "action": "付替",
+          "positions": [
+            "サイド"
+          ]
+        }
+      ],
+      "timestamp": "2025-09-03T01:47:31.697Z"
+    },
+    {
+      "type": "set_work",
+      "setId": 24,
+      "original": "右ドアミラーアーム脱着ボルト取り替え加工",
+      "itemCount": 2,
+      "items": [
+        {
+          "target": "ドア",
+          "action": "加工",
+          "positions": [
+            "右"
+          ]
+        },
+        {
+          "target": "ドア",
+          "action": "脱着",
+          "positions": [
+            "右"
+          ]
+        }
+      ],
+      "timestamp": "2025-09-03T01:47:31.873Z"
+    },
+    {
+      "type": "set_work",
+      "setId": 25,
+      "original": "ウィング蝶番点検・グリスアップ・煽りドアスケット調整",
+      "itemCount": 2,
+      "items": [
+        {
+          "target": "ドア",
+          "action": "点検",
+          "positions": []
+        },
+        {
+          "target": "ドア",
+          "action": "調整",
+          "positions": []
+        }
+      ],
+      "timestamp": "2025-09-03T01:47:32.040Z"
+    },
+    {
+      "type": "individual_work",
+      "workId": 65,
+      "original": "ドライバーシートブラケット交換",
+      "target": "ブラケット",
+      "action": "交換",
+      "positions": [],
+      "timestamp": "2025-09-03T01:47:32.088Z"
+    },
+    {
+      "type": "set_work",
+      "setId": 26,
+      "original": "ジャバラパイプ脱着・エキゾーストパイプ折損修正溶接",
+      "itemCount": 3,
+      "items": [
+        {
+          "target": "パイプ",
+          "action": "脱着",
+          "positions": []
+        },
+        {
+          "target": "パイプ",
+          "action": "溶接",
+          "positions": []
+        },
+        {
+          "target": "パイプ",
+          "action": "修正",
+          "positions": []
+        }
+      ],
+      "timestamp": "2025-09-03T01:47:32.307Z"
+    },
+    {
+      "type": "set_work",
+      "setId": 27,
+      "original": "ホーン交換・ステイ交換・ブラケット鈑金修理",
+      "itemCount": 2,
+      "items": [
+        {
+          "target": "ブラケット",
+          "action": "鈑金",
+          "positions": []
+        },
+        {
+          "target": "ブラケット",
+          "action": "修理",
+          "positions": []
+        }
+      ],
+      "timestamp": "2025-09-03T01:47:32.522Z"
+    },
+    {
+      "type": "individual_work",
+      "workId": 66,
+      "original": "右コーナーパネル脱着",
+      "target": "コーナーパネル",
+      "action": "脱着",
+      "positions": [
+        "右"
+      ],
+      "timestamp": "2025-09-03T01:47:32.568Z"
+    },
+    {
+      "type": "set_work",
+      "setId": 28,
+      "original": "右アッパーフェンダー取替・取り付け修正・タイヤハウスカバー脱着",
+      "itemCount": 4,
+      "items": [
+        {
+          "target": "アッパーフェンダー",
+          "action": "カバー",
+          "positions": [
+            "右"
+          ]
+        },
+        {
+          "target": "アッパーフェンダー",
+          "action": "取替",
+          "positions": [
+            "右"
+          ]
+        },
+        {
+          "target": "アッパーフェンダー",
+          "action": "脱着",
+          "positions": [
+            "右"
+          ]
+        },
+        {
+          "target": "アッパーフェンダー",
+          "action": "修正",
+          "positions": [
+            "右"
+          ]
+        }
+      ],
+      "timestamp": "2025-09-03T01:47:32.833Z"
+    },
+    {
+      "type": "individual_work",
+      "workId": 67,
+      "original": "右ドアパネル内側鈑金",
+      "target": "ドアパネル",
+      "action": "鈑金",
+      "positions": [
+        "右"
+      ],
+      "timestamp": "2025-09-03T01:47:32.881Z"
+    },
+    {
+      "type": "set_work",
+      "setId": 29,
+      "original": "左サイドガード折損部分切替溶接・フラッシャーステイ切断付替え加工・錆止め塗装",
+      "itemCount": 7,
+      "items": [
+        {
+          "target": "サイドガード",
+          "action": "錆止め",
+          "positions": [
+            "左"
+          ]
+        },
+        {
+          "target": "サイドガード",
+          "action": "加工",
+          "positions": [
+            "左"
+          ]
+        },
+        {
+          "target": "サイドガード",
+          "action": "溶接",
+          "positions": [
+            "左"
+          ]
+        },
+        {
+          "target": "サイドガード",
+          "action": "切断",
+          "positions": [
+            "左"
+          ]
+        },
+        {
+          "target": "サイドガード",
+          "action": "塗装",
+          "positions": [
+            "左"
+          ]
+        },
+        {
+          "target": "サイドガード",
+          "action": "付替",
+          "positions": [
+            "左"
+          ]
+        },
+        {
+          "target": "サイドガード",
+          "action": "切替",
+          "positions": [
+            "左"
+          ]
+        }
+      ],
+      "timestamp": "2025-09-03T01:47:33.296Z"
+    },
+    {
+      "type": "set_work",
+      "setId": 30,
+      "original": "バッテリー縞板キャッチ取替調整",
+      "itemCount": 2,
+      "items": [
+        {
+          "target": "バッテリー",
+          "action": "取替",
+          "positions": []
+        },
+        {
+          "target": "バッテリー",
+          "action": "調整",
+          "positions": []
+        }
+      ],
+      "timestamp": "2025-09-03T01:47:33.469Z"
+    },
+    {
+      "type": "individual_work",
+      "workId": 68,
+      "original": "リヤナンバーブラケット折損溶接",
+      "target": "ブラケット",
+      "action": "溶接",
+      "positions": [],
+      "timestamp": "2025-09-03T01:47:33.517Z"
+    }
+  ]
+}

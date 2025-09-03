@@ -1,0 +1,2620 @@
+[
+  {
+    "timestamp": "2025-09-03T01:47:28.390Z",
+    "original": "リヤフラッシャーASSY取替・ブラケット鈑金修理",
+    "result": {
+      "original": "リヤフラッシャーASSY取替・ブラケット鈑金修理",
+      "price": 0,
+      "invoiceId": "25043369-1",
+      "items": [
+        {
+          "target": "ブラケット",
+          "action": "鈑金",
+          "positions": [],
+          "memo": "リヤフラッシャーASSY取替・",
+          "unitPrice": null
+        },
+        {
+          "target": "ブラケット",
+          "action": "修理",
+          "positions": [],
+          "memo": "リヤフラッシャーASSY取替・",
+          "unitPrice": null
+        }
+      ],
+      "isSet": true,
+      "status": "success",
+      "errors": [],
+      "setName": "リヤフラッシャーASSY取替・ブラケット鈑金修理",
+      "setPrice": 0
+    },
+    "processingSteps": {
+      "positions": [],
+      "target": "ブラケット",
+      "actions": [
+        "鈑金",
+        "修理"
+      ]
+    }
+  },
+  {
+    "timestamp": "2025-09-03T01:47:28.391Z",
+    "original": "DPFマフラーセンサーボルト折れ込み修理",
+    "result": {
+      "original": "DPFマフラーセンサーボルト折れ込み修理",
+      "price": 0,
+      "invoiceId": "25043370-1",
+      "items": [],
+      "isSet": false,
+      "status": "failed",
+      "errors": [
+        {
+          "reason": "insufficient_data",
+          "details": {
+            "hasTarget": false,
+            "hasActions": true,
+            "foundTarget": "",
+            "foundActions": [
+              "修理"
+            ],
+            "remainingText": "DPFマフラーセンサーボルト折れ込み"
+          }
+        }
+      ]
+    },
+    "processingSteps": {
+      "positions": [],
+      "target": "",
+      "actions": [
+        "修理"
+      ]
+    }
+  },
+  {
+    "timestamp": "2025-09-03T01:47:28.391Z",
+    "original": "DPFマフラーセンサーボルト折れ込み修理",
+    "result": {
+      "original": "DPFマフラーセンサーボルト折れ込み修理",
+      "price": 0,
+      "invoiceId": "25043370-2",
+      "items": [],
+      "isSet": false,
+      "status": "failed",
+      "errors": [
+        {
+          "reason": "insufficient_data",
+          "details": {
+            "hasTarget": false,
+            "hasActions": true,
+            "foundTarget": "",
+            "foundActions": [
+              "修理"
+            ],
+            "remainingText": "DPFマフラーセンサーボルト折れ込み"
+          }
+        }
+      ]
+    },
+    "processingSteps": {
+      "positions": [],
+      "target": "",
+      "actions": [
+        "修理"
+      ]
+    }
+  },
+  {
+    "timestamp": "2025-09-03T01:47:28.391Z",
+    "original": "左ファーストステップ・ロアカバー・リフレクター取替・ステップブラケット脱着修正・左ドアフラッシャー取替",
+    "result": {
+      "original": "左ファーストステップ・ロアカバー・リフレクター取替・ステップブラケット脱着修正・左ドアフラッシャー取替",
+      "price": 0,
+      "invoiceId": "25043371-1",
+      "items": [
+        {
+          "target": "ファーストステップ",
+          "action": "カバー",
+          "positions": [
+            "左"
+          ],
+          "memo": "・ロア・リフレクター・ステップブラケット・左ドアフラッシャー取替",
+          "unitPrice": null
+        },
+        {
+          "target": "ファーストステップ",
+          "action": "取替",
+          "positions": [
+            "左"
+          ],
+          "memo": "・ロア・リフレクター・ステップブラケット・左ドアフラッシャー取替",
+          "unitPrice": null
+        },
+        {
+          "target": "ファーストステップ",
+          "action": "脱着",
+          "positions": [
+            "左"
+          ],
+          "memo": "・ロア・リフレクター・ステップブラケット・左ドアフラッシャー取替",
+          "unitPrice": null
+        },
+        {
+          "target": "ファーストステップ",
+          "action": "修正",
+          "positions": [
+            "左"
+          ],
+          "memo": "・ロア・リフレクター・ステップブラケット・左ドアフラッシャー取替",
+          "unitPrice": null
+        }
+      ],
+      "isSet": true,
+      "status": "success",
+      "errors": [],
+      "setName": "左ファーストステップ・ロアカバー・リフレクター取替・ステップブラケット脱着修正・左ドアフラッシャー取替",
+      "setPrice": 0
+    },
+    "processingSteps": {
+      "positions": [
+        "左"
+      ],
+      "target": "ファーストステップ",
+      "actions": [
+        "カバー",
+        "取替",
+        "脱着",
+        "修正"
+      ]
+    }
+  },
+  {
+    "timestamp": "2025-09-03T01:47:28.391Z",
+    "original": "フロントリッド・グリル脱着・フロントキャブサスマウントリンク脱着リンクブッシュ嚙み込み取外し交換",
+    "result": {
+      "original": "フロントリッド・グリル脱着・フロントキャブサスマウントリンク脱着リンクブッシュ嚙み込み取外し交換",
+      "price": 0,
+      "invoiceId": "25043372-1",
+      "items": [],
+      "isSet": false,
+      "status": "failed",
+      "errors": [
+        {
+          "reason": "insufficient_data",
+          "details": {
+            "hasTarget": false,
+            "hasActions": true,
+            "foundTarget": "",
+            "foundActions": [
+              "交換",
+              "脱着"
+            ],
+            "remainingText": "リッド・グリル・フロントキャブサスマウントリンク脱着リンクブッシュ嚙み込み取外し"
+          }
+        }
+      ]
+    },
+    "processingSteps": {
+      "positions": [
+        "フロント"
+      ],
+      "target": "",
+      "actions": [
+        "交換",
+        "脱着"
+      ]
+    }
+  },
+  {
+    "timestamp": "2025-09-03T01:47:28.391Z",
+    "original": "メイン燃料タンクホース延長サブタンク付替え加工",
+    "result": {
+      "original": "メイン燃料タンクホース延長サブタンク付替え加工",
+      "price": 0,
+      "invoiceId": "25043373-1",
+      "items": [
+        {
+          "target": "燃料タンク",
+          "action": "加工",
+          "positions": [],
+          "memo": "メインホース延長サブタンクえ",
+          "unitPrice": null
+        },
+        {
+          "target": "燃料タンク",
+          "action": "付替",
+          "positions": [],
+          "memo": "メインホース延長サブタンクえ",
+          "unitPrice": null
+        }
+      ],
+      "isSet": true,
+      "status": "success",
+      "errors": [],
+      "setName": "メイン燃料タンクホース延長サブタンク付替え加工",
+      "setPrice": 0
+    },
+    "processingSteps": {
+      "positions": [],
+      "target": "燃料タンク",
+      "actions": [
+        "加工",
+        "付替"
+      ]
+    }
+  },
+  {
+    "timestamp": "2025-09-03T01:47:28.391Z",
+    "original": "リヤバンパー折損鈑金修理",
+    "result": {
+      "original": "リヤバンパー折損鈑金修理",
+      "price": 0,
+      "invoiceId": "25043374-1",
+      "items": [],
+      "isSet": false,
+      "status": "failed",
+      "errors": [
+        {
+          "reason": "insufficient_data",
+          "details": {
+            "hasTarget": false,
+            "hasActions": true,
+            "foundTarget": "",
+            "foundActions": [
+              "鈑金",
+              "修理"
+            ],
+            "remainingText": "リヤバンパー折損"
+          }
+        }
+      ]
+    },
+    "processingSteps": {
+      "positions": [],
+      "target": "",
+      "actions": [
+        "鈑金",
+        "修理"
+      ]
+    }
+  },
+  {
+    "timestamp": "2025-09-03T01:47:28.392Z",
+    "original": "タンクバンドマス締め",
+    "result": {
+      "original": "タンクバンドマス締め",
+      "price": 0,
+      "invoiceId": "25043375-1",
+      "items": [],
+      "isSet": false,
+      "status": "failed",
+      "errors": [
+        {
+          "reason": "insufficient_data",
+          "details": {
+            "hasTarget": false,
+            "hasActions": false,
+            "foundTarget": "",
+            "foundActions": [],
+            "remainingText": "タンクバンドマス締め"
+          }
+        }
+      ]
+    },
+    "processingSteps": {
+      "positions": [],
+      "target": "",
+      "actions": []
+    }
+  },
+  {
+    "timestamp": "2025-09-03T01:47:28.392Z",
+    "original": "アドブルーキャップ分解取替加工",
+    "result": {
+      "original": "アドブルーキャップ分解取替加工",
+      "price": 0,
+      "invoiceId": "25043376-1",
+      "items": [],
+      "isSet": false,
+      "status": "failed",
+      "errors": [
+        {
+          "reason": "insufficient_data",
+          "details": {
+            "hasTarget": false,
+            "hasActions": true,
+            "foundTarget": "",
+            "foundActions": [
+              "取替",
+              "加工",
+              "分解"
+            ],
+            "remainingText": "アドブルーキャップ"
+          }
+        }
+      ]
+    },
+    "processingSteps": {
+      "positions": [],
+      "target": "",
+      "actions": [
+        "取替",
+        "加工",
+        "分解"
+      ]
+    }
+  },
+  {
+    "timestamp": "2025-09-03T01:47:28.392Z",
+    "original": "右キャブフェンダー回り応急鈑金修理・マッドガード及びステイ取替鈑金加工・タイヤハウスカバー取替加工",
+    "result": {
+      "original": "右キャブフェンダー回り応急鈑金修理・マッドガード及びステイ取替鈑金加工・タイヤハウスカバー取替加工",
+      "price": 0,
+      "invoiceId": "25043377-1",
+      "items": [
+        {
+          "target": "タイヤハウスカバー",
+          "action": "鈑金",
+          "positions": [
+            "右"
+          ],
+          "memo": "キャブフェンダー回り応急・マッドガード及びステイ取替鈑金加工・取替加工",
+          "unitPrice": null
+        },
+        {
+          "target": "タイヤハウスカバー",
+          "action": "修理",
+          "positions": [
+            "右"
+          ],
+          "memo": "キャブフェンダー回り応急・マッドガード及びステイ取替鈑金加工・取替加工",
+          "unitPrice": null
+        }
+      ],
+      "isSet": true,
+      "status": "success",
+      "errors": [],
+      "setName": "右キャブフェンダー回り応急鈑金修理・マッドガード及びステイ取替鈑金加工・タイヤハウスカバー取替加工",
+      "setPrice": 0
+    },
+    "processingSteps": {
+      "positions": [
+        "右"
+      ],
+      "target": "タイヤハウスカバー",
+      "actions": [
+        "鈑金",
+        "修理"
+      ]
+    }
+  },
+  {
+    "timestamp": "2025-09-03T01:47:28.392Z",
+    "original": "エンジンカバーステイ修正・折損溶接",
+    "result": {
+      "original": "エンジンカバーステイ修正・折損溶接",
+      "price": 0,
+      "invoiceId": "25043378-1",
+      "items": [
+        {
+          "target": "エンジンカバー",
+          "action": "溶接",
+          "positions": [],
+          "memo": "ステイ・折損",
+          "unitPrice": null
+        },
+        {
+          "target": "エンジンカバー",
+          "action": "修正",
+          "positions": [],
+          "memo": "ステイ・折損",
+          "unitPrice": null
+        }
+      ],
+      "isSet": true,
+      "status": "success",
+      "errors": [],
+      "setName": "エンジンカバーステイ修正・折損溶接",
+      "setPrice": 0
+    },
+    "processingSteps": {
+      "positions": [],
+      "target": "エンジンカバー",
+      "actions": [
+        "溶接",
+        "修正"
+      ]
+    }
+  },
+  {
+    "timestamp": "2025-09-03T01:47:28.392Z",
+    "original": "フロントリッド・グリル・キャブマウントリンク脱着・リンクブッシュ前後切断取替加工",
+    "result": {
+      "original": "フロントリッド・グリル・キャブマウントリンク脱着・リンクブッシュ前後切断取替加工",
+      "price": 0,
+      "invoiceId": "25043378-1",
+      "items": [],
+      "isSet": false,
+      "status": "failed",
+      "errors": [
+        {
+          "reason": "insufficient_data",
+          "details": {
+            "hasTarget": false,
+            "hasActions": true,
+            "foundTarget": "",
+            "foundActions": [
+              "取替",
+              "加工",
+              "脱着",
+              "切断"
+            ],
+            "remainingText": "リッド・グリル・キャブマウントリンク・リンクブッシュ前後"
+          }
+        }
+      ]
+    },
+    "processingSteps": {
+      "positions": [
+        "フロント"
+      ],
+      "target": "",
+      "actions": [
+        "取替",
+        "加工",
+        "脱着",
+        "切断"
+      ]
+    }
+  },
+  {
+    "timestamp": "2025-09-03T01:47:28.392Z",
+    "original": "センターシート張替加工",
+    "result": {
+      "original": "センターシート張替加工",
+      "price": 0,
+      "invoiceId": "25043379-1",
+      "items": [],
+      "isSet": false,
+      "status": "failed",
+      "errors": [
+        {
+          "reason": "insufficient_data",
+          "details": {
+            "hasTarget": false,
+            "hasActions": true,
+            "foundTarget": "",
+            "foundActions": [
+              "加工",
+              "張替"
+            ],
+            "remainingText": "シート"
+          }
+        }
+      ]
+    },
+    "processingSteps": {
+      "positions": [
+        "センター"
+      ],
+      "target": "",
+      "actions": [
+        "加工",
+        "張替"
+      ]
+    }
+  },
+  {
+    "timestamp": "2025-09-03T01:47:28.392Z",
+    "original": "天井周りコーキング処理",
+    "result": {
+      "original": "天井周りコーキング処理",
+      "price": 0,
+      "invoiceId": "25043379-1",
+      "items": [],
+      "isSet": false,
+      "status": "failed",
+      "errors": [
+        {
+          "reason": "insufficient_data",
+          "details": {
+            "hasTarget": false,
+            "hasActions": false,
+            "foundTarget": "",
+            "foundActions": [],
+            "remainingText": "天井周りコーキング処理"
+          }
+        }
+      ]
+    },
+    "processingSteps": {
+      "positions": [],
+      "target": "",
+      "actions": []
+    }
+  },
+  {
+    "timestamp": "2025-09-03T01:47:28.392Z",
+    "original": "左バックミラー・ステイ・モーター取替",
+    "result": {
+      "original": "左バックミラー・ステイ・モーター取替",
+      "price": 0,
+      "invoiceId": "25043380-1",
+      "items": [
+        {
+          "target": "バックミラー",
+          "action": "取替",
+          "positions": [
+            "左"
+          ],
+          "memo": "・ステイ・モーター",
+          "unitPrice": 0
+        }
+      ],
+      "isSet": false,
+      "status": "success",
+      "errors": []
+    },
+    "processingSteps": {
+      "positions": [
+        "左"
+      ],
+      "target": "バックミラー",
+      "actions": [
+        "取替"
+      ]
+    }
+  },
+  {
+    "timestamp": "2025-09-03T01:47:28.393Z",
+    "original": "左ステップカバー・ドアー補修塗装",
+    "result": {
+      "original": "左ステップカバー・ドアー補修塗装",
+      "price": 0,
+      "invoiceId": "25043380-1",
+      "items": [
+        {
+          "target": "ドア",
+          "action": "カバー",
+          "positions": [
+            "左"
+          ],
+          "memo": "ステップ・ー",
+          "unitPrice": null
+        },
+        {
+          "target": "ドア",
+          "action": "塗装",
+          "positions": [
+            "左"
+          ],
+          "memo": "ステップ・ー",
+          "unitPrice": null
+        },
+        {
+          "target": "ドア",
+          "action": "補修",
+          "positions": [
+            "左"
+          ],
+          "memo": "ステップ・ー",
+          "unitPrice": null
+        }
+      ],
+      "isSet": true,
+      "status": "success",
+      "errors": [],
+      "setName": "左ステップカバー・ドアー補修塗装",
+      "setPrice": 0
+    },
+    "processingSteps": {
+      "positions": [
+        "左"
+      ],
+      "target": "ドア",
+      "actions": [
+        "カバー",
+        "塗装",
+        "補修"
+      ]
+    }
+  },
+  {
+    "timestamp": "2025-09-03T01:47:28.393Z",
+    "original": "左コーナーパネル・コーナーカバー取替・取り付け部分修正",
+    "result": {
+      "original": "左コーナーパネル・コーナーカバー取替・取り付け部分修正",
+      "price": 0,
+      "invoiceId": "25043380-1",
+      "items": [
+        {
+          "target": "コーナーパネル",
+          "action": "カバー",
+          "positions": [
+            "左"
+          ],
+          "memo": "・コーナー・取り付け部分",
+          "unitPrice": null
+        },
+        {
+          "target": "コーナーパネル",
+          "action": "取替",
+          "positions": [
+            "左"
+          ],
+          "memo": "・コーナー・取り付け部分",
+          "unitPrice": null
+        },
+        {
+          "target": "コーナーパネル",
+          "action": "修正",
+          "positions": [
+            "左"
+          ],
+          "memo": "・コーナー・取り付け部分",
+          "unitPrice": null
+        }
+      ],
+      "isSet": true,
+      "status": "success",
+      "errors": [],
+      "setName": "左コーナーパネル・コーナーカバー取替・取り付け部分修正",
+      "setPrice": 0
+    },
+    "processingSteps": {
+      "positions": [
+        "左"
+      ],
+      "target": "コーナーパネル",
+      "actions": [
+        "カバー",
+        "取替",
+        "修正"
+      ]
+    }
+  },
+  {
+    "timestamp": "2025-09-03T01:47:28.393Z",
+    "original": "インナーバンパー・左フィニッシャー・エンドカバー・ヘッドライト・フォグランプ・フラッシャー取替・他部品組替",
+    "result": {
+      "original": "インナーバンパー・左フィニッシャー・エンドカバー・ヘッドライト・フォグランプ・フラッシャー取替・他部品組替",
+      "price": 0,
+      "invoiceId": "25043380-1",
+      "items": [
+        {
+          "target": "ヘッドライト",
+          "action": "カバー",
+          "positions": [
+            "インナー"
+          ],
+          "memo": "バンパー・左フィニッシャー・エンド・・フォグランプ・フラッシャー・他部品",
+          "unitPrice": null
+        },
+        {
+          "target": "ヘッドライト",
+          "action": "取替",
+          "positions": [
+            "インナー"
+          ],
+          "memo": "バンパー・左フィニッシャー・エンド・・フォグランプ・フラッシャー・他部品",
+          "unitPrice": null
+        },
+        {
+          "target": "ヘッドライト",
+          "action": "組替",
+          "positions": [
+            "インナー"
+          ],
+          "memo": "バンパー・左フィニッシャー・エンド・・フォグランプ・フラッシャー・他部品",
+          "unitPrice": null
+        }
+      ],
+      "isSet": true,
+      "status": "success",
+      "errors": [],
+      "setName": "インナーバンパー・左フィニッシャー・エンドカバー・ヘッドライト・フォグランプ・フラッシャー取替・他部品組替",
+      "setPrice": 0
+    },
+    "processingSteps": {
+      "positions": [
+        "インナー"
+      ],
+      "target": "ヘッドライト",
+      "actions": [
+        "カバー",
+        "取替",
+        "組替"
+      ]
+    }
+  },
+  {
+    "timestamp": "2025-09-03T01:47:28.393Z",
+    "original": "左右ファーストステップブラケット脱着修正・左側ステイ取替",
+    "result": {
+      "original": "左右ファーストステップブラケット脱着修正・左側ステイ取替",
+      "price": 0,
+      "invoiceId": "25043380-1",
+      "items": [
+        {
+          "target": "ファーストステップ",
+          "action": "取替",
+          "positions": [
+            "左"
+          ],
+          "memo": "右ブラケット・左側ステイ",
+          "unitPrice": null
+        },
+        {
+          "target": "ファーストステップ",
+          "action": "脱着",
+          "positions": [
+            "左"
+          ],
+          "memo": "右ブラケット・左側ステイ",
+          "unitPrice": null
+        },
+        {
+          "target": "ファーストステップ",
+          "action": "修正",
+          "positions": [
+            "左"
+          ],
+          "memo": "右ブラケット・左側ステイ",
+          "unitPrice": null
+        }
+      ],
+      "isSet": true,
+      "status": "success",
+      "errors": [],
+      "setName": "左右ファーストステップブラケット脱着修正・左側ステイ取替",
+      "setPrice": 0
+    },
+    "processingSteps": {
+      "positions": [
+        "左"
+      ],
+      "target": "ファーストステップ",
+      "actions": [
+        "取替",
+        "脱着",
+        "修正"
+      ]
+    }
+  },
+  {
+    "timestamp": "2025-09-03T01:47:28.393Z",
+    "original": "ホイール塗装4本",
+    "result": {
+      "original": "ホイール塗装4本",
+      "price": 0,
+      "invoiceId": "25043385-1",
+      "items": [],
+      "isSet": false,
+      "status": "failed",
+      "errors": [
+        {
+          "reason": "insufficient_data",
+          "details": {
+            "hasTarget": false,
+            "hasActions": true,
+            "foundTarget": "",
+            "foundActions": [
+              "塗装"
+            ],
+            "remainingText": "ホイール4本"
+          }
+        }
+      ]
+    },
+    "processingSteps": {
+      "positions": [],
+      "target": "",
+      "actions": [
+        "塗装"
+      ]
+    }
+  },
+  {
+    "timestamp": "2025-09-03T01:47:28.393Z",
+    "original": "取消",
+    "result": {
+      "original": "取消",
+      "price": 0,
+      "invoiceId": "25043385-2",
+      "items": [],
+      "isSet": false,
+      "status": "failed",
+      "errors": [
+        {
+          "reason": "insufficient_data",
+          "details": {
+            "hasTarget": false,
+            "hasActions": false,
+            "foundTarget": "",
+            "foundActions": [],
+            "remainingText": "取消"
+          }
+        }
+      ]
+    },
+    "processingSteps": {
+      "positions": [],
+      "target": "",
+      "actions": []
+    }
+  },
+  {
+    "timestamp": "2025-09-03T01:47:28.393Z",
+    "original": "左右当たりゴム取外し加工",
+    "result": {
+      "original": "左右当たりゴム取外し加工",
+      "price": 0,
+      "invoiceId": "25053381-1",
+      "items": [],
+      "isSet": false,
+      "status": "failed",
+      "errors": [
+        {
+          "reason": "insufficient_data",
+          "details": {
+            "hasTarget": false,
+            "hasActions": true,
+            "foundTarget": "",
+            "foundActions": [
+              "加工"
+            ],
+            "remainingText": "右当たりゴム取外し"
+          }
+        }
+      ]
+    },
+    "processingSteps": {
+      "positions": [
+        "左"
+      ],
+      "target": "",
+      "actions": [
+        "加工"
+      ]
+    }
+  },
+  {
+    "timestamp": "2025-09-03T01:47:28.393Z",
+    "original": "フロンバンパー脱着・左右フォグランプステイ取り外し・ガードバンパーボルトワッシャー4枚製作取付",
+    "result": {
+      "original": "フロンバンパー脱着・左右フォグランプステイ取り外し・ガードバンパーボルトワッシャー4枚製作取付",
+      "price": 0,
+      "invoiceId": "25053381-1",
+      "items": [],
+      "isSet": false,
+      "status": "failed",
+      "errors": [
+        {
+          "reason": "insufficient_data",
+          "details": {
+            "hasTarget": false,
+            "hasActions": true,
+            "foundTarget": "",
+            "foundActions": [
+              "取り外し",
+              "脱着",
+              "取付",
+              "製作"
+            ],
+            "remainingText": "フロンバンパー・左右フォグランプステイ・ガードバンパーボルトワッシャー4枚"
+          }
+        }
+      ]
+    },
+    "processingSteps": {
+      "positions": [],
+      "target": "",
+      "actions": [
+        "取り外し",
+        "脱着",
+        "取付",
+        "製作"
+      ]
+    }
+  },
+  {
+    "timestamp": "2025-09-03T01:47:28.394Z",
+    "original": "センタースロットル・レール鈑金加工",
+    "result": {
+      "original": "センタースロットル・レール鈑金加工",
+      "price": 0,
+      "invoiceId": "25053382-1",
+      "items": [],
+      "isSet": false,
+      "status": "failed",
+      "errors": [
+        {
+          "reason": "insufficient_data",
+          "details": {
+            "hasTarget": false,
+            "hasActions": true,
+            "foundTarget": "",
+            "foundActions": [
+              "鈑金",
+              "加工"
+            ],
+            "remainingText": "スロットル・レール"
+          }
+        }
+      ]
+    },
+    "processingSteps": {
+      "positions": [
+        "センター"
+      ],
+      "target": "",
+      "actions": [
+        "鈑金",
+        "加工"
+      ]
+    }
+  },
+  {
+    "timestamp": "2025-09-03T01:47:28.394Z",
+    "original": "工場内清掃代行",
+    "result": {
+      "original": "工場内清掃代行",
+      "price": 0,
+      "invoiceId": "25053383-1",
+      "items": [],
+      "isSet": false,
+      "status": "failed",
+      "errors": [
+        {
+          "reason": "insufficient_data",
+          "details": {
+            "hasTarget": false,
+            "hasActions": true,
+            "foundTarget": "",
+            "foundActions": [
+              "清掃"
+            ],
+            "remainingText": "工場内代行"
+          }
+        }
+      ]
+    },
+    "processingSteps": {
+      "positions": [],
+      "target": "",
+      "actions": [
+        "清掃"
+      ]
+    }
+  },
+  {
+    "timestamp": "2025-09-03T01:47:28.394Z",
+    "original": "プラットホームブッシュ張替加工",
+    "result": {
+      "original": "プラットホームブッシュ張替加工",
+      "price": 0,
+      "invoiceId": "25053384-1",
+      "items": [],
+      "isSet": false,
+      "status": "failed",
+      "errors": [
+        {
+          "reason": "insufficient_data",
+          "details": {
+            "hasTarget": false,
+            "hasActions": true,
+            "foundTarget": "",
+            "foundActions": [
+              "加工",
+              "張替"
+            ],
+            "remainingText": "プラットホームブッシュ"
+          }
+        }
+      ]
+    },
+    "processingSteps": {
+      "positions": [],
+      "target": "",
+      "actions": [
+        "加工",
+        "張替"
+      ]
+    }
+  },
+  {
+    "timestamp": "2025-09-03T01:47:28.394Z",
+    "original": "ホイール塗装4本",
+    "result": {
+      "original": "ホイール塗装4本",
+      "price": 0,
+      "invoiceId": "25053386-1",
+      "items": [],
+      "isSet": false,
+      "status": "failed",
+      "errors": [
+        {
+          "reason": "insufficient_data",
+          "details": {
+            "hasTarget": false,
+            "hasActions": true,
+            "foundTarget": "",
+            "foundActions": [
+              "塗装"
+            ],
+            "remainingText": "ホイール4本"
+          }
+        }
+      ]
+    },
+    "processingSteps": {
+      "positions": [],
+      "target": "",
+      "actions": [
+        "塗装"
+      ]
+    }
+  },
+  {
+    "timestamp": "2025-09-03T01:47:28.394Z",
+    "original": "左右大型反射板取替(傘リベット8本込み）",
+    "result": {
+      "original": "左右大型反射板取替(傘リベット8本込み）",
+      "price": 0,
+      "invoiceId": "25053387-1",
+      "items": [],
+      "isSet": false,
+      "status": "failed",
+      "errors": [
+        {
+          "reason": "insufficient_data",
+          "details": {
+            "hasTarget": false,
+            "hasActions": true,
+            "foundTarget": "",
+            "foundActions": [
+              "取替"
+            ],
+            "remainingText": "右大型反射板(傘リベット8本込み）"
+          }
+        }
+      ]
+    },
+    "processingSteps": {
+      "positions": [
+        "左"
+      ],
+      "target": "",
+      "actions": [
+        "取替"
+      ]
+    }
+  },
+  {
+    "timestamp": "2025-09-03T01:47:28.394Z",
+    "original": "右後ろシリンダーピン折れ込み取替加工・蝶番点検",
+    "result": {
+      "original": "右後ろシリンダーピン折れ込み取替加工・蝶番点検",
+      "price": 0,
+      "invoiceId": "25053388-1",
+      "items": [],
+      "isSet": false,
+      "status": "failed",
+      "errors": [
+        {
+          "reason": "insufficient_data",
+          "details": {
+            "hasTarget": false,
+            "hasActions": true,
+            "foundTarget": "",
+            "foundActions": [
+              "取替",
+              "加工",
+              "点検"
+            ],
+            "remainingText": "ろシリンダーピン折れ込み・蝶番"
+          }
+        }
+      ]
+    },
+    "processingSteps": {
+      "positions": [
+        "右",
+        "後"
+      ],
+      "target": "",
+      "actions": [
+        "取替",
+        "加工",
+        "点検"
+      ]
+    }
+  },
+  {
+    "timestamp": "2025-09-03T01:47:28.394Z",
+    "original": "内装脱着貼替加工",
+    "result": {
+      "original": "内装脱着貼替加工",
+      "price": 0,
+      "invoiceId": "25053389-1",
+      "items": [],
+      "isSet": false,
+      "status": "failed",
+      "errors": [
+        {
+          "reason": "insufficient_data",
+          "details": {
+            "hasTarget": false,
+            "hasActions": true,
+            "foundTarget": "",
+            "foundActions": [
+              "加工",
+              "脱着"
+            ],
+            "remainingText": "装貼替"
+          }
+        }
+      ]
+    },
+    "processingSteps": {
+      "positions": [
+        "内"
+      ],
+      "target": "",
+      "actions": [
+        "加工",
+        "脱着"
+      ]
+    }
+  },
+  {
+    "timestamp": "2025-09-03T01:47:28.394Z",
+    "original": "錆止め塗装",
+    "result": {
+      "original": "錆止め塗装",
+      "price": 0,
+      "invoiceId": "25053389-1",
+      "items": [],
+      "isSet": false,
+      "status": "failed",
+      "errors": [
+        {
+          "reason": "insufficient_data",
+          "details": {
+            "hasTarget": false,
+            "hasActions": true,
+            "foundTarget": "",
+            "foundActions": [
+              "錆止め",
+              "塗装"
+            ],
+            "remainingText": ""
+          }
+        }
+      ]
+    },
+    "processingSteps": {
+      "positions": [],
+      "target": "",
+      "actions": [
+        "錆止め",
+        "塗装"
+      ]
+    }
+  },
+  {
+    "timestamp": "2025-09-03T01:47:28.394Z",
+    "original": "ボデー左前ドアー脱着鈑金・コーナーポスト切断脱着鈑金",
+    "result": {
+      "original": "ボデー左前ドアー脱着鈑金・コーナーポスト切断脱着鈑金",
+      "price": 0,
+      "invoiceId": "25053389-1",
+      "items": [
+        {
+          "target": "ドア",
+          "action": "鈑金",
+          "positions": [],
+          "memo": "ボデー左前ー・コーナーポスト脱着鈑金",
+          "unitPrice": null
+        },
+        {
+          "target": "ドア",
+          "action": "脱着",
+          "positions": [],
+          "memo": "ボデー左前ー・コーナーポスト脱着鈑金",
+          "unitPrice": null
+        },
+        {
+          "target": "ドア",
+          "action": "切断",
+          "positions": [],
+          "memo": "ボデー左前ー・コーナーポスト脱着鈑金",
+          "unitPrice": null
+        }
+      ],
+      "isSet": true,
+      "status": "success",
+      "errors": [],
+      "setName": "ボデー左前ドアー脱着鈑金・コーナーポスト切断脱着鈑金",
+      "setPrice": 0
+    },
+    "processingSteps": {
+      "positions": [],
+      "target": "ドア",
+      "actions": [
+        "鈑金",
+        "脱着",
+        "切断"
+      ]
+    }
+  },
+  {
+    "timestamp": "2025-09-03T01:47:28.394Z",
+    "original": "クロスメンバー亀裂2ヵ所カット溶接",
+    "result": {
+      "original": "クロスメンバー亀裂2ヵ所カット溶接",
+      "price": 0,
+      "invoiceId": "25053390-1",
+      "items": [],
+      "isSet": false,
+      "status": "failed",
+      "errors": [
+        {
+          "reason": "insufficient_data",
+          "details": {
+            "hasTarget": false,
+            "hasActions": true,
+            "foundTarget": "",
+            "foundActions": [
+              "溶接"
+            ],
+            "remainingText": "クロスメンバー亀裂2ヵ所カット"
+          }
+        }
+      ]
+    },
+    "processingSteps": {
+      "positions": [],
+      "target": "",
+      "actions": [
+        "溶接"
+      ]
+    }
+  },
+  {
+    "timestamp": "2025-09-03T01:47:28.395Z",
+    "original": "左ウィングキャッチ受け鈑金・シート1部脱着リベット打ち替え加工",
+    "result": {
+      "original": "左ウィングキャッチ受け鈑金・シート1部脱着リベット打ち替え加工",
+      "price": 0,
+      "invoiceId": "25053391-1",
+      "items": [],
+      "isSet": false,
+      "status": "failed",
+      "errors": [
+        {
+          "reason": "insufficient_data",
+          "details": {
+            "hasTarget": false,
+            "hasActions": true,
+            "foundTarget": "",
+            "foundActions": [
+              "鈑金",
+              "加工",
+              "脱着"
+            ],
+            "remainingText": "ウィングキャッチ受け・シート1部リベット打ち替え"
+          }
+        }
+      ]
+    },
+    "processingSteps": {
+      "positions": [
+        "左"
+      ],
+      "target": "",
+      "actions": [
+        "鈑金",
+        "加工",
+        "脱着"
+      ]
+    }
+  },
+  {
+    "timestamp": "2025-09-03T01:47:28.395Z",
+    "original": "左右ドアウェザーストリップゴム取替・スカッフプレート脱着腐食ビス取替加工",
+    "result": {
+      "original": "左右ドアウェザーストリップゴム取替・スカッフプレート脱着腐食ビス取替加工",
+      "price": 0,
+      "invoiceId": "25053392-1",
+      "items": [
+        {
+          "target": "ドア",
+          "action": "取替",
+          "positions": [
+            "左"
+          ],
+          "memo": "右ウェザーストリップゴム・スカッフプレート腐食ビス取替",
+          "unitPrice": null
+        },
+        {
+          "target": "ドア",
+          "action": "加工",
+          "positions": [
+            "左"
+          ],
+          "memo": "右ウェザーストリップゴム・スカッフプレート腐食ビス取替",
+          "unitPrice": null
+        },
+        {
+          "target": "ドア",
+          "action": "脱着",
+          "positions": [
+            "左"
+          ],
+          "memo": "右ウェザーストリップゴム・スカッフプレート腐食ビス取替",
+          "unitPrice": null
+        }
+      ],
+      "isSet": true,
+      "status": "success",
+      "errors": [],
+      "setName": "左右ドアウェザーストリップゴム取替・スカッフプレート脱着腐食ビス取替加工",
+      "setPrice": 0
+    },
+    "processingSteps": {
+      "positions": [
+        "左"
+      ],
+      "target": "ドア",
+      "actions": [
+        "取替",
+        "加工",
+        "脱着"
+      ]
+    }
+  },
+  {
+    "timestamp": "2025-09-03T01:47:28.395Z",
+    "original": "右ドアー内張脱着・ラッチ取替",
+    "result": {
+      "original": "右ドアー内張脱着・ラッチ取替",
+      "price": 0,
+      "invoiceId": "25053392-1",
+      "items": [
+        {
+          "target": "ドア",
+          "action": "取替",
+          "positions": [
+            "右"
+          ],
+          "memo": "ー内張・ラッチ",
+          "unitPrice": null
+        },
+        {
+          "target": "ドア",
+          "action": "脱着",
+          "positions": [
+            "右"
+          ],
+          "memo": "ー内張・ラッチ",
+          "unitPrice": null
+        }
+      ],
+      "isSet": true,
+      "status": "success",
+      "errors": [],
+      "setName": "右ドアー内張脱着・ラッチ取替",
+      "setPrice": 0
+    },
+    "processingSteps": {
+      "positions": [
+        "右"
+      ],
+      "target": "ドア",
+      "actions": [
+        "取替",
+        "脱着"
+      ]
+    }
+  },
+  {
+    "timestamp": "2025-09-03T01:47:28.395Z",
+    "original": "クロスメンバー亀裂カット溶接",
+    "result": {
+      "original": "クロスメンバー亀裂カット溶接",
+      "price": 0,
+      "invoiceId": "25053393-1",
+      "items": [],
+      "isSet": false,
+      "status": "failed",
+      "errors": [
+        {
+          "reason": "insufficient_data",
+          "details": {
+            "hasTarget": false,
+            "hasActions": true,
+            "foundTarget": "",
+            "foundActions": [
+              "溶接"
+            ],
+            "remainingText": "クロスメンバー亀裂カット"
+          }
+        }
+      ]
+    },
+    "processingSteps": {
+      "positions": [],
+      "target": "",
+      "actions": [
+        "溶接"
+      ]
+    }
+  },
+  {
+    "timestamp": "2025-09-03T01:47:28.395Z",
+    "original": "左後ろセイコーラック取替加工",
+    "result": {
+      "original": "左後ろセイコーラック取替加工",
+      "price": 0,
+      "invoiceId": "25053394-1",
+      "items": [],
+      "isSet": false,
+      "status": "failed",
+      "errors": [
+        {
+          "reason": "insufficient_data",
+          "details": {
+            "hasTarget": false,
+            "hasActions": true,
+            "foundTarget": "",
+            "foundActions": [
+              "取替",
+              "加工"
+            ],
+            "remainingText": "後ろセイコーラック"
+          }
+        }
+      ]
+    },
+    "processingSteps": {
+      "positions": [
+        "左"
+      ],
+      "target": "",
+      "actions": [
+        "取替",
+        "加工"
+      ]
+    }
+  },
+  {
+    "timestamp": "2025-09-03T01:47:28.395Z",
+    "original": "持ち込みマフラー分解脱着・UDPC・DOC清掃付替え加工・折れ込みボルト修理4本・フェンダー脱着",
+    "result": {
+      "original": "持ち込みマフラー分解脱着・UDPC・DOC清掃付替え加工・折れ込みボルト修理4本・フェンダー脱着",
+      "price": 0,
+      "invoiceId": "25053395-1",
+      "items": [],
+      "isSet": false,
+      "status": "failed",
+      "errors": [
+        {
+          "reason": "insufficient_data",
+          "details": {
+            "hasTarget": false,
+            "hasActions": true,
+            "foundTarget": "",
+            "foundActions": [
+              "加工",
+              "修理",
+              "脱着",
+              "付替",
+              "清掃",
+              "分解"
+            ],
+            "remainingText": "持ち込みマフラー・UDPC・DOCえ・折れ込みボルト4本・フェンダー脱着"
+          }
+        }
+      ]
+    },
+    "processingSteps": {
+      "positions": [],
+      "target": "",
+      "actions": [
+        "加工",
+        "修理",
+        "脱着",
+        "付替",
+        "清掃",
+        "分解"
+      ]
+    }
+  },
+  {
+    "timestamp": "2025-09-03T01:47:28.395Z",
+    "original": "ドライバーシートリクライニング取替",
+    "result": {
+      "original": "ドライバーシートリクライニング取替",
+      "price": 0,
+      "invoiceId": "25053396-1",
+      "items": [],
+      "isSet": false,
+      "status": "failed",
+      "errors": [
+        {
+          "reason": "insufficient_data",
+          "details": {
+            "hasTarget": false,
+            "hasActions": true,
+            "foundTarget": "",
+            "foundActions": [
+              "取替"
+            ],
+            "remainingText": "ドライバーシートリクライニング"
+          }
+        }
+      ]
+    },
+    "processingSteps": {
+      "positions": [],
+      "target": "",
+      "actions": [
+        "取替"
+      ]
+    }
+  },
+  {
+    "timestamp": "2025-09-03T01:47:28.395Z",
+    "original": "タンクバンド２本取替",
+    "result": {
+      "original": "タンクバンド２本取替",
+      "price": 0,
+      "invoiceId": "25053396-1",
+      "items": [],
+      "isSet": false,
+      "status": "failed",
+      "errors": [
+        {
+          "reason": "insufficient_data",
+          "details": {
+            "hasTarget": false,
+            "hasActions": true,
+            "foundTarget": "",
+            "foundActions": [
+              "取替"
+            ],
+            "remainingText": "タンクバンド２本"
+          }
+        }
+      ]
+    },
+    "processingSteps": {
+      "positions": [],
+      "target": "",
+      "actions": [
+        "取替"
+      ]
+    }
+  },
+  {
+    "timestamp": "2025-09-03T01:47:28.395Z",
+    "original": "リヤゲート嚙み込み修理・ダンプキャッチ2個分解修理・キャッチロックボールジョイント取付加工溶接・ポール2本曲がり直し亀裂溶接",
+    "result": {
+      "original": "リヤゲート嚙み込み修理・ダンプキャッチ2個分解修理・キャッチロックボールジョイント取付加工溶接・ポール2本曲がり直し亀裂溶接",
+      "price": 0,
+      "invoiceId": "25053397-1",
+      "items": [],
+      "isSet": false,
+      "status": "failed",
+      "errors": [
+        {
+          "reason": "insufficient_data",
+          "details": {
+            "hasTarget": false,
+            "hasActions": true,
+            "foundTarget": "",
+            "foundActions": [
+              "曲がり直し",
+              "加工",
+              "修理",
+              "溶接",
+              "取付",
+              "分解"
+            ],
+            "remainingText": "リヤゲート嚙み込み・ダンプキャッチ2個修理・キャッチロックボールジョイント・ポール2本亀裂溶接"
+          }
+        }
+      ]
+    },
+    "processingSteps": {
+      "positions": [],
+      "target": "",
+      "actions": [
+        "曲がり直し",
+        "加工",
+        "修理",
+        "溶接",
+        "取付",
+        "分解"
+      ]
+    }
+  },
+  {
+    "timestamp": "2025-09-03T01:47:28.395Z",
+    "original": "ウィング蝶番点検グリスアップ・枠骨異音点検ボルト取付加工３ヶ所",
+    "result": {
+      "original": "ウィング蝶番点検グリスアップ・枠骨異音点検ボルト取付加工３ヶ所",
+      "price": 0,
+      "invoiceId": "25053398-1",
+      "items": [],
+      "isSet": false,
+      "status": "failed",
+      "errors": [
+        {
+          "reason": "insufficient_data",
+          "details": {
+            "hasTarget": false,
+            "hasActions": true,
+            "foundTarget": "",
+            "foundActions": [
+              "加工",
+              "取付",
+              "点検"
+            ],
+            "remainingText": "ウィング蝶番グリスアップ・枠骨異音点検ボルト３ヶ所"
+          }
+        }
+      ]
+    },
+    "processingSteps": {
+      "positions": [],
+      "target": "",
+      "actions": [
+        "加工",
+        "取付",
+        "点検"
+      ]
+    }
+  },
+  {
+    "timestamp": "2025-09-03T01:47:28.395Z",
+    "original": "左右スケット分解調整4ヶ所",
+    "result": {
+      "original": "左右スケット分解調整4ヶ所",
+      "price": 0,
+      "invoiceId": "25053399-1",
+      "items": [],
+      "isSet": false,
+      "status": "failed",
+      "errors": [
+        {
+          "reason": "insufficient_data",
+          "details": {
+            "hasTarget": false,
+            "hasActions": true,
+            "foundTarget": "",
+            "foundActions": [
+              "調整",
+              "分解"
+            ],
+            "remainingText": "右スケット4ヶ所"
+          }
+        }
+      ]
+    },
+    "processingSteps": {
+      "positions": [
+        "左"
+      ],
+      "target": "",
+      "actions": [
+        "調整",
+        "分解"
+      ]
+    }
+  },
+  {
+    "timestamp": "2025-09-03T01:47:28.396Z",
+    "original": "駐車ブレーキブラケット亀裂2ヵ所カット溶整",
+    "result": {
+      "original": "駐車ブレーキブラケット亀裂2ヵ所カット溶整",
+      "price": 0,
+      "invoiceId": "25053400-1",
+      "items": [],
+      "isSet": false,
+      "status": "failed",
+      "errors": [
+        {
+          "reason": "insufficient_data",
+          "details": {
+            "hasTarget": true,
+            "hasActions": false,
+            "foundTarget": "ブラケット",
+            "foundActions": [],
+            "remainingText": "駐車ブレーキ亀裂2ヵ所カット溶整"
+          }
+        }
+      ]
+    },
+    "processingSteps": {
+      "positions": [],
+      "target": "ブラケット",
+      "actions": []
+    }
+  },
+  {
+    "timestamp": "2025-09-03T01:47:28.396Z",
+    "original": "右ストッパー交換・ボルト嚙み込み修理",
+    "result": {
+      "original": "右ストッパー交換・ボルト嚙み込み修理",
+      "price": 0,
+      "invoiceId": "25053401-1",
+      "items": [],
+      "isSet": false,
+      "status": "failed",
+      "errors": [
+        {
+          "reason": "insufficient_data",
+          "details": {
+            "hasTarget": false,
+            "hasActions": true,
+            "foundTarget": "",
+            "foundActions": [
+              "交換",
+              "修理"
+            ],
+            "remainingText": "ストッパー・ボルト嚙み込み"
+          }
+        }
+      ]
+    },
+    "processingSteps": {
+      "positions": [
+        "右"
+      ],
+      "target": "",
+      "actions": [
+        "交換",
+        "修理"
+      ]
+    }
+  },
+  {
+    "timestamp": "2025-09-03T01:47:28.396Z",
+    "original": "右ストッパー交換",
+    "result": {
+      "original": "右ストッパー交換",
+      "price": 0,
+      "invoiceId": "25053401-2",
+      "items": [],
+      "isSet": false,
+      "status": "failed",
+      "errors": [
+        {
+          "reason": "insufficient_data",
+          "details": {
+            "hasTarget": false,
+            "hasActions": true,
+            "foundTarget": "",
+            "foundActions": [
+              "交換"
+            ],
+            "remainingText": "ストッパー"
+          }
+        }
+      ]
+    },
+    "processingSteps": {
+      "positions": [
+        "右"
+      ],
+      "target": "",
+      "actions": [
+        "交換"
+      ]
+    }
+  },
+  {
+    "timestamp": "2025-09-03T01:47:28.396Z",
+    "original": "サイドガード脱着・燃料タンク2個脱着入替・付属品付替え",
+    "result": {
+      "original": "サイドガード脱着・燃料タンク2個脱着入替・付属品付替え",
+      "price": 0,
+      "invoiceId": "25053402-1",
+      "items": [
+        {
+          "target": "燃料タンク",
+          "action": "脱着",
+          "positions": [
+            "サイド"
+          ],
+          "memo": "ガード・2個脱着入替・付属品え",
+          "unitPrice": null
+        },
+        {
+          "target": "燃料タンク",
+          "action": "付替",
+          "positions": [
+            "サイド"
+          ],
+          "memo": "ガード・2個脱着入替・付属品え",
+          "unitPrice": null
+        }
+      ],
+      "isSet": true,
+      "status": "success",
+      "errors": [],
+      "setName": "サイドガード脱着・燃料タンク2個脱着入替・付属品付替え",
+      "setPrice": 0
+    },
+    "processingSteps": {
+      "positions": [
+        "サイド"
+      ],
+      "target": "燃料タンク",
+      "actions": [
+        "脱着",
+        "付替"
+      ]
+    }
+  },
+  {
+    "timestamp": "2025-09-03T01:47:28.397Z",
+    "original": "右ドアミラーアーム脱着ボルト取り替え加工",
+    "result": {
+      "original": "右ドアミラーアーム脱着ボルト取り替え加工",
+      "price": 0,
+      "invoiceId": "25053403-1",
+      "items": [
+        {
+          "target": "ドア",
+          "action": "加工",
+          "positions": [
+            "右"
+          ],
+          "memo": "ミラーアームボルト取り替え",
+          "unitPrice": null
+        },
+        {
+          "target": "ドア",
+          "action": "脱着",
+          "positions": [
+            "右"
+          ],
+          "memo": "ミラーアームボルト取り替え",
+          "unitPrice": null
+        }
+      ],
+      "isSet": true,
+      "status": "success",
+      "errors": [],
+      "setName": "右ドアミラーアーム脱着ボルト取り替え加工",
+      "setPrice": 0
+    },
+    "processingSteps": {
+      "positions": [
+        "右"
+      ],
+      "target": "ドア",
+      "actions": [
+        "加工",
+        "脱着"
+      ]
+    }
+  },
+  {
+    "timestamp": "2025-09-03T01:47:28.397Z",
+    "original": "左右スケット4個調整",
+    "result": {
+      "original": "左右スケット4個調整",
+      "price": 0,
+      "invoiceId": "25053404-1",
+      "items": [],
+      "isSet": false,
+      "status": "failed",
+      "errors": [
+        {
+          "reason": "insufficient_data",
+          "details": {
+            "hasTarget": false,
+            "hasActions": true,
+            "foundTarget": "",
+            "foundActions": [
+              "調整"
+            ],
+            "remainingText": "右スケット4個"
+          }
+        }
+      ]
+    },
+    "processingSteps": {
+      "positions": [
+        "左"
+      ],
+      "target": "",
+      "actions": [
+        "調整"
+      ]
+    }
+  },
+  {
+    "timestamp": "2025-09-03T01:47:28.397Z",
+    "original": "ウィング蝶番点検・グリスアップ・煽りドアスケット調整",
+    "result": {
+      "original": "ウィング蝶番点検・グリスアップ・煽りドアスケット調整",
+      "price": 0,
+      "invoiceId": "25053405-1",
+      "items": [
+        {
+          "target": "ドア",
+          "action": "点検",
+          "positions": [],
+          "memo": "ウィング蝶番・グリスアップ・煽りスケット",
+          "unitPrice": null
+        },
+        {
+          "target": "ドア",
+          "action": "調整",
+          "positions": [],
+          "memo": "ウィング蝶番・グリスアップ・煽りスケット",
+          "unitPrice": null
+        }
+      ],
+      "isSet": true,
+      "status": "success",
+      "errors": [],
+      "setName": "ウィング蝶番点検・グリスアップ・煽りドアスケット調整",
+      "setPrice": 0
+    },
+    "processingSteps": {
+      "positions": [],
+      "target": "ドア",
+      "actions": [
+        "点検",
+        "調整"
+      ]
+    }
+  },
+  {
+    "timestamp": "2025-09-03T01:47:28.397Z",
+    "original": "ドライバーシートブラケット交換",
+    "result": {
+      "original": "ドライバーシートブラケット交換",
+      "price": 0,
+      "invoiceId": "25053406-1",
+      "items": [
+        {
+          "target": "ブラケット",
+          "action": "交換",
+          "positions": [],
+          "memo": "ドライバーシート",
+          "unitPrice": 0
+        }
+      ],
+      "isSet": false,
+      "status": "success",
+      "errors": []
+    },
+    "processingSteps": {
+      "positions": [],
+      "target": "ブラケット",
+      "actions": [
+        "交換"
+      ]
+    }
+  },
+  {
+    "timestamp": "2025-09-03T01:47:28.397Z",
+    "original": "ジャバラパイプ脱着・エキゾーストパイプ折損修正溶接",
+    "result": {
+      "original": "ジャバラパイプ脱着・エキゾーストパイプ折損修正溶接",
+      "price": 0,
+      "invoiceId": "25053407-1",
+      "items": [
+        {
+          "target": "パイプ",
+          "action": "脱着",
+          "positions": [],
+          "memo": "ジャバラ・エキゾーストパイプ折損",
+          "unitPrice": null
+        },
+        {
+          "target": "パイプ",
+          "action": "溶接",
+          "positions": [],
+          "memo": "ジャバラ・エキゾーストパイプ折損",
+          "unitPrice": null
+        },
+        {
+          "target": "パイプ",
+          "action": "修正",
+          "positions": [],
+          "memo": "ジャバラ・エキゾーストパイプ折損",
+          "unitPrice": null
+        }
+      ],
+      "isSet": true,
+      "status": "success",
+      "errors": [],
+      "setName": "ジャバラパイプ脱着・エキゾーストパイプ折損修正溶接",
+      "setPrice": 0
+    },
+    "processingSteps": {
+      "positions": [],
+      "target": "パイプ",
+      "actions": [
+        "脱着",
+        "溶接",
+        "修正"
+      ]
+    }
+  },
+  {
+    "timestamp": "2025-09-03T01:47:28.397Z",
+    "original": "クロスメンバー亀裂溶接",
+    "result": {
+      "original": "クロスメンバー亀裂溶接",
+      "price": 0,
+      "invoiceId": "25053408-1",
+      "items": [],
+      "isSet": false,
+      "status": "failed",
+      "errors": [
+        {
+          "reason": "insufficient_data",
+          "details": {
+            "hasTarget": false,
+            "hasActions": true,
+            "foundTarget": "",
+            "foundActions": [
+              "溶接"
+            ],
+            "remainingText": "クロスメンバー亀裂"
+          }
+        }
+      ]
+    },
+    "processingSteps": {
+      "positions": [],
+      "target": "",
+      "actions": [
+        "溶接"
+      ]
+    }
+  },
+  {
+    "timestamp": "2025-09-03T01:47:28.397Z",
+    "original": "ホーン交換・ステイ交換・ブラケット鈑金修理",
+    "result": {
+      "original": "ホーン交換・ステイ交換・ブラケット鈑金修理",
+      "price": 0,
+      "invoiceId": "25053409-1",
+      "items": [
+        {
+          "target": "ブラケット",
+          "action": "鈑金",
+          "positions": [],
+          "memo": "ホーン交換・ステイ交換・",
+          "unitPrice": null
+        },
+        {
+          "target": "ブラケット",
+          "action": "修理",
+          "positions": [],
+          "memo": "ホーン交換・ステイ交換・",
+          "unitPrice": null
+        }
+      ],
+      "isSet": true,
+      "status": "success",
+      "errors": [],
+      "setName": "ホーン交換・ステイ交換・ブラケット鈑金修理",
+      "setPrice": 0
+    },
+    "processingSteps": {
+      "positions": [],
+      "target": "ブラケット",
+      "actions": [
+        "鈑金",
+        "修理"
+      ]
+    }
+  },
+  {
+    "timestamp": "2025-09-03T01:47:28.397Z",
+    "original": "右ステップパネル取替鈑金",
+    "result": {
+      "original": "右ステップパネル取替鈑金",
+      "price": 0,
+      "invoiceId": "25053409-1",
+      "items": [],
+      "isSet": false,
+      "status": "failed",
+      "errors": [
+        {
+          "reason": "insufficient_data",
+          "details": {
+            "hasTarget": false,
+            "hasActions": true,
+            "foundTarget": "",
+            "foundActions": [
+              "鈑金",
+              "取替"
+            ],
+            "remainingText": "ステップパネル"
+          }
+        }
+      ]
+    },
+    "processingSteps": {
+      "positions": [
+        "右"
+      ],
+      "target": "",
+      "actions": [
+        "鈑金",
+        "取替"
+      ]
+    }
+  },
+  {
+    "timestamp": "2025-09-03T01:47:28.397Z",
+    "original": "右コーナーパネル脱着",
+    "result": {
+      "original": "右コーナーパネル脱着",
+      "price": 0,
+      "invoiceId": "25053409-1",
+      "items": [
+        {
+          "target": "コーナーパネル",
+          "action": "脱着",
+          "positions": [
+            "右"
+          ],
+          "memo": "",
+          "unitPrice": 0
+        }
+      ],
+      "isSet": false,
+      "status": "success",
+      "errors": []
+    },
+    "processingSteps": {
+      "positions": [
+        "右"
+      ],
+      "target": "コーナーパネル",
+      "actions": [
+        "脱着"
+      ]
+    }
+  },
+  {
+    "timestamp": "2025-09-03T01:47:28.397Z",
+    "original": "右ロアフェンダー取替・取り付け修正",
+    "result": {
+      "original": "右ロアフェンダー取替・取り付け修正",
+      "price": 0,
+      "invoiceId": "25053409-1",
+      "items": [],
+      "isSet": false,
+      "status": "failed",
+      "errors": [
+        {
+          "reason": "insufficient_data",
+          "details": {
+            "hasTarget": false,
+            "hasActions": true,
+            "foundTarget": "",
+            "foundActions": [
+              "取替",
+              "修正"
+            ],
+            "remainingText": "フェンダー・取り付け"
+          }
+        }
+      ]
+    },
+    "processingSteps": {
+      "positions": [
+        "右",
+        "ロア"
+      ],
+      "target": "",
+      "actions": [
+        "取替",
+        "修正"
+      ]
+    }
+  },
+  {
+    "timestamp": "2025-09-03T01:47:28.398Z",
+    "original": "右アッパーフェンダー取替・取り付け修正・タイヤハウスカバー脱着",
+    "result": {
+      "original": "右アッパーフェンダー取替・取り付け修正・タイヤハウスカバー脱着",
+      "price": 0,
+      "invoiceId": "25053409-1",
+      "items": [
+        {
+          "target": "アッパーフェンダー",
+          "action": "カバー",
+          "positions": [
+            "右"
+          ],
+          "memo": "・取り付け・タイヤハウス",
+          "unitPrice": null
+        },
+        {
+          "target": "アッパーフェンダー",
+          "action": "取替",
+          "positions": [
+            "右"
+          ],
+          "memo": "・取り付け・タイヤハウス",
+          "unitPrice": null
+        },
+        {
+          "target": "アッパーフェンダー",
+          "action": "脱着",
+          "positions": [
+            "右"
+          ],
+          "memo": "・取り付け・タイヤハウス",
+          "unitPrice": null
+        },
+        {
+          "target": "アッパーフェンダー",
+          "action": "修正",
+          "positions": [
+            "右"
+          ],
+          "memo": "・取り付け・タイヤハウス",
+          "unitPrice": null
+        }
+      ],
+      "isSet": true,
+      "status": "success",
+      "errors": [],
+      "setName": "右アッパーフェンダー取替・取り付け修正・タイヤハウスカバー脱着",
+      "setPrice": 0
+    },
+    "processingSteps": {
+      "positions": [
+        "右"
+      ],
+      "target": "アッパーフェンダー",
+      "actions": [
+        "カバー",
+        "取替",
+        "脱着",
+        "修正"
+      ]
+    }
+  },
+  {
+    "timestamp": "2025-09-03T01:47:28.398Z",
+    "original": "右ドアパネル内側鈑金",
+    "result": {
+      "original": "右ドアパネル内側鈑金",
+      "price": 0,
+      "invoiceId": "25053409-1",
+      "items": [
+        {
+          "target": "ドアパネル",
+          "action": "鈑金",
+          "positions": [
+            "右"
+          ],
+          "memo": "内側",
+          "unitPrice": 0
+        }
+      ],
+      "isSet": false,
+      "status": "success",
+      "errors": []
+    },
+    "processingSteps": {
+      "positions": [
+        "右"
+      ],
+      "target": "ドアパネル",
+      "actions": [
+        "鈑金"
+      ]
+    }
+  },
+  {
+    "timestamp": "2025-09-03T01:47:28.398Z",
+    "original": "リヤナンバーボルト折れ込み修理",
+    "result": {
+      "original": "リヤナンバーボルト折れ込み修理",
+      "price": 0,
+      "invoiceId": "25053410-1",
+      "items": [],
+      "isSet": false,
+      "status": "failed",
+      "errors": [
+        {
+          "reason": "insufficient_data",
+          "details": {
+            "hasTarget": false,
+            "hasActions": true,
+            "foundTarget": "",
+            "foundActions": [
+              "修理"
+            ],
+            "remainingText": "リヤナンバーボルト折れ込み"
+          }
+        }
+      ]
+    },
+    "processingSteps": {
+      "positions": [],
+      "target": "",
+      "actions": [
+        "修理"
+      ]
+    }
+  },
+  {
+    "timestamp": "2025-09-03T01:47:28.398Z",
+    "original": "コンテナロックガード取替",
+    "result": {
+      "original": "コンテナロックガード取替",
+      "price": 0,
+      "invoiceId": "25053411-1",
+      "items": [],
+      "isSet": false,
+      "status": "failed",
+      "errors": [
+        {
+          "reason": "insufficient_data",
+          "details": {
+            "hasTarget": false,
+            "hasActions": true,
+            "foundTarget": "",
+            "foundActions": [
+              "取替"
+            ],
+            "remainingText": "コンテナロックガード"
+          }
+        }
+      ]
+    },
+    "processingSteps": {
+      "positions": [],
+      "target": "",
+      "actions": [
+        "取替"
+      ]
+    }
+  },
+  {
+    "timestamp": "2025-09-03T01:47:28.398Z",
+    "original": "左サイドガード折損部分切替溶接・フラッシャーステイ切断付替え加工・錆止め塗装",
+    "result": {
+      "original": "左サイドガード折損部分切替溶接・フラッシャーステイ切断付替え加工・錆止め塗装",
+      "price": 0,
+      "invoiceId": "25053411-1",
+      "items": [
+        {
+          "target": "サイドガード",
+          "action": "錆止め",
+          "positions": [
+            "左"
+          ],
+          "memo": "折損部分・フラッシャーステイえ・",
+          "unitPrice": null
+        },
+        {
+          "target": "サイドガード",
+          "action": "加工",
+          "positions": [
+            "左"
+          ],
+          "memo": "折損部分・フラッシャーステイえ・",
+          "unitPrice": null
+        },
+        {
+          "target": "サイドガード",
+          "action": "溶接",
+          "positions": [
+            "左"
+          ],
+          "memo": "折損部分・フラッシャーステイえ・",
+          "unitPrice": null
+        },
+        {
+          "target": "サイドガード",
+          "action": "切断",
+          "positions": [
+            "左"
+          ],
+          "memo": "折損部分・フラッシャーステイえ・",
+          "unitPrice": null
+        },
+        {
+          "target": "サイドガード",
+          "action": "塗装",
+          "positions": [
+            "左"
+          ],
+          "memo": "折損部分・フラッシャーステイえ・",
+          "unitPrice": null
+        },
+        {
+          "target": "サイドガード",
+          "action": "付替",
+          "positions": [
+            "左"
+          ],
+          "memo": "折損部分・フラッシャーステイえ・",
+          "unitPrice": null
+        },
+        {
+          "target": "サイドガード",
+          "action": "切替",
+          "positions": [
+            "左"
+          ],
+          "memo": "折損部分・フラッシャーステイえ・",
+          "unitPrice": null
+        }
+      ],
+      "isSet": true,
+      "status": "success",
+      "errors": [],
+      "setName": "左サイドガード折損部分切替溶接・フラッシャーステイ切断付替え加工・錆止め塗装",
+      "setPrice": 0
+    },
+    "processingSteps": {
+      "positions": [
+        "左"
+      ],
+      "target": "サイドガード",
+      "actions": [
+        "錆止め",
+        "加工",
+        "溶接",
+        "切断",
+        "塗装",
+        "付替",
+        "切替"
+      ]
+    }
+  },
+  {
+    "timestamp": "2025-09-03T01:47:28.398Z",
+    "original": "右後ろウィングキャッチ受け・コーナーガード取り替え加工",
+    "result": {
+      "original": "右後ろウィングキャッチ受け・コーナーガード取り替え加工",
+      "price": 0,
+      "invoiceId": "25053412-1",
+      "items": [],
+      "isSet": false,
+      "status": "failed",
+      "errors": [
+        {
+          "reason": "insufficient_data",
+          "details": {
+            "hasTarget": false,
+            "hasActions": true,
+            "foundTarget": "",
+            "foundActions": [
+              "加工"
+            ],
+            "remainingText": "ろウィングキャッチ受け・コーナーガード取り替え"
+          }
+        }
+      ]
+    },
+    "processingSteps": {
+      "positions": [
+        "右",
+        "後"
+      ],
+      "target": "",
+      "actions": [
+        "加工"
+      ]
+    }
+  },
+  {
+    "timestamp": "2025-09-03T01:47:28.398Z",
+    "original": "バッテリー縞板キャッチ取替調整",
+    "result": {
+      "original": "バッテリー縞板キャッチ取替調整",
+      "price": 0,
+      "invoiceId": "25053413-1",
+      "items": [
+        {
+          "target": "バッテリー",
+          "action": "取替",
+          "positions": [],
+          "memo": "縞板キャッチ",
+          "unitPrice": null
+        },
+        {
+          "target": "バッテリー",
+          "action": "調整",
+          "positions": [],
+          "memo": "縞板キャッチ",
+          "unitPrice": null
+        }
+      ],
+      "isSet": true,
+      "status": "success",
+      "errors": [],
+      "setName": "バッテリー縞板キャッチ取替調整",
+      "setPrice": 0
+    },
+    "processingSteps": {
+      "positions": [],
+      "target": "バッテリー",
+      "actions": [
+        "取替",
+        "調整"
+      ]
+    }
+  },
+  {
+    "timestamp": "2025-09-03T01:47:28.398Z",
+    "original": "リヤナンバーブラケット折損溶接",
+    "result": {
+      "original": "リヤナンバーブラケット折損溶接",
+      "price": 0,
+      "invoiceId": "25053414-1",
+      "items": [
+        {
+          "target": "ブラケット",
+          "action": "溶接",
+          "positions": [],
+          "memo": "リヤナンバー折損",
+          "unitPrice": 0
+        }
+      ],
+      "isSet": false,
+      "status": "success",
+      "errors": []
+    },
+    "processingSteps": {
+      "positions": [],
+      "target": "ブラケット",
+      "actions": [
+        "溶接"
+      ]
+    }
+  },
+  {
+    "timestamp": "2025-09-03T01:47:28.398Z",
+    "original": "右後ろ煽りスケット応急取外し",
+    "result": {
+      "original": "右後ろ煽りスケット応急取外し",
+      "price": 0,
+      "invoiceId": "25053415-1",
+      "items": [],
+      "isSet": false,
+      "status": "failed",
+      "errors": [
+        {
+          "reason": "insufficient_data",
+          "details": {
+            "hasTarget": false,
+            "hasActions": false,
+            "foundTarget": "",
+            "foundActions": [],
+            "remainingText": "ろ煽りスケット応急取外し"
+          }
+        }
+      ]
+    },
+    "processingSteps": {
+      "positions": [
+        "右",
+        "後"
+      ],
+      "target": "",
+      "actions": []
+    }
+  }
+]

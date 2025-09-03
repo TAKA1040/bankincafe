@@ -27,12 +27,14 @@ export interface InvoiceWithItems {
   invoice_number: string | null
   issue_date: string | null
   billing_date: string | null
+  billing_month: string | null
   customer_category: 'UD' | 'その他'
   customer_name: string | null
   subject_name: string | null
   subject: string | null
   registration_number: string | null
   order_number: string | null
+  purchase_order_number: string | null
   subtotal: number
   tax: number
   total: number
@@ -68,6 +70,28 @@ export interface SearchFilters {
   endDate: string
 }
 
+// 文字正規化関数（ひらがな/カタカナ、大文字小文字、全角半角を統一）
+const normalizeSearchText = (text: string): string => {
+  if (!text) return ''
+  
+  return text
+    // 全角英数字を半角に変換
+    .replace(/[Ａ-Ｚａ-ｚ０-９]/g, (char) => {
+      return String.fromCharCode(char.charCodeAt(0) - 0xFEE0)
+    })
+    // 全角スペースを半角に変換
+    .replace(/　/g, ' ')
+    // カタカナをひらがなに変換
+    .replace(/[\u30A1-\u30F6]/g, (char) => {
+      return String.fromCharCode(char.charCodeAt(0) - 0x60)
+    })
+    // 小文字に統一
+    .toLowerCase()
+    // 連続する空白を単一にし、前後の空白を削除
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
 export function useInvoiceList() {
   const [invoices, setInvoices] = useState<InvoiceWithItems[]>([])
   const [loading, setLoading] = useState(true)
@@ -86,15 +110,18 @@ export function useInvoiceList() {
           invoice_number,
           issue_date,
           billing_date,
+          billing_month,
           customer_category,
           customer_name,
           subject_name,
           subject,
           registration_number,
           order_number,
+          purchase_order_number,
           subtotal,
           tax,
           total,
+          total_amount,
           status,
           payment_status,
           created_at,
@@ -180,7 +207,7 @@ export function useInvoiceList() {
           payment_status: (invoice.payment_status as 'unpaid' | 'paid' | 'partial') || 'unpaid',
           subtotal: invoice.subtotal || 0,
           tax: invoice.tax || 0,
-          total: invoice.total || 0
+          total: invoice.total_amount || invoice.total || 0
         }
 
         invoicesWithItems.push(invoiceWithItems)
@@ -197,24 +224,24 @@ export function useInvoiceList() {
 
   const searchInvoices = useCallback((filters: SearchFilters): InvoiceWithItems[] => {
     return invoices.filter(invoice => {
-      // キーワード検索
+      // キーワード検索（曖昧検索）
       if (filters.keyword.trim()) {
-        const keyword = filters.keyword.toLowerCase()
+        const normalizedKeyword = normalizeSearchText(filters.keyword)
         const matchesKeyword = 
-          invoice.invoice_id.toLowerCase().includes(keyword) ||
-          (invoice.invoice_number?.toLowerCase() || '').includes(keyword) ||
-          (invoice.customer_name?.toLowerCase() || '').includes(keyword) ||
-          (invoice.subject?.toLowerCase() || '').includes(keyword) ||
-          (invoice.subject_name?.toLowerCase() || '').includes(keyword) ||
-          (invoice.registration_number?.toLowerCase() || '').includes(keyword) ||
-          invoice.work_names.toLowerCase().includes(keyword) ||
-          (invoice.issue_date?.includes(keyword)) ||
-          (invoice.billing_date?.includes(keyword)) ||
+          normalizeSearchText(invoice.invoice_id).includes(normalizedKeyword) ||
+          normalizeSearchText(invoice.invoice_number || '').includes(normalizedKeyword) ||
+          normalizeSearchText(invoice.customer_name || '').includes(normalizedKeyword) ||
+          normalizeSearchText(invoice.subject || '').includes(normalizedKeyword) ||
+          normalizeSearchText(invoice.subject_name || '').includes(normalizedKeyword) ||
+          normalizeSearchText(invoice.registration_number || '').includes(normalizedKeyword) ||
+          normalizeSearchText(invoice.work_names).includes(normalizedKeyword) ||
+          normalizeSearchText(invoice.issue_date || '').includes(normalizedKeyword) ||
+          normalizeSearchText(invoice.billing_date || '').includes(normalizedKeyword) ||
           invoice.line_items.some(item => 
-            (item.raw_label?.toLowerCase() || '').includes(keyword) ||
-            (item.target?.toLowerCase() || '').includes(keyword) ||
-            (item.action?.toLowerCase() || '').includes(keyword) ||
-            (item.position?.toLowerCase() || '').includes(keyword)
+            normalizeSearchText(item.raw_label || '').includes(normalizedKeyword) ||
+            normalizeSearchText(item.target || '').includes(normalizedKeyword) ||
+            normalizeSearchText(item.action || '').includes(normalizedKeyword) ||
+            normalizeSearchText(item.position || '').includes(normalizedKeyword)
           )
         if (!matchesKeyword) return false
       }

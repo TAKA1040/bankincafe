@@ -45,6 +45,19 @@ export interface ActionPosition {
   position_name?: string
 }
 
+export interface PriceSuggestion {
+  id: number
+  target_id: number
+  action_id: number
+  position_id?: number
+  suggested_price: number
+  frequency: number
+  last_used: string
+  target_name?: string
+  action_name?: string
+  position_name?: string
+}
+
 
 // prototypeページで使用するためのカスタムフック
 export function useWorkDictionary() {

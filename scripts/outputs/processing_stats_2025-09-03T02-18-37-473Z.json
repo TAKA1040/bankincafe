@@ -1,0 +1,9 @@
+{
+  "timestamp": "2025-09-03T02:18:37.475Z",
+  "total": 100,
+  "processed": 42,
+  "unprocessed": 58,
+  "successRate": "42.0",
+  "individualWorks": 12,
+  "setWorks": 30
+}
