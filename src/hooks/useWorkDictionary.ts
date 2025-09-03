@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { supabase } from '@/lib/supabase'
 
+
 // Supabaseから取得するデータの型定義
 export interface Target {
   id: number
@@ -44,13 +45,6 @@ export interface ActionPosition {
   position_name?: string
 }
 
-export interface PriceSuggestion {
-  target_id: number
-  action_id: number
-  suggested_price: number
-  usage_count: number
-  last_used_at: string
-}
 
 // prototypeページで使用するためのカスタムフック
 export function useWorkDictionary() {
@@ -60,7 +54,6 @@ export function useWorkDictionary() {
   const [readingMappings, setReadingMappings] = useState<ReadingMapping[]>([])
   const [targetActions, setTargetActions] = useState<TargetAction[]>([])
   const [actionPositions, setActionPositions] = useState<ActionPosition[]>([])
-  const [priceSuggestions, setPriceSuggestions] = useState<PriceSuggestion[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -77,8 +70,7 @@ export function useWorkDictionary() {
           positionsRes,
           readingsRes,
           targetActionsRes,
-          actionPositionsRes,
-          pricesRes
+          actionPositionsRes
         ] = await Promise.all([
           supabase.from('targets').select('*').eq('is_active', true).order('sort_order'),
           supabase.from('actions').select('*').eq('is_active', true).order('sort_order'),
@@ -95,8 +87,7 @@ export function useWorkDictionary() {
             position_id,
             actions(name),
             positions(name)
-          `),
-          supabase.from('price_suggestions').select('*')
+          `)
         ])
 
         // エラーチェック
@@ -106,7 +97,6 @@ export function useWorkDictionary() {
         if (readingsRes.error) throw readingsRes.error
         if (targetActionsRes.error) throw targetActionsRes.error
         if (actionPositionsRes.error) throw actionPositionsRes.error
-        if (pricesRes.error) throw pricesRes.error
 
         // データ設定
         setTargets(targetsRes.data)
@@ -125,7 +115,6 @@ export function useWorkDictionary() {
           action_name: (item.actions as any)?.name,
           position_name: (item.positions as any)?.name
         })))
-        setPriceSuggestions(pricesRes.data)
         
         setError(null)
       } catch (err) {
@@ -198,18 +187,10 @@ export function useWorkDictionary() {
     return map
   }, [actionPositions])
 
-  // 価格提案マッピング
+  // 価格提案マッピング（不要なので空オブジェクトを返す）
   const priceBookMap = useMemo(() => {
-    const map: { [key: string]: number } = {}
-    priceSuggestions.forEach(ps => {
-      const targetName = targets.find(t => t.id === ps.target_id)?.name
-      const actionName = actions.find(a => a.id === ps.action_id)?.name
-      if (targetName && actionName) {
-        map[`${targetName}_${actionName}`] = ps.suggested_price
-      }
-    })
-    return map
-  }, [priceSuggestions, targets, actions])
+    return {}
+  }, [])
 
   // 作業履歴保存関数
   async function saveWorkHistory(
@@ -322,7 +303,6 @@ export function useWorkDictionary() {
     readingMappings,
     targetActions,
     actionPositions,
-    priceSuggestions,
     
     // prototypeページ互換の配列
     targetsArray,
