@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { FileText, Users, Search, Clock, BarChart3, Plus, Calculator, TrendingUp, Settings, Hash, BookOpen, Edit3, Building2 } from 'lucide-react'
+import { FileText, Users, Search, Clock, BarChart3, Plus, Calculator, TrendingUp, Settings, Hash, BookOpen, Edit3, Building2, Tag } from 'lucide-react'
 
 export default function HomePage() {
   const router = useRouter()
@@ -53,10 +53,10 @@ export default function HomePage() {
       category: 'settings'
     },
     {
-      title: '件名マスタ設定',
-      description: '件名のマスター管理・自動登録',
-      icon: FileText,
-      path: '/subject-settings',
+      title: '件名マスタ管理',
+      description: '件名と登録番号の関連管理',
+      icon: Tag,
+      path: '/subject-master',
       color: 'bg-teal-600 hover:bg-teal-700 shadow-lg',
       textColor: 'text-white',
       category: 'settings'

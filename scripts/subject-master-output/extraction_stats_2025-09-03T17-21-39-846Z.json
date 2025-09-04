@@ -1,0 +1,48 @@
+{
+  "timestamp": "2025-09-03T17:21:39.851Z",
+  "total_processed": 1131,
+  "unique_count": 176,
+  "duplicate_removed": 955,
+  "top_10_most_used": [
+    {
+      "subject": "株式会社バンテック九州",
+      "count": 118
+    },
+    {
+      "subject": "株式会社バンテック",
+      "count": 97
+    },
+    {
+      "subject": "株式会社サクラ物流",
+      "count": 86
+    },
+    {
+      "subject": "鶴丸海運株式会社",
+      "count": 40
+    },
+    {
+      "subject": "平和物流株式会社",
+      "count": 38
+    },
+    {
+      "subject": "田村運輸株式会社",
+      "count": 37
+    },
+    {
+      "subject": "三原物流株式会社",
+      "count": 27
+    },
+    {
+      "subject": "久富産業株式会社",
+      "count": 26
+    },
+    {
+      "subject": "株式会社　VIP",
+      "count": 23
+    },
+    {
+      "subject": "北九州ダイキュー運輸株式会社",
+      "count": 23
+    }
+  ]
+}

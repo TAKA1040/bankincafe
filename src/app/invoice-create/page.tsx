@@ -463,7 +463,7 @@ export default function InvoiceCreatePage() {
   const [action, setAction] = useState<string | undefined>()
   const [position, setPosition] = useState<string | undefined>()
   const [workMemo, setWorkMemo] = useState('')
-  const [unitPrice, setUnitPrice] = useState(0)
+  const [unitPrice, setUnitPrice] = useState('')
   const [qty, setQty] = useState(1)
   
   // セット作業用状態
@@ -488,7 +488,7 @@ export default function InvoiceCreatePage() {
   const addStructured = () => {
     if (!target) return
     const label = composedLabel(target, action, position, workMemo)
-    const amount = Math.round((unitPrice || 0) * (qty || 0))
+    const amount = Math.round((Number(unitPrice) || 0) * (qty || 0))
     
     const newId = Date.now()
     const newItem: WorkItem = {
@@ -496,7 +496,7 @@ export default function InvoiceCreatePage() {
       type: 'individual',
       work_name: label,
       position: position,
-      unit_price: unitPrice || 0,
+      unit_price: Number(unitPrice) || 0,
       quantity: qty || 0,
       amount: amount,
       memo: workMemo
@@ -509,7 +509,7 @@ export default function InvoiceCreatePage() {
     setAction(undefined)
     setPosition(undefined)
     setWorkMemo('')
-    setUnitPrice(0)
+    setUnitPrice('')
     setQty(1)
     setIsTargetConfirmed(false)
     setShowTargetSuggestions(false)
@@ -547,8 +547,8 @@ export default function InvoiceCreatePage() {
   }, [action, target, priceBookMap])
   
   React.useEffect(() => {
-    if (suggested != null && (unitPrice === 0 || Number.isNaN(unitPrice))) {
-      setUnitPrice(suggested)
+    if (suggested != null && (unitPrice === '' || unitPrice === '0' || Number(unitPrice) === 0 || Number.isNaN(Number(unitPrice)))) {
+      setUnitPrice(suggested.toString())
     }
   }, [suggested, unitPrice])
   
@@ -1374,7 +1374,8 @@ export default function InvoiceCreatePage() {
                       <TabTrigger value="set">セット作業</TabTrigger>
                       
                       <TabContent value="individual">
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-end mb-4">
+                        {/* PC: 3列レイアウト（対象・動作・位置） */}
+                        <div className="hidden md:grid grid-cols-3 gap-3 items-end mb-4">
                         <div className="relative">
                         <SimpleLabel>対象</SimpleLabel>
                         <input
@@ -1488,7 +1489,108 @@ export default function InvoiceCreatePage() {
                       </div>
                     </div>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end mb-4">
+                    {/* スマホ: 対象・動作を1行、位置・その他を1行 */}
+                    <div className="md:hidden space-y-3 mb-4">
+                      {/* 1行目: 対象・動作 */}
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="relative">
+                          <SimpleLabel>対象</SimpleLabel>
+                          <input
+                            type="text"
+                            value={target}
+                            onChange={(e) => {
+                              const value = e.target.value
+                              setTarget(value)
+                              setAction(undefined)
+                              setIsTargetConfirmed(false)
+                              
+                              if (value.trim() && TARGETS) {
+                                const filtered = TARGETS.filter(t => 
+                                  fuzzyMatch(t, value)
+                                ).slice(0, 150)
+                                setTargetSuggestions(filtered)
+                                setShowTargetSuggestions(filtered.length > 0)
+                                setSelectedTargetIndex(-1)
+                              } else {
+                                if (TARGETS) {
+                                  const startIndex = targetPage * TARGETS_PER_PAGE
+                                  setTargetSuggestions(TARGETS.slice(startIndex, startIndex + TARGETS_PER_PAGE))
+                                  setShowTargetSuggestions(true)
+                                  setSelectedTargetIndex(-1)
+                                }
+                              }
+                            }}
+                            onFocus={() => {
+                              if (TARGETS) {
+                                if (!target.trim()) {
+                                  const startIndex = targetPage * TARGETS_PER_PAGE
+                                  setTargetSuggestions(TARGETS.slice(startIndex, startIndex + TARGETS_PER_PAGE))
+                                }
+                                setShowTargetSuggestions(true)
+                              }
+                            }}
+                            onBlur={() => setTimeout(() => setShowTargetSuggestions(false), 200)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="対象を入力"
+                          />
+                          {showTargetSuggestions && targetSuggestions.length > 0 && (
+                            <div className="absolute z-20 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-80 overflow-y-auto">
+                              {targetSuggestions.map((suggestion, index) => (
+                                <button
+                                  key={suggestion}
+                                  onClick={() => {
+                                    setTarget(suggestion)
+                                    setIsTargetConfirmed(true)
+                                    setShowTargetSuggestions(false)
+                                    setSelectedTargetIndex(-1)
+                                  }}
+                                  className="w-full px-3 py-2 text-left hover:bg-blue-50 first:rounded-t-lg last:rounded-b-lg"
+                                >
+                                  {suggestion}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        <div>
+                          <SimpleLabel>動作</SimpleLabel>
+                          <input
+                            type="text"
+                            value={action || ''}
+                            readOnly
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50"
+                            placeholder="対象を選択後、下のボタンで選択"
+                          />
+                        </div>
+                      </div>
+                      
+                      {/* 2行目: 位置・その他 */}
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <SimpleLabel>位置</SimpleLabel>
+                          <input
+                            type="text"
+                            value={position || ''}
+                            readOnly
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50"
+                            placeholder="動作選択後、下のボタンで選択"
+                          />
+                        </div>
+                        <div>
+                          <SimpleLabel>その他</SimpleLabel>
+                          <input
+                            type="text"
+                            value={workMemo}
+                            onChange={(e) => setWorkMemo(e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="メモがあれば入力"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* PC: 4列レイアウト（その他・単価・数量・追加ボタン） */}
+                    <div className="hidden md:grid grid-cols-4 gap-3 items-end mb-4">
                       <div>
                         <SimpleLabel>その他</SimpleLabel>
                         <input
@@ -1502,11 +1604,16 @@ export default function InvoiceCreatePage() {
                       <div>
                         <SimpleLabel>単価</SimpleLabel>
                         <input
-                          type="number"
+                          type="text"
+                          inputMode="numeric"
+                          pattern="[0-9]*"
                           value={unitPrice}
-                          onChange={(e) => setUnitPrice(Number(e.target.value))}
+                          onChange={(e) => {
+                            const value = e.target.value.replace(/[^0-9]/g, '')
+                            setUnitPrice(value ? Number(value) : 0)
+                          }}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                          min="0"
+                          placeholder="金額を入力してください"
                         />
                       </div>
                       <div>
@@ -1529,6 +1636,73 @@ export default function InvoiceCreatePage() {
                         </button>
                       </div>
                     </div>
+                    
+                    {/* スマホ: 単価・数量を横並び、追加ボタンを右側 */}
+                    <div className="md:hidden mb-4">
+                      <div className="grid grid-cols-3 gap-3 items-end">
+                        <div>
+                          <SimpleLabel>単価</SimpleLabel>
+                          <input
+                            type="text"
+                            inputMode="numeric"
+                            pattern="[0-9]*"
+                            value={unitPrice}
+                            onChange={(e) => {
+                              const value = e.target.value.replace(/[^0-9]/g, '')
+                              setUnitPrice(value ? Number(value) : 0)
+                            }}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="金額を入力してください"
+                          />
+                        </div>
+                        <div>
+                          <SimpleLabel>数量</SimpleLabel>
+                          <input
+                            type="number"
+                            value={qty}
+                            onChange={(e) => setQty(Number(e.target.value))}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            min="1"
+                          />
+                        </div>
+                        <div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (!target) {
+                                alert('対象を入力してください')
+                                return
+                              }
+                              if (!action) {
+                                alert('動作を選択してください')
+                                return
+                              }
+                              if (Number(unitPrice) <= 0) {
+                                alert('単価を正しく入力してください')
+                                return
+                              }
+                              addStructured()
+                            }}
+                            className="w-full h-11 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors flex items-center justify-center gap-1 font-medium text-sm"
+                          >
+                            <Plus size={16} />
+                            追加
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 金額表示（スマホのみ） */}
+                    <div className="md:hidden mb-4">
+                      {Number(unitPrice) > 0 && qty > 0 && (
+                        <div className="text-center p-2 bg-blue-50 rounded-lg">
+                          <span className="text-blue-800 font-medium">
+                            金額: ¥{(Number(unitPrice) * qty).toLocaleString()}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    
                     {isTargetConfirmed && target && (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
@@ -1618,11 +1792,16 @@ export default function InvoiceCreatePage() {
                           <div>
                             <SimpleLabel>単価</SimpleLabel>
                             <input
-                              type="number"
+                              type="text"
+                              inputMode="numeric"
+                              pattern="[0-9]*"
                               value={setPrice}
-                              onChange={(e) => setSetPrice(Number(e.target.value))}
+                              onChange={(e) => {
+                                const value = e.target.value.replace(/[^0-9]/g, '')
+                                setSetPrice(value ? Number(value) : 0)
+                              }}
                               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                              min="0"
+                              placeholder="セット価格を入力してください"
                             />
                           </div>
                           <div>

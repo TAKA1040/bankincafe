@@ -1,277 +1,120 @@
-app-index.js:33 Warning: Cannot update a component (`HotReload`) while rendering a different component (`InvoiceCreatePage`). To locate the bad setState() call inside `InvoiceCreatePage`, follow the stack trace as described in https://reactjs.org/link/setstate-in-render
-    at InvoiceCreatePage (webpack-internal:///(app-pages-browser)/./src/app/invoice-create/page.tsx:431:78)
-    at ClientPageRoot (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/client-page.js:14:11)
-    at InnerLayoutRouter (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:243:11)
-    at RedirectErrorBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js:74:9)
-    at RedirectBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js:82:11)
-    at NotFoundBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/not-found-boundary.js:84:11)
-    at LoadingBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:349:11)
-    at ErrorBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/error-boundary.js:160:11)
-    at InnerScrollAndFocusHandler (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:153:9)
-    at ScrollAndFocusHandler (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:228:11)
-    at RenderFromTemplateContext (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/render-from-template-context.js:16:44)
-    at OuterLayoutRouter (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:370:11)
-    at InnerLayoutRouter (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:243:11)
-    at RedirectErrorBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js:74:9)
-    at RedirectBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js:82:11)
-    at NotFoundErrorBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/not-found-boundary.js:76:9)
-    at NotFoundBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/not-found-boundary.js:84:11)
-    at LoadingBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:349:11)
-    at ErrorBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/error-boundary.js:160:11)
-    at InnerScrollAndFocusHandler (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:153:9)
-    at ScrollAndFocusHandler (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:228:11)
-    at RenderFromTemplateContext (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/render-from-template-context.js:16:44)
-    at OuterLayoutRouter (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:370:11)
-    at body
-    at html
-    at RootLayout (Server)
-    at RedirectErrorBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js:74:9)
-    at RedirectBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js:82:11)
-    at NotFoundErrorBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/not-found-boundary.js:76:9)
-    at NotFoundBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/not-found-boundary.js:84:11)
-    at DevRootNotFoundBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/dev-root-not-found-boundary.js:33:11)
-    at ReactDevOverlay (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/react-dev-overlay/app/ReactDevOverlay.js:87:9)
-    at HotReload (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/react-dev-overlay/app/hot-reloader-client.js:321:11)
-    at Router (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/app-router.js:207:11)
-    at ErrorBoundaryHandler (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/error-boundary.js:113:9)
-    at ErrorBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/error-boundary.js:160:11)
-    at AppRouter (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/app-router.js:585:13)
-    at ServerRoot (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-index.js:112:27)
-    at Root (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-index.js:117:11)
-window.console.error @ app-index.js:33
-page.tsx:1801 Uncaught ReferenceError: TARGET_POSITIONS is not defined
-    at eval (page.tsx:1801:61)
-    at InvoiceCreatePage (page.tsx:1832:31)
-    at renderWithHooks (react-dom.development.js:11121:18)
-    at updateFunctionComponent (react-dom.development.js:16290:20)
-    at beginWork$1 (react-dom.development.js:18472:16)
-    at HTMLUnknownElement.callCallback (react-dom.development.js:20565:14)
-    at Object.invokeGuardedCallbackImpl (react-dom.development.js:20614:16)
-    at invokeGuardedCallback (react-dom.development.js:20689:29)
-    at beginWork (react-dom.development.js:26949:7)
-    at performUnitOfWork (react-dom.development.js:25748:12)
-    at workLoopSync (react-dom.development.js:25464:5)
-    at renderRootSync (react-dom.development.js:25419:7)
-    at performSyncWorkOnRoot (react-dom.development.js:24887:20)
-    at flushSyncWorkAcrossRoots_impl (react-dom.development.js:7758:13)
-    at flushSyncWorkOnAllRoots (react-dom.development.js:7718:3)
-    at processRootScheduleInMicrotask (react-dom.development.js:7863:3)
-    at eval (react-dom.development.js:8034:7)
-redirect-boundary.js:57 Uncaught ReferenceError: TARGET_POSITIONS is not defined
-    at eval (page.tsx:1801:61)
-    at InvoiceCreatePage (page.tsx:1832:31)
-    at renderWithHooks (react-dom.development.js:11121:18)
-    at updateFunctionComponent (react-dom.development.js:16290:20)
-    at beginWork$1 (react-dom.development.js:18472:16)
-    at beginWork (react-dom.development.js:26927:14)
-    at performUnitOfWork (react-dom.development.js:25748:12)
-    at workLoopSync (react-dom.development.js:25464:5)
-    at renderRootSync (react-dom.development.js:25419:7)
-    at performSyncWorkOnRoot (react-dom.development.js:24887:20)
-    at flushSyncWorkAcrossRoots_impl (react-dom.development.js:7758:13)
-    at flushSyncWorkOnAllRoots (react-dom.development.js:7718:3)
-    at processRootScheduleInMicrotask (react-dom.development.js:7863:3)
-    at eval (react-dom.development.js:8034:7)
-redirect-boundary.js:57 Uncaught ReferenceError: TARGET_POSITIONS is not defined
-    at eval (page.tsx:1801:61)
-    at InvoiceCreatePage (page.tsx:1832:31)
-    at renderWithHooks (react-dom.development.js:11121:18)
-    at updateFunctionComponent (react-dom.development.js:16290:20)
-    at beginWork$1 (react-dom.development.js:18472:16)
-    at beginWork (react-dom.development.js:26927:14)
-    at performUnitOfWork (react-dom.development.js:25748:12)
-    at workLoopSync (react-dom.development.js:25464:5)
-    at renderRootSync (react-dom.development.js:25419:7)
-    at performSyncWorkOnRoot (react-dom.development.js:24887:20)
-    at flushSyncWorkAcrossRoots_impl (react-dom.development.js:7758:13)
-    at flushSyncWorkOnAllRoots (react-dom.development.js:7718:3)
-    at processRootScheduleInMicrotask (react-dom.development.js:7863:3)
-    at eval (react-dom.development.js:8034:7)
-not-found-boundary.js:37 Uncaught ReferenceError: TARGET_POSITIONS is not defined
-    at eval (page.tsx:1801:61)
-    at InvoiceCreatePage (page.tsx:1832:31)
-    at renderWithHooks (react-dom.development.js:11121:18)
-    at updateFunctionComponent (react-dom.development.js:16290:20)
-    at beginWork$1 (react-dom.development.js:18472:16)
-    at beginWork (react-dom.development.js:26927:14)
-    at performUnitOfWork (react-dom.development.js:25748:12)
-    at workLoopSync (react-dom.development.js:25464:5)
-    at renderRootSync (react-dom.development.js:25419:7)
-    at performSyncWorkOnRoot (react-dom.development.js:24887:20)
-    at flushSyncWorkAcrossRoots_impl (react-dom.development.js:7758:13)
-    at flushSyncWorkOnAllRoots (react-dom.development.js:7718:3)
-    at processRootScheduleInMicrotask (react-dom.development.js:7863:3)
-    at eval (react-dom.development.js:8034:7)
-redirect-boundary.js:57 Uncaught ReferenceError: TARGET_POSITIONS is not defined
-    at eval (page.tsx:1801:61)
-    at InvoiceCreatePage (page.tsx:1832:31)
-    at renderWithHooks (react-dom.development.js:11121:18)
-    at updateFunctionComponent (react-dom.development.js:16290:20)
-    at beginWork$1 (react-dom.development.js:18472:16)
-    at beginWork (react-dom.development.js:26927:14)
-    at performUnitOfWork (react-dom.development.js:25748:12)
-    at workLoopSync (react-dom.development.js:25464:5)
-    at renderRootSync (react-dom.development.js:25419:7)
-    at performSyncWorkOnRoot (react-dom.development.js:24887:20)
-    at flushSyncWorkAcrossRoots_impl (react-dom.development.js:7758:13)
-    at flushSyncWorkOnAllRoots (react-dom.development.js:7718:3)
-    at processRootScheduleInMicrotask (react-dom.development.js:7863:3)
-    at eval (react-dom.development.js:8034:7)
-not-found-boundary.js:37 Uncaught ReferenceError: TARGET_POSITIONS is not defined
-    at eval (page.tsx:1801:61)
-    at InvoiceCreatePage (page.tsx:1832:31)
-    at renderWithHooks (react-dom.development.js:11121:18)
-    at updateFunctionComponent (react-dom.development.js:16290:20)
-    at beginWork$1 (react-dom.development.js:18472:16)
-    at beginWork (react-dom.development.js:26927:14)
-    at performUnitOfWork (react-dom.development.js:25748:12)
-    at workLoopSync (react-dom.development.js:25464:5)
-    at renderRootSync (react-dom.development.js:25419:7)
-    at performSyncWorkOnRoot (react-dom.development.js:24887:20)
-    at flushSyncWorkAcrossRoots_impl (react-dom.development.js:7758:13)
-    at flushSyncWorkOnAllRoots (react-dom.development.js:7718:3)
-    at processRootScheduleInMicrotask (react-dom.development.js:7863:3)
-    at eval (react-dom.development.js:8034:7)
-page.tsx:1801 Uncaught ReferenceError: TARGET_POSITIONS is not defined
-    at eval (page.tsx:1801:61)
-    at InvoiceCreatePage (page.tsx:1832:31)
-    at renderWithHooks (react-dom.development.js:11121:18)
-    at updateFunctionComponent (react-dom.development.js:16290:20)
-    at beginWork$1 (react-dom.development.js:18472:16)
-    at HTMLUnknownElement.callCallback (react-dom.development.js:20565:14)
-    at Object.invokeGuardedCallbackImpl (react-dom.development.js:20614:16)
-    at invokeGuardedCallback (react-dom.development.js:20689:29)
-    at beginWork (react-dom.development.js:26949:7)
-    at performUnitOfWork (react-dom.development.js:25748:12)
-    at workLoopSync (react-dom.development.js:25464:5)
-    at renderRootSync (react-dom.development.js:25419:7)
-    at recoverFromConcurrentError (react-dom.development.js:24597:20)
-    at performSyncWorkOnRoot (react-dom.development.js:24899:20)
-    at flushSyncWorkAcrossRoots_impl (react-dom.development.js:7758:13)
-    at flushSyncWorkOnAllRoots (react-dom.development.js:7718:3)
-    at processRootScheduleInMicrotask (react-dom.development.js:7863:3)
-    at eval (react-dom.development.js:8034:7)
-redirect-boundary.js:57 Uncaught ReferenceError: TARGET_POSITIONS is not defined
-    at eval (page.tsx:1801:61)
-    at InvoiceCreatePage (page.tsx:1832:31)
-    at renderWithHooks (react-dom.development.js:11121:18)
-    at updateFunctionComponent (react-dom.development.js:16290:20)
-    at beginWork$1 (react-dom.development.js:18472:16)
-    at beginWork (react-dom.development.js:26927:14)
-    at performUnitOfWork (react-dom.development.js:25748:12)
-    at workLoopSync (react-dom.development.js:25464:5)
-    at renderRootSync (react-dom.development.js:25419:7)
-    at recoverFromConcurrentError (react-dom.development.js:24597:20)
-    at performSyncWorkOnRoot (react-dom.development.js:24899:20)
-    at flushSyncWorkAcrossRoots_impl (react-dom.development.js:7758:13)
-    at flushSyncWorkOnAllRoots (react-dom.development.js:7718:3)
-    at processRootScheduleInMicrotask (react-dom.development.js:7863:3)
-    at eval (react-dom.development.js:8034:7)
-redirect-boundary.js:57 Uncaught ReferenceError: TARGET_POSITIONS is not defined
-    at eval (page.tsx:1801:61)
-    at InvoiceCreatePage (page.tsx:1832:31)
-    at renderWithHooks (react-dom.development.js:11121:18)
-    at updateFunctionComponent (react-dom.development.js:16290:20)
-    at beginWork$1 (react-dom.development.js:18472:16)
-    at beginWork (react-dom.development.js:26927:14)
-    at performUnitOfWork (react-dom.development.js:25748:12)
-    at workLoopSync (react-dom.development.js:25464:5)
-    at renderRootSync (react-dom.development.js:25419:7)
-    at recoverFromConcurrentError (react-dom.development.js:24597:20)
-    at performSyncWorkOnRoot (react-dom.development.js:24899:20)
-    at flushSyncWorkAcrossRoots_impl (react-dom.development.js:7758:13)
-    at flushSyncWorkOnAllRoots (react-dom.development.js:7718:3)
-    at processRootScheduleInMicrotask (react-dom.development.js:7863:3)
-    at eval (react-dom.development.js:8034:7)
-not-found-boundary.js:37 Uncaught ReferenceError: TARGET_POSITIONS is not defined
-    at eval (page.tsx:1801:61)
-    at InvoiceCreatePage (page.tsx:1832:31)
-    at renderWithHooks (react-dom.development.js:11121:18)
-    at updateFunctionComponent (react-dom.development.js:16290:20)
-    at beginWork$1 (react-dom.development.js:18472:16)
-    at beginWork (react-dom.development.js:26927:14)
-    at performUnitOfWork (react-dom.development.js:25748:12)
-    at workLoopSync (react-dom.development.js:25464:5)
-    at renderRootSync (react-dom.development.js:25419:7)
-    at recoverFromConcurrentError (react-dom.development.js:24597:20)
-    at performSyncWorkOnRoot (react-dom.development.js:24899:20)
-    at flushSyncWorkAcrossRoots_impl (react-dom.development.js:7758:13)
-    at flushSyncWorkOnAllRoots (react-dom.development.js:7718:3)
-    at processRootScheduleInMicrotask (react-dom.development.js:7863:3)
-    at eval (react-dom.development.js:8034:7)
-redirect-boundary.js:57 Uncaught ReferenceError: TARGET_POSITIONS is not defined
-    at eval (page.tsx:1801:61)
-    at InvoiceCreatePage (page.tsx:1832:31)
-    at renderWithHooks (react-dom.development.js:11121:18)
-    at updateFunctionComponent (react-dom.development.js:16290:20)
-    at beginWork$1 (react-dom.development.js:18472:16)
-    at beginWork (react-dom.development.js:26927:14)
-    at performUnitOfWork (react-dom.development.js:25748:12)
-    at workLoopSync (react-dom.development.js:25464:5)
-    at renderRootSync (react-dom.development.js:25419:7)
-    at recoverFromConcurrentError (react-dom.development.js:24597:20)
-    at performSyncWorkOnRoot (react-dom.development.js:24899:20)
-    at flushSyncWorkAcrossRoots_impl (react-dom.development.js:7758:13)
-    at flushSyncWorkOnAllRoots (react-dom.development.js:7718:3)
-    at processRootScheduleInMicrotask (react-dom.development.js:7863:3)
-    at eval (react-dom.development.js:8034:7)
-not-found-boundary.js:37 Uncaught ReferenceError: TARGET_POSITIONS is not defined
-    at eval (page.tsx:1801:61)
-    at InvoiceCreatePage (page.tsx:1832:31)
-    at renderWithHooks (react-dom.development.js:11121:18)
-    at updateFunctionComponent (react-dom.development.js:16290:20)
-    at beginWork$1 (react-dom.development.js:18472:16)
-    at beginWork (react-dom.development.js:26927:14)
-    at performUnitOfWork (react-dom.development.js:25748:12)
-    at workLoopSync (react-dom.development.js:25464:5)
-    at renderRootSync (react-dom.development.js:25419:7)
-    at recoverFromConcurrentError (react-dom.development.js:24597:20)
-    at performSyncWorkOnRoot (react-dom.development.js:24899:20)
-    at flushSyncWorkAcrossRoots_impl (react-dom.development.js:7758:13)
-    at flushSyncWorkOnAllRoots (react-dom.development.js:7718:3)
-    at processRootScheduleInMicrotask (react-dom.development.js:7863:3)
-    at eval (react-dom.development.js:8034:7)
-app-index.js:33 The above error occurred in the <NotFoundErrorBoundary> component:
+  GET http://localhost:3000/invoice-create 500 (Internal Server Error)
+performFullReload @ webpack-internal:///…oader-client.js:393
+handleApplyUpdates @ webpack-internal:///…oader-client.js:352
+eval @ webpack-internal:///…oader-client.js:382
+Promise.then
+tryApplyUpdates @ webpack-internal:///…oader-client.js:379
+handleSuccess @ webpack-internal:///…oader-client.js:112
+processMessage @ webpack-internal:///…oader-client.js:254
+eval @ webpack-internal:///…loader-client.js:67
+handleMessage @ webpack-internal:///…ges/websocket.js:45
+index.js:627 Uncaught ModuleBuildError: Module build failed (from ./node_modules/next/dist/build/webpack/loaders/next-swc-loader.js):
+Error: 
+  x Unexpected token `div`. Expected jsx identifier
+      ,-[C:\Windsurf\bankincafe\src\app\invoice-create\page.tsx:1277:1]
+ 1277 |   }
+ 1278 | 
+ 1279 |   return (
+ 1280 |     <div className="min-h-screen bg-gray-50">
+      :      ^^^
+ 1281 |       <div className="container mx-auto px-4 py-8">
+ 1282 |         {/* ヘッダー */}
+ 1282 |         <header className="bg-white rounded-lg shadow-sm p-6 mb-6">
+      `----
 
-    at InvoiceCreatePage (webpack-internal:///(app-pages-browser)/./src/app/invoice-create/page.tsx:431:78)
-    at ClientPageRoot (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/client-page.js:14:11)
-    at InnerLayoutRouter (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:243:11)
-    at RedirectErrorBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js:74:9)
-    at RedirectBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js:82:11)
-    at NotFoundBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/not-found-boundary.js:84:11)
-    at LoadingBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:349:11)
-    at ErrorBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/error-boundary.js:160:11)
-    at InnerScrollAndFocusHandler (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:153:9)
-    at ScrollAndFocusHandler (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:228:11)
-    at RenderFromTemplateContext (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/render-from-template-context.js:16:44)
-    at OuterLayoutRouter (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:370:11)
-    at InnerLayoutRouter (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:243:11)
-    at RedirectErrorBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js:74:9)
-    at RedirectBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js:82:11)
-    at NotFoundErrorBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/not-found-boundary.js:76:9)
-    at NotFoundBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/not-found-boundary.js:84:11)
-    at LoadingBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:349:11)
-    at ErrorBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/error-boundary.js:160:11)
-    at InnerScrollAndFocusHandler (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:153:9)
-    at ScrollAndFocusHandler (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:228:11)
-    at RenderFromTemplateContext (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/render-from-template-context.js:16:44)
-    at OuterLayoutRouter (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:370:11)
-    at body
-    at html
-    at RootLayout (Server)
-    at RedirectErrorBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js:74:9)
-    at RedirectBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js:82:11)
-    at NotFoundErrorBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/not-found-boundary.js:76:9)
-    at NotFoundBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/not-found-boundary.js:84:11)
-    at DevRootNotFoundBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/dev-root-not-found-boundary.js:33:11)
-    at ReactDevOverlay (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/react-dev-overlay/app/ReactDevOverlay.js:87:9)
-    at HotReload (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/react-dev-overlay/app/hot-reloader-client.js:321:11)
-    at Router (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/app-router.js:207:11)
-    at ErrorBoundaryHandler (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/error-boundary.js:113:9)
-    at ErrorBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/error-boundary.js:160:11)
-    at AppRouter (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/app-router.js:585:13)
-    at ServerRoot (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-index.js:112:27)
-    at Root (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-index.js:117:11)
 
-React will try to recreate this component tree from scratch using the error boundary you provided, ReactDevOverlay.
-window.console.error @ app-index.js:33
+Caused by:
+    Syntax Error
+    at processResult (file://C:\Windsurf\bankincafe\node_modules\next\dist\compiled\webpack\bundle5.js:28:400590)
+    at <unknown> (file://C:\Windsurf\bankincafe\node_modules\next\dist\compiled\webpack\bundle5.js:28:402302)
+    at <unknown> (file://C:\Windsurf\bankincafe\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js:1:8645)
+    at <unknown> (file://C:\Windsurf\bankincafe\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js:1:5019)
+    at r.callback (file://C:\Windsurf\bankincafe\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js:1:4039)
+getServerError @ nodeStackFrames.js:38
+eval @ index.js:627
+setTimeout
+hydrate @ index.js:615
+await in hydrate
+pageBootrap @ page-bootstrap.js:27
+eval @ next-dev.js:25
+Promise.then
+eval @ next-dev.js:23
+./node_modules/next/dist/client/next-dev.js @ main.js?ts=1756974890338:820
+options.factory @ webpack.js?ts=1756974890338:647
+__webpack_require__ @ webpack.js?ts=1756974890338:37
+__webpack_exec__ @ main.js?ts=1756974890338:1964
+（匿名） @ main.js?ts=1756974890338:1965
+webpackJsonpCallback @ webpack.js?ts=1756974890338:1195
+（匿名） @ main.js?ts=1756974890338:9
+websocket.js:39 [HMR] connected
+hydration-error-info.js:63 ./src/app/invoice-create/page.tsx
+Error: 
+  x Unexpected token `div`. Expected jsx identifier
+      ,-[C:\Windsurf\bankincafe\src\app\invoice-create\page.tsx:1277:1]
+ 1277 |   }
+ 1278 | 
+ 1279 |   return (
+ 1280 |     <div className="min-h-screen bg-gray-50">
+      :      ^^^
+ 1281 |       <div className="container mx-auto px-4 py-8">
+ 1282 |         {/* ヘッダー */}
+ 1282 |         <header className="bg-white rounded-lg shadow-sm p-6 mb-6">
+      `----
+
+Caused by:
+    Syntax Error
+console.error @ hydration-error-info.js:63
+window.console.error @ setup-hydration-warning.js:18
+handleErrors @ hot-reloader-client.js:162
+processMessage @ hot-reloader-client.js:239
+eval @ hot-reloader-client.js:67
+handleMessage @ websocket.js:45
+use-on-click-outside.js:30 [Violation] Added non-passive event listener to a scroll-blocking 'touchstart' event. Consider marking event handler as 'passive' to make the page more responsive. See https://www.chromestatus.com/feature/5745543795965952
+eval @ use-on-click-outside.js:30
+commitHookEffectListMount @ react-dom.development.js:23184
+commitPassiveMountOnFiber @ react-dom.development.js:24960
+commitPassiveMountEffects_complete @ react-dom.development.js:24925
+commitPassiveMountEffects_begin @ react-dom.development.js:24912
+commitPassiveMountEffects @ react-dom.development.js:24900
+flushPassiveEffectsImpl @ react-dom.development.js:27073
+flushPassiveEffects @ react-dom.development.js:27018
+commitRootImpl @ react-dom.development.js:26969
+commitRoot @ react-dom.development.js:26716
+performSyncWorkOnRoot @ react-dom.development.js:26151
+flushSyncCallbacks @ react-dom.development.js:12042
+commitRootImpl @ react-dom.development.js:26993
+commitRoot @ react-dom.development.js:26716
+finishConcurrentRender @ react-dom.development.js:26015
+performConcurrentWorkOnRoot @ react-dom.development.js:25843
+workLoop @ scheduler.development.js:266
+flushWork @ scheduler.development.js:239
+performWorkUntilDeadline @ scheduler.development.js:533
+scheduler.development.js:517 [Violation] 'message' handler took 231ms
+use-on-click-outside.js:30 [Violation] Added non-passive event listener to a scroll-blocking 'touchstart' event. Consider marking event handler as 'passive' to make the page more responsive. See https://www.chromestatus.com/feature/5745543795965952
+eval @ use-on-click-outside.js:30
+commitHookEffectListMount @ react-dom.development.js:23184
+commitPassiveMountOnFiber @ react-dom.development.js:24960
+commitPassiveMountEffects_complete @ react-dom.development.js:24925
+commitPassiveMountEffects_begin @ react-dom.development.js:24912
+commitPassiveMountEffects @ react-dom.development.js:24900
+flushPassiveEffectsImpl @ react-dom.development.js:27073
+flushPassiveEffects @ react-dom.development.js:27018
+commitRootImpl @ react-dom.development.js:26969
+commitRoot @ react-dom.development.js:26716
+performSyncWorkOnRoot @ react-dom.development.js:26151
+flushSyncCallbacks @ react-dom.development.js:12042
+eval @ react-dom.development.js:25685
+use-on-click-outside.js:30 [Violation] Added non-passive event listener to a scroll-blocking 'touchstart' event. Consider marking event handler as 'passive' to make the page more responsive. See https://www.chromestatus.com/feature/5745543795965952
+eval @ use-on-click-outside.js:30
+commitHookEffectListMount @ react-dom.development.js:23184
+commitPassiveMountOnFiber @ react-dom.development.js:24960
+commitPassiveMountEffects_complete @ react-dom.development.js:24925
+commitPassiveMountEffects_begin @ react-dom.development.js:24912
+commitPassiveMountEffects @ react-dom.development.js:24900
+flushPassiveEffectsImpl @ react-dom.development.js:27073
+flushPassiveEffects @ react-dom.development.js:27018
+commitRootImpl @ react-dom.development.js:26969
+commitRoot @ react-dom.development.js:26716
+performSyncWorkOnRoot @ react-dom.development.js:26151
+flushSyncCallbacks @ react-dom.development.js:12042
+eval @ react-dom.development.js:25685
