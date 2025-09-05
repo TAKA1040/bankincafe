@@ -3,21 +3,39 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 
+// 入金記録
+export interface PaymentRecord {
+  id: number
+  payment_date: string
+  payment_amount: number
+  payment_method: string | null
+  notes: string | null
+  created_at: string
+}
+
+// 売上請求書データ（新スキーマ対応）
 export interface SalesInvoice {
   invoice_id: string
   issue_date: string | null
   customer_name: string | null
   subject_name: string | null
+  subject: string | null
   total_amount: number
-  status: 'draft' | 'finalized' | 'cancelled'
+  status: 'draft' | 'finalized' | 'sent' | 'paid'
   payment_status: 'unpaid' | 'paid' | 'partial'
-  payment_date: string | null
   created_at: string | null
-  // For UI layout
-  purchase_order_number: string | null 
+  // 実際のDBカラム
   registration_number: string | null
   order_number: string | null
-  remaining_amount: number | null
+  order_id: string | null
+  // 新スキーマ対応フィールド
+  invoice_type: 'standard' | 'credit_note'
+  original_invoice_id: string | null
+  // 計算フィールド
+  total_paid: number
+  remaining_amount: number
+  last_payment_date: string | null
+  payment_history: PaymentRecord[]
 }
 
 export interface MonthlySales {
@@ -41,6 +59,7 @@ export interface SalesStatistics {
   averageAmount: number
   paidAmount: number
   unpaidAmount: number
+  partialAmount: number
   topCustomer: string
   topMonth: string
 }
@@ -55,7 +74,7 @@ export function useSalesData() {
       setLoading(true)
       setError(null)
 
-      // First, try selecting including payment_date (newer column)
+      // 新スキーマ対応クエリ（通常請求書のみ、入金履歴を含む）
       let { data, error } = await supabase
         .from('invoices')
         .select(`
@@ -63,23 +82,32 @@ export function useSalesData() {
           issue_date,
           customer_name,
           subject_name,
-          total_amount,
+          subject,
+          total,
           status,
           payment_status,
-          payment_date,
-          created_at
+          registration_number,
+          order_number,
+          order_id,
+          invoice_type,
+          original_invoice_id,
+          created_at,
+          invoice_payments(
+            id,
+            payment_date,
+            payment_amount,
+            payment_method,
+            notes,
+            created_at
+          )
         `)
-        .not('total_amount', 'is', null)
+        .eq('invoice_type', 'standard') // 通常請求書のみ
+        .not('total', 'is', null)
         .order('issue_date', { ascending: false })
 
-      // If invalid column error (e.g., payment_date not yet migrated), retry without it
-      const isInvalidColumn = error && (
-        (error as any).code === '42703' ||
-        String((error as any).message || '').toLowerCase().includes('column') &&
-        String((error as any).message || '').includes('payment_date')
-      )
-
-      if (isInvalidColumn) {
+      // フォールバック処理（新テーブルが未作成の場合）
+      if (error && (error as any).code === '42P01') { // テーブル存在なしエラー
+        console.log('新テーブル未作成、フォールバック処理実行')
         const fallback = await supabase
           .from('invoices')
           .select(`
@@ -87,13 +115,18 @@ export function useSalesData() {
             issue_date,
             customer_name,
             subject_name,
-            total_amount,
+            subject,
+            total,
             status,
             payment_status,
+            registration_number,
+            order_number,
+            order_id,
             created_at
           `)
-          .not('total_amount', 'is', null)
+          .not('total', 'is', null)
           .order('issue_date', { ascending: false })
+        
         data = fallback.data as any[]
         error = fallback.error as any
       }
@@ -102,22 +135,53 @@ export function useSalesData() {
 
       const rows: any[] = (data as any[]) || []
 
-      const salesInvoices: SalesInvoice[] = rows.map((invoice: any) => ({
-        invoice_id: invoice.invoice_id,
-        issue_date: invoice.issue_date,
-        customer_name: invoice.customer_name,
-        subject_name: invoice.subject_name,
-        total_amount: invoice.total_amount || 0,
-        status: (invoice.status as 'draft' | 'finalized' | 'cancelled') || 'draft',
-        payment_status: (invoice.payment_status as 'unpaid' | 'paid' | 'partial') || 'unpaid',
-        payment_date: invoice.payment_date || null,
-        created_at: invoice.created_at,
-        // Dummy data for UI layout
-        purchase_order_number: null,
-        registration_number: null,
-        order_number: null,
-        remaining_amount: null,
-      }))
+      const salesInvoices: SalesInvoice[] = rows.map((invoice: any) => {
+        // 入金履歴の処理
+        const payments: PaymentRecord[] = (invoice.invoice_payments || []).map((p: any) => ({
+          id: p.id,
+          payment_date: p.payment_date,
+          payment_amount: p.payment_amount || 0,
+          payment_method: p.payment_method,
+          notes: p.notes,
+          created_at: p.created_at
+        }))
+
+        // 入金合計の計算
+        const totalPaid = payments.reduce((sum, p) => sum + p.payment_amount, 0)
+        
+        // 最終入金日の取得
+        const lastPaymentDate = payments.length > 0 
+          ? payments.sort((a, b) => new Date(b.payment_date).getTime() - new Date(a.payment_date).getTime())[0].payment_date
+          : null
+
+        const totalAmount = invoice.total || 0
+
+        return {
+          invoice_id: invoice.invoice_id,
+          issue_date: invoice.issue_date,
+          customer_name: invoice.customer_name,
+          subject_name: invoice.subject_name,
+          subject: invoice.subject,
+          total_amount: totalAmount,
+          status: (invoice.status as 'draft' | 'finalized' | 'sent' | 'paid') || 'draft',
+          payment_status: (invoice.payment_status as 'unpaid' | 'paid' | 'partial') || 'unpaid',
+          created_at: invoice.created_at,
+          // 実際のDBカラム
+          registration_number: invoice.registration_number,
+          order_number: invoice.order_number,
+          order_id: invoice.order_id,
+          // 新スキーマフィールド
+          invoice_type: (invoice.invoice_type as 'standard' | 'credit_note') || 'standard',
+          original_invoice_id: invoice.original_invoice_id,
+          // 計算フィールド
+          total_paid: totalPaid,
+          remaining_amount: totalAmount - totalPaid,
+          last_payment_date: lastPaymentDate,
+          payment_history: payments.sort((a, b) => 
+            new Date(b.payment_date).getTime() - new Date(a.payment_date).getTime()
+          )
+        }
+      })
 
       setInvoices(salesInvoices)
     } catch (err) {
@@ -228,16 +292,24 @@ export function useSalesData() {
         averageAmount: 0,
         paidAmount: 0,
         unpaidAmount: 0,
+        partialAmount: 0,
         topCustomer: '',
         topMonth: ''
       }
     }
 
     const totalSales = filteredData.reduce((sum, invoice) => sum + invoice.total_amount, 0)
+    
+    // 支払い状況別の金額集計（新スキーマベース）
     const paidAmount = filteredData
       .filter(invoice => invoice.payment_status === 'paid')
-      .reduce((sum, invoice) => sum + invoice.total_amount, 0)
-    const unpaidAmount = totalSales - paidAmount
+      .reduce((sum, invoice) => sum + invoice.total_paid, 0)
+    
+    const partialAmount = filteredData
+      .filter(invoice => invoice.payment_status === 'partial')
+      .reduce((sum, invoice) => sum + invoice.total_paid, 0)
+    
+    const unpaidAmount = totalSales - paidAmount - partialAmount
     const averageAmount = Math.round(totalSales / filteredData.length)
 
     // 顧客別売上
@@ -254,6 +326,7 @@ export function useSalesData() {
       averageAmount,
       paidAmount,
       unpaidAmount,
+      partialAmount,
       topCustomer,
       topMonth
     }
@@ -284,14 +357,16 @@ export function useSalesData() {
     }
     
     const headers = [
-      '請求書ID', '請求日', '顧客名', '件名', '金額', 'ステータス', '支払い状況', '作成日'
+      '請求書ID', '請求日', '顧客名', '件名', '金額', 'ステータス', 
+      '支払い状況', '入金合計', '残額', '最終入金日', '作成日'
     ]
     
     const getStatusLabel = (status: string): string => {
       const statusMap = {
         draft: '下書き',
         finalized: '確定',
-        cancelled: '取消'
+        sent: '送信済み',
+        paid: '支払済み'
       }
       return statusMap[status as keyof typeof statusMap] || status
     }
@@ -309,10 +384,13 @@ export function useSalesData() {
       invoice.invoice_id,
       invoice.issue_date ? new Date(invoice.issue_date).toLocaleDateString('ja-JP') : '',
       `"${(invoice.customer_name || '').replace(/"/g, '""')}"`,
-      `"${(invoice.subject_name || '').replace(/"/g, '""')}"`,
+      `"${(invoice.subject_name || invoice.subject || '').replace(/"/g, '""')}"`,
       invoice.total_amount.toString(),
       getStatusLabel(invoice.status),
       getPaymentStatusLabel(invoice.payment_status),
+      invoice.total_paid.toString(),
+      invoice.remaining_amount.toString(),
+      invoice.last_payment_date ? new Date(invoice.last_payment_date).toLocaleDateString('ja-JP') : '',
       invoice.created_at ? new Date(invoice.created_at).toLocaleDateString('ja-JP') : ''
     ])
 
@@ -329,72 +407,162 @@ export function useSalesData() {
   }, [invoices])
 
   const getPaymentStatusSummary = useCallback((year?: number) => {
-    let filteredData = invoices;
+    let filteredData = invoices
     if (year) {
       filteredData = invoices.filter(invoice => {
-        if (!invoice.issue_date) return false;
-        const invoiceYear = new Date(invoice.issue_date).getFullYear();
-        return invoiceYear === year;
-      });
+        if (!invoice.issue_date) return false
+        const invoiceYear = new Date(invoice.issue_date).getFullYear()
+        return invoiceYear === year
+      })
     }
 
     const summary = {
-      unpaid: { count: 0, total: 0 },
-      paid: { count: 0, total: 0 },
-    };
+      unpaid: { count: 0, total: 0, remaining: 0 },
+      paid: { count: 0, total: 0, remaining: 0 },
+      partial: { count: 0, total: 0, remaining: 0 }
+    }
 
     for (const invoice of filteredData) {
-      if (invoice.payment_status === 'unpaid') {
-        summary.unpaid.count++;
-        summary.unpaid.total += invoice.total_amount;
-      } else if (invoice.payment_status === 'paid') {
-        summary.paid.count++;
-        summary.paid.total += invoice.total_amount;
+      const status = invoice.payment_status
+      if (summary[status]) {
+        summary[status].count++
+        summary[status].total += invoice.total_amount
+        summary[status].remaining += invoice.remaining_amount
       }
     }
-    return summary;
-  }, [invoices]);
+    
+    return summary
+  }, [invoices])
 
-  const updateInvoicesPaymentStatus = useCallback(async (invoiceIds: string[], paymentDate: string) => {
+  // 新スキーマ対応: invoice_payments テーブルへの入金記録
+  const recordPayment = useCallback(async (invoiceId: string, paymentData: {
+    payment_date: string
+    payment_amount: number
+    payment_method?: string
+    notes?: string
+  }): Promise<boolean> => {
     try {
-      setLoading(true);
-      setError(null);
+      setLoading(true)
+      setError(null)
 
-      const { error } = await supabase
-        .from('invoices')
-        .update({
-          payment_status: 'paid',
-          payment_date: paymentDate,
+      // invoice_payments テーブルに入金記録を挿入
+      const { error: paymentError } = await supabase
+        .from('invoice_payments')
+        .insert({
+          invoice_id: invoiceId,
+          payment_date: paymentData.payment_date,
+          payment_amount: paymentData.payment_amount,
+          payment_method: paymentData.payment_method || null,
+          notes: paymentData.notes || null
         })
-        .in('invoice_id', invoiceIds);
 
-      if (error) {
-        const isInvalidColumn = error && (
-            (error as any).code === '42703' ||
-            String((error as any).message || '').toLowerCase().includes('column') &&
-            String((error as any).message || '').includes('payment_date')
-        );
+      if (paymentError) {
+        // フォールバック: 古いテーブル構造での更新
+        console.log('新テーブル使用不可、フォールバック処理実行')
+        const { error: fallbackError } = await supabase
+          .from('invoices')
+          .update({ 
+            payment_status: 'paid',
+            // payment_date: paymentData.payment_date  // 新スキーマでは削除済み
+          })
+          .eq('invoice_id', invoiceId)
+        
+        if (fallbackError) throw fallbackError
+      } else {
+        // 請求書の支払い状況を更新
+        // 入金合計を計算して支払い状況を決定
+        const { data: payments } = await supabase
+          .from('invoice_payments')
+          .select('payment_amount')
+          .eq('invoice_id', invoiceId)
 
-        if (isInvalidColumn) {
-            const { error: fallbackError } = await supabase
-                .from('invoices')
-                .update({ payment_status: 'paid' })
-                .in('invoice_id', invoiceIds);
-            if (fallbackError) throw fallbackError;
-        } else {
-            throw error;
+        const { data: invoice } = await supabase
+          .from('invoices')
+          .select('total')
+          .eq('invoice_id', invoiceId)
+          .single()
+
+        if (payments && invoice) {
+          const totalPaid = payments.reduce((sum, p) => sum + (p.payment_amount || 0), 0)
+          const total = invoice.total || 0
+          
+          let newStatus: 'unpaid' | 'paid' | 'partial' = 'unpaid'
+          if (totalPaid >= total) {
+            newStatus = 'paid'
+          } else if (totalPaid > 0) {
+            newStatus = 'partial'
+          }
+
+          await supabase
+            .from('invoices')
+            .update({ payment_status: newStatus })
+            .eq('invoice_id', invoiceId)
         }
       }
 
-      await fetchInvoices();
-      return true;
+      await fetchInvoices()
+      return true
     } catch (err) {
-      console.error('Failed to update payment status:', err);
-      setError(err instanceof Error ? err.message : '入金状況の更新に失敗しました');
-      setLoading(false);
-      return false;
+      console.error('Failed to record payment:', err)
+      setError(err instanceof Error ? err.message : '入金記録の登録に失敗しました')
+      setLoading(false)
+      return false
     }
-  }, [fetchInvoices]);
+  }, [fetchInvoices])
+
+  // 複数請求書の一括支払い更新（新スキーマ対応）
+  const updateInvoicesPaymentStatus = useCallback(async (invoiceIds: string[], paymentDate: string): Promise<boolean> => {
+    try {
+      setLoading(true)
+      setError(null)
+
+      // 各請求書の残額を取得して入金記録を作成
+      const { data: invoicesData } = await supabase
+        .from('invoices')
+        .select('invoice_id, total')
+        .in('invoice_id', invoiceIds)
+
+      if (!invoicesData) throw new Error('請求書データの取得に失敗しました')
+
+      // 各請求書に対して入金記録を作成
+      for (const invoice of invoicesData) {
+        // 既存の入金額を取得
+        const { data: existingPayments } = await supabase
+          .from('invoice_payments')
+          .select('payment_amount')
+          .eq('invoice_id', invoice.invoice_id)
+
+        const existingTotal = existingPayments?.reduce((sum, p) => sum + (p.payment_amount || 0), 0) || 0
+        const remainingAmount = (invoice.total || 0) - existingTotal
+
+        if (remainingAmount > 0) {
+          await supabase
+            .from('invoice_payments')
+            .insert({
+              invoice_id: invoice.invoice_id,
+              payment_date: paymentDate,
+              payment_amount: remainingAmount,
+              payment_method: '一括更新',
+              notes: '売上管理画面からの一括支払い更新'
+            })
+
+          // 支払い状況を「支払済み」に更新
+          await supabase
+            .from('invoices')
+            .update({ payment_status: 'paid' })
+            .eq('invoice_id', invoice.invoice_id)
+        }
+      }
+
+      await fetchInvoices()
+      return true
+    } catch (err) {
+      console.error('Failed to update payment status:', err)
+      setError(err instanceof Error ? err.message : '入金状況の更新に失敗しました')
+      setLoading(false)
+      return false
+    }
+  }, [fetchInvoices])
 
   // 初期データロード
   useEffect(() => {
@@ -412,6 +580,7 @@ export function useSalesData() {
     exportToCSV,
     refetch: fetchInvoices,
     getPaymentStatusSummary,
+    recordPayment,
     updateInvoicesPaymentStatus
   }
 }

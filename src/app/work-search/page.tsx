@@ -134,12 +134,12 @@ export default function WorkSearchPage() {
             task_type
           `), // 元の請求書項目（金額情報含む）
           supabase.from('invoice_line_items_split').select(`
+            id,
             invoice_id,
             line_no,
             raw_label_part,
             action,
-            target,
-            position
+            target
           `), // 分割データ（詳細情報用）
           supabase.from('invoices').select(`
             invoice_id,
@@ -358,15 +358,40 @@ export default function WorkSearchPage() {
       
       if (splitError) throw splitError
       
+      // 位置情報も取得（splitDataのidを使用）
+      const splitIds = splitData?.map(split => split.id) || []
+      let positionData: any[] = []
+      if (splitIds.length > 0) {
+        const { data: positions } = await supabase
+          .from('work_item_positions')
+          .select('*')
+          .in('split_item_id', splitIds)
+        positionData = positions || []
+      }
       
-      // 分割データをグループ化
+      
+      // 位置情報をsplit_item_idでマップ化
+      const positionMap = new Map()
+      positionData.forEach(pos => {
+        if (!positionMap.has(pos.split_item_id)) {
+          positionMap.set(pos.split_item_id, [])
+        }
+        positionMap.get(pos.split_item_id).push(pos.position)
+      })
+      
+      // 分割データをグループ化（位置情報付き）
       const splitMap = new Map()
       splitData?.forEach(split => {
         const key = `${split.invoice_id}-${split.line_no}`
         if (!splitMap.has(key)) {
           splitMap.set(key, [])
         }
-        splitMap.get(key).push(split)
+        // 位置情報を追加
+        const splitWithPositions = {
+          ...split,
+          positions: positionMap.get(split.id) || []
+        }
+        splitMap.get(key).push(splitWithPositions)
       })
       
       // 請求書詳細データを構築
@@ -591,7 +616,7 @@ export default function WorkSearchPage() {
                   <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 cursor-pointer" onClick={() => handleSort('registration_number')}>登録番号</th>
                   <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 cursor-pointer" onClick={() => handleSort('work_name')}>作業名</th>
                   <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 cursor-pointer" onClick={() => handleSort('customer_name')}>対象</th>
-                  <th className="px-4 py-3 text-center text-sm font-medium text-gray-700">種別</th>
+                  <th className="px-4 py-3 text-center text-sm font-medium text-gray-700">T/S</th>
                   <th className="px-4 py-3 text-right text-sm font-medium text-gray-700 cursor-pointer" onClick={() => handleSort('unit_price')}>単価</th>
                   <th className="px-4 py-3 text-center text-sm font-medium text-gray-700">詳細</th>
                 </tr>
@@ -614,7 +639,7 @@ export default function WorkSearchPage() {
                           ? 'bg-purple-100 text-purple-800' 
                           : 'bg-blue-100 text-blue-800'
                       }`}>
-                        {item.is_set ? 'セット' : '個別'}
+                        {item.is_set ? 'S' : 'T'}
                       </span>
                     </td>
                     <td className="px-4 py-4 text-right text-sm font-semibold text-green-600">{formatCurrency(item.unit_price)}</td>
