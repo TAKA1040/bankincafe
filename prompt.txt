@@ -1,120 +1,174 @@
-  GET http://localhost:3000/invoice-create 500 (Internal Server Error)
-performFullReload @ webpack-internal:///…oader-client.js:393
-handleApplyUpdates @ webpack-internal:///…oader-client.js:352
-eval @ webpack-internal:///…oader-client.js:382
-Promise.then
-tryApplyUpdates @ webpack-internal:///…oader-client.js:379
-handleSuccess @ webpack-internal:///…oader-client.js:112
-processMessage @ webpack-internal:///…oader-client.js:254
-eval @ webpack-internal:///…loader-client.js:67
-handleMessage @ webpack-internal:///…ges/websocket.js:45
-index.js:627 Uncaught ModuleBuildError: Module build failed (from ./node_modules/next/dist/build/webpack/loaders/next-swc-loader.js):
-Error: 
-  x Unexpected token `div`. Expected jsx identifier
-      ,-[C:\Windsurf\bankincafe\src\app\invoice-create\page.tsx:1277:1]
- 1277 |   }
- 1278 | 
- 1279 |   return (
- 1280 |     <div className="min-h-screen bg-gray-50">
-      :      ^^^
- 1281 |       <div className="container mx-auto px-4 py-8">
- 1282 |         {/* ヘッダー */}
- 1282 |         <header className="bg-white rounded-lg shadow-sm p-6 mb-6">
-      `----
-
-
-Caused by:
-    Syntax Error
-    at processResult (file://C:\Windsurf\bankincafe\node_modules\next\dist\compiled\webpack\bundle5.js:28:400590)
-    at <unknown> (file://C:\Windsurf\bankincafe\node_modules\next\dist\compiled\webpack\bundle5.js:28:402302)
-    at <unknown> (file://C:\Windsurf\bankincafe\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js:1:8645)
-    at <unknown> (file://C:\Windsurf\bankincafe\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js:1:5019)
-    at r.callback (file://C:\Windsurf\bankincafe\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js:1:4039)
-getServerError @ nodeStackFrames.js:38
-eval @ index.js:627
-setTimeout
-hydrate @ index.js:615
-await in hydrate
-pageBootrap @ page-bootstrap.js:27
-eval @ next-dev.js:25
-Promise.then
-eval @ next-dev.js:23
-./node_modules/next/dist/client/next-dev.js @ main.js?ts=1756974890338:820
-options.factory @ webpack.js?ts=1756974890338:647
-__webpack_require__ @ webpack.js?ts=1756974890338:37
-__webpack_exec__ @ main.js?ts=1756974890338:1964
-（匿名） @ main.js?ts=1756974890338:1965
-webpackJsonpCallback @ webpack.js?ts=1756974890338:1195
-（匿名） @ main.js?ts=1756974890338:9
-websocket.js:39 [HMR] connected
-hydration-error-info.js:63 ./src/app/invoice-create/page.tsx
-Error: 
-  x Unexpected token `div`. Expected jsx identifier
-      ,-[C:\Windsurf\bankincafe\src\app\invoice-create\page.tsx:1277:1]
- 1277 |   }
- 1278 | 
- 1279 |   return (
- 1280 |     <div className="min-h-screen bg-gray-50">
-      :      ^^^
- 1281 |       <div className="container mx-auto px-4 py-8">
- 1282 |         {/* ヘッダー */}
- 1282 |         <header className="bg-white rounded-lg shadow-sm p-6 mb-6">
-      `----
-
-Caused by:
-    Syntax Error
-console.error @ hydration-error-info.js:63
-window.console.error @ setup-hydration-warning.js:18
-handleErrors @ hot-reloader-client.js:162
-processMessage @ hot-reloader-client.js:239
-eval @ hot-reloader-client.js:67
-handleMessage @ websocket.js:45
-use-on-click-outside.js:30 [Violation] Added non-passive event listener to a scroll-blocking 'touchstart' event. Consider marking event handler as 'passive' to make the page more responsive. See https://www.chromestatus.com/feature/5745543795965952
-eval @ use-on-click-outside.js:30
-commitHookEffectListMount @ react-dom.development.js:23184
-commitPassiveMountOnFiber @ react-dom.development.js:24960
-commitPassiveMountEffects_complete @ react-dom.development.js:24925
-commitPassiveMountEffects_begin @ react-dom.development.js:24912
-commitPassiveMountEffects @ react-dom.development.js:24900
-flushPassiveEffectsImpl @ react-dom.development.js:27073
-flushPassiveEffects @ react-dom.development.js:27018
-commitRootImpl @ react-dom.development.js:26969
-commitRoot @ react-dom.development.js:26716
-performSyncWorkOnRoot @ react-dom.development.js:26151
-flushSyncCallbacks @ react-dom.development.js:12042
-commitRootImpl @ react-dom.development.js:26993
-commitRoot @ react-dom.development.js:26716
-finishConcurrentRender @ react-dom.development.js:26015
-performConcurrentWorkOnRoot @ react-dom.development.js:25843
-workLoop @ scheduler.development.js:266
-flushWork @ scheduler.development.js:239
-performWorkUntilDeadline @ scheduler.development.js:533
-scheduler.development.js:517 [Violation] 'message' handler took 231ms
-use-on-click-outside.js:30 [Violation] Added non-passive event listener to a scroll-blocking 'touchstart' event. Consider marking event handler as 'passive' to make the page more responsive. See https://www.chromestatus.com/feature/5745543795965952
-eval @ use-on-click-outside.js:30
-commitHookEffectListMount @ react-dom.development.js:23184
-commitPassiveMountOnFiber @ react-dom.development.js:24960
-commitPassiveMountEffects_complete @ react-dom.development.js:24925
-commitPassiveMountEffects_begin @ react-dom.development.js:24912
-commitPassiveMountEffects @ react-dom.development.js:24900
-flushPassiveEffectsImpl @ react-dom.development.js:27073
-flushPassiveEffects @ react-dom.development.js:27018
-commitRootImpl @ react-dom.development.js:26969
-commitRoot @ react-dom.development.js:26716
-performSyncWorkOnRoot @ react-dom.development.js:26151
-flushSyncCallbacks @ react-dom.development.js:12042
-eval @ react-dom.development.js:25685
-use-on-click-outside.js:30 [Violation] Added non-passive event listener to a scroll-blocking 'touchstart' event. Consider marking event handler as 'passive' to make the page more responsive. See https://www.chromestatus.com/feature/5745543795965952
-eval @ use-on-click-outside.js:30
-commitHookEffectListMount @ react-dom.development.js:23184
-commitPassiveMountOnFiber @ react-dom.development.js:24960
-commitPassiveMountEffects_complete @ react-dom.development.js:24925
-commitPassiveMountEffects_begin @ react-dom.development.js:24912
-commitPassiveMountEffects @ react-dom.development.js:24900
-flushPassiveEffectsImpl @ react-dom.development.js:27073
-flushPassiveEffects @ react-dom.development.js:27018
-commitRootImpl @ react-dom.development.js:26969
-commitRoot @ react-dom.development.js:26716
-performSyncWorkOnRoot @ react-dom.development.js:26151
-flushSyncCallbacks @ react-dom.development.js:12042
-eval @ react-dom.development.js:25685
+react-dom.development.js:38560 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+page.tsx:335 Fetching invoice detail for: 25043369-1
+page.tsx:353 Invoice work items fetched: 1
+page.tsx:354 First work item raw data: {
+  "id": 1,
+  "line_no": 1,
+  "raw_label": "リヤフラッシャーASSY取替・ブラケット鈑金修理",
+  "unit_price": 0,
+  "quantity": 1,
+  "amount": 0,
+  "task_type": "fuzzy"
+}
+page.tsx:355 First work item amount: 0
+page.tsx:356 First work item unit_price: 0
+page.tsx:357 First work item quantity: 1
+page.tsx:367 Split data fetched: 2
+page.tsx:368 Split data sample: {
+  "id": 1,
+  "invoice_id": "25043369-1",
+  "line_no": 1,
+  "sub_no": 1,
+  "raw_label_part": "リヤフラッシャーASSY取替",
+  "action": null,
+  "target": null,
+  "position": null,
+  "unit_price": 6000,
+  "quantity": 1,
+  "amount": 6000,
+  "is_cancelled": false,
+  "confidence_score": null,
+  "extraction_method": null,
+  "notes": null,
+  "created_at": "2025-09-04T13:39:31.763355+00:00",
+  "updated_at": "2025-09-04T13:39:31.763355+00:00"
+}
+page.tsx:373 Split 0: Object
+page.tsx:373 Split 1: Object
+page.tsx:411 Work item 1: Object
+page.tsx:420 >>> FINAL AMOUNT for line 1: 12000
+page.tsx:424   Split 0: amount=6000, cancelled=false, label=リヤフラッシャーASSY取替
+page.tsx:424   Split 1: amount=6000, cancelled=false, label=ブラケット鈑金修理
+page.tsx:453 InvoiceDetail: Object
+page.tsx:454 Work Items: Array(1)
+page.tsx:455 Total Amount: 12000
+page.tsx:335 Fetching invoice detail for: 25043373-1
+page.tsx:353 Invoice work items fetched: 1
+page.tsx:354 First work item raw data: {
+  "id": 6,
+  "line_no": 1,
+  "raw_label": "メイン燃料タンクホース延長サブタンク付替え加工",
+  "unit_price": 0,
+  "quantity": 1,
+  "amount": 0,
+  "task_type": "fuzzy"
+}
+page.tsx:355 First work item amount: 0
+page.tsx:356 First work item unit_price: 0
+page.tsx:357 First work item quantity: 1
+page.tsx:367 Split data fetched: 1
+page.tsx:368 Split data sample: {
+  "id": 13,
+  "invoice_id": "25043373-1",
+  "line_no": 1,
+  "sub_no": 1,
+  "raw_label_part": "メイン燃料タンクホース延長サブタンク付替え加工",
+  "action": null,
+  "target": null,
+  "position": null,
+  "unit_price": 0,
+  "quantity": 1,
+  "amount": 0,
+  "is_cancelled": true,
+  "confidence_score": null,
+  "extraction_method": null,
+  "notes": null,
+  "created_at": "2025-09-04T13:39:31.763355+00:00",
+  "updated_at": "2025-09-04T13:39:31.763355+00:00"
+}
+page.tsx:373 Split 0: Object
+page.tsx:411 Work item 1: Object
+page.tsx:420 >>> FINAL AMOUNT for line 1: 0
+page.tsx:424   Split 0: amount=0, cancelled=true, label=メイン燃料タンクホース延長サブタンク付替え加工
+page.tsx:453 InvoiceDetail: Object
+page.tsx:454 Work Items: Array(1)
+page.tsx:455 Total Amount: 0
+page.tsx:335 Fetching invoice detail for: 25053381-1
+page.tsx:353 Invoice work items fetched: 2
+page.tsx:354 First work item raw data: {
+  "id": 22,
+  "line_no": 1,
+  "raw_label": "左右当たりゴム取外し加工",
+  "unit_price": 0,
+  "quantity": 1,
+  "amount": 0,
+  "task_type": "fuzzy"
+}
+page.tsx:355 First work item amount: 0
+page.tsx:356 First work item unit_price: 0
+page.tsx:357 First work item quantity: 1
+page.tsx:367 Split data fetched: 4
+page.tsx:368 Split data sample: {
+  "id": 47,
+  "invoice_id": "25053381-1",
+  "line_no": 1,
+  "sub_no": 1,
+  "raw_label_part": "左右当たりゴム取外し加工",
+  "action": null,
+  "target": null,
+  "position": null,
+  "unit_price": 0,
+  "quantity": 1,
+  "amount": 0,
+  "is_cancelled": true,
+  "confidence_score": null,
+  "extraction_method": null,
+  "notes": null,
+  "created_at": "2025-09-04T13:39:31.763355+00:00",
+  "updated_at": "2025-09-04T13:39:31.763355+00:00"
+}
+page.tsx:373 Split 0: Object
+page.tsx:373 Split 1: Object
+page.tsx:373 Split 2: Object
+page.tsx:411 Work item 1: Object
+page.tsx:420 >>> FINAL AMOUNT for line 1: 0
+page.tsx:424   Split 0: amount=0, cancelled=true, label=左右当たりゴム取外し加工
+page.tsx:411 Work item 2: Object
+page.tsx:420 >>> FINAL AMOUNT for line 2: 0
+page.tsx:424   Split 0: amount=0, cancelled=true, label=フロンバンパー脱着
+page.tsx:424   Split 1: amount=0, cancelled=true, label=左右フォグランプステイ取り外し
+page.tsx:424   Split 2: amount=0, cancelled=true, label=ガードバンパーボルトワッシャー4枚製作取付
+page.tsx:453 InvoiceDetail: Object
+page.tsx:454 Work Items: Array(2)
+page.tsx:455 Total Amount: 0
+page.tsx:335 Fetching invoice detail for: 25053390-1
+page.tsx:353 Invoice work items fetched: 1
+page.tsx:354 First work item raw data: {
+  "id": 33,
+  "line_no": 1,
+  "raw_label": "クロスメンバー亀裂2ヵ所カット溶接",
+  "unit_price": 0,
+  "quantity": 1,
+  "amount": 0,
+  "task_type": "fuzzy"
+}
+page.tsx:355 First work item amount: 0
+page.tsx:356 First work item unit_price: 0
+page.tsx:357 First work item quantity: 1
+page.tsx:367 Split data fetched: 1
+page.tsx:368 Split data sample: {
+  "id": 63,
+  "invoice_id": "25053390-1",
+  "line_no": 1,
+  "sub_no": 1,
+  "raw_label_part": "クロスメンバー亀裂2ヵ所カット溶接",
+  "action": null,
+  "target": null,
+  "position": null,
+  "unit_price": 0,
+  "quantity": 1,
+  "amount": 0,
+  "is_cancelled": true,
+  "confidence_score": null,
+  "extraction_method": null,
+  "notes": null,
+  "created_at": "2025-09-04T13:39:31.853515+00:00",
+  "updated_at": "2025-09-04T13:39:31.853515+00:00"
+}
+page.tsx:373 Split 0: Object
+page.tsx:411 Work item 1: Object
+page.tsx:420 >>> FINAL AMOUNT for line 1: 0
+page.tsx:424   Split 0: amount=0, cancelled=true, label=クロスメンバー亀裂2ヵ所カット溶接
+page.tsx:453 InvoiceDetail: Object
+page.tsx:454 Work Items: Array(1)
+page.tsx:455 Total Amount: 0

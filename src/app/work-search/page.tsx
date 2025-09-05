@@ -2,347 +2,456 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Search, Clock, Download, Filter, X, BarChart3 } from 'lucide-react'
+import { ArrowLeft, Search, Download, BarChart3, X } from 'lucide-react'
+import { supabase } from '@/lib/supabase'
+import type { Database } from '@/types/supabase'
+import { CustomerCategoryDB, CustomerCategory } from '@/lib/customer-categories'
 
 // 型定義
-interface WorkHistoryItem {
-  id: number
-  work_name: string
-  unit_price: number
-  customer_name: string
-  date: string
-  invoice_id?: number
-  memo: string
-  category: string
+type InvoiceRow = Database['public']['Tables']['invoices']['Row']
+type InvoiceLineItemRow = Database['public']['Tables']['invoice_line_items']['Row']
+
+// 画面表示用の新しいデータ構造
+interface SplitDetail {
+  invoice_id: string
+  line_no: number
+  raw_label_part: string
+  action: string | null
+  target: string | null
+  position: string | null
 }
 
+interface WorkSearchItem {
+  // line_items から
+  line_item_id: number;
+  work_name: string;
+  unit_price: number;
+  quantity: number;
+  
+  // invoices から
+  invoice_id: string;
+  customer_name: string | null;
+  subject: string | null;
+  registration_number: string | null;
+  issue_date: string | null;
+  
+  // 分割データから
+  target: string | null;
+  action: string | null;
+  position: string | null;
+  
+  // 派生データ
+  is_set: boolean;
+  invoice_month: string | null;
+  split_details?: SplitDetail[]; // 分割詳細情報
+}
+
+// 検索フィルターの型
 interface SearchFilters {
   keyword: string
-  customer: string
-  category: string
-  minPrice: string
-  maxPrice: string
-  startDate: string
-  endDate: string
+  customerCategory: string
+  dateFrom: string
+  dateTo: string
+  target: string
 }
 
+// 統計情報の型
 interface WorkStatistics {
   totalWorks: number
   totalAmount: number
   averagePrice: number
-  topCustomer: string
-  topWork: string
 }
 
-// WorkSearchDBクラス
-class WorkSearchDB {
-  private data: WorkHistoryItem[]
+// 請求書詳細表示用の型
+interface InvoiceDetail {
+  invoice_id: string
+  customer_name: string | null
+  subject: string | null
+  registration_number: string | null
+  issue_date: string | null
+  invoice_month: string | null
+  work_items: {
+    line_item_id: number
+    line_no: number
+    work_name: string
+    unit_price: number
+    quantity: number
+    amount: number
+    task_type: string
+    split_details: SplitDetail[]
+  }[]
+  total_amount: number
+  work_count: number
+}
 
-  constructor() {
-    this.data = this.loadData()
+// 金額をフォーマットするヘルパー関数
+const formatCurrency = (amount: number | null) => {
+  if (amount === null || isNaN(amount)) {
+    return '¥-'
   }
-
-  // 文字正規化関数（ひらがな・カタカナ・大文字小文字・全角半角を統一）
-  private normalizeText(text: string): string {
-    return text
-      .toLowerCase() // 小文字変換
-      .replace(/[Ａ-Ｚａ-ｚ０-９]/g, (s) => String.fromCharCode(s.charCodeAt(0) - 0xFEE0)) // 全角英数字を半角に
-      .replace(/[ァ-ヴ]/g, (s) => String.fromCharCode(s.charCodeAt(0) - 0x60)) // カタカナをひらがなに
-      .replace(/[　\s]/g, '') // 全角・半角スペースを削除
-  }
-
-  // 曖昧検索マッチング関数
-  private fuzzyMatch(text: string, keyword: string): boolean {
-    const normalizedText = this.normalizeText(text)
-    const normalizedKeyword = this.normalizeText(keyword)
-    return normalizedText.includes(normalizedKeyword)
-  }
-
-  private loadData(): WorkHistoryItem[] {
-    try {
-      const stored = localStorage.getItem('bankin_work_search')
-      return stored ? JSON.parse(stored) : this.getDefaultData()
-    } catch {
-      return this.getDefaultData()
-    }
-  }
-
-  private getDefaultData(): WorkHistoryItem[] {
-    return [
-      {
-        id: 1,
-        work_name: 'Webサイト制作',
-        unit_price: 100000,
-        customer_name: 'テクノロジー株式会社',
-        date: '2024-01-15',
-        invoice_id: 1,
-        memo: 'レスポンシブ対応',
-        category: 'Web制作'
-      },
-      {
-        id: 2,
-        work_name: 'システム保守',
-        unit_price: 50000,
-        customer_name: 'サンプル商事株式会社B',
-        date: '2024-02-10',
-        invoice_id: 2,
-        memo: '月次保守',
-        category: 'システム'
-      },
-      {
-        id: 3,
-        work_name: 'データベース設計',
-        unit_price: 80000,
-        customer_name: '株式会社UDトラックス',
-        date: '2024-03-05',
-        invoice_id: 3,
-        memo: 'ER図作成含む',
-        category: 'データベース'
-      },
-      {
-        id: 4,
-        work_name: 'SEO対策',
-        unit_price: 30000,
-        customer_name: 'テクノロジー株式会社',
-        date: '2024-01-20',
-        memo: 'キーワード分析',
-        category: 'マーケティング'
-      },
-      {
-        id: 5,
-        work_name: 'サーバー構築',
-        unit_price: 120000,
-        customer_name: 'サンプル商事株式会社B',
-        date: '2024-02-25',
-        memo: 'AWS環境',
-        category: 'インフラ'
-      },
-      {
-        id: 6,
-        work_name: 'モバイルアプリ開発',
-        unit_price: 150000,
-        customer_name: 'モバイル株式会社',
-        date: '2024-03-10',
-        memo: 'iOS/Android対応',
-        category: 'アプリ開発'
-      },
-      {
-        id: 7,
-        work_name: 'セキュリティ監査',
-        unit_price: 90000,
-        customer_name: 'セキュリティ企業',
-        date: '2024-03-15',
-        memo: '脆弱性診断',
-        category: 'セキュリティ'
-      },
-      {
-        id: 8,
-        work_name: 'API開発',
-        unit_price: 70000,
-        customer_name: 'テクノロジー株式会社',
-        date: '2024-03-20',
-        memo: 'REST API',
-        category: 'システム'
-      }
-    ]
-  }
-
-  search(filters: SearchFilters): WorkHistoryItem[] {
-    return this.data.filter(item => {
-      // 作業名での検索（曖昧検索）
-      if (filters.keyword.trim()) {
-        const matchesKeyword = this.fuzzyMatch(item.work_name, filters.keyword)
-        if (!matchesKeyword) return false
-      }
-
-      // 顧客フィルター
-      if (filters.customer.trim()) {
-        if (item.customer_name !== filters.customer) return false
-      }
-
-      // 種別フィルター（個別・セット価格）
-      if (filters.category && filters.category !== 'all') {
-        const isSet = item.category === 'Web制作' || item.category === 'システム' || item.category === 'データベース'
-        if (filters.category === 'individual' && isSet) return false
-        if (filters.category === 'set' && !isSet) return false
-      }
-
-      return true
-    })
-  }
-
-  getStatistics(items: WorkHistoryItem[]): WorkStatistics {
-    if (items.length === 0) {
-      return {
-        totalWorks: 0,
-        totalAmount: 0,
-        averagePrice: 0,
-        topCustomer: '',
-        topWork: ''
-      }
-    }
-
-    const totalAmount = items.reduce((sum, item) => sum + item.unit_price, 0)
-    const averagePrice = Math.round(totalAmount / items.length)
-
-    // 顧客別集計
-    const customerCounts = items.reduce((counts, item) => {
-      counts[item.customer_name] = (counts[item.customer_name] || 0) + 1
-      return counts
-    }, {} as Record<string, number>)
-    const topCustomer = Object.entries(customerCounts).sort(([,a], [,b]) => b - a)[0]?.[0] || ''
-
-    // 作業別集計
-    const workCounts = items.reduce((counts, item) => {
-      counts[item.work_name] = (counts[item.work_name] || 0) + 1
-      return counts
-    }, {} as Record<string, number>)
-    const topWork = Object.entries(workCounts).sort(([,a], [,b]) => b - a)[0]?.[0] || ''
-
-    return {
-      totalWorks: items.length,
-      totalAmount,
-      averagePrice,
-      topCustomer,
-      topWork
-    }
-  }
-
-  getCategories(): string[] {
-    const categories = [...new Set(this.data.map(item => item.category))]
-    return categories.sort()
-  }
-
-  exportToCSV(items: WorkHistoryItem[]): void {
-    const headers = [
-      'ID', '作業名', '単価', '顧客名', '日付', '請求書ID', 'メモ', 'カテゴリ'
-    ]
-    
-    const rows = items.map(item => [
-      item.id.toString(),
-      `"${item.work_name.replace(/"/g, '""')}"`,
-      item.unit_price.toString(),
-      `"${item.customer_name.replace(/"/g, '""')}"`,
-      item.date,
-      item.invoice_id?.toString() || '',
-      `"${item.memo.replace(/"/g, '""')}"`,
-      `"${item.category.replace(/"/g, '""')}"`
-    ])
-
-    const csvContent = [headers.join(','), ...rows.map(row => row.join(','))].join('\n')
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-    const url = URL.createObjectURL(blob)
-    
-    const link = document.createElement('a')
-    link.href = url
-    link.download = `作業履歴_${new Date().toISOString().split('T')[0]}.csv`
-    link.click()
-    
-    setTimeout(() => URL.revokeObjectURL(url), 100)
-  }
+  return `¥${amount.toLocaleString()}`
 }
 
 export default function WorkSearchPage() {
   const router = useRouter()
-  const [db] = useState(() => new WorkSearchDB())
-  const [workItems, setWorkItems] = useState<WorkHistoryItem[]>([])
-  const [isSearching, setIsSearching] = useState(false)
-  const [sortBy, setSortBy] = useState<'date' | 'price' | 'customer' | 'work'>('price')
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
-  const [selectedItem, setSelectedItem] = useState<WorkHistoryItem | null>(null)
-  const [showInvoiceModal, setShowInvoiceModal] = useState(false)
+  const [allItems, setAllItems] = useState<WorkSearchItem[]>([])
+  const [filteredItems, setFilteredItems] = useState<WorkSearchItem[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   
-  const [filters, setFilters] = useState<SearchFilters>({
-    keyword: '',
-    customer: '',
-    category: 'all',
-    minPrice: '',
-    maxPrice: '',
-    startDate: '',
-    endDate: ''
-  })
+  const [filters, setFilters] = useState<SearchFilters>({ keyword: '', customerCategory: '', dateFrom: '', dateTo: '', target: '' })
+  const [sortBy, setSortBy] = useState<'issue_date' | 'unit_price' | 'customer_name' | 'work_name' | 'subject' | 'registration_number' | 'invoice_month'>('unit_price')
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
 
-  // 検索処理
+  const [selectedItem, setSelectedItem] = useState<WorkSearchItem | null>(null)
+  const [selectedInvoiceDetail, setSelectedInvoiceDetail] = useState<InvoiceDetail | null>(null)
+  const [customerCategories, setCustomerCategories] = useState<CustomerCategory[]>([])
+
+  // 顧客カテゴリー読み込み
   useEffect(() => {
-    const searchItems = async () => {
-      setIsSearching(true)
-      await new Promise(resolve => setTimeout(resolve, 200))
-      const filtered = db.search(filters)
-      setWorkItems(filtered)
-      setIsSearching(false)
+    const categoryDB = new CustomerCategoryDB()
+    setCustomerCategories(categoryDB.getCategories())
+  }, [])
+
+  // データ取得ロジック
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true)
+      setError(null)
+      try {
+        // 1. 分割データと請求書データを取得
+        
+        // 2. 元の請求書項目と分割データを取得
+        const [lineItemsRes, splitItemsRes, invoicesRes] = await Promise.all([
+          supabase.from('invoice_line_items').select(`
+            id,
+            invoice_id,
+            line_no,
+            raw_label,
+            unit_price,
+            quantity,
+            amount,
+            task_type
+          `), // 元の請求書項目（金額情報含む）
+          supabase.from('invoice_line_items_split').select(`
+            invoice_id,
+            line_no,
+            raw_label_part,
+            action,
+            target,
+            position
+          `), // 分割データ（詳細情報用）
+          supabase.from('invoices').select(`
+            invoice_id,
+            customer_name,
+            subject,
+            subject_name,
+            registration_number,
+            issue_date
+          `)
+        ])
+
+        
+        if (lineItemsRes.error) {
+          console.error('Line items error:', lineItemsRes.error)
+          throw new Error(`請求書項目の取得に失敗しました: ${lineItemsRes.error.message}`)
+        }
+        if (splitItemsRes.error) {
+          console.error('Split items error:', splitItemsRes.error)
+          throw new Error(`分割作業項目の取得に失敗しました: ${splitItemsRes.error.message}`)
+        }
+        if (invoicesRes.error) {
+          console.error('Invoices error:', invoicesRes.error)
+          throw new Error(`請求情報の取得に失敗しました: ${invoicesRes.error.message}`)
+        }
+
+        const lineItems = lineItemsRes.data || []
+        const splitItems = splitItemsRes.data || []
+        const invoices = invoicesRes.data || []
+
+        // 2. 請求書情報とマップを作成
+        const invoiceMap = new Map(invoices.map(inv => [inv.invoice_id, inv]))
+        
+        // 3. 分割データをグループ化（invoice_id + line_no）
+        const splitMap = new Map()
+        splitItems.forEach(split => {
+          const key = `${split.invoice_id}-${split.line_no}`
+          if (!splitMap.has(key)) {
+            splitMap.set(key, [])
+          }
+          splitMap.get(key).push(split)
+        })
+
+        // 4. 元の請求書項目をベースに画面表示用データを作成
+        const workSearchItems: WorkSearchItem[] = lineItems.map(item => {
+          const invoice = invoiceMap.get(item.invoice_id)
+          const key = `${item.invoice_id}-${item.line_no}`
+          const splitDetails = splitMap.get(key) || []
+          
+          // 請求月を生成（issue_dateから年月を取得）
+          let invoice_month = null
+          if (invoice?.issue_date) {
+            const date = new Date(invoice.issue_date)
+            const shortYear = date.getFullYear().toString().slice(-2)
+            invoice_month = `${shortYear}年${(date.getMonth() + 1).toString().padStart(2, '0')}月`
+          }
+
+          // 分割データから詳細情報を取得（最初の分割項目から）
+          const firstSplit = splitDetails[0] || {}
+          
+          return {
+            line_item_id: item.id,
+            work_name: item.raw_label || '名称不明',
+            unit_price: item.unit_price || 0,
+            quantity: item.quantity || 0,
+            invoice_id: item.invoice_id,
+            customer_name: invoice?.customer_name || null,
+            subject: invoice?.subject || invoice?.subject_name || null,
+            registration_number: invoice?.registration_number || null,
+            issue_date: invoice?.issue_date || null,
+            target: firstSplit.target || null,
+            action: firstSplit.action || null,
+            position: firstSplit.position || null,
+            is_set: item.task_type === 'set' || false,
+            invoice_month: invoice_month,
+            split_details: splitDetails, // 分割詳細情報を保持
+          }
+        })
+
+        setAllItems(workSearchItems)
+        setFilteredItems(workSearchItems)
+
+      } catch (e) {
+        console.error(e)
+        setError(e instanceof Error ? e.message : '不明なエラーが発生しました')
+      } finally {
+        setLoading(false)
+      }
     }
-    searchItems()
-  }, [filters, db])
 
-  // 初期データロード
+    fetchData()
+  }, [])
+
+  // 検索フィルター処理
   useEffect(() => {
-    setWorkItems(db.data)
-  }, [db])
+    const lowerCaseKeyword = filters.keyword.toLowerCase()
+    const result = allItems.filter(item => {
+      // キーワード検索
+      const matchesKeyword = (
+        (item.work_name?.toLowerCase() || '').includes(lowerCaseKeyword) ||
+        (item.customer_name?.toLowerCase() || '').includes(lowerCaseKeyword) ||
+        (item.subject?.toLowerCase() || '').includes(lowerCaseKeyword) ||
+        (item.registration_number?.toLowerCase() || '').includes(lowerCaseKeyword) ||
+        (item.invoice_month?.toLowerCase() || '').includes(lowerCaseKeyword)
+      )
+      
+      // 顧客カテゴリーフィルター
+      const matchesCategory = filters.customerCategory === '' || 
+        (() => {
+          const category = customerCategories.find(cat => cat.id === filters.customerCategory)
+          return category && item.customer_name === category.companyName
+        })()
+      
+      // 日付範囲フィルター
+      const matchesDateRange = (() => {
+        if (!filters.dateFrom && !filters.dateTo) return true
+        if (!item.issue_date) return false
+        
+        const itemDate = new Date(item.issue_date)
+        const fromDate = filters.dateFrom ? new Date(filters.dateFrom) : new Date('1900-01-01')
+        const toDate = filters.dateTo ? new Date(filters.dateTo) : new Date('2100-12-31')
+        
+        // 時刻部分をリセットして日付のみで比較
+        itemDate.setHours(0, 0, 0, 0)
+        fromDate.setHours(0, 0, 0, 0)
+        toDate.setHours(23, 59, 59, 999)
+        
+        return itemDate >= fromDate && itemDate <= toDate
+      })()
+      
+      // 対象フィルター
+      const matchesTarget = filters.target === '' || 
+        (item.target && item.target === filters.target)
+      
+      return matchesKeyword && matchesCategory && matchesDateRange && matchesTarget
+    })
+    setFilteredItems(result)
+  }, [filters, allItems, customerCategories])
 
   // ソート処理
   const sortedItems = useMemo(() => {
-    const sorted = [...workItems].sort((a, b) => {
+    return [...filteredItems].sort((a, b) => {
       let comparison = 0
-      
-      switch (sortBy) {
-        case 'date':
-          comparison = new Date(a.date).getTime() - new Date(b.date).getTime()
-          break
-        case 'price':
-          comparison = a.unit_price - b.unit_price
-          break
-        case 'customer':
-          comparison = a.customer_name.localeCompare(b.customer_name)
-          break
-        case 'work':
-          comparison = a.work_name.localeCompare(b.work_name)
-          break
+      const valA = a[sortBy]
+      const valB = b[sortBy]
+
+      if (valA === null || valB === null) {
+        comparison = valA === valB ? 0 : valA === null ? 1 : -1;
+      } else if (typeof valA === 'string' && typeof valB === 'string') {
+        comparison = valA.localeCompare(valB)
+      } else if (typeof valA === 'number' && typeof valB === 'number') {
+        comparison = valA - valB
       }
       
       return sortOrder === 'asc' ? comparison : -comparison
     })
-    
-    return sorted
-  }, [workItems, sortBy, sortOrder])
+  }, [filteredItems, sortBy, sortOrder])
 
+  // 対象の一覧を取得
+  const uniqueTargets = useMemo(() => {
+    const targets = allItems
+      .map(item => item.target)
+      .filter((target, index, arr) => target && arr.indexOf(target) === index)
+      .sort()
+    return targets
+  }, [allItems])
+
+  // 統計情報
   const statistics = useMemo(() => {
-    return db.getStatistics(workItems)
-  }, [workItems, db])
-
-  const categories = useMemo(() => {
-    return db.getCategories()
-  }, [db])
-
-  const handleBack = () => router.push('/')
-
-  const handleExportCSV = () => {
-    db.exportToCSV(sortedItems)
-  }
+    if (filteredItems.length === 0) {
+      return { totalWorks: 0, totalAmount: 0, averagePrice: 0 }
+    }
+    const totalWorks = filteredItems.length
+    const totalAmount = filteredItems.reduce((sum, item) => sum + (item.unit_price * item.quantity), 0)
+    return {
+      totalWorks: totalWorks,
+      totalAmount: totalAmount,
+      averagePrice: Math.round(totalAmount / totalWorks),
+    }
+  }, [filteredItems])
 
   const handleSort = (field: typeof sortBy) => {
-    setSortBy(field)
-    if (field === 'price') {
-      setSortOrder('asc') // 価格は安い順がデフォルト
-    } else if (field === 'date') {
-      setSortOrder('desc') // 日付は新しい順がデフォルト
+    if (sortBy === field) {
+      setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')
     } else {
-      setSortOrder('asc') // 顧客名は昇順がデフォルト
+      setSortBy(field)
+      setSortOrder('asc')
+    }
+  }
+  
+  // 作業項目から請求書詳細を取得する関数
+  const fetchInvoiceDetail = async (workItem: WorkSearchItem) => {
+    try {
+      // 同じ請求書IDのすべての作業項目を取得
+      const { data: invoiceWorkItems, error } = await supabase
+        .from('invoice_line_items')
+        .select(`
+          id,
+          line_no,
+          raw_label,
+          unit_price,
+          quantity,
+          amount,
+          task_type
+        `)
+        .eq('invoice_id', workItem.invoice_id)
+        .order('line_no')
+      
+      if (error) throw error
+      
+      
+      // 分割データも取得
+      const { data: splitData, error: splitError } = await supabase
+        .from('invoice_line_items_split')
+        .select('*')
+        .eq('invoice_id', workItem.invoice_id)
+      
+      if (splitError) throw splitError
+      
+      
+      // 分割データをグループ化
+      const splitMap = new Map()
+      splitData?.forEach(split => {
+        const key = `${split.invoice_id}-${split.line_no}`
+        if (!splitMap.has(key)) {
+          splitMap.set(key, [])
+        }
+        splitMap.get(key).push(split)
+      })
+      
+      // 請求書詳細データを構築
+      const work_items = invoiceWorkItems?.map(item => {
+        const key = `${workItem.invoice_id}-${item.line_no}`
+        const split_details = splitMap.get(key) || []
+        
+        // 全ての分割データの金額を合計（cancelledも含めて）
+        const totalSplitAmount = split_details.reduce((sum, split) => sum + (split.amount || 0), 0)
+        const totalSplitQuantity = split_details.reduce((sum, split) => sum + (split.quantity || 0), 0)
+        
+        // 分割データがある場合はそれを使用、ない場合は元データを使用
+        const amount = totalSplitAmount > 0 ? totalSplitAmount : (item.amount || (item.unit_price * item.quantity) || 0)
+        const quantity = totalSplitQuantity > 0 ? totalSplitQuantity : (item.quantity || 0)
+        
+        // 単価は合計金額から逆算、または最初の有効な分割データから
+        const firstValidSplit = split_details.find(split => (split.amount || 0) > 0) || split_details[0]
+        const unit_price = firstValidSplit?.unit_price || (quantity > 0 ? Math.round(amount / quantity) : 0) || item.unit_price || 0
+        
+        
+        return {
+          line_item_id: item.id,
+          line_no: item.line_no,
+          work_name: item.raw_label || firstValidSplit?.raw_label_part || '名称不明',
+          unit_price: unit_price,
+          quantity: quantity,
+          amount: amount,
+          task_type: item.task_type || 'individual',
+          split_details: split_details
+        }
+      }) || []
+      
+      const total_amount = work_items.reduce((sum, item) => sum + item.amount, 0)
+      
+      const invoiceDetail: InvoiceDetail = {
+        invoice_id: workItem.invoice_id,
+        customer_name: workItem.customer_name,
+        subject: workItem.subject,
+        registration_number: workItem.registration_number,
+        issue_date: workItem.issue_date,
+        invoice_month: workItem.invoice_month,
+        work_items: work_items,
+        total_amount: total_amount,
+        work_count: work_items.length
+      }
+      
+      
+      setSelectedInvoiceDetail(invoiceDetail)
+    } catch (error) {
+      console.error('請求書詳細の取得エラー:', error)
     }
   }
 
-  const clearFilters = () => {
-    setFilters({
-      keyword: '',
-      customer: '',
-      category: 'all',
-      minPrice: '',
-      maxPrice: '',
-      startDate: '',
-      endDate: ''
-    })
+  const handleExportCSV = () => {
+    const headers = ['作業名', '単価', '数量', '顧客名', '件名', '請求月', '登録番号', '発行日', 'セット', '請求書ID']
+    const rows = sortedItems.map(item => [
+      `"${item.work_name.replace(/"/g, '""')}"`, 
+      item.unit_price,
+      item.quantity,
+      `"${(item.customer_name || '').replace(/"/g, '""')}"`, 
+      `"${(item.subject || '').replace(/"/g, '""')}"`, 
+      `"${(item.invoice_month || '').replace(/"/g, '""')}"`, 
+      `"${(item.registration_number || '').replace(/"/g, '""')}"`, 
+      item.issue_date || '',
+      item.is_set ? 'はい' : 'いいえ',
+      item.invoice_id
+    ].join(','))
+    
+    const csvContent = [headers.join(','), ...rows].join('\n')
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `作業価格検索結果_${new Date().toISOString().split('T')[0]}.csv`
+    link.click()
+    URL.revokeObjectURL(url)
   }
 
-  const hasActiveFilters = filters.keyword || filters.customer || filters.startDate || filters.endDate;
+  if (loading) {
+    return <div className="min-h-screen flex items-center justify-center">読み込み中...</div>
+  }
+
+  if (error) {
+    return <div className="min-h-screen flex items-center justify-center text-red-500">エラー: {error}</div>
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -355,392 +464,310 @@ export default function WorkSearchPage() {
               <h1 className="text-2xl font-bold text-gray-800">作業価格履歴検索</h1>
             </div>
             <div className="flex gap-2">
-              <button
-                onClick={handleExportCSV}
-                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2"
-              >
-                <Download size={20} />
-                CSV出力
-              </button>
-              <button
-                onClick={handleBack}
-                className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 flex items-center gap-2"
-              >
-                <ArrowLeft size={20} />
-                戻る
-              </button>
+              <button onClick={handleExportCSV} className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2"><Download size={20} />CSV出力</button>
+              <button onClick={() => router.push('/')} className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 flex items-center gap-2"><ArrowLeft size={20} />戻る</button>
             </div>
           </div>
         </header>
 
-
-        {/* 作業名検索セクション */}
+        {/* 検索と統計 */}
         <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-          <div className="max-w-2xl mx-auto">
-            <div className="relative mb-4">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={24} />
-              <input
-                type="text"
-                placeholder="作業名を入力して検索（例：バンパー交換、オイル交換など）"
-                value={filters.keyword}
-                onChange={(e) => setFilters({...filters, keyword: e.target.value})}
-                className="w-full pl-12 pr-4 py-3 text-lg border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
-            <p className="text-sm text-gray-600 text-center">
-              過去の作業履歴から価格情報を検索します。セット作業の場合は内訳詳細も確認できます。
-            </p>
-          </div>
-          
-          {workItems.length > 0 && (
-            <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-              <div className="flex flex-wrap items-center justify-center gap-6 text-sm">
-                <div className="flex items-center gap-2">
-                  <BarChart3 size={16} className="text-blue-600" />
-                  <span className="text-gray-700">該当件数:</span>
-                  <span className="font-bold text-blue-600">{workItems.length}件</span>
+          <div className="flex gap-8">
+            <div className="flex-grow space-y-4">
+              {/* キーワード検索 */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                <input
+                  type="text"
+                  placeholder="作業名、顧客名、件名、登録番号、請求月で検索..."
+                  value={filters.keyword}
+                  onChange={(e) => setFilters({ ...filters, keyword: e.target.value })}
+                  className="w-full pl-10 pr-4 py-2 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+              
+              {/* フィルター行 */}
+              <div className="flex flex-wrap gap-4 items-center">
+                {/* 顧客カテゴリーフィルター */}
+                <div className="flex gap-2 items-center min-w-0">
+                  <label className="text-sm font-medium text-gray-700 whitespace-nowrap">顧客名:</label>
+                  <select
+                    value={filters.customerCategory}
+                    onChange={(e) => setFilters({ ...filters, customerCategory: e.target.value })}
+                    className="w-32 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                  >
+                    <option value="">すべての顧客</option>
+                    {customerCategories.map((category) => (
+                      <option key={category.id} value={category.id}>{category.name}</option>
+                    ))}
+                  </select>
+                  {filters.customerCategory && (
+                    <button
+                      onClick={() => setFilters({ ...filters, customerCategory: '' })}
+                      className="px-2 py-1 text-xs text-gray-600 hover:text-gray-800 border border-gray-300 rounded hover:bg-gray-50"
+                    >
+                      クリア
+                    </button>
+                  )}
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-gray-700">価格範囲:</span>
-                  <span className="font-bold text-green-600">
-                    ¥{Math.min(...workItems.map(item => item.unit_price)).toLocaleString()} 
-                    ~ ¥{Math.max(...workItems.map(item => item.unit_price)).toLocaleString()}
-                  </span>
+
+                {/* 日付範囲フィルター */}
+                <div className="flex gap-2 items-center min-w-0">
+                  <label className="text-sm font-medium text-gray-700 whitespace-nowrap">期間:</label>
+                  <div className="flex gap-1 items-center">
+                    <input
+                      type="date"
+                      value={filters.dateFrom}
+                      onChange={(e) => setFilters({ ...filters, dateFrom: e.target.value })}
+                      className="w-36 px-2 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                    <span className="text-sm text-gray-500 px-1">〜</span>
+                    <input
+                      type="date"
+                      value={filters.dateTo}
+                      onChange={(e) => setFilters({ ...filters, dateTo: e.target.value })}
+                      className="w-36 px-2 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                  {(filters.dateFrom || filters.dateTo) && (
+                    <button
+                      onClick={() => setFilters({ ...filters, dateFrom: '', dateTo: '' })}
+                      className="px-2 py-1 text-xs text-gray-600 hover:text-gray-800 border border-gray-300 rounded hover:bg-gray-50"
+                    >
+                      クリア
+                    </button>
+                  )}
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-gray-700">平均価格:</span>
-                  <span className="font-bold text-orange-600">¥{statistics.averagePrice.toLocaleString()}</span>
+
+                {/* 対象フィルター */}
+                <div className="flex gap-2 items-center min-w-0">
+                  <label className="text-sm font-medium text-gray-700 whitespace-nowrap">対象:</label>
+                  <select
+                    value={filters.target}
+                    onChange={(e) => setFilters({ ...filters, target: e.target.value })}
+                    className="w-32 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                  >
+                    <option value="">すべての対象</option>
+                    {uniqueTargets.map((target) => (
+                      <option key={target} value={target}>{target}</option>
+                    ))}
+                  </select>
+                  {filters.target && (
+                    <button
+                      onClick={() => setFilters({ ...filters, target: '' })}
+                      className="px-2 py-1 text-xs text-gray-600 hover:text-gray-800 border border-gray-300 rounded hover:bg-gray-50"
+                    >
+                      クリア
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
-          )}
-        </div>
-
-        {/* ソート・表示オプション */}
-        <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
-          <div className="flex flex-wrap items-center gap-4">
-            <span className="text-sm font-medium text-gray-700">並び替え:</span>
-            <div className="flex gap-2">
-              {[
-                { key: 'date', label: '日付' },
-                { key: 'price', label: '価格' },
-                { key: 'customer', label: '顧客名' },
-                { key: 'work', label: '作業名' }
-              ].map(({ key, label }) => (
-                <button
-                  key={key}
-                  onClick={() => handleSort(key as typeof sortBy)}
-                  className={`px-3 py-1 rounded text-sm ${
-                    sortBy === key
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  {label} {sortBy === key && (sortOrder === 'asc' ? '↑' : '↓')}
-                </button>
-              ))}
+            <div className="flex-shrink-0 grid grid-cols-3 gap-4 text-center">
+              <div>
+                <div className="text-sm text-gray-600">総作業数</div>
+                <div className="text-xl font-bold text-blue-600">{statistics.totalWorks}</div>
+              </div>
+              <div>
+                <div className="text-sm text-gray-600">平均単価</div>
+                <div className="text-xl font-bold text-green-600">{formatCurrency(statistics.averagePrice)}</div>
+              </div>
+              <div>
+                <div className="text-sm text-gray-600">合計金額</div>
+                <div className="text-xl font-bold text-orange-600">{formatCurrency(statistics.totalAmount)}</div>
+              </div>
             </div>
           </div>
         </div>
 
         {/* 作業価格比較テーブル */}
         <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-          {workItems.length === 0 ? (
-            <div className="p-12 text-center text-gray-500">
-              {filters.keyword ? '該当する作業履歴がありません' : '作業名を入力して検索してください'}
-            </div>
-          ) : (
-            <>
-              {/* 価格比較フィルター */}
-              <div className="p-4 border-b bg-gray-50">
-                <div className="flex flex-wrap items-center gap-4">
-                  <div className="flex items-center gap-2">
-                    <label className="text-sm font-medium text-gray-700">並び替え:</label>
-                    <select
-                      value={sortBy}
-                      onChange={(e) => handleSort(e.target.value as typeof sortBy)}
-                      className="px-3 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="price">価格順（安い順）</option>
-                      <option value="date">日付順（新しい順）</option>
-                      <option value="customer">顧客名順</option>
-                    </select>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <label className="text-sm font-medium text-gray-700">表示:</label>
-                    <select
-                      value={filters.customer}
-                      onChange={(e) => setFilters({...filters, customer: e.target.value})}
-                      className="px-3 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="">全顧客</option>
-                      {[...new Set(workItems.map(item => item.customer_name))].map(customer => (
-                        <option key={customer} value={customer}>{customer}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <label className="text-sm font-medium text-gray-700">種別:</label>
-                    <select
-                      value={filters.category}
-                      onChange={(e) => setFilters({...filters, category: e.target.value})}
-                      className="px-3 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="all">全て</option>
-                      <option value="individual">個別価格のみ</option>
-                      <option value="set">セット価格のみ</option>
-                    </select>
-                  </div>
-                </div>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50 border-b">
+                <tr>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 cursor-pointer" onClick={() => handleSort('subject')}>件名</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 cursor-pointer whitespace-nowrap" onClick={() => handleSort('invoice_month')}>請求月</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 cursor-pointer" onClick={() => handleSort('registration_number')}>登録番号</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 cursor-pointer" onClick={() => handleSort('work_name')}>作業名</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 cursor-pointer" onClick={() => handleSort('customer_name')}>対象</th>
+                  <th className="px-4 py-3 text-center text-sm font-medium text-gray-700">種別</th>
+                  <th className="px-4 py-3 text-right text-sm font-medium text-gray-700 cursor-pointer" onClick={() => handleSort('unit_price')}>単価</th>
+                  <th className="px-4 py-3 text-center text-sm font-medium text-gray-700">詳細</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {sortedItems.map((item) => (
+                  <tr key={`${item.invoice_id}-${item.line_item_id}`} className="hover:bg-gray-50">
+                    <td className="px-4 py-4 text-sm text-gray-700 max-w-xs">
+                      <div className="truncate" title={item.subject}>{item.subject || '-'}</div>
+                    </td>
+                    <td className="px-4 py-4 text-sm text-gray-600 whitespace-nowrap">{item.invoice_month || '-'}</td>
+                    <td className="px-4 py-4 text-sm text-gray-600 font-mono">{item.registration_number || '-'}</td>
+                    <td className="px-4 py-4 text-sm text-gray-900 max-w-xs">
+                      <div className="truncate" title={item.work_name}>{item.work_name}</div>
+                    </td>
+                    <td className="px-4 py-4 text-sm text-gray-800">{item.customer_name || '-'}</td>
+                    <td className="px-4 py-4 text-center">
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        item.is_set 
+                          ? 'bg-purple-100 text-purple-800' 
+                          : 'bg-blue-100 text-blue-800'
+                      }`}>
+                        {item.is_set ? 'セット' : '個別'}
+                      </span>
+                    </td>
+                    <td className="px-4 py-4 text-right text-sm font-semibold text-green-600">{formatCurrency(item.unit_price)}</td>
+                    <td className="px-4 py-4 text-center">
+                      <button onClick={() => fetchInvoiceDetail(item)} className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700">詳細</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {sortedItems.length === 0 && (
+              <div className="p-12 text-center text-gray-500">
+                {filters.keyword ? '該当する作業履歴がありません' : 'データがありません'}
               </div>
-
-              {/* 価格比較テーブル */}
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-gray-50 border-b">
-                    <tr>
-                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">価格</th>
-                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">顧客</th>
-                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">実施日</th>
-                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">種別</th>
-                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">備考</th>
-                      <th className="px-4 py-3 text-center text-sm font-medium text-gray-700">詳細</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {sortedItems.map((item, index) => {
-                      const isSet = item.category === 'Web制作' || item.category === 'システム' || item.category === 'データベース'
-                      const priceLevel = item.unit_price <= Math.min(...workItems.map(i => i.unit_price)) * 1.1 ? 'lowest' :
-                                        item.unit_price >= Math.max(...workItems.map(i => i.unit_price)) * 0.9 ? 'highest' : 'normal'
-                      
-                      return (
-                        <tr key={item.id} className={`hover:bg-gray-50 ${
-                          priceLevel === 'lowest' ? 'bg-green-50' : 
-                          priceLevel === 'highest' ? 'bg-red-50' : ''
-                        }`}>
-                          <td className="px-4 py-4">
-                            <div className={`text-lg font-bold ${
-                              priceLevel === 'lowest' ? 'text-green-600' : 
-                              priceLevel === 'highest' ? 'text-red-600' : 'text-blue-600'
-                            }`}>
-                              ¥{item.unit_price.toLocaleString()}
-                            </div>
-                            {priceLevel === 'lowest' && (
-                              <div className="text-xs text-green-600 font-medium">最安値</div>
-                            )}
-                            {priceLevel === 'highest' && (
-                              <div className="text-xs text-red-600 font-medium">最高値</div>
-                            )}
-                          </td>
-                          <td className="px-4 py-4">
-                            <div className="text-sm font-medium text-gray-900">{item.customer_name}</div>
-                            <div className="text-xs text-gray-500">請求書 #{item.invoice_id || item.id}</div>
-                          </td>
-                          <td className="px-4 py-4">
-                            <div className="text-sm text-gray-900">
-                              {new Date(item.date).toLocaleDateString('ja-JP')}
-                            </div>
-                          </td>
-                          <td className="px-4 py-4">
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                              isSet 
-                                ? 'bg-purple-100 text-purple-800' 
-                                : 'bg-blue-100 text-blue-800'
-                            }`}>
-                              {isSet ? 'セット' : '個別'}
-                            </span>
-                          </td>
-                          <td className="px-4 py-4">
-                            <div className="text-sm text-gray-700 max-w-32 truncate" title={item.memo}>
-                              {item.memo || '-'}
-                            </div>
-                            {isSet && (
-                              <div className="text-xs text-orange-600 mt-1">内訳確認可能</div>
-                            )}
-                          </td>
-                          <td className="px-4 py-4 text-center">
-                            <button
-                              onClick={() => {
-                                setSelectedItem(item)
-                                setShowInvoiceModal(true)
-                              }}
-                              className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
-                            >
-                              詳細
-                            </button>
-                          </td>
-                        </tr>
-                      )
-                    })}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* 価格分析サマリー */}
-              <div className="p-4 border-t bg-gray-50">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
-                  <div className="text-center">
-                    <div className="text-green-600 font-bold text-lg">
-                      ¥{Math.min(...workItems.map(item => item.unit_price)).toLocaleString()}
-                    </div>
-                    <div className="text-gray-600">最安値</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-red-600 font-bold text-lg">
-                      ¥{Math.max(...workItems.map(item => item.unit_price)).toLocaleString()}
-                    </div>
-                    <div className="text-gray-600">最高値</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-blue-600 font-bold text-lg">
-                      ¥{statistics.averagePrice.toLocaleString()}
-                    </div>
-                    <div className="text-gray-600">平均価格</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-orange-600 font-bold text-lg">
-                      ¥{(Math.max(...workItems.map(item => item.unit_price)) - Math.min(...workItems.map(item => item.unit_price))).toLocaleString()}
-                    </div>
-                    <div className="text-gray-600">価格差</div>
-                  </div>
-                </div>
-              </div>
-            </>
-          )}
+            )}
+          </div>
         </div>
 
-        {/* 請求書詳細モーダル */}
-        {showInvoiceModal && selectedItem && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" role="dialog" aria-modal="true">
-            <div className="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto m-4">
-              <div className="p-6">
-                <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-xl font-bold text-gray-800">
-                    請求書詳細 #{selectedItem.invoice_id || selectedItem.id}
-                  </h2>
-                  <button
-                    onClick={() => setShowInvoiceModal(false)}
-                    className="text-gray-500 hover:text-gray-700"
-                  >
-                    <X size={24} />
-                  </button>
+        {/* 詳細モーダル - 請求書全体表示 */}
+        {selectedInvoiceDetail && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" role="dialog" aria-modal="true">
+            <div className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto m-4">
+              <div className="bg-gray-50 px-6 py-4 border-b flex justify-between items-center">
+                <h2 className="text-xl font-bold text-gray-800">📋 請求書詳細</h2>
+                <button onClick={() => setSelectedInvoiceDetail(null)} className="text-gray-500 hover:text-gray-700">
+                  <X size={24} />
+                </button>
+              </div>
+              
+              <div className="p-6 space-y-6">
+                {/* 請求書情報セクション */}
+                <div className="bg-blue-50 rounded-lg p-4">
+                  <h3 className="text-lg font-semibold text-blue-800 mb-3 flex items-center">
+                    📄 請求書情報
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                    <div><span className="font-medium text-gray-600">請求書ID:</span> <span className="text-blue-700 font-mono">{selectedInvoiceDetail.invoice_id}</span></div>
+                    <div><span className="font-medium text-gray-600">請求月:</span> <span className="text-gray-800">{selectedInvoiceDetail.invoice_month || '-'}</span></div>
+                    <div><span className="font-medium text-gray-600">発行日:</span> <span className="text-gray-800">{selectedInvoiceDetail.issue_date ? new Date(selectedInvoiceDetail.issue_date).toLocaleDateString('ja-JP') : '-'}</span></div>
+                    <div><span className="font-medium text-gray-600">件名:</span> <span className="text-gray-800">{selectedInvoiceDetail.subject || '-'}</span></div>
+                    <div><span className="font-medium text-gray-600">顧客名:</span> <span className="text-gray-800">{selectedInvoiceDetail.customer_name || '-'}</span></div>
+                    <div><span className="font-medium text-gray-600">登録番号:</span> <span className="text-gray-800 font-mono">{selectedInvoiceDetail.registration_number || '-'}</span></div>
+                  </div>
                 </div>
 
-                {/* 請求書情報 */}
-                <div className="space-y-6">
-                  {/* 基本情報 */}
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <h3 className="text-lg font-semibold mb-3 text-gray-800">基本情報</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <span className="text-sm font-medium text-gray-600">請求書番号:</span>
-                        <div className="text-blue-600 font-bold">#{selectedItem.invoice_id || selectedItem.id}</div>
+                {/* 作業項目一覧セクション */}
+                <div className="bg-yellow-50 rounded-lg p-4">
+                  <h3 className="text-lg font-semibold text-yellow-800 mb-3 flex items-center">
+                    🛠️ 作業項目一覧 ({selectedInvoiceDetail.work_count}件)
+                  </h3>
+                  <div className="space-y-3">
+                    {selectedInvoiceDetail.work_items.map((workItem, index) => (
+                      <div key={workItem.line_item_id} className="bg-white rounded p-4 border">
+                        <div className="flex justify-between items-start mb-3">
+                          <div className="flex items-center gap-2">
+                            <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-medium">
+                              #{workItem.line_no}
+                            </span>
+                            <span className={`px-2 py-1 rounded text-xs font-medium ${
+                              workItem.task_type === 'set' 
+                                ? 'bg-purple-100 text-purple-800' 
+                                : 'bg-green-100 text-green-800'
+                            }`}>
+                              {workItem.task_type === 'set' ? 'セット作業' : '個別作業'}
+                            </span>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-xl font-bold text-green-600">{formatCurrency(workItem.amount || 0)}</div>
+                            <div className="text-xs text-gray-500">
+                              {formatCurrency(workItem.unit_price || 0)} × {workItem.quantity || 0}
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="flex justify-between items-center mb-2">
+                          <div className="text-gray-900 font-medium">{workItem.work_name}</div>
+                          <div className="text-lg font-semibold text-orange-600">
+                            小計: {formatCurrency(workItem.amount || 0)}
+                          </div>
+                        </div>
+                        
+                        {/* 分割詳細がある場合は表示 */}
+                        {workItem.split_details && workItem.split_details.length > 0 && (
+                          <div className="mt-3 space-y-1">
+                            <div className="text-xs font-medium text-gray-600 mb-1">詳細内訳:</div>
+                            {workItem.split_details.map((detail, detailIndex) => (
+                              <div key={detailIndex} className="bg-gray-50 rounded p-2 text-xs">
+                                <div className="text-gray-800">{detail.raw_label_part}</div>
+                                <div className="grid grid-cols-3 gap-2 mt-1 text-gray-600">
+                                  <div>対象: {detail.target || '-'}</div>
+                                  <div>動作: {detail.action || '-'}</div>
+                                  <div>位置: {detail.position || '-'}</div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
-                      <div>
-                        <span className="text-sm font-medium text-gray-600">請求日:</span>
-                        <div className="font-medium">{new Date(selectedItem.date).toLocaleDateString('ja-JP')}</div>
-                      </div>
-                      <div>
-                        <span className="text-sm font-medium text-gray-600">顧客名:</span>
-                        <div className="font-medium">{selectedItem.customer_name}</div>
-                      </div>
-                      <div>
-                        <span className="text-sm font-medium text-gray-600">件名:</span>
-                        <div className="font-medium">{selectedItem.work_name}業務</div>
-                      </div>
-                    </div>
+                    ))}
                   </div>
-
-                  {/* 登録番号 */}
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <h3 className="text-lg font-semibold mb-3 text-gray-800">登録情報</h3>
-                    <div>
-                      <span className="text-sm font-medium text-gray-600">登録番号:</span>
-                      <div className="font-medium">
-                        {selectedItem.customer_name.includes('UDトラックス') ? 'T9876543210987' : 
-                         selectedItem.customer_name.includes('テクノロジー') ? 'T1234567890123' : '-'}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* 作業項目詳細 */}
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <h3 className="text-lg font-semibold mb-3 text-gray-800">作業項目</h3>
-                    <div className="overflow-x-auto">
-                      <table className="w-full border border-gray-200 rounded-lg">
-                        <thead className="bg-gray-100">
-                          <tr>
-                            <th className="px-4 py-2 text-left text-sm font-medium text-gray-600">作業名</th>
-                            <th className="px-4 py-2 text-center text-sm font-medium text-gray-600">数量</th>
-                            <th className="px-4 py-2 text-right text-sm font-medium text-gray-600">単価</th>
-                            <th className="px-4 py-2 text-center text-sm font-medium text-gray-600">種別</th>
-                            <th className="px-4 py-2 text-right text-sm font-medium text-gray-600">金額</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          <tr className="border-t border-gray-200">
-                            <td className="px-4 py-2 text-sm">{selectedItem.work_name}</td>
-                            <td className="px-4 py-2 text-center text-sm">1</td>
-                            <td className="px-4 py-2 text-right text-sm">¥{selectedItem.unit_price.toLocaleString()}</td>
-                            <td className="px-4 py-2 text-center text-sm">
-                              <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
-                                {selectedItem.category === 'Web制作' || selectedItem.category === 'システム' ? 'セット' : '個別'}
-                              </span>
-                            </td>
-                            <td className="px-4 py-2 text-right text-sm font-medium">¥{selectedItem.unit_price.toLocaleString()}</td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-
-                  {/* 金額計算 */}
-                  <div className="bg-blue-50 p-4 rounded-lg">
-                    <h3 className="text-lg font-semibold mb-3 text-gray-800">金額詳細</h3>
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <span className="text-sm font-medium text-gray-600">小計:</span>
-                        <span className="font-medium">¥{selectedItem.unit_price.toLocaleString()}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm font-medium text-gray-600">消費税 (10%):</span>
-                        <span className="font-medium">¥{Math.floor(selectedItem.unit_price * 0.1).toLocaleString()}</span>
-                      </div>
-                      <hr className="border-gray-300" />
-                      <div className="flex justify-between text-lg font-bold">
-                        <span className="text-gray-800">合計:</span>
-                        <span className="text-blue-600">¥{(selectedItem.unit_price + Math.floor(selectedItem.unit_price * 0.1)).toLocaleString()}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* メモ */}
-                  {selectedItem.memo && (
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                      <h3 className="text-lg font-semibold mb-3 text-gray-800">メモ</h3>
-                      <p className="text-gray-700 bg-white p-3 rounded border">{selectedItem.memo}</p>
-                    </div>
-                  )}
                 </div>
 
-                {/* フッター */}
-                <div className="flex justify-end gap-2 mt-6 pt-4 border-t border-gray-200">
-                  <button
-                    onClick={() => setShowInvoiceModal(false)}
-                    className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600"
-                  >
-                    閉じる
-                  </button>
-                  <button
-                    onClick={() => {
-                      setShowInvoiceModal(false)
-                      router.push('/invoice-create')
-                    }}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                  >
-                    新規請求書作成
-                  </button>
+                {/* 金額サマリーセクション */}
+                <div className="bg-red-50 rounded-lg p-4">
+                  <h3 className="text-lg font-semibold text-red-800 mb-3 flex items-center">
+                    💰 請求金額サマリー
+                  </h3>
+                  <div className="space-y-3">
+                    {/* 各作業項目の小計 */}
+                    <div className="space-y-1">
+                      {selectedInvoiceDetail.work_items.map((workItem, index) => (
+                        <div key={workItem.line_item_id} className="flex justify-between items-center text-sm">
+                          <div className="text-gray-700">
+                            #{workItem.line_no}: {workItem.work_name.substring(0, 30)}
+                            {workItem.work_name.length > 30 ? '...' : ''}
+                          </div>
+                          <div className="font-medium text-gray-900">{formatCurrency(workItem.amount || 0)}</div>
+                        </div>
+                      ))}
+                    </div>
+                    
+                    <div className="border-t-2 border-red-300 pt-4">
+                      {selectedInvoiceDetail.total_amount > 0 ? (
+                        <div className="flex justify-between items-center bg-red-100 rounded-lg p-4">
+                          <div className="text-xl font-bold text-red-900">請求書合計</div>
+                          <div className="text-3xl font-bold text-red-700">{formatCurrency(selectedInvoiceDetail.total_amount)}</div>
+                        </div>
+                      ) : (
+                        <div className="bg-yellow-100 border border-yellow-300 rounded-lg p-4">
+                          <div className="flex items-center justify-between">
+                            <div className="text-lg font-bold text-yellow-800">請求書合計</div>
+                            <div className="text-2xl font-bold text-yellow-700">金額データ不備</div>
+                          </div>
+                          <div className="text-sm text-yellow-700 mt-2">
+                            ※ この請求書の金額情報がデータベースに正しく登録されていない可能性があります。作業内容は上記の通りです。
+                          </div>
+                        </div>
+                      )}
+                      <div className="text-center text-sm text-gray-600 mt-2">
+                        作業項目数: {selectedInvoiceDetail.work_count}件
+                      </div>
+                    </div>
+                  </div>
                 </div>
+              </div>
+
+              <div className="bg-gray-50 px-6 py-4 border-t flex justify-end">
+                <button 
+                  onClick={() => setSelectedInvoiceDetail(null)}
+                  className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                >
+                  閉じる
+                </button>
               </div>
             </div>
           </div>

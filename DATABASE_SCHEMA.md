@@ -14,31 +14,40 @@
 | カラム名 | データ型 | NULL | 説明 | 例 |
 |----------|----------|------|------|-----|
 | invoice_id | TEXT | NO | 請求書ID（主キー） | 25043371-1 |
-| issue_date | DATE | YES | 請求日 | 2025-04-27 |
-| customer_name | TEXT | YES | 顧客名 | 株式会社UDトラックス |
-| subject_name | TEXT | YES | 件名 | エンジン修理 |
+| invoice_number | TEXT | YES | 請求書番号（表示用） | 25043371-1 |
+| issue_date | DATE | YES | 発行日 | 2025-04-27 |
+| billing_date | DATE | YES | 請求日 | 2025-04-27 |
+| customer_name | TEXT | YES | 顧客名 | UDトラックス株式会社 |
+| customer_category | TEXT | YES | 顧客カテゴリ | UD |
+| subject | TEXT | YES | 件名 | エンジン修理 |
+| subject_name | TEXT | YES | 件名（旧フィールド） | エンジン修理 |
 | registration_number | TEXT | YES | 車両登録番号 | 品川500あ1234 |
-| billing_month | DECIMAL | YES | 請求月（YYMM） | 2504.0 |
-| purchase_order_number | TEXT | YES | 発注番号 | 1700414294 |
 | order_number | TEXT | YES | オーダー番号 | 2501852-01 |
-| remarks | TEXT | YES | 備考 | 特別対応 |
-| subtotal | DECIMAL(12,2) | YES | 小計 | 13200.00 |
-| tax | DECIMAL(12,2) | YES | 消費税 | 1200.00 |
-| total_amount | DECIMAL(12,2) | YES | 合計金額 | 13200.00 |
+| order_id | TEXT | YES | オーダーID | ord_123 |
+| subtotal | NUMERIC(12,0) | YES | 小計 | 13200 |
+| tax | NUMERIC(12,0) | YES | 消費税 | 1200 |
+| total | NUMERIC(12,0) | YES | 合計金額 | 14400 |
 | status | TEXT | YES | ステータス | finalized |
 | payment_status | TEXT | YES | 支払い状況 | unpaid |
+| payment_date | DATE | YES | 支払日 | 2025-05-15 |
+| partial_payment_amount | NUMERIC(12,0) | YES | 一部入金額 | 5000 |
 | created_at | TIMESTAMPTZ | YES | 作成日時 | 2025-08-30T10:00:00Z |
 | updated_at | TIMESTAMPTZ | YES | 更新日時 | 2025-08-30T10:00:00Z |
 
 #### **status** の値
 - `draft` - 下書き
 - `finalized` - 確定
-- `cancelled` - 取消
+- `sent` - 送信済み
+- `paid` - 支払済み
 
 #### **payment_status** の値
 - `unpaid` - 未払い
 - `paid` - 支払済み
 - `partial` - 一部入金
+
+#### **customer_category** の値
+- `UD` - UDトラックス関連
+- `その他` - その他の顧客
 
 ---
 
@@ -47,25 +56,26 @@
 
 | カラム名 | データ型 | NULL | 説明 | 例 |
 |----------|----------|------|------|-----|
-| id | SERIAL | NO | ID（主キー） | 1 |
+| id | BIGSERIAL | NO | ID（主キー） | 1 |
 | invoice_id | TEXT | NO | 請求書ID（外部キー） | 25043371-1 |
 | line_no | INTEGER | NO | 明細行番号 | 1 |
-| task_type | TEXT | YES | 作業タイプ | fuzzy |
+| task_type | TEXT | NO | 作業タイプ | fuzzy |
 | target | TEXT | YES | 対象物 | バンパー |
 | action | TEXT | YES | 作業動作 | 脱着 |
 | position | TEXT | YES | 部位 | 右前 |
 | quantity | INTEGER | YES | 数量 | 1 |
-| unit_price | DECIMAL(12,2) | YES | 単価 | 8000.00 |
-| amount | DECIMAL(12,2) | YES | 金額 | 8000.00 |
+| unit_price | NUMERIC(12,0) | YES | 単価 | 8000 |
+| amount | NUMERIC(12,0) | YES | 金額 | 8000 |
 | raw_label | TEXT | YES | 原文ラベル | 右バンパー脱着・修理 |
 | performed_at | DATE | YES | 作業実施日 | 2025-04-27 |
 | created_at | TIMESTAMPTZ | YES | 作成日時 | 2025-08-30T10:00:00Z |
 | updated_at | TIMESTAMPTZ | YES | 更新日時 | 2025-08-30T10:00:00Z |
 
 #### **task_type** の値
+- `fuzzy` - 非構造化データ（分割対象）
+- `structured` - 構造化データ（分解済み）
+- `set` - セット作業
 - `individual` - 個別作業
-- `set` - セット作業  
-- `fuzzy` - 複合作業（分割対象）
 
 ---
 
@@ -294,4 +304,50 @@ ORDER BY i.invoice_id, li.line_no, s.sub_no;
 - 大量データ時は日付範囲での分割クエリを推奨
 - 分割テーブルの件数が多い場合は追加インデックスを検討
 
-**最終更新**: 2025年8月30日
+**最終更新**: 2025年9月4日（Claude Code更新）
+
+---
+
+## 📊 作業価格検索ページ (work-search) との連携
+
+### **使用テーブル**
+- `invoices` - 請求書ヘッダー情報
+- `invoice_line_items` - 作業明細情報
+
+### **データ結合ロジック**
+```sql
+-- work-searchページで使用されるクエリ構造
+SELECT 
+  li.id as line_item_id,
+  li.raw_label as work_name,
+  li.unit_price,
+  li.quantity,
+  li.invoice_id,
+  i.customer_name,
+  i.subject,
+  i.registration_number,
+  i.issue_date,
+  CASE WHEN li.task_type = 'set' THEN true ELSE false END as is_set,
+  -- 請求月の生成（issue_dateから）
+  TO_CHAR(i.issue_date, 'YYYY年MM月') as invoice_month
+FROM invoice_line_items li
+LEFT JOIN invoices i ON li.invoice_id = i.invoice_id
+WHERE li.unit_price > 0;
+```
+
+### **検索対象フィールド**
+- `work_name` (作業名 - `raw_label`から取得)
+- `customer_name` (顧客名)  
+- `subject` (件名)
+- `registration_number` (登録番号)
+- `invoice_month` (請求月 - `issue_date`から生成)
+
+### **パフォーマンス最適化**
+```sql
+-- 作業価格検索用の推奨インデックス
+CREATE INDEX IF NOT EXISTS idx_line_items_unit_price ON invoice_line_items(unit_price);
+CREATE INDEX IF NOT EXISTS idx_line_items_task_type ON invoice_line_items(task_type);
+CREATE INDEX IF NOT EXISTS idx_invoices_issue_date_customer ON invoices(issue_date, customer_name);
+```
+
+**最終更新**: 2025年9月4日（Claude Code更新）

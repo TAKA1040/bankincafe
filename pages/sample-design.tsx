@@ -10,7 +10,7 @@ export default function SampleDesignPage() {
     <div className={styles.container}>
       <header className={styles.header}>
         <h1 className={`${styles.title} ${styles.fadeInUp}`}>
-          🎨 CSS Modules デザインサンプル
+          【確認用】このページがwork-searchですか？
         </h1>
         <p className={styles.subtitle}>
           デザイントークン + CSS Modules による安全で一貫したスタイリング
