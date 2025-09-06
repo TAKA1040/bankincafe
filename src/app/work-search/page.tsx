@@ -100,7 +100,7 @@ export default function WorkSearchPage() {
   const [error, setError] = useState<string | null>(null)
   
   const [filters, setFilters] = useState<SearchFilters>({ keyword: '', customerCategory: '', dateFrom: '', dateTo: '', target: '' })
-  const [sortBy, setSortBy] = useState<'issue_date' | 'unit_price' | 'customer_name' | 'work_name' | 'subject' | 'registration_number' | 'invoice_month'>('unit_price')
+  const [sortBy, setSortBy] = useState<'issue_date' | 'unit_price' | 'customer_name' | 'work_name' | 'subject' | 'registration_number' | 'invoice_month' | 'target'>('unit_price')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
 
   const [selectedItem, setSelectedItem] = useState<WorkSearchItem | null>(null)
