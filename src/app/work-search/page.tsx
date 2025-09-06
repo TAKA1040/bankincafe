@@ -245,13 +245,15 @@ export default function WorkSearchPage() {
   useEffect(() => {
     const lowerCaseKeyword = filters.keyword.toLowerCase()
     const result = allItems.filter(item => {
-      // キーワード検索
+      // キーワード検索（顧客名、対象、アクションも含む）
       const matchesKeyword = (
         (item.work_name?.toLowerCase() || '').includes(lowerCaseKeyword) ||
         (item.customer_name?.toLowerCase() || '').includes(lowerCaseKeyword) ||
         (item.subject?.toLowerCase() || '').includes(lowerCaseKeyword) ||
         (item.registration_number?.toLowerCase() || '').includes(lowerCaseKeyword) ||
-        (item.invoice_month?.toLowerCase() || '').includes(lowerCaseKeyword)
+        (item.invoice_month?.toLowerCase() || '').includes(lowerCaseKeyword) ||
+        (item.target?.toLowerCase() || '').includes(lowerCaseKeyword) ||
+        (item.action?.toLowerCase() || '').includes(lowerCaseKeyword)
       )
       
       // 顧客カテゴリーフィルター
@@ -455,11 +457,13 @@ export default function WorkSearchPage() {
   }
 
   const handleExportCSV = () => {
-    const headers = ['作業名', '単価', '数量', '顧客名', '件名', '請求月', '登録番号', '発行日', 'セット', '請求書ID']
+    const headers = ['作業名', '単価', '数量', '対象', '動作', '顧客名', '件名', '請求月', '登録番号', '発行日', 'セット', '請求書ID']
     const rows = sortedItems.map(item => [
       `"${item.work_name.replace(/"/g, '""')}"`, 
       item.unit_price,
       item.quantity,
+      `"${(item.target || '').replace(/"/g, '""')}"`,
+      `"${(item.action || '').replace(/"/g, '""')}"`,
       `"${(item.customer_name || '').replace(/"/g, '""')}"`, 
       `"${(item.subject || '').replace(/"/g, '""')}"`, 
       `"${(item.invoice_month || '').replace(/"/g, '""')}"`, 
@@ -513,7 +517,7 @@ export default function WorkSearchPage() {
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
                 <input
                   type="text"
-                  placeholder="作業名、顧客名、件名、登録番号、請求月で検索..."
+                  placeholder="作業名、件名（顧客名含む）、登録番号、請求月、対象で検索..."
                   value={filters.keyword}
                   onChange={(e) => setFilters({ ...filters, keyword: e.target.value })}
                   className="w-full pl-10 pr-4 py-2 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -624,9 +628,9 @@ export default function WorkSearchPage() {
                   <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 cursor-pointer whitespace-nowrap" onClick={() => handleSort('invoice_month')}>請求月</th>
                   <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 cursor-pointer" onClick={() => handleSort('registration_number')}>登録番号</th>
                   <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 cursor-pointer" onClick={() => handleSort('work_name')}>作業名</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 cursor-pointer" onClick={() => handleSort('customer_name')}>対象</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 cursor-pointer" onClick={() => handleSort('target')}>対象</th>
                   <th className="px-4 py-3 text-center text-sm font-medium text-gray-700">T/S</th>
-                  <th className="px-4 py-3 text-right text-sm font-medium text-gray-700 cursor-pointer" onClick={() => handleSort('unit_price')}>単価</th>
+                  <th className="px-4 py-3 text-right text-sm font-medium text-gray-700 cursor-pointer" onClick={() => handleSort('unit_price')}>単価<br/><span className="font-normal text-xs">(セット/個別)</span></th>
                   <th className="px-4 py-3 text-center text-sm font-medium text-gray-700">詳細</th>
                 </tr>
               </thead>
@@ -641,7 +645,7 @@ export default function WorkSearchPage() {
                     <td className="px-4 py-4 text-sm text-gray-900 max-w-xs">
                       <div className="truncate" title={item.work_name}>{item.work_name}</div>
                     </td>
-                    <td className="px-4 py-4 text-sm text-gray-800">{item.customer_name || '-'}</td>
+                    <td className="px-4 py-4 text-sm text-gray-800">{item.target || '-'}</td>
                     <td className="px-4 py-4 text-center">
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                         item.is_set 
@@ -667,130 +671,84 @@ export default function WorkSearchPage() {
           </div>
         </div>
 
-        {/* 詳細モーダル - 請求書全体表示 */}
+        {/* 詳細モーダル - 請求書情報表示 */}
         {selectedInvoiceDetail && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" role="dialog" aria-modal="true">
-            <div className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto m-4">
+            <div className="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto m-4">
               <div className="bg-gray-50 px-6 py-4 border-b flex justify-between items-center">
-                <h2 className="text-xl font-bold text-gray-800">📋 請求書詳細</h2>
+                <h2 className="text-xl font-bold text-gray-800">請求書情報</h2>
                 <button onClick={() => setSelectedInvoiceDetail(null)} className="text-gray-500 hover:text-gray-700">
                   <X size={24} />
                 </button>
               </div>
               
               <div className="p-6 space-y-6">
-                {/* 請求書情報セクション */}
-                <div className="bg-blue-50 rounded-lg p-4">
-                  <h3 className="text-lg font-semibold text-blue-800 mb-3 flex items-center">
-                    📄 請求書情報
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                    <div><span className="font-medium text-gray-600">請求書ID:</span> <span className="text-blue-700 font-mono">{selectedInvoiceDetail.invoice_id}</span></div>
-                    <div><span className="font-medium text-gray-600">請求月:</span> <span className="text-gray-800">{selectedInvoiceDetail.invoice_month || '-'}</span></div>
-                    <div><span className="font-medium text-gray-600">発行日:</span> <span className="text-gray-800">{selectedInvoiceDetail.issue_date ? new Date(selectedInvoiceDetail.issue_date).toLocaleDateString('ja-JP') : '-'}</span></div>
-                    <div><span className="font-medium text-gray-600">件名:</span> <span className="text-gray-800">{selectedInvoiceDetail.subject || '-'}</span></div>
-                    <div><span className="font-medium text-gray-600">顧客名:</span> <span className="text-gray-800">{selectedInvoiceDetail.customer_name || '-'}</span></div>
-                    <div><span className="font-medium text-gray-600">登録番号:</span> <span className="text-gray-800 font-mono">{selectedInvoiceDetail.registration_number || '-'}</span></div>
+                {/* 請求書基本情報 */}
+                <div className="bg-blue-50 rounded-lg p-6">
+                  <h3 className="text-lg font-semibold text-blue-800 mb-4">請求書基本情報</h3>
+                  <div className="grid grid-cols-1 gap-4">
+                    <div className="flex justify-between items-center py-2 border-b border-blue-200">
+                      <span className="font-medium text-gray-700">請求書ID</span>
+                      <span className="text-blue-700 font-mono text-lg">{selectedInvoiceDetail.invoice_id}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-2 border-b border-blue-200">
+                      <span className="font-medium text-gray-700">件名</span>
+                      <span className="text-gray-800 text-right max-w-xs">{selectedInvoiceDetail.subject || '-'}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-2 border-b border-blue-200">
+                      <span className="font-medium text-gray-700">顧客名</span>
+                      <span className="text-gray-800 font-medium">{selectedInvoiceDetail.customer_name || '-'}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-2 border-b border-blue-200">
+                      <span className="font-medium text-gray-700">登録番号</span>
+                      <span className="text-gray-800 font-mono">{selectedInvoiceDetail.registration_number || '-'}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-2 border-b border-blue-200">
+                      <span className="font-medium text-gray-700">請求月</span>
+                      <span className="text-gray-800 font-medium">{selectedInvoiceDetail.invoice_month || '-'}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-2 border-b border-blue-200">
+                      <span className="font-medium text-gray-700">発行日</span>
+                      <span className="text-gray-800">{selectedInvoiceDetail.issue_date ? new Date(selectedInvoiceDetail.issue_date).toLocaleDateString('ja-JP') : '-'}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-2">
+                      <span className="font-medium text-gray-700">作業項目数</span>
+                      <span className="text-blue-600 font-bold text-lg">{selectedInvoiceDetail.work_count}件</span>
+                    </div>
                   </div>
                 </div>
 
-                {/* 作業項目一覧セクション */}
-                <div className="bg-yellow-50 rounded-lg p-4">
-                  <h3 className="text-lg font-semibold text-yellow-800 mb-3 flex items-center">
-                    🛠️ 作業項目一覧 ({selectedInvoiceDetail.work_count}件)
-                  </h3>
-                  <div className="space-y-3">
-                    {selectedInvoiceDetail.work_items.map((workItem, index) => (
-                      <div key={workItem.line_item_id} className="bg-white rounded p-4 border">
-                        <div className="flex justify-between items-start mb-3">
-                          <div className="flex items-center gap-2">
-                            <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-medium">
-                              #{workItem.line_no}
-                            </span>
-                            <span className={`px-2 py-1 rounded text-xs font-medium ${
-                              workItem.task_type === 'set' 
-                                ? 'bg-purple-100 text-purple-800' 
-                                : 'bg-green-100 text-green-800'
-                            }`}>
-                              {workItem.task_type === 'set' ? 'セット作業' : '個別作業'}
-                            </span>
-                          </div>
-                          <div className="text-right">
-                            <div className="text-xl font-bold text-green-600">{formatCurrency(workItem.amount || 0)}</div>
-                            <div className="text-xs text-gray-500">
-                              {formatCurrency(workItem.unit_price || 0)} × {workItem.quantity || 0}
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <div className="flex justify-between items-center mb-2">
-                          <div className="text-gray-900 font-medium">{workItem.work_name}</div>
-                          <div className="text-lg font-semibold text-orange-600">
-                            小計: {formatCurrency(workItem.amount || 0)}
-                          </div>
-                        </div>
-                        
-                        {/* 分割詳細がある場合は表示 */}
-                        {workItem.split_details && workItem.split_details.length > 0 && (
-                          <div className="mt-3 space-y-1">
-                            <div className="text-xs font-medium text-gray-600 mb-1">詳細内訳:</div>
-                            {workItem.split_details.map((detail, detailIndex) => (
-                              <div key={detailIndex} className="bg-gray-50 rounded p-2 text-xs">
-                                <div className="text-gray-800">{detail.raw_label_part}</div>
-                                <div className="grid grid-cols-3 gap-2 mt-1 text-gray-600">
-                                  <div>対象: {detail.target || '-'}</div>
-                                  <div>動作: {detail.action || '-'}</div>
-                                  <div>位置: {detail.position || '-'}</div>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        )}
+                {/* 請求金額情報 */}
+                <div className="bg-green-50 rounded-lg p-6">
+                  <h3 className="text-lg font-semibold text-green-800 mb-4">請求金額情報</h3>
+                  {selectedInvoiceDetail.total_amount > 0 ? (
+                    <div className="text-center">
+                      <div className="text-sm text-gray-600 mb-2">請求書合計金額</div>
+                      <div className="text-4xl font-bold text-green-700 mb-4">{formatCurrency(selectedInvoiceDetail.total_amount)}</div>
+                      <div className="text-sm text-gray-600">
+                        平均単価: {formatCurrency(Math.round(selectedInvoiceDetail.total_amount / selectedInvoiceDetail.work_count))} / 作業項目
                       </div>
-                    ))}
-                  </div>
+                    </div>
+                  ) : (
+                    <div className="bg-yellow-100 border border-yellow-300 rounded-lg p-4 text-center">
+                      <div className="text-yellow-800 font-medium mb-2">金額データ不備</div>
+                      <div className="text-sm text-yellow-700">
+                        この請求書の金額情報が正しく登録されていません
+                      </div>
+                    </div>
+                  )}
                 </div>
 
-                {/* 金額サマリーセクション */}
-                <div className="bg-red-50 rounded-lg p-4">
-                  <h3 className="text-lg font-semibold text-red-800 mb-3 flex items-center">
-                    💰 請求金額サマリー
-                  </h3>
-                  <div className="space-y-3">
-                    {/* 各作業項目の小計 */}
-                    <div className="space-y-1">
-                      {selectedInvoiceDetail.work_items.map((workItem, index) => (
-                        <div key={workItem.line_item_id} className="flex justify-between items-center text-sm">
-                          <div className="text-gray-700">
-                            #{workItem.line_no}: {workItem.work_name.substring(0, 30)}
-                            {workItem.work_name.length > 30 ? '...' : ''}
-                          </div>
-                          <div className="font-medium text-gray-900">{formatCurrency(workItem.amount || 0)}</div>
-                        </div>
-                      ))}
-                    </div>
-                    
-                    <div className="border-t-2 border-red-300 pt-4">
-                      {selectedInvoiceDetail.total_amount > 0 ? (
-                        <div className="flex justify-between items-center bg-red-100 rounded-lg p-4">
-                          <div className="text-xl font-bold text-red-900">請求書合計</div>
-                          <div className="text-3xl font-bold text-red-700">{formatCurrency(selectedInvoiceDetail.total_amount)}</div>
-                        </div>
-                      ) : (
-                        <div className="bg-yellow-100 border border-yellow-300 rounded-lg p-4">
-                          <div className="flex items-center justify-between">
-                            <div className="text-lg font-bold text-yellow-800">請求書合計</div>
-                            <div className="text-2xl font-bold text-yellow-700">金額データ不備</div>
-                          </div>
-                          <div className="text-sm text-yellow-700 mt-2">
-                            ※ この請求書の金額情報がデータベースに正しく登録されていない可能性があります。作業内容は上記の通りです。
-                          </div>
-                        </div>
-                      )}
-                      <div className="text-center text-sm text-gray-600 mt-2">
-                        作業項目数: {selectedInvoiceDetail.work_count}件
-                      </div>
-                    </div>
+                {/* アクションボタン */}
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <div className="text-center space-y-3">
+                    <div className="text-sm text-gray-600 mb-3">この請求書の詳細を確認する場合</div>
+                    <button 
+                      onClick={() => window.open(`/invoice-view/${selectedInvoiceDetail.invoice_id}`, '_blank')}
+                      className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                    >
+                      請求書詳細ページを開く
+                    </button>
                   </div>
                 </div>
               </div>

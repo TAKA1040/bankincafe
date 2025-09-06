@@ -84,9 +84,9 @@ export default function InvoiceListPage() {
 
   const getPaymentStatusBadge = (status: string) => {
     const statusMap = {
-      unpaid: { label: '未払い', className: 'bg-red-100 text-red-800' },
-      partial: { label: '一部払い', className: 'bg-yellow-100 text-yellow-800' },
-      paid: { label: '支払済み', className: 'bg-green-100 text-green-800' }
+      unpaid: { label: '未入金', className: 'bg-red-100 text-red-800' },
+      partial: { label: '一部入金', className: 'bg-yellow-100 text-yellow-800' },
+      paid: { label: '入金済み', className: 'bg-green-100 text-green-800' }
     };
     const config = statusMap[status as keyof typeof statusMap] || { label: status, className: 'bg-gray-100 text-gray-800' };
     return (
@@ -191,11 +191,11 @@ export default function InvoiceListPage() {
           <div className="text-2xl font-bold text-gray-900">{stats.total}</div>
         </div>
         <div className="bg-white p-4 rounded-lg shadow-sm border">
-          <div className="text-sm text-gray-600">未払い</div>
+          <div className="text-sm text-gray-600">未入金</div>
           <div className="text-2xl font-bold text-red-600">{stats.unpaid}</div>
         </div>
         <div className="bg-white p-4 rounded-lg shadow-sm border">
-          <div className="text-sm text-gray-600">支払済み</div>
+          <div className="text-sm text-gray-600">入金済み</div>
           <div className="text-2xl font-bold text-green-600">{stats.paid}</div>
         </div>
         <div className="bg-white p-4 rounded-lg shadow-sm border">
