@@ -1,10 +1,29 @@
-http://localhost:3000/work-search
-Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
-2hot-reloader-client.js:187 [Fast Refresh] rebuilding
-hot-reloader-client.js:44 [Fast Refresh] done in 27ms
-hot-reloader-client.js:187 [Fast Refresh] rebuilding
-hot-reloader-client.js:44 [Fast Refresh] done in 363ms
-hot-reloader-client.js:187 [Fast Refresh] rebuilding
-hot-reloader-client.js:44 [Fast Refresh] done in 131ms
-
-データの出力がおかしいよ
+これから、dada2.csvを、データベースに移管しやすいシンプルな中間ファイルに変換する作業を開始します。
+今回の最初のタスクは、dada2.csvから請求書のヘッダー情報だけを抜き出し、invoices_import.csvという新しいファイルを作成することです。
+この作業には、非常に重要なルールがありますので、必ず守ってください。
+【重要ルール：請求書の「正本」の特定】
+dada2.csvの中には、21111293-1と21111293-2のように、同じ請求書番号にハイフン以降の枝番がついているレコードが複数存在します。
+これは、請求書を後から修正した履歴であり、枝番は修正のバージョンを表しています。
+例として、21111293-2は21111293-1を修正したものです。
+したがって、invoices_import.csvを作成する際には、以下のルールを適用してください。
+記録はすべて残す:
+dada2.csvにある全ての行の記録は、移行プロセスの中で失ってはなりません。
+有効なデータは最新版のみ:
+同じ請求書番号（ハイフン前の部分が同じ）のものが複数ある場合、実際に有効なデータとしてシステムで使うのは、末尾の枝番が最も大きいレコードです。
+例えば、-1, -2, -3とあれば、-3の行がその請求書の最終的な「正本」となります。
+【具体的な作業指示】
+上記のルールを理解した上で、まずはdada2.csvから全ての行を対象に、以下の項目対応表に従って単純なタイトル変換を行ってください。
+（※この段階ではまだ重複削除はせず、全データを変換するだけで構いません。正本の特定は次のステップで行います）
+dada2.csv の項目名	invoices_import.csv の項目名
+請求書番号	invoice_id
+請求月	billing_month
+請求日	issue_date
+請求先	customer_name
+件名	subject
+登録番号	registration_number
+発注番号	purchase_order_number
+オーダー番号	order_number
+小計	subtotal
+消費税	tax
+請求金額	total
+備考	remarks

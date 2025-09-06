@@ -62,3 +62,19 @@ next-env.d.ts
 
 # Reference files for development (not included in build)
 請求書システム画像/
+
+# Scripts containing API keys or sensitive data (隠すだけ、削除しない)
+scripts/
+
+# Any files potentially containing personal data
+**/dada*.csv
+**/hondata/
+current_supabase_data_sample.json
+supabase_full_export.json
+invoice_line_items_*.csv
+*_current.csv
+*_export.csv
+
+# Configuration files that might contain secrets
+*config*.json
+*settings*.json
