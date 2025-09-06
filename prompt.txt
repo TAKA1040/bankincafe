@@ -1,57 +1,17 @@
-[00:51:09.775] Running build in Washington, D.C., USA (East) – iad1
-[00:51:09.775] Build machine configuration: 2 cores, 8 GB
-[00:51:09.835] Cloning github.com/TAKA1040/bankincafe (Branch: main, Commit: 8249ed4)
-[00:51:11.214] Cloning completed: 1.379s
-[00:51:11.343] Found .vercelignore
-[00:51:11.354] Removed 32 ignored files defined in .vercelignore
-[00:51:11.354]   /請求書システム画像/invoice_items_transformed - コピー.csv
-[00:51:11.355]   /請求書システム画像/invoices_transformed - コピー.csv
-[00:51:11.355]   /請求書システム画像/TOPメニュー.png
-[00:51:11.355]   /請求書システム画像/スクリーンショット 2025-05-30 152856.png
-[00:51:11.355]   /請求書システム画像/スクリーンショット 2025-05-30 160424.png
-[00:51:11.355]   /請求書システム画像/ページデザイン/customer.page.tsx
-[00:51:11.355]   /請求書システム画像/ページデザイン/invoice.create.page.tsx
-[00:51:11.355]   /請求書システム画像/ページデザイン/invoice.history.page.tsx
-[00:51:11.355]   /請求書システム画像/ページデザイン/invoice.list.page.tsx
-[00:51:11.355]   /請求書システム画像/ページデザイン/main.page.tsx
-[00:51:11.852] Restored build cache from previous deployment (84rPhhKzm19k7wTFJzvf9qFaVoEt)
-[00:51:12.353] Running "vercel build"
-[00:51:12.739] Vercel CLI 47.0.5
-[00:51:13.152] Warning: Detected "engines": { "node": ">=20.0.0" } in your `package.json` that will automatically upgrade when a new major Node.js Version is released. Learn More: http://vercel.link/node-version
-[00:51:13.165] Running "install" command: `npm install`...
-[00:51:24.112] 
-[00:51:24.113] added 141 packages, removed 13 packages, changed 26 packages, and audited 464 packages in 11s
-[00:51:24.113] 
-[00:51:24.113] 156 packages are looking for funding
-[00:51:24.114]   run `npm fund` for details
-[00:51:24.172] 
-[00:51:24.173] 1 critical severity vulnerability
-[00:51:24.173] 
-[00:51:24.174] To address all issues, run:
-[00:51:24.174]   npm audit fix --force
-[00:51:24.174] 
-[00:51:24.175] Run `npm audit` for details.
-[00:51:24.212] Detected Next.js version: 14.2.18
-[00:51:24.213] Running "npm run build"
-[00:51:24.327] 
-[00:51:24.327] > bankincafe@2.0.0 build
-[00:51:24.328] > next build
-[00:51:24.328] 
-[00:51:24.939]   ▲ Next.js 14.2.18
-[00:51:24.940] 
-[00:51:25.011]    Creating an optimized production build ...
-[00:51:53.211]  ✓ Compiled successfully
-[00:51:53.212]    Linting and checking validity of types ...
-[00:52:09.702] Failed to compile.
-[00:52:09.702] 
-[00:52:09.702] ./src/components/PaymentHistoryModal.tsx:4:36
-[00:52:09.703] Type error: Cannot find module '@headlessui/react' or its corresponding type declarations.
-[00:52:09.703] 
-[00:52:09.703] [0m [90m 2 |[39m[0m
-[00:52:09.703] [0m [90m 3 |[39m [36mimport[39m { [33mFragment[39m } [36mfrom[39m [32m'react'[39m[0m
-[00:52:09.703] [0m[31m[1m>[22m[39m[90m 4 |[39m [36mimport[39m { [33mDialog[39m[33m,[39m [33mTransition[39m } [36mfrom[39m [32m'@headlessui/react'[39m[0m
-[00:52:09.703] [0m [90m   |[39m                                    [31m[1m^[22m[39m[0m
-[00:52:09.703] [0m [90m 5 |[39m [36mimport[39m { [33mX[39m[33m,[39m [33mCreditCard[39m[33m,[39m [33mCalendar[39m[33m,[39m [33mDollarSign[39m[33m,[39m [33mFileText[39m } [36mfrom[39m [32m'lucide-react'[39m[0m
-[00:52:09.703] [0m [90m 6 |[39m [36mimport[39m { [33mPaymentRecord[39m[33m,[39m [33mSalesInvoice[39m } [36mfrom[39m [32m'@/hooks/useSalesData'[39m[0m
-[00:52:09.704] [0m [90m 7 |[39m[0m
-[00:52:09.758] Error: Command "npm run build" exited with 1
+Vercel TypeScriptエラー修正メモ
+
+1. React type definitions version mismatch 解決済み
+   - @types/react v19 → v18.3.17に変更
+   - @types/react-dom v18.3.1と整合性確保
+
+2. 修正が必要なTypeScriptエラー一覧:
+   - Navbar.tsx: Button iconプロパティエラー
+   - useProgressiveFilter.ts: name_norm nullチェック必要
+   - useSubjectMaster.ts: canonical_name型定義の不整合
+   - useWorkDictionary.ts: nullチェックと型アサーション
+
+3. 修正戦略:
+   - ローカルで全エラーを一括修正
+   - npm run type-check で全件チェック
+   - 修正完了後に一括コミット&プッシュ
+   - Vercel 3分待ちを1回だけにする効率化

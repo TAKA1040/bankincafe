@@ -94,6 +94,11 @@ export function useSubjectMaster() {
     try {
       const updates = orderedSubjects.map((subject, index) => ({
         id: subject.id,
+        canonical_name: subject.canonical_name,
+        category: subject.category,
+        usage_count: subject.usage_count,
+        last_used_at: subject.last_used_at,
+        is_active: subject.is_active,
         sort_order: index,
       }))
 

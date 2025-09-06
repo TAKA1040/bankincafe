@@ -90,8 +90,8 @@ export default function Navbar() {
                 variant="outline"
                 size="sm"
                 onClick={handleSignOut}
-                icon={<LogOut className="h-4 w-4" />}
               >
+                <LogOut className="h-4 w-4 mr-2" />
                 ログアウト
               </Button>
             </div>

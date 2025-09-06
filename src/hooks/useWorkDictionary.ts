@@ -114,7 +114,8 @@ export function useWorkDictionary() {
         // データ設定 - nullをundefinedに変換
         setTargets((targetsRes.data || []).map(item => ({
           ...item,
-          reading: item.reading ?? undefined
+          reading: item.reading ?? undefined,
+          sort_order: item.sort_order ?? 0
         })))
         setActions((actionsRes.data || []).map(item => ({
           ...item,
@@ -128,13 +129,13 @@ export function useWorkDictionary() {
           ...item,
           word_type: item.word_type as "target" | "action" | "position"
         })))
-        setTargetActions(targetActionsRes.data.map(item => ({
+        setTargetActions((targetActionsRes.data || []).map(item => ({
           target_id: item.target_id,
           action_id: item.action_id,
           target_name: (item.targets as any)?.name,
           action_name: (item.actions as any)?.name
         })))
-        setActionPositions(actionPositionsRes.data.map(item => ({
+        setActionPositions((actionPositionsRes.data || []).map(item => ({
           action_id: item.action_id,
           position_id: item.position_id,
           action_name: (item.actions as any)?.name,

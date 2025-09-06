@@ -200,7 +200,7 @@ export function useInvoiceList() {
           invoice_number: invoice.invoice_number || invoice.invoice_id,
           customer_category: (invoice.customer_category as 'UD' | 'その他') || 'その他',
           subject: invoice.subject || invoice.subject_name,
-          line_items: lineItemsWithSplits,
+          line_items: lineItemsWithSplits as any,
           total_quantity: totalQuantity,
           work_names: workNames.join(' / '),
           status: (invoice.status as 'draft' | 'finalized' | 'sent' | 'paid') || 'draft',

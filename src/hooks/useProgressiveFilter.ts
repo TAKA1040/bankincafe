@@ -69,7 +69,12 @@ export function useProgressiveFilter() {
           .order('sort_order')
         
         if (error) throw error
-        setTargets(data || [])
+        setTargets((data || []).map(item => ({
+          ...item,
+          name_norm: item.name_norm || '',
+          is_active: item.is_active ?? true,
+          sort_order: item.sort_order ?? 0
+        })))
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch targets')
       } finally {
@@ -95,11 +100,18 @@ export function useProgressiveFilter() {
         const { data, error } = await supabase
           .from('available_actions_by_target')
           .select('*')
-          .eq('target_name', selectedTarget.name)
+          .eq('target_name', selectedTarget?.name || '')
           .order('sort_order')
         
         if (error) throw error
-        setAvailableActions(data || [])
+        setAvailableActions((data || []).map(item => ({
+          ...item,
+          target_id: item.target_id ?? 0,
+          target_name: item.target_name || '',
+          action_id: item.action_id ?? 0,
+          action_name: item.action_name || '',
+          sort_order: item.sort_order ?? 0
+        })))
         setSelectedAction(null)
         setSelectedPosition(null)
       } catch (err) {
@@ -126,12 +138,23 @@ export function useProgressiveFilter() {
         const { data, error } = await supabase
           .from('available_positions_by_target_action')
           .select('*')
-          .eq('target_name', selectedTarget.name)
-          .eq('action_name', selectedAction.name)
+          .eq('target_name', selectedTarget?.name || '')
+          .eq('action_name', selectedAction?.name || '')
           .order('position_sort_order')
         
         if (error) throw error
-        setAvailablePositions(data || [])
+        setAvailablePositions((data || []).map(item => ({
+          ...item,
+          target_id: item.target_id ?? 0,
+          target_name: item.target_name || '',
+          action_id: item.action_id ?? 0,
+          action_name: item.action_name || '',
+          position_id: item.position_id ?? null,
+          position_name: item.position_name || '',
+          position_sort_order: item.position_sort_order ?? 0,
+          usage_count: item.usage_count ?? 0,
+          is_recommended: item.is_recommended ?? false
+        })))
         setSelectedPosition(null)
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch available positions')
