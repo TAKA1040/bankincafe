@@ -185,32 +185,230 @@ export type Database = {
           },
         ]
       }
-      invoices: {
+      invoice_line_items_split: {
         Row: {
+          action: string | null
+          amount: number | null
+          confidence_score: number | null
           created_at: string | null
+          extraction_method: string | null
+          id: number
           invoice_id: string
-          issue_date: string | null
-          registration_number: string | null
-          subject_name: string | null
+          is_cancelled: boolean
+          is_latest: boolean
+          line_no: number
+          notes: string | null
+          other: string | null
+          quantity: number
+          raw_label_full: string | null
+          raw_label_part: string
+          record_type: string | null
+          set_name: string | null
+          sub_no: number
+          target: string | null
+          unit_price: number | null
           updated_at: string | null
         }
         Insert: {
+          action?: string | null
+          amount?: number | null
+          confidence_score?: number | null
           created_at?: string | null
+          extraction_method?: string | null
+          id?: number
           invoice_id: string
-          issue_date?: string | null
-          registration_number?: string | null
-          subject_name?: string | null
+          is_cancelled?: boolean
+          is_latest?: boolean
+          line_no: number
+          notes?: string | null
+          other?: string | null
+          quantity?: number
+          raw_label_full?: string | null
+          raw_label_part: string
+          record_type?: string | null
+          set_name?: string | null
+          sub_no: number
+          target?: string | null
+          unit_price?: number | null
           updated_at?: string | null
         }
         Update: {
+          action?: string | null
+          amount?: number | null
+          confidence_score?: number | null
           created_at?: string | null
+          extraction_method?: string | null
+          id?: number
           invoice_id?: string
-          issue_date?: string | null
-          registration_number?: string | null
-          subject_name?: string | null
+          is_cancelled?: boolean
+          is_latest?: boolean
+          line_no?: number
+          notes?: string | null
+          other?: string | null
+          quantity?: number
+          raw_label_full?: string | null
+          raw_label_part?: string
+          record_type?: string | null
+          set_name?: string | null
+          sub_no?: number
+          target?: string | null
+          unit_price?: number | null
           updated_at?: string | null
         }
         Relationships: []
+      }
+      invoice_payments: {
+        Row: {
+          created_at: string | null
+          id: number
+          invoice_id: string
+          notes: string | null
+          payment_amount: number
+          payment_date: string
+          payment_method: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: number
+          invoice_id: string
+          notes?: string | null
+          payment_amount: number
+          payment_date: string
+          payment_method?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: number
+          invoice_id?: string
+          notes?: string | null
+          payment_amount?: number
+          payment_date?: string
+          payment_method?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_payments_invoice"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["invoice_id"]
+          },
+        ]
+      }
+      invoices: {
+        Row: {
+          billing_date: string | null
+          billing_month: string | null
+          created_at: string | null
+          customer_category: string | null
+          customer_name: string | null
+          invoice_id: string
+          invoice_number: string | null
+          invoice_type: string | null
+          issue_date: string | null
+          order_id: string | null
+          order_number: string | null
+          original_invoice_id: string | null
+          payment_status: string | null
+          purchase_order_number: string | null
+          registration_number: string | null
+          remarks: string | null
+          status: string | null
+          subject: string | null
+          subject_name: string | null
+          subtotal: number | null
+          tax: number | null
+          total: number | null
+          total_amount: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          billing_date?: string | null
+          billing_month?: string | null
+          created_at?: string | null
+          customer_category?: string | null
+          customer_name?: string | null
+          invoice_id: string
+          invoice_number?: string | null
+          invoice_type?: string | null
+          issue_date?: string | null
+          order_id?: string | null
+          order_number?: string | null
+          original_invoice_id?: string | null
+          payment_status?: string | null
+          purchase_order_number?: string | null
+          registration_number?: string | null
+          remarks?: string | null
+          status?: string | null
+          subject?: string | null
+          subject_name?: string | null
+          subtotal?: number | null
+          tax?: number | null
+          total?: number | null
+          total_amount?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          billing_date?: string | null
+          billing_month?: string | null
+          created_at?: string | null
+          customer_category?: string | null
+          customer_name?: string | null
+          invoice_id?: string
+          invoice_number?: string | null
+          invoice_type?: string | null
+          issue_date?: string | null
+          order_id?: string | null
+          order_number?: string | null
+          original_invoice_id?: string | null
+          payment_status?: string | null
+          purchase_order_number?: string | null
+          registration_number?: string | null
+          remarks?: string | null
+          status?: string | null
+          subject?: string | null
+          subject_name?: string | null
+          subtotal?: number | null
+          tax?: number | null
+          total?: number | null
+          total_amount?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_invoices_original"
+            columns: ["original_invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["invoice_id"]
+          },
+        ]
+      }
+      legacy_line_item_raws: {
+        Row: {
+          id: number
+          line_item_id: number
+          raw_text: string
+        }
+        Insert: {
+          id?: number
+          line_item_id: number
+          raw_text: string
+        }
+        Update: {
+          id?: number
+          line_item_id?: number
+          raw_text?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_legacy_line_item"
+            columns: ["line_item_id"]
+            isOneToOne: true
+            referencedRelation: "invoice_line_items"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       positions: {
         Row: {
@@ -350,6 +548,120 @@ export type Database = {
           word_type?: string
         }
         Relationships: []
+      }
+      registration_number_master: {
+        Row: {
+          category_code: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          last_used_at: string | null
+          region: string | null
+          registration_number: string
+          sequence_number: string | null
+          suffix: string | null
+          updated_at: string
+          usage_count: number
+        }
+        Insert: {
+          category_code?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          last_used_at?: string | null
+          region?: string | null
+          registration_number: string
+          sequence_number?: string | null
+          suffix?: string | null
+          updated_at?: string
+          usage_count?: number
+        }
+        Update: {
+          category_code?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          last_used_at?: string | null
+          region?: string | null
+          registration_number?: string
+          sequence_number?: string | null
+          suffix?: string | null
+          updated_at?: string
+          usage_count?: number
+        }
+        Relationships: []
+      }
+      subject_master: {
+        Row: {
+          created_at: string
+          id: string
+          subject_name: string
+          subject_name_kana: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          subject_name: string
+          subject_name_kana?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          subject_name?: string
+          subject_name_kana?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      subject_registration_numbers: {
+        Row: {
+          created_at: string
+          id: string
+          is_primary: boolean
+          last_used_at: string | null
+          registration_number_id: string
+          subject_id: string
+          updated_at: string
+          usage_count: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_primary?: boolean
+          last_used_at?: string | null
+          registration_number_id: string
+          subject_id: string
+          updated_at?: string
+          usage_count?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_primary?: boolean
+          last_used_at?: string | null
+          registration_number_id?: string
+          subject_id?: string
+          updated_at?: string
+          usage_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subject_registration_numbers_registration_number_id_fkey"
+            columns: ["registration_number_id"]
+            isOneToOne: false
+            referencedRelation: "registration_number_master"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subject_registration_numbers_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subject_master"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       target_action_positions: {
         Row: {
@@ -512,6 +824,7 @@ export type Database = {
           is_active: boolean | null
           name: string
           name_norm: string | null
+          reading: string | null
           sort_order: number | null
           updated_at: string | null
         }
@@ -521,6 +834,7 @@ export type Database = {
           is_active?: boolean | null
           name: string
           name_norm?: string | null
+          reading?: string | null
           sort_order?: number | null
           updated_at?: string | null
         }
@@ -530,8 +844,45 @@ export type Database = {
           is_active?: boolean | null
           name?: string
           name_norm?: string | null
+          reading?: string | null
           sort_order?: number | null
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      task_master: {
+        Row: {
+          canonical_name: string
+          category: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          last_used_at: string | null
+          sort_order: number
+          updated_at: string
+          usage_count: number
+        }
+        Insert: {
+          canonical_name: string
+          category?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          last_used_at?: string | null
+          sort_order?: number
+          updated_at?: string
+          usage_count?: number
+        }
+        Update: {
+          canonical_name?: string
+          category?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          last_used_at?: string | null
+          sort_order?: number
+          updated_at?: string
+          usage_count?: number
         }
         Relationships: []
       }
@@ -663,6 +1014,35 @@ export type Database = {
             columns: ["target_id"]
             isOneToOne: false
             referencedRelation: "targets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      work_item_positions: {
+        Row: {
+          created_at: string | null
+          id: number
+          position: string
+          split_item_id: number
+        }
+        Insert: {
+          created_at?: string | null
+          id?: number
+          position: string
+          split_item_id: number
+        }
+        Update: {
+          created_at?: string | null
+          id?: number
+          position?: string
+          split_item_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_positions_split_item"
+            columns: ["split_item_id"]
+            isOneToOne: false
+            referencedRelation: "invoice_line_items_split"
             referencedColumns: ["id"]
           },
         ]

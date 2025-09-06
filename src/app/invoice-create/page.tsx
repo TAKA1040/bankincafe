@@ -766,7 +766,7 @@ export default function InvoiceCreatePage() {
       detail_positions: []
     }])
     // 新しい作業項目の位置選択状態を初期化
-    setOldSelectedPositions(prev => ({ ...prev, [newId]: [] }))
+    setSelectedPositions([])
     setSelectedDetailPositions(prev => ({ ...prev, [newId]: {} }))
   }
 

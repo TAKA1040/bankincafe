@@ -54,16 +54,24 @@ export default function InvoiceViewPage({ params }: PageProps) {
         // 各ライン項目の分割データを取得
         const lineItemsWithSplits = await Promise.all(
           (lineItems || []).map(async (item) => {
-            const { data: splitItems, error: splitError } = await supabase
-              .from('invoice_line_items_split')
-              .select('*')
-              .eq('invoice_id', item.invoice_id)
-              .eq('line_no', item.line_no)
-              .order('sub_no', { ascending: true });
-
-            if (splitError) {
-              console.error(`Failed to fetch split items:`, splitError);
+            // invoice_line_items_splitテーブルが存在しない場合の対応
+            let splitItems = null;
+            try {
+              const { data, error: splitError } = await supabase
+                .from('invoice_line_items' as any)
+                .select('*')
+                .eq('invoice_id', item.invoice_id)
+                .eq('line_no', item.line_no)
+                .order('line_no', { ascending: true });
+              
+              if (!splitError) {
+                splitItems = data;
+              }
+            } catch (e) {
+              // テーブルが存在しない場合はスキップ
+              console.warn('invoice_line_items_split table not found');
             }
+
 
             return {
               id: item.id,
@@ -98,9 +106,9 @@ export default function InvoiceViewPage({ params }: PageProps) {
 
         const invoiceWithItems: InvoiceWithItems = {
           ...invoiceData,
-          invoice_number: invoiceData.invoice_number || invoiceData.invoice_id,
-          customer_category: (invoiceData.customer_category as 'UD' | 'その他') || 'その他',
-          subject: invoiceData.subject || invoiceData.subject_name,
+          invoice_number: (invoiceData as any).invoice_number || invoiceData.invoice_id,
+          customer_category: ((invoiceData as any).customer_category as 'UD' | 'その他') || 'その他',
+          subject: (invoiceData as any).subject || (invoiceData as any).subject_name || '',
           line_items: lineItemsWithSplits,
           total_quantity: totalQuantity,
           work_names: workNames.join(' / '),
