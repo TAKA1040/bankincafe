@@ -92,7 +92,7 @@ export default function InvoiceViewPage({ params }: PageProps) {
 
         // 総数量と作業名を計算
         let totalQuantity = 0;
-        let workNames: string[] = [];
+        const workNames: string[] = [];
 
         lineItemsWithSplits.forEach(item => {
           if (item.split_items && item.split_items.length > 0) {

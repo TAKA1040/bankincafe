@@ -305,7 +305,7 @@ export default function RegistrationSettingsPage() {
                 const pages = []
                 const maxPagesToShow = 5
                 let startPage = Math.max(1, currentPage - 2)
-                let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1)
+                const endPage = Math.min(totalPages, startPage + maxPagesToShow - 1)
                 
                 // 末尾に合わせて開始ページを調整
                 if (endPage - startPage + 1 < maxPagesToShow) {

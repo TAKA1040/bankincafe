@@ -11,15 +11,15 @@ interface SecurityWrapperProps {
 }
 
 export default function SecurityWrapper({ children, redirectTo = '/login' }: SecurityWrapperProps) {
-  // 開発モードでは認証をバイパス
-  if (process.env.NODE_ENV === 'development') {
-    return <>{children}</>
-  }
-
   const { user, loading, isAdmin } = useAuth()
   const router = useRouter()
 
   useEffect(() => {
+    // 開発モードでは認証をバイパス
+    if (process.env.NODE_ENV === 'development') {
+      return
+    }
+    
     if (!loading && !user) {
       router.push(redirectTo)
     } else if (!loading && user && !isAdmin) {
@@ -27,6 +27,11 @@ export default function SecurityWrapper({ children, redirectTo = '/login' }: Sec
       router.push('/auth/auth-code-error')
     }
   }, [user, loading, isAdmin, router, redirectTo])
+
+  // 開発モードでは認証をバイパス
+  if (process.env.NODE_ENV === 'development') {
+    return <>{children}</>
+  }
 
   if (loading) {
     return (

@@ -181,7 +181,7 @@ export function useInvoiceList() {
 
         // ライン項目からサマリーを計算（分割項目がある場合はそれを使用）
         let totalQuantity = 0
-        let workNames: string[] = []
+        const workNames: string[] = []
 
         lineItemsWithSplits.forEach(item => {
           if (item.split_items && item.split_items.length > 0) {

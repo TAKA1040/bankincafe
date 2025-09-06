@@ -480,7 +480,7 @@ export default function WorkHistoryPage() {
               />
             </div>
             <p id="search-help" className="text-xs text-gray-500 mt-1">
-              例: "Web テクノロジー" → "Web"と"テクノロジー"両方を含む結果を表示
+              例: &ldquo;Web テクノロジー&rdquo; → &ldquo;Web&rdquo;と&ldquo;テクノロジー&rdquo;両方を含む結果を表示
             </p>
           </div>
           
