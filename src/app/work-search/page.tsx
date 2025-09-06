@@ -587,7 +587,7 @@ export default function WorkSearchPage() {
                   >
                     <option value="">すべての対象</option>
                     {uniqueTargets.map((target) => (
-                      <option key={target} value={target}>{target}</option>
+                      <option key={target} value={target || ''}>{target || ''}</option>
                     ))}
                   </select>
                   {filters.target && (
