@@ -34,7 +34,7 @@ interface WorkStatistics {
 
 // WorkHistoryDBクラス
 class WorkHistoryDB {
-  private data: WorkHistoryItem[]
+  public data: WorkHistoryItem[]
 
   constructor() {
     this.data = this.loadData()
