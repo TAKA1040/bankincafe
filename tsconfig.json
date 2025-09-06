@@ -53,6 +53,10 @@
   "exclude": [
     "node_modules",
     "請求書システム画像/**",
-    "docs/**"
+    "docs/**",
+    "src/app.disabled/**",
+    "Windsurf用/**",
+    "tests/**",
+    "playwright.config.ts"
   ]
 }
