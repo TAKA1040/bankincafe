@@ -111,11 +111,23 @@ export function useWorkDictionary() {
         if (targetActionsRes.error) throw targetActionsRes.error
         if (actionPositionsRes.error) throw actionPositionsRes.error
 
-        // データ設定
-        setTargets(targetsRes.data)
-        setActions(actionsRes.data)
-        setPositions(positionsRes.data)
-        setReadingMappings(readingsRes.data)
+        // データ設定 - nullをundefinedに変換
+        setTargets((targetsRes.data || []).map(item => ({
+          ...item,
+          reading: item.reading ?? undefined
+        })))
+        setActions((actionsRes.data || []).map(item => ({
+          ...item,
+          sort_order: item.sort_order ?? 0
+        })))
+        setPositions((positionsRes.data || []).map(item => ({
+          ...item,
+          sort_order: item.sort_order ?? 0
+        })))
+        setReadingMappings((readingsRes.data || []).map(item => ({
+          ...item,
+          word_type: item.word_type as "target" | "action" | "position"
+        })))
         setTargetActions(targetActionsRes.data.map(item => ({
           target_id: item.target_id,
           action_id: item.action_id,

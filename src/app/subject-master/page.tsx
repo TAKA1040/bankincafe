@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Search, Plus, Edit2, FileText, ArrowLeft, Trash2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
@@ -24,7 +24,7 @@ export default function SubjectMasterPage() {
   const [editForm, setEditForm] = useState({ subject_name: '', subject_name_kana: '' })
 
   // 件名一覧を取得
-  const fetchSubjects = async () => {
+  const fetchSubjects = useCallback(async () => {
     try {
       setLoading(true)
       
@@ -82,15 +82,15 @@ export default function SubjectMasterPage() {
       
     } catch (error) {
       console.error('件名マスタ取得エラー:', error)
-      alert(`件名マスタの取得に失敗しました: ${error.message}`)
+      alert(`件名マスタの取得に失敗しました: ${error instanceof Error ? error.message : 'データの取得に失敗しました'}`)
     } finally {
       setLoading(false)
     }
-  }
+  }, [currentPage, itemsPerPage, searchTerm])
 
   useEffect(() => {
     fetchSubjects()
-  }, [currentPage, itemsPerPage, searchTerm])
+  }, [fetchSubjects])
 
   // 検索処理
   const handleSearch = () => {

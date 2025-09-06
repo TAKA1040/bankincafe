@@ -287,7 +287,7 @@ export default function WorkEntryPrototype() {
   const detailAvailableActions = useMemo(() => {
     if (!detailTarget || !(detailTarget in TARGET_ACTIONS)) return ACTIONS;
     return TARGET_ACTIONS[detailTarget as keyof typeof TARGET_ACTIONS];
-  }, [detailTarget]);
+  }, [detailTarget, ACTIONS, TARGET_ACTIONS]);
 
   // 全明細
   const [items, setItems] = useState<LineItem[]>([]);
@@ -324,7 +324,7 @@ export default function WorkEntryPrototype() {
   // 提案単価の自動反映（未入力時のみ）
   React.useEffect(() => {
     if (suggested != null && (unitPrice === 0 || Number.isNaN(unitPrice))) setUnitPrice(suggested);
-  }, [suggested]);
+  }, [suggested, unitPrice]);
 
   // 対象が変更されたときに動作をリセット
   React.useEffect(() => {
@@ -612,8 +612,8 @@ export default function WorkEntryPrototype() {
     if (modalCallerType === 'set') {
       // セット詳細に反映
       setDetailTarget(modalSelectedTarget);
-      setDetailAction(modalSelectedAction || undefined);
-      setDetailPosition(modalSelectedPosition || undefined);
+      setDetailAction(modalSelectedAction || '');
+      setDetailPosition(modalSelectedPosition || '');
       setDetailMemo(modalMemo);
     } else {
       // 個別に反映

@@ -91,7 +91,7 @@ export default function RegistrationDetailPage() {
         
       } catch (error) {
         console.error('登録番号詳細取得エラー:', error)
-        alert(`データの取得に失敗しました: ${error.message}`)
+        alert(`データの取得に失敗しました: ${error instanceof Error ? error.message : 'データの取得に失敗しました'}`)
       } finally {
         setLoading(false)
       }

@@ -85,7 +85,7 @@ export default function InvoiceViewPage({ params }: PageProps) {
               amount: item.amount,
               raw_label: item.raw_label,
               performed_at: item.performed_at,
-              split_items: splitItems || []
+              split_items: (splitItems as any) || []
             };
           })
         );
@@ -379,7 +379,7 @@ export default function InvoiceViewPage({ params }: PageProps) {
                           {item.raw_label || 'セット作業'}
                         </div>
                         <div className="text-xs text-gray-500 mt-1">
-                          {item.split_items.map((split: any, idx: number) => (
+                          {item.split_items?.map((split: any, idx: number) => (
                             <div key={idx}>
                               • {split.raw_label_part} ({split.quantity})
                             </div>
@@ -387,7 +387,7 @@ export default function InvoiceViewPage({ params }: PageProps) {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                        {item.split_items.reduce((sum: number, split: any) => sum + split.quantity, 0)}
+                        {item.split_items?.reduce((sum: number, split: any) => sum + split.quantity, 0) || 0}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
                         {item.unit_price ? formatAmount(item.unit_price) : '-'}

@@ -1158,7 +1158,7 @@ export default function InvoiceCreatePage() {
                         : customerCategories.find(cat => cat.id === customerCategory)?.companyName || '顧客名を入力してください'
                     }
                     required
-                    disabled={customerCategory !== 'other' && customerCategories.find(cat => cat.id === customerCategory)?.companyName}
+                    disabled={Boolean(customerCategory !== 'other' && customerCategories.find(cat => cat.id === customerCategory)?.companyName)}
                   />
                   {showCustomerSuggestions && customerSuggestions.length > 0 && (
                     <div className="absolute z-20 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-80 overflow-y-auto">
@@ -1610,7 +1610,7 @@ export default function InvoiceCreatePage() {
                           value={unitPrice}
                           onChange={(e) => {
                             const value = e.target.value.replace(/[^0-9]/g, '')
-                            setUnitPrice(value ? Number(value) : 0)
+                            setUnitPrice(value || '0')
                           }}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                           placeholder="金額を入力してください"
@@ -1649,7 +1649,7 @@ export default function InvoiceCreatePage() {
                             value={unitPrice}
                             onChange={(e) => {
                               const value = e.target.value.replace(/[^0-9]/g, '')
-                              setUnitPrice(value ? Number(value) : 0)
+                              setUnitPrice(value || '0')
                             }}
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                             placeholder="金額を入力してください"
@@ -2086,7 +2086,7 @@ export default function InvoiceCreatePage() {
                             <div key={index} className="flex justify-between items-center p-2 bg-gray-50 rounded text-sm">
                               <div className="flex-1">
                                 <div>{detail.label}</div>
-                                {detail.unitPrice > 0 && (
+                                {detail.unitPrice && detail.unitPrice > 0 && (
                                   <div className="text-xs text-blue-600 mt-1">
                                     ¥{detail.unitPrice.toLocaleString()}
                                   </div>

@@ -132,10 +132,23 @@ export default function WorkDictionaryPage() {
         supabase.from('price_suggestions').select('*')
       ])
 
-      if (targetsRes.data) setTargets(targetsRes.data)
-      if (actionsRes.data) setActions(actionsRes.data)
-      if (positionsRes.data) setPositions(positionsRes.data)
-      if (readingsRes.data) setReadingMappings(readingsRes.data)
+      if (targetsRes.data) setTargets(targetsRes.data.map(item => ({
+        ...item,
+        reading: item.reading ?? undefined,
+        sort_order: item.sort_order ?? 0
+      })))
+      if (actionsRes.data) setActions(actionsRes.data.map(item => ({
+        ...item,
+        sort_order: item.sort_order ?? 0
+      })))
+      if (positionsRes.data) setPositions(positionsRes.data.map(item => ({
+        ...item,
+        sort_order: item.sort_order ?? 0
+      })))
+      if (readingsRes.data) setReadingMappings(readingsRes.data.map(item => ({
+        ...item,
+        word_type: item.word_type as "target" | "action" | "position"
+      })))
       if (targetActionsRes.data) setTargetActions(targetActionsRes.data.map(item => ({
         target_id: item.target_id,
         action_id: item.action_id,
@@ -148,7 +161,11 @@ export default function WorkDictionaryPage() {
         action_name: (item.actions as any)?.name,
         position_name: (item.positions as any)?.name
       })))
-      if (pricesRes.data) setPriceSuggestions(pricesRes.data)
+      if (pricesRes.data) setPriceSuggestions(pricesRes.data.map(item => ({
+        ...item,
+        frequency: item.usage_count ?? 0,
+        last_used: item.last_used_at ?? ''
+      })))
       
     } catch (error) {
       console.error('データ読み込みエラー:', error)
@@ -649,7 +666,7 @@ export default function WorkDictionaryPage() {
       
       // is_activeをfalseに更新（論理削除）
       const { error } = await supabase
-        .from(table)
+        .from(table as any)
         .update({ is_active: false })
         .eq('id', id)
         
@@ -1510,7 +1527,7 @@ export default function WorkDictionaryPage() {
                         const groupedByTarget = filteredTargetActions.reduce((acc, ta) => {
                           if (!acc[ta.target_id]) {
                             acc[ta.target_id] = {
-                              target_name: ta.target_name,
+                              target_name: ta.target_name || '',
                               actions: []
                             }
                           }
@@ -1747,7 +1764,7 @@ export default function WorkDictionaryPage() {
                         const groupedByAction = filteredActionPositions.reduce((acc, ap) => {
                           if (!acc[ap.action_id]) {
                             acc[ap.action_id] = {
-                              action_name: ap.action_name,
+                              action_name: ap.action_name || '',
                               positions: []
                             }
                           }

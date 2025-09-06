@@ -181,7 +181,7 @@ export default function WorkEntryPrototype2() {
   const suggested = useMemo(() => suggestPrice(action, target, priceBookMap), [action, target, priceBookMap]);
   React.useEffect(() => {
     if (suggested != null && (unitPrice === 0 || Number.isNaN(unitPrice))) setUnitPrice(suggested);
-  }, [suggested]);
+  }, [suggested, unitPrice]);
 
   // target suggestions with empty-input full list paging
   const [targetSuggestions, setTargetSuggestions] = useState<string[]>([]);

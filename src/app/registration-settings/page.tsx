@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Search, Plus, ArrowLeft, Car } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
@@ -21,7 +21,7 @@ export default function RegistrationSettingsPage() {
   const [itemsPerPage, setItemsPerPage] = useState(30)
   const [totalCount, setTotalCount] = useState(0)
 
-  const fetchRegistrations = async () => {
+  const fetchRegistrations = useCallback(async () => {
     try {
       setLoading(true)
       
@@ -34,9 +34,17 @@ export default function RegistrationSettingsPage() {
       }
       
       // まず件数を取得してからページネーションを適用
-      const { count: totalRecords } = await query.select('*', { count: 'exact', head: true })
+      let countQuery = supabase
+        .from('registration_number_master')
+        .select('*', { count: 'exact', head: true })
       
-      if (totalRecords === 0) {
+      if (searchTerm) {
+        countQuery = countQuery.ilike('registration_number', `%${searchTerm}%`)
+      }
+      
+      const { count: totalRecords } = await countQuery
+      
+      if (!totalRecords || totalRecords === 0) {
         setRegistrations([])
         setTotalCount(0)
         setLoading(false)
@@ -58,7 +66,7 @@ export default function RegistrationSettingsPage() {
       // 安全な範囲でデータを取得
       if (from >= totalRecords) {
         setRegistrations([])
-        setTotalCount(totalRecords)
+        setTotalCount(totalRecords || 0)
         setLoading(false)
         return
       }
@@ -78,20 +86,20 @@ export default function RegistrationSettingsPage() {
     } catch (error) {
       console.error('登録番号マスタ取得エラー:', error)
       // エラーメッセージを詳細表示
-      if (error.code === '416') {
+      if (error && typeof error === 'object' && 'code' in error && error.code === '416') {
         console.log('範囲エラー: ページネーション範囲が不正です')
         setCurrentPage(1) // 最初のページに戻す
       } else {
-        alert(`登録番号マスタの取得に失敗しました: ${error.message}`)
+        alert(`登録番号マスタの取得に失敗しました: ${error instanceof Error ? error.message : 'データの取得に失敗しました'}`)
       }
     } finally {
       setLoading(false)
     }
-  }
+  }, [currentPage, itemsPerPage, searchTerm])
 
   useEffect(() => {
     fetchRegistrations()
-  }, [currentPage, itemsPerPage, searchTerm])
+  }, [fetchRegistrations])
 
   const handleSearch = () => {
     setCurrentPage(1)

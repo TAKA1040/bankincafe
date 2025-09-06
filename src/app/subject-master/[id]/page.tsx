@@ -97,7 +97,7 @@ export default function SubjectDetailPage() {
         
       } catch (error) {
         console.error('件名詳細取得エラー:', error)
-        alert(`データの取得に失敗しました: ${error.message}`)
+        alert(`データの取得に失敗しました: ${error instanceof Error ? error.message : 'データの取得に失敗しました'}`)
       } finally {
         setLoading(false)
       }

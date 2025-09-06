@@ -125,7 +125,7 @@ export default function AdvancedWorkEntry({ workItems, onWorkItemsChange }: Adva
   const suggested = useMemo(() => suggestPrice(action, target, priceBookMap), [action, target, priceBookMap])
   useEffect(() => {
     if (suggested != null && (unitPrice === 0 || Number.isNaN(unitPrice))) setUnitPrice(suggested)
-  }, [suggested])
+  }, [suggested, unitPrice])
 
   // Target search logic
   const handleTargetSearch = (value: string) => {

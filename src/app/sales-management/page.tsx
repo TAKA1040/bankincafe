@@ -7,7 +7,15 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { useSalesData } from '@/hooks/useSalesData'
 import { supabase } from '@/lib/supabase'
 
-const PaymentManagementTab = ({ invoices, summary, onUpdate, loading, categories, selectedCategory, onCategoryChange }) => {
+const PaymentManagementTab = ({ invoices, summary, onUpdate, loading, categories, selectedCategory, onCategoryChange }: {
+  invoices: any[],
+  summary: any,
+  onUpdate: (selectedIds: string[], paymentDate: string) => void,
+  loading: boolean,
+  categories: any[],
+  selectedCategory: string,
+  onCategoryChange: (category: string) => void
+}) => {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [paymentDate, setPaymentDate] = useState(new Date().toISOString().split('T')[0]);
 
