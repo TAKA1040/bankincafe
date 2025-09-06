@@ -1,67 +1,58 @@
- ⨯ Failed to generate static paths for /invoice-view/[id]:
-Error: Cannot find module './vendor-chunks/next.js'
-Require stack:
-- C:\Windsurf\bankincafe\.next\server\webpack-runtime.js
-- C:\Windsurf\bankincafe\.next\server\app\invoice-view\[id]\page.js
-- C:\Windsurf\bankincafe\node_modules\next\dist\server\require.js
-- C:\Windsurf\bankincafe\node_modules\next\dist\server\load-components.js
-- C:\Windsurf\bankincafe\node_modules\next\dist\build\utils.js
-- C:\Windsurf\bankincafe\node_modules\next\dist\server\dev\static-paths-worker.js
-- C:\Windsurf\bankincafe\node_modules\next\dist\compiled\jest-worker\processChild.js
-    at Module._resolveFilename (node:internal/modules/cjs/loader:1144:15)
-    at C:\Windsurf\bankincafe\node_modules\next\dist\server\require-hook.js:55:36
-    at Module._load (node:internal/modules/cjs/loader:985:27)
-    at Module.require (node:internal/modules/cjs/loader:1235:19)
-    at mod.require (C:\Windsurf\bankincafe\node_modules\next\dist\server\require-hook.js:65:28)
-    at require (node:internal/modules/helpers:176:18)
-    at __webpack_require__.f.require (C:\Windsurf\bankincafe\.next\server\webpack-runtime.js:198:28)
-    at C:\Windsurf\bankincafe\.next\server\webpack-runtime.js:111:40
-    at Array.reduce (<anonymous>)
-    at __webpack_require__.e (C:\Windsurf\bankincafe\.next\server\webpack-runtime.js:110:67) {
-  type: 'Error',
-  code: 'MODULE_NOT_FOUND',
-  requireStack: [
-    'C:\\Windsurf\\bankincafe\\.next\\server\\webpack-runtime.js',
-    'C:\\Windsurf\\bankincafe\\.next\\server\\app\\invoice-view\\[id]\\page.js',
-    'C:\\Windsurf\\bankincafe\\node_modules\\next\\dist\\server\\require.js',
-    'C:\\Windsurf\\bankincafe\\node_modules\\next\\dist\\server\\load-components.js',
-    'C:\\Windsurf\\bankincafe\\node_modules\\next\\dist\\build\\utils.js',
-    'C:\\Windsurf\\bankincafe\\node_modules\\next\\dist\\server\\dev\\static-paths-worker.js',
-    'C:\\Windsurf\\bankincafe\\node_modules\\next\\dist\\compiled\\jest-worker\\processChild.js'
-  ]
-}
- GET /_next/static/css/app/layout.css?v=1757166169066 404 in 43ms
- GET /_next/static/chunks/main-app.js?v=1757166169066 404 in 44ms
- GET /_next/static/chunks/app-pages-internals.js 404 in 39ms
- GET /_next/static/chunks/app/page.js 404 in 42ms
- ○ Compiling /_error ...
- ✓ Compiled /_error in 1488ms (916 modules)
- GET /invoice-list 404 in 1776ms
- GET /invoice-list 404 in 53ms
- GET /work-search 404 in 60ms
- GET /invoice-view/25043369-1 404 in 34ms
-<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, lstat 'C:\Windsurf\bankincafe\.next\server\app\page.js'
-<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving '../../../../.next/server/app/page' in C:\Windsurf\bankincafe\node_modules\next\dist\server for build dependencies doesn't lead to expected result 'C:\Windsurf\bankincafe\.next\server\app\page.js', but to 'Error: Can't resolve '../../../../.next/server/app/page' in 'C:\Windsurf\bankincafe\node_modules\next\dist\server'' instead. Resolving dependencies are ignored for this path.
-<w>  at resolve commonjs file ../../../../.next/server/app/page (expected C:\Windsurf\bankincafe\.next\server\app\page.js)
-<w>  at file dependencies C:\Windsurf\bankincafe\node_modules\next\dist\server\require.js
-<w>  at file C:\Windsurf\bankincafe\node_modules\next\dist\server\require.js
-<w>  at file dependencies C:\Windsurf\bankincafe\node_modules\next\dist\server\load-components.js
-<w>  at file C:\Windsurf\bankincafe\node_modules\next\dist\server\load-components.js
-<w>  at file dependencies C:\Windsurf\bankincafe\node_modules\next\dist\build\utils.js
-<w>  at file C:\Windsurf\bankincafe\node_modules\next\dist\build\utils.js
-<w>  at file dependencies C:\Windsurf\bankincafe\node_modules\next\dist\build\webpack\loaders\next-route-loader\index.js
-<w>  at file C:\Windsurf\bankincafe\node_modules\next\dist\build\webpack\loaders\next-route-loader\index.js
-<w>  at resolve commonjs C:\Windsurf\bankincafe\node_modules\next\dist\build\webpack\loaders\next-route-loader\index.js
- ✓ Compiled in 359ms (913 modules)
-<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, lstat 'C:\Windsurf\bankincafe\.next\server'
-<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving '../../../../.next/server/app/page' in C:\Windsurf\bankincafe\node_modules\next\dist\server for build dependencies doesn't lead to expected result 'C:\Windsurf\bankincafe\.next\server\app\page.js', but to 'Error: Can't resolve '../../../../.next/server/app/page' in 'C:\Windsurf\bankincafe\node_modules\next\dist\server'' instead. Resolving dependencies are ignored for this path.
-<w>  at resolve commonjs file ../../../../.next/server/app/page (expected C:\Windsurf\bankincafe\.next\server\app\page.js)
-<w>  at file dependencies C:\Windsurf\bankincafe\node_modules\next\dist\server\require.js
-<w>  at file C:\Windsurf\bankincafe\node_modules\next\dist\server\require.js
-<w>  at file dependencies C:\Windsurf\bankincafe\node_modules\next\dist\server\load-components.js
-<w>  at file C:\Windsurf\bankincafe\node_modules\next\dist\server\load-components.js
-<w>  at file dependencies C:\Windsurf\bankincafe\node_modules\next\dist\build\utils.js
-<w>  at file C:\Windsurf\bankincafe\node_modules\next\dist\build\utils.js
-<w>  at file dependencies C:\Windsurf\bankincafe\node_modules\next\dist\build\webpack\loaders\next-route-loader\index.js
-<w>  at file C:\Windsurf\bankincafe\node_modules\next\dist\build\webpack\loaders\next-route-loader\index.js
-<w>  at resolve commonjs C:\Windsurf\bankincafe\node_modules\next\dist\build\webpack\loaders\next-route-loader\index.js
+エラーの核心
+Type error: Element implicitly has an 'any' type because expression of type '` ${string}_${string} `'
+can't be used to index type '...'
+
+
+該当箇所:
+
+return priceBookMap[`${target}_${action}`] || null
+
+
+TypeScriptが「${target}_${action}」という文字列を、priceBookMap のキーとして保証できない、と怒ってる。
+→ つまり 型定義と実際のアクセス方法が噛み合ってない。
+
+解決の方向性（3パターン）
+① Record<string, 型> にしてしまう（安全寄り）
+
+priceBookMap が「任意の文字列キーを持つマップ」であるなら、型をこう修正：
+
+// 例: 値が string の場合
+const priceBookMap: Record<string, string> = { ... }
+
+// 例: 値がオブジェクトなら
+const priceBookMap: Record<string, PriceBookItem> = { ... }
+
+② キーの型を絞る
+
+もし priceBookMap のキーが「${target}_${action}」形式だけに限られるなら、型をUnionで表す:
+
+type PriceBookKey = `${string}_${string}`
+const priceBookMap: Record<PriceBookKey, PriceBookItem> = { ... }
+
+③ キャストで逃げる（暫定）
+
+まず動かすだけならキャスト：
+
+return (priceBookMap as Record<string, any>)[`${target}_${action}`] || null
+
+
+ただしこれは型安全性を捨てるので、最終的には①や②に持っていくのがおすすめ。
+
+推奨手順
+
+priceBookMap の定義場所を確認
+
+どこで型を宣言している？（useState / useMemo / props など）
+
+その上で、
+
+ざっくり動かしたい → ③
+
+型安全を担保したい → ① か ②
+
+👉 たかまる、この priceBookMap って「何をキーにして」「どんな値を持たせる」想定？
+（例: "target_action" → 単価情報 みたいな感じ？）
+そこが分かれば、①と②どっちが正解か切り分けられるよ。
+
+
+ChatGPTが見た感じこういう意見も言ってるので参考にしてみて。

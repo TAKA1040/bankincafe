@@ -200,8 +200,8 @@ export function useWorkDictionary() {
     return map
   }, [actionPositions])
 
-  // 価格提案マッピング（不要なので空オブジェクトを返す）
-  const priceBookMap = useMemo(() => {
+  // 価格提案マッピング（target_action → unitPrice）
+  const priceBookMap = useMemo((): Record<string, number> => {
     return {}
   }, [])
 

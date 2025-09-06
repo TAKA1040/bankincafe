@@ -543,7 +543,7 @@ export default function InvoiceCreatePage() {
   // 価格推定
   const suggested = useMemo(() => {
     if (!action || !target || !priceBookMap) return null
-    return (priceBookMap as Record<string, number>)[`${target}_${action}`] || null
+    return priceBookMap[`${target}_${action}`] || null
   }, [action, target, priceBookMap])
   
   React.useEffect(() => {
@@ -555,7 +555,7 @@ export default function InvoiceCreatePage() {
   // 動作選択ハンドラー
   const handleActionSelect = (a: string) => {
     setAction(a)
-    const price = (priceBookMap as Record<string, number>)?.[`${target}_${a}`]
+    const price = priceBookMap?.[`${target}_${a}`]
     if (price) setUnitPrice(price)
   }
   
@@ -1709,7 +1709,7 @@ export default function InvoiceCreatePage() {
                           <div className="text-sm font-medium text-gray-700 mb-2">動作（クリックで入力）:</div>
                           <div className="flex flex-wrap gap-1">
                             {(TARGET_ACTIONS && TARGET_ACTIONS[target] ? TARGET_ACTIONS[target] : ACTIONS || []).map((a) => {
-                              const price = (priceBookMap as Record<string, number>)?.[`${target}_${a}`]
+                              const price = priceBookMap?.[`${target}_${a}`]
                               return (
                                 <button
                                   key={a}
