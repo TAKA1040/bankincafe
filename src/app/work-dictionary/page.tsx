@@ -665,7 +665,12 @@ export default function WorkDictionaryPage() {
       setSaving(true)
       
       console.log(`削除処理開始: ${table} ID=${id}`)
+      console.log('Supabase接続状況:', supabase.supabaseUrl, supabase.supabaseKey ? '✓Key設定済み' : '❌Key未設定')
       const startTime = Date.now()
+      
+      // 接続テスト
+      console.log('DB接続テスト開始...')
+      const connectionTest = Date.now()
       
       // is_activeをfalseに更新（論理削除）
       const { error, data } = await supabase
@@ -674,8 +679,17 @@ export default function WorkDictionaryPage() {
         .eq('id', id)
         .select()
         
+      const connectionTime = Date.now() - connectionTest
+      console.log(`DB接続時間: ${connectionTime}ms`)
+      
       if (error) {
         console.error('削除処理でエラー:', error)
+        console.error('エラー詳細:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        })
         throw error
       }
       
@@ -683,25 +697,54 @@ export default function WorkDictionaryPage() {
       console.log(`DB更新完了 (${dbUpdateTime}ms):`, data)
       
       // ローカル状態から即座に削除（高速化）
+      console.log('ローカル状態更新開始...')
+      const uiUpdateStart = Date.now()
+      
       if (table === 'targets') {
-        setTargets(prev => prev.filter(item => item.id !== id))
+        setTargets(prev => {
+          const filtered = prev.filter(item => item.id !== id)
+          console.log(`Targets: ${prev.length} → ${filtered.length}`)
+          return filtered
+        })
       } else if (table === 'actions') {
-        setActions(prev => prev.filter(item => item.id !== id))
+        setActions(prev => {
+          const filtered = prev.filter(item => item.id !== id)
+          console.log(`Actions: ${prev.length} → ${filtered.length}`)
+          return filtered
+        })
       } else if (table === 'positions') {
-        setPositions(prev => prev.filter(item => item.id !== id))
+        setPositions(prev => {
+          const filtered = prev.filter(item => item.id !== id)
+          console.log(`Positions: ${prev.length} → ${filtered.length}`)
+          return filtered
+        })
       }
       
+      const uiUpdateTime = Date.now() - uiUpdateStart
       const totalTime = Date.now() - startTime
+      console.log(`UI更新時間: ${uiUpdateTime}ms`)
       console.log(`削除処理完了 (合計${totalTime}ms)`)
       
       // 成功メッセージ
       const itemName = table === 'targets' ? '対象' : table === 'actions' ? '動作' : '位置'
-      alert(`${itemName}を削除しました`)
+      alert(`${itemName}を削除しました (${totalTime}ms)`)
       
     } catch (error) {
       console.error('削除エラー:', error)
       const errorMessage = error instanceof Error ? error.message : '削除に失敗しました'
-      showError(`削除エラー: ${errorMessage}`)
+      
+      // デバッグ用の詳細情報
+      if (error instanceof Error && 'code' in error) {
+        console.error('エラーコード:', (error as any).code)
+      }
+      
+      // ユーザーに分かりやすいエラーメッセージ
+      let userMessage = 'データベース接続エラーが発生しました。'
+      if (errorMessage.includes('fetch')) {
+        userMessage += '\nSupabaseサービスが起動していない可能性があります。'
+      }
+      
+      showError(`削除エラー: ${userMessage}`)
     } finally {
       setSaving(false)
     }

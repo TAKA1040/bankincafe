@@ -1038,36 +1038,36 @@ export default function InvoiceCreatePage() {
                     <button
                       type="button"
                       onClick={() => adjustMonth(-1)}
-                      className="px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded text-sm transition-colors"
+                      className="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded text-sm transition-colors whitespace-nowrap"
                     >
                       前月
                     </button>
-                    <div className="flex gap-1 flex-1">
+                    <div className="flex gap-1 flex-1 min-w-0">
                       <select
                         value={invoiceYear}
                         onChange={(e) => setInvoiceYear(Number(e.target.value))}
-                        className="flex-1 px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-20 px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-center"
                       >
                         {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i).map(year => (
                           <option key={year} value={year}>{year}</option>
                         ))}
                       </select>
-                      <span className="py-2 text-gray-500">年</span>
+                      <span className="py-2 text-gray-500 whitespace-nowrap">年</span>
                       <select
                         value={invoiceMonth}
                         onChange={(e) => setInvoiceMonth(Number(e.target.value))}
-                        className="flex-1 px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-16 px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-center"
                       >
                         {Array.from({ length: 12 }, (_, i) => i + 1).map(month => (
                           <option key={month} value={month}>{month}</option>
                         ))}
                       </select>
-                      <span className="py-2 text-gray-500">月</span>
+                      <span className="py-2 text-gray-500 whitespace-nowrap">月</span>
                     </div>
                     <button
                       type="button"
                       onClick={() => adjustMonth(1)}
-                      className="px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded text-sm transition-colors"
+                      className="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded text-sm transition-colors whitespace-nowrap"
                     >
                       次月
                     </button>
@@ -1082,7 +1082,7 @@ export default function InvoiceCreatePage() {
                     <button
                       type="button"
                       onClick={() => adjustBillingDate(-1)}
-                      className="px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded text-sm transition-colors"
+                      className="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded text-sm transition-colors whitespace-nowrap"
                     >
                       前日
                     </button>
@@ -1090,20 +1090,20 @@ export default function InvoiceCreatePage() {
                       type="date"
                       value={billingDate}
                       onChange={(e) => setBillingDate(e.target.value)}
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-w-0"
                       required
                     />
                     <button
                       type="button"
                       onClick={setBillingDateToday}
-                      className="px-2 py-1 bg-blue-100 hover:bg-blue-200 rounded text-sm transition-colors"
+                      className="px-3 py-2 bg-blue-100 hover:bg-blue-200 rounded text-sm transition-colors whitespace-nowrap"
                     >
                       今日
                     </button>
                     <button
                       type="button"
                       onClick={() => adjustBillingDate(1)}
-                      className="px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded text-sm transition-colors"
+                      className="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded text-sm transition-colors whitespace-nowrap"
                     >
                       翌日
                     </button>
