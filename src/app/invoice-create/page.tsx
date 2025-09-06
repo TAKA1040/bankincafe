@@ -556,7 +556,7 @@ export default function InvoiceCreatePage() {
   const handleActionSelect = (a: string) => {
     setAction(a)
     const price = priceBookMap?.[`${target}_${a}`]
-    if (price) setUnitPrice(price)
+    if (price) setUnitPrice(price.toString())
   }
   
   // 位置選択ハンドラー
