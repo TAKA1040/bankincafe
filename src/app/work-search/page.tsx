@@ -419,7 +419,7 @@ export default function WorkSearchPage() {
         const quantity = totalSplitQuantity > 0 ? totalSplitQuantity : (item.quantity || 0)
         
         // 単価は合計金額から逆算、または最初の有効な分割データから
-        const firstValidSplit = split_details.find(split => (split.amount || 0) > 0) || split_details[0]
+        const firstValidSplit = split_details.find((split: any) => (split.amount || 0) > 0) || split_details[0]
         const unit_price = firstValidSplit?.unit_price || (quantity > 0 ? Math.round(amount / quantity) : 0) || item.unit_price || 0
         
         
