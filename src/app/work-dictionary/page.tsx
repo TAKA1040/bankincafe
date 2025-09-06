@@ -657,7 +657,7 @@ export default function WorkDictionaryPage() {
     }
   }, [normalizeSortOrder, loadAllData, showError])
 
-  // 削除処理
+  // 削除処理（パフォーマンス最適化版）
   const deleteItem = async (table: 'targets' | 'actions' | 'positions', id: number) => {
     if (!confirm('本当に削除しますか？\n※この操作は元に戻せません')) return
     
@@ -665,6 +665,7 @@ export default function WorkDictionaryPage() {
       setSaving(true)
       
       console.log(`削除処理開始: ${table} ID=${id}`)
+      const startTime = Date.now()
       
       // is_activeをfalseに更新（論理削除）
       const { error, data } = await supabase
@@ -678,12 +679,24 @@ export default function WorkDictionaryPage() {
         throw error
       }
       
-      console.log('削除処理成功:', data)
+      const dbUpdateTime = Date.now() - startTime
+      console.log(`DB更新完了 (${dbUpdateTime}ms):`, data)
       
-      await loadAllData()
+      // ローカル状態から即座に削除（高速化）
+      if (table === 'targets') {
+        setTargets(prev => prev.filter(item => item.id !== id))
+      } else if (table === 'actions') {
+        setActions(prev => prev.filter(item => item.id !== id))
+      } else if (table === 'positions') {
+        setPositions(prev => prev.filter(item => item.id !== id))
+      }
+      
+      const totalTime = Date.now() - startTime
+      console.log(`削除処理完了 (合計${totalTime}ms)`)
       
       // 成功メッセージ
-      alert(`${table === 'targets' ? '対象' : table === 'actions' ? '動作' : '位置'}を削除しました`)
+      const itemName = table === 'targets' ? '対象' : table === 'actions' ? '動作' : '位置'
+      alert(`${itemName}を削除しました`)
       
     } catch (error) {
       console.error('削除エラー:', error)
