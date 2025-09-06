@@ -411,8 +411,8 @@ export default function WorkSearchPage() {
         const split_details = splitMap.get(key) || []
         
         // 全ての分割データの金額を合計（cancelledも含めて）
-        const totalSplitAmount = split_details.reduce((sum: number, split) => sum + (split.amount || 0), 0)
-        const totalSplitQuantity = split_details.reduce((sum: number, split) => sum + (split.quantity || 0), 0)
+        const totalSplitAmount = split_details.reduce((sum: number, split: any) => sum + (split.amount || 0), 0)
+        const totalSplitQuantity = split_details.reduce((sum: number, split: any) => sum + (split.quantity || 0), 0)
         
         // 分割データがある場合はそれを使用、ない場合は元データを使用
         const amount = totalSplitAmount > 0 ? totalSplitAmount : (item.amount || (item.unit_price * item.quantity) || 0)
