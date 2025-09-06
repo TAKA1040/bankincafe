@@ -132,7 +132,7 @@ export default function WorkSearchPage() {
             quantity,
             amount,
             task_type
-          `), // 元の請求書項目（金額情報含む）
+          `).limit(10000), // 元の請求書項目（金額情報含む）
           supabase.from('invoice_line_items_split').select(`
             id,
             invoice_id,
@@ -140,7 +140,7 @@ export default function WorkSearchPage() {
             raw_label_part,
             action,
             target
-          `), // 分割データ（詳細情報用）
+          `).limit(20000), // 分割データ（詳細情報用）
           supabase.from('invoices').select(`
             invoice_id,
             customer_name,
@@ -148,7 +148,7 @@ export default function WorkSearchPage() {
             subject_name,
             registration_number,
             issue_date
-          `)
+          `).limit(10000)
         ])
 
         
