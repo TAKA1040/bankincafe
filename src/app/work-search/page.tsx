@@ -415,7 +415,7 @@ export default function WorkSearchPage() {
         const totalSplitQuantity = split_details.reduce((sum: number, split: any) => sum + (split.quantity || 0), 0)
         
         // 分割データがある場合はそれを使用、ない場合は元データを使用
-        const amount = totalSplitAmount > 0 ? totalSplitAmount : (item.amount || (item.unit_price * item.quantity) || 0)
+        const amount = totalSplitAmount > 0 ? totalSplitAmount : (item.amount || ((item.unit_price || 0) * (item.quantity || 0)) || 0)
         const quantity = totalSplitQuantity > 0 ? totalSplitQuantity : (item.quantity || 0)
         
         // 単価は合計金額から逆算、または最初の有効な分割データから
