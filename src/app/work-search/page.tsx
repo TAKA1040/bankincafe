@@ -638,7 +638,7 @@ export default function WorkSearchPage() {
                 {sortedItems.map((item) => (
                   <tr key={`${item.invoice_id}-${item.line_item_id}`} className="hover:bg-gray-50">
                     <td className="px-4 py-4 text-sm text-gray-700 max-w-xs">
-                      <div className="truncate" title={item.subject}>{item.subject || '-'}</div>
+                      <div className="truncate" title={item.subject || undefined}>{item.subject || '-'}</div>
                     </td>
                     <td className="px-4 py-4 text-sm text-gray-600 whitespace-nowrap">{item.invoice_month || '-'}</td>
                     <td className="px-4 py-4 text-sm text-gray-600 font-mono">{item.registration_number || '-'}</td>
