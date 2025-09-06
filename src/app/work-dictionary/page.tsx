@@ -113,9 +113,9 @@ export default function WorkDictionaryPage() {
         actionPositionsRes,
         pricesRes
       ] = await Promise.all([
-        supabase.from('targets').select('*').order('sort_order'),
-        supabase.from('actions').select('*').order('sort_order'),
-        supabase.from('positions').select('*').order('sort_order'),
+        supabase.from('targets').select('*').eq('is_active', true).order('sort_order'),
+        supabase.from('actions').select('*').eq('is_active', true).order('sort_order'),
+        supabase.from('positions').select('*').eq('is_active', true).order('sort_order'),
         supabase.from('reading_mappings').select('*'),
         supabase.from('target_actions').select(`
           target_id,
@@ -658,25 +658,37 @@ export default function WorkDictionaryPage() {
   }, [normalizeSortOrder, loadAllData, showError])
 
   // 削除処理
-  const deleteItem = async (table: string, id: number) => {
-    if (!confirm('本当に削除しますか？')) return
+  const deleteItem = async (table: 'targets' | 'actions' | 'positions', id: number) => {
+    if (!confirm('本当に削除しますか？\n※この操作は元に戻せません')) return
     
     try {
       setSaving(true)
       
+      console.log(`削除処理開始: ${table} ID=${id}`)
+      
       // is_activeをfalseに更新（論理削除）
-      const { error } = await supabase
-        .from(table as any)
+      const { error, data } = await supabase
+        .from(table)
         .update({ is_active: false })
         .eq('id', id)
+        .select()
         
-      if (error) throw error
+      if (error) {
+        console.error('削除処理でエラー:', error)
+        throw error
+      }
+      
+      console.log('削除処理成功:', data)
       
       await loadAllData()
       
+      // 成功メッセージ
+      alert(`${table === 'targets' ? '対象' : table === 'actions' ? '動作' : '位置'}を削除しました`)
+      
     } catch (error) {
       console.error('削除エラー:', error)
-      alert('削除に失敗しました')
+      const errorMessage = error instanceof Error ? error.message : '削除に失敗しました'
+      showError(`削除エラー: ${errorMessage}`)
     } finally {
       setSaving(false)
     }
