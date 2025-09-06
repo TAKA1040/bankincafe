@@ -78,3 +78,30 @@ invoice_line_items_*.csv
 # Configuration files that might contain secrets
 *config*.json
 *settings*.json
+
+# Data import scripts and batch files (temporary files)
+batch_*.sql
+*.py
+auto_import_all.py
+create_small_batches.py
+complete_remaining_import.py
+continue_import.py
+final_batch_import.py
+import_final_summary.py
+simple_import.py
+direct_import.py
+verify_current_data.py
+final_status_check.py
+clear_existing_data.sql
+check_data.sql
+test_*.sql
+final_import.sql
+schema_check.sql
+import_batch_small.sql
+execute_*.py
+run_all_batches.py
+manual_import_instructions.md
+database_import_guide.md
+reports/
+docs/作業ログ.md
+docs/変換ルール.md
