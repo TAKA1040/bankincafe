@@ -1029,12 +1029,12 @@ export default function InvoiceCreatePage() {
               <h2 className="text-lg font-semibold mb-6 text-gray-800">📋 基本情報</h2>
               
               {/* 年月・日付セクション */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     請求データ年月 <span className="text-red-500">*</span>
                   </label>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap min-w-0">
                     <button
                       type="button"
                       onClick={() => adjustMonth(-1)}
@@ -1042,11 +1042,11 @@ export default function InvoiceCreatePage() {
                     >
                       前月
                     </button>
-                    <div className="flex gap-1 flex-1 min-w-0">
+                    <div className="flex gap-2 flex-1">
                       <select
                         value={invoiceYear}
                         onChange={(e) => setInvoiceYear(Number(e.target.value))}
-                        className="w-20 px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-center"
+                        className="w-24 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-center"
                       >
                         {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i).map(year => (
                           <option key={year} value={year}>{year}</option>
@@ -1056,7 +1056,7 @@ export default function InvoiceCreatePage() {
                       <select
                         value={invoiceMonth}
                         onChange={(e) => setInvoiceMonth(Number(e.target.value))}
-                        className="w-16 px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-center"
+                        className="w-20 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-center"
                       >
                         {Array.from({ length: 12 }, (_, i) => i + 1).map(month => (
                           <option key={month} value={month}>{month}</option>
@@ -1078,7 +1078,7 @@ export default function InvoiceCreatePage() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     請求日（発行日） <span className="text-red-500">*</span>
                   </label>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap min-w-0">
                     <button
                       type="button"
                       onClick={() => adjustBillingDate(-1)}
