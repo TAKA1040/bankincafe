@@ -1735,7 +1735,7 @@ export default function WorkEntryPrototype() {
                 <div className="bg-gray-50 rounded-lg p-4 mb-6">
                   <h3 className="text-lg font-semibold text-gray-700 mb-2">✅ 選択内容の確認</h3>
                   <div className="text-lg font-bold text-blue-600">
-                    {composedLabel(modalSelectedTarget, modalSelectedAction, modalSelectedPosition, modalMemo)}
+                    {composedLabel(modalSelectedTarget, modalSelectedAction, modalSelectedPosition || undefined, modalMemo)}
                   </div>
                   {modalSuggestedPrice > 0 && (
                     <div className="text-sm text-gray-600 mt-1">
