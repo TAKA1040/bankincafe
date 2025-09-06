@@ -63,6 +63,12 @@ next-env.d.ts
 # Reference files for development (not included in build)
 請求書システム画像/
 
+# Disabled app folders
+src/app.disabled/
+Windsurf用/
+tests/
+playwright.config.ts
+
 # Scripts containing API keys or sensitive data (隠すだけ、削除しない)
 scripts/
 

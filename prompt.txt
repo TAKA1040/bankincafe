@@ -1,29 +1,54 @@
-これから、dada2.csvを、データベースに移管しやすいシンプルな中間ファイルに変換する作業を開始します。
-今回の最初のタスクは、dada2.csvから請求書のヘッダー情報だけを抜き出し、invoices_import.csvという新しいファイルを作成することです。
-この作業には、非常に重要なルールがありますので、必ず守ってください。
-【重要ルール：請求書の「正本」の特定】
-dada2.csvの中には、21111293-1と21111293-2のように、同じ請求書番号にハイフン以降の枝番がついているレコードが複数存在します。
-これは、請求書を後から修正した履歴であり、枝番は修正のバージョンを表しています。
-例として、21111293-2は21111293-1を修正したものです。
-したがって、invoices_import.csvを作成する際には、以下のルールを適用してください。
-記録はすべて残す:
-dada2.csvにある全ての行の記録は、移行プロセスの中で失ってはなりません。
-有効なデータは最新版のみ:
-同じ請求書番号（ハイフン前の部分が同じ）のものが複数ある場合、実際に有効なデータとしてシステムで使うのは、末尾の枝番が最も大きいレコードです。
-例えば、-1, -2, -3とあれば、-3の行がその請求書の最終的な「正本」となります。
-【具体的な作業指示】
-上記のルールを理解した上で、まずはdada2.csvから全ての行を対象に、以下の項目対応表に従って単純なタイトル変換を行ってください。
-（※この段階ではまだ重複削除はせず、全データを変換するだけで構いません。正本の特定は次のステップで行います）
-dada2.csv の項目名	invoices_import.csv の項目名
-請求書番号	invoice_id
-請求月	billing_month
-請求日	issue_date
-請求先	customer_name
-件名	subject
-登録番号	registration_number
-発注番号	purchase_order_number
-オーダー番号	order_number
-小計	subtotal
-消費税	tax
-請求金額	total
-備考	remarks
+ ⨯ Failed to generate static paths for /invoice-view/[id]:
+Error: Cannot find module './vendor-chunks/next.js'
+Require stack:
+- C:\Windsurf\bankincafe\.next\server\webpack-runtime.js
+- C:\Windsurf\bankincafe\.next\server\app\invoice-view\[id]\page.js
+- C:\Windsurf\bankincafe\node_modules\next\dist\server\require.js
+- C:\Windsurf\bankincafe\node_modules\next\dist\server\load-components.js
+- C:\Windsurf\bankincafe\node_modules\next\dist\build\utils.js
+- C:\Windsurf\bankincafe\node_modules\next\dist\server\dev\static-paths-worker.js
+- C:\Windsurf\bankincafe\node_modules\next\dist\compiled\jest-worker\processChild.js
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1144:15)
+    at C:\Windsurf\bankincafe\node_modules\next\dist\server\require-hook.js:55:36
+    at Module._load (node:internal/modules/cjs/loader:985:27)
+    at Module.require (node:internal/modules/cjs/loader:1235:19)
+    at mod.require (C:\Windsurf\bankincafe\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:176:18)
+    at __webpack_require__.f.require (C:\Windsurf\bankincafe\.next\server\webpack-runtime.js:198:28)
+    at C:\Windsurf\bankincafe\.next\server\webpack-runtime.js:111:40
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (C:\Windsurf\bankincafe\.next\server\webpack-runtime.js:110:67) {
+  type: 'Error',
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\Windsurf\\bankincafe\\.next\\server\\webpack-runtime.js',
+    'C:\\Windsurf\\bankincafe\\.next\\server\\app\\invoice-view\\[id]\\page.js',
+    'C:\\Windsurf\\bankincafe\\node_modules\\next\\dist\\server\\require.js',
+    'C:\\Windsurf\\bankincafe\\node_modules\\next\\dist\\server\\load-components.js',
+    'C:\\Windsurf\\bankincafe\\node_modules\\next\\dist\\build\\utils.js',
+    'C:\\Windsurf\\bankincafe\\node_modules\\next\\dist\\server\\dev\\static-paths-worker.js',
+    'C:\\Windsurf\\bankincafe\\node_modules\\next\\dist\\compiled\\jest-worker\\processChild.js'
+  ]
+}
+ GET /_next/static/css/app/layout.css?v=1757166169066 404 in 43ms
+ GET /_next/static/chunks/main-app.js?v=1757166169066 404 in 44ms
+ GET /_next/static/chunks/app-pages-internals.js 404 in 39ms
+ GET /_next/static/chunks/app/page.js 404 in 42ms
+ ○ Compiling /_error ...
+ ✓ Compiled /_error in 1488ms (916 modules)
+ GET /invoice-list 404 in 1776ms
+ GET /invoice-list 404 in 53ms
+ GET /work-search 404 in 60ms
+ GET /invoice-view/25043369-1 404 in 34ms
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, lstat 'C:\Windsurf\bankincafe\.next\server\app\page.js'
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving '../../../../.next/server/app/page' in C:\Windsurf\bankincafe\node_modules\next\dist\server for build dependencies doesn't lead to expected result 'C:\Windsurf\bankincafe\.next\server\app\page.js', but to 'Error: Can't resolve '../../../../.next/server/app/page' in 'C:\Windsurf\bankincafe\node_modules\next\dist\server'' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ../../../../.next/server/app/page (expected C:\Windsurf\bankincafe\.next\server\app\page.js)
+<w>  at file dependencies C:\Windsurf\bankincafe\node_modules\next\dist\server\require.js
+<w>  at file C:\Windsurf\bankincafe\node_modules\next\dist\server\require.js
+<w>  at file dependencies C:\Windsurf\bankincafe\node_modules\next\dist\server\load-components.js
+<w>  at file C:\Windsurf\bankincafe\node_modules\next\dist\server\load-components.js
+<w>  at file dependencies C:\Windsurf\bankincafe\node_modules\next\dist\build\utils.js
+<w>  at file C:\Windsurf\bankincafe\node_modules\next\dist\build\utils.js
+<w>  at file dependencies C:\Windsurf\bankincafe\node_modules\next\dist\build\webpack\loaders\next-route-loader\index.js
+<w>  at file C:\Windsurf\bankincafe\node_modules\next\dist\build\webpack\loaders\next-route-loader\index.js
+<w>  at resolve commonjs C:\Windsurf\bankincafe\node_modules\next\dist\build\webpack\loaders\next-route-loader\index.js
