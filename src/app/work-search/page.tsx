@@ -182,8 +182,17 @@ export default function WorkSearchPage() {
           splitMap.get(key).push(split)
         })
 
-        // 4. 元の請求書項目をベースに画面表示用データを作成
-        const workSearchItems: WorkSearchItem[] = lineItems.map(item => {
+        // 4. 元の請求書項目をベースに画面表示用データを作成（取り消し作業は除外）
+        const workSearchItems: WorkSearchItem[] = lineItems
+          .filter(item => {
+            // 取り消し作業を除外
+            const workName = (item.raw_label || '').trim()
+            const cancelKeywords = ['取消', '取り消し', 'キャンセル', 'CANCEL']
+            return !cancelKeywords.some(keyword => 
+              workName.includes(keyword) || workName === keyword
+            )
+          })
+          .map(item => {
           const invoice = invoiceMap.get(item.invoice_id)
           const key = `${item.invoice_id}-${item.line_no}`
           const splitDetails = splitMap.get(key) || []
