@@ -102,7 +102,10 @@ export function useInvoiceList() {
       setLoading(true)
       setError(null)
 
-      // 請求書とライン項目を取得
+      console.log('=== 請求書データ取得開始 ===')
+      const startTime = performance.now()
+
+      // 段階的最適化: まずは基本データのみ取得
       const { data: invoiceData, error: invoiceError } = await supabase
         .from('invoices')
         .select(`
@@ -128,91 +131,31 @@ export function useInvoiceList() {
           updated_at
         `)
         .order('created_at', { ascending: false })
+        .limit(200)
+
+      console.log(`データ取得完了: ${performance.now() - startTime}ms`)
 
       if (invoiceError) {
         throw invoiceError
       }
 
-      // 各請求書のライン項目を取得
-      const invoicesWithItems: InvoiceWithItems[] = []
+      // 簡略化: 基本データのみで請求書リストを構築
+      const invoicesWithItems: InvoiceWithItems[] = (invoiceData || []).map(invoice => ({
+        ...invoice,
+        invoice_number: invoice.invoice_number || invoice.invoice_id,
+        customer_category: (invoice.customer_category as 'UD' | 'その他') || 'その他',
+        subject: invoice.subject || invoice.subject_name,
+        line_items: [], // 一覧表示では詳細は不要
+        total_quantity: 0, // 後で必要に応じて取得
+        work_names: '作業内容', // 後で必要に応じて取得
+        status: (invoice.status as 'draft' | 'finalized' | 'sent' | 'paid') || 'draft',
+        payment_status: (invoice.payment_status as 'unpaid' | 'paid' | 'partial') || 'unpaid',
+        subtotal: invoice.subtotal || 0,
+        tax: invoice.tax || 0,
+        total: invoice.total_amount || invoice.total || 0
+      }))
 
-      for (const invoice of invoiceData || []) {
-        const { data: lineItems, error: lineError } = await supabase
-          .from('invoice_line_items')
-          .select('*')
-          .eq('invoice_id', invoice.invoice_id)
-          .order('line_no', { ascending: true })
-
-        if (lineError) {
-          console.error(`Failed to fetch line items for ${invoice.invoice_id}:`, lineError)
-          continue
-        }
-
-        // 各ライン項目の分割データを取得
-        const lineItemsWithSplits = await Promise.all(
-          (lineItems || []).map(async (item) => {
-            const { data: splitItems, error: splitError } = await supabase
-              .from('invoice_line_items_split')
-              .select('*')
-              .eq('invoice_id', item.invoice_id)
-              .eq('line_no', item.line_no)
-              .order('sub_no', { ascending: true })
-
-            if (splitError) {
-              console.error(`Failed to fetch split items for ${item.invoice_id}-${item.line_no}:`, splitError)
-            }
-
-            return {
-              id: item.id,
-              line_no: item.line_no,
-              task_type: item.task_type,
-              target: item.target,
-              action: item.action,
-              position: item.position,
-              quantity: item.quantity,
-              unit_price: item.unit_price,
-              amount: item.amount,
-              raw_label: item.raw_label,
-              performed_at: item.performed_at,
-              split_items: splitItems || []
-            }
-          })
-        )
-
-        // ライン項目からサマリーを計算（分割項目がある場合はそれを使用）
-        let totalQuantity = 0
-        const workNames: string[] = []
-
-        lineItemsWithSplits.forEach(item => {
-          if (item.split_items && item.split_items.length > 0) {
-            // 分割項目がある場合
-            totalQuantity += item.split_items.reduce((sum, split) => sum + split.quantity, 0)
-            workNames.push(...item.split_items.map(split => split.raw_label_part))
-          } else {
-            // 分割項目がない場合は元の項目を使用
-            totalQuantity += item.quantity || 0
-            workNames.push(item.raw_label || [item.target, item.action, item.position].filter(Boolean).join(' '))
-          }
-        })
-
-        const invoiceWithItems: InvoiceWithItems = {
-          ...invoice,
-          invoice_number: invoice.invoice_number || invoice.invoice_id,
-          customer_category: (invoice.customer_category as 'UD' | 'その他') || 'その他',
-          subject: invoice.subject || invoice.subject_name,
-          line_items: lineItemsWithSplits as any,
-          total_quantity: totalQuantity,
-          work_names: workNames.join(' / '),
-          status: (invoice.status as 'draft' | 'finalized' | 'sent' | 'paid') || 'draft',
-          payment_status: (invoice.payment_status as 'unpaid' | 'paid' | 'partial') || 'unpaid',
-          subtotal: invoice.subtotal || 0,
-          tax: invoice.tax || 0,
-          total: invoice.total_amount || invoice.total || 0
-        }
-
-        invoicesWithItems.push(invoiceWithItems)
-      }
-
+      console.log(`処理完了: ${performance.now() - startTime}ms, 件数: ${invoicesWithItems.length}`)
       setInvoices(invoicesWithItems)
     } catch (err) {
       console.error('Failed to fetch invoices:', err)

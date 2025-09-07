@@ -248,7 +248,7 @@ export default function InvoiceViewPage({ params }: PageProps) {
         </div>
         <div className="flex gap-2">
           <button
-            onClick={() => router.push(`/invoice-edit/${invoice.invoice_id}`)}
+            onClick={() => router.push(`/invoice-create?edit=${invoice.invoice_id}`)}
             className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center gap-2"
           >
             <Edit className="w-4 h-4" />

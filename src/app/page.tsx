@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { FileText, Users, Search, Clock, BarChart3, Plus, Calculator, TrendingUp, Settings, Hash, BookOpen, Edit3, Building2, Tag } from 'lucide-react'
+import { FileText, Users, Search, Clock, BarChart3, Plus, Calculator, TrendingUp, Settings, Hash, BookOpen, Edit3, Building2, Tag, Shield } from 'lucide-react'
 
 export default function HomePage() {
   const router = useRouter()
@@ -114,6 +114,15 @@ export default function HomePage() {
       color: 'bg-cyan-600 hover:bg-cyan-700 shadow-lg',
       textColor: 'text-white',
       category: 'primary'
+    },
+    {
+      title: '管理者設定',
+      description: 'ユーザー管理・システム設定・Google認証',
+      icon: Shield,
+      path: '/admin-settings',
+      color: 'bg-red-600 hover:bg-red-700 shadow-lg',
+      textColor: 'text-white',
+      category: 'admin'
     }
   ]
 
@@ -121,6 +130,7 @@ export default function HomePage() {
   const managementItems = menuItems.filter(item => item.category === 'management')
   const analysisItems = menuItems.filter(item => item.category === 'analysis')
   const settingsItems = menuItems.filter(item => item.category === 'settings')
+  const adminItems = menuItems.filter(item => item.category === 'admin')
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
@@ -201,6 +211,33 @@ export default function HomePage() {
               })}
             </div>
           </div>
+
+          {/* 管理者機能 */}
+          {adminItems.length > 0 && (
+            <div className="bg-white rounded-xl shadow-lg p-6 max-w-4xl mx-auto border-l-4 border-red-500">
+              <h2 className="text-xl font-bold text-gray-800 mb-4 text-center">
+                🛡️ 管理者機能
+              </h2>
+              <div className="grid grid-cols-1 gap-3">
+                {adminItems.map((item) => {
+                  const Icon = item.icon
+                  return (
+                    <button
+                      key={item.path}
+                      onClick={() => router.push(item.path)}
+                      className={`flex items-center gap-2 p-4 rounded-lg text-sm font-bold transition-all duration-200 hover:scale-105 ${item.color}`}
+                    >
+                      <Icon size={18} />
+                      <div className="text-left">
+                        <div>{item.title}</div>
+                        <div className="text-xs opacity-75">{item.description}</div>
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          )}
         </section>
 
         {/* システム情報 */}

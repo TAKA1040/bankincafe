@@ -1,9 +1,11 @@
 'use client'
 
-import React, { useState, useEffect, useMemo } from 'react'
-import { useRouter } from 'next/navigation'
+import React, { useState, useEffect, useMemo, useRef } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { ArrowLeft, Plus, Trash2, Save, Search, Calculator } from 'lucide-react'
 import { useWorkDictionary } from '@/hooks/useWorkDictionary'
+import { supabase } from '@/lib/supabase'
+import { generateDocumentNumber, parseDocumentNumber } from '@/lib/utils'
 
 // ひらがな・カタカナ変換のヘルパー関数
 const hiraganaToKatakana = (str: string) => {
@@ -425,10 +427,58 @@ class CustomerCategoryDB {
 
 export default function InvoiceCreatePage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const editInvoiceId = searchParams.get('edit')
+  const isEditMode = !!editInvoiceId
+  
   const [db, setDb] = useState<WorkHistoryDB | null>(null)
   const [categoryDb, setCategoryDb] = useState<CustomerCategoryDB | null>(null)
   const [subjectDb, setSubjectDb] = useState<SubjectMasterDB | null>(null)
   const [registrationDb, setRegistrationDb] = useState<RegistrationMasterDB | null>(null)
+
+  // Supabaseから最大連番を取得する関数
+  const getMaxSequence = async (year: string, month: string, type: 'invoice' | 'estimate'): Promise<number> => {
+    try {
+      const prefix = type === 'estimate' ? `${year}${month}M` : `${year}${month}`
+      
+      // PostgreSQLの正規表現を使用してより正確にマッチ
+      const pattern = type === 'estimate' 
+        ? `^${year}${month}M[0-9]{3}-[0-9]+$` 
+        : `^${year}${month}[0-9]{4}-[0-9]+$`
+      
+      const { data: invoices, error } = await supabase
+        .from('invoices')
+        .select('invoice_id')
+        .like('invoice_id', `${prefix}%`)
+        .order('invoice_id', { ascending: false })
+
+      if (error) throw error
+
+      if (!invoices || invoices.length === 0) {
+        return 0 // 該当する番号がない場合は0を返す（次番号が1になる）
+      }
+
+      // クライアントサイドで正確にフィルタリング
+      const filteredInvoices = invoices.filter(inv => {
+        const parsed = parseDocumentNumber(inv.invoice_id)
+        return parsed && 
+               parsed.year === year && 
+               parsed.month === month && 
+               parsed.isEstimate === (type === 'estimate')
+      })
+
+      if (filteredInvoices.length === 0) {
+        return 0
+      }
+
+      const lastNumber = filteredInvoices[0].invoice_id
+      const parsed = parseDocumentNumber(lastNumber)
+      return parsed?.sequence ?? 0
+    } catch (error) {
+      console.error('Error getting max sequence:', error)
+      return 0
+    }
+  }
   
   // 作業辞書データの取得
   const {
@@ -443,6 +493,8 @@ export default function InvoiceCreatePage() {
   } = useWorkDictionary()
   
   // 基本情報の状態
+  const [documentType, setDocumentType] = useState<'invoice' | 'estimate'>('invoice') // 請求書・見積書選択
+  const [invoiceNumber, setInvoiceNumber] = useState('') // 請求書No
   const [invoiceYear, setInvoiceYear] = useState(new Date().getFullYear())
   const [invoiceMonth, setInvoiceMonth] = useState(new Date().getMonth() + 1)
   const [billingDate, setBillingDate] = useState(new Date().toISOString().split('T')[0])
@@ -468,7 +520,7 @@ export default function InvoiceCreatePage() {
   
   // セット作業用状態
   const [setName, setSetName] = useState('')
-  const [setPrice, setSetPrice] = useState(0)
+  const [setPrice, setSetPrice] = useState('')
   const [setQuantity, setSetQuantity] = useState(1)
   const [setDetails, setSetDetails] = useState<Array<{action?: string, target?: string, position?: string, memo?: string, label: string, quantity?: number, unitPrice?: number}>>([])
   
@@ -477,6 +529,7 @@ export default function InvoiceCreatePage() {
   const [detailAction, setDetailAction] = useState('')
   const [detailPosition, setDetailPosition] = useState('')
   const [detailOther, setDetailOther] = useState('')
+  const [detailQuantity, setDetailQuantity] = useState(1)
   
   // prototype2準拠のユーティリティ関数
   const composedLabel = (t?: string, a?: string, p?: string, m?: string) => {
@@ -523,9 +576,9 @@ export default function InvoiceCreatePage() {
       id: newId,
       type: 'set',
       work_name: setName.trim(),
-      unit_price: setPrice || 0,
+      unit_price: Number(setPrice) || 0,
       quantity: setQuantity || 0,
-      amount: Math.round((setPrice || 0) * (setQuantity || 0)),
+      amount: Math.round((Number(setPrice) || 0) * (setQuantity || 0)),
       memo: '',
       set_details: setDetails.map(d => d.label),
       detail_positions: setDetails.map(d => d.position || '')
@@ -536,7 +589,7 @@ export default function InvoiceCreatePage() {
     // リセット
     setSetDetails([])
     setSetName('')
-    setSetPrice(0)
+    setSetPrice('')
     setSetQuantity(1)
   }
   
@@ -606,6 +659,52 @@ export default function InvoiceCreatePage() {
   const [showRegistrationSuggestions, setShowRegistrationSuggestions] = useState(false)
   const [selectedSubjectIndex, setSelectedSubjectIndex] = useState(-1)
   const [selectedRegistrationIndex, setSelectedRegistrationIndex] = useState(-1)
+  const [allSubjects, setAllSubjects] = useState<any[]>([])
+  const [allRegistrations, setAllRegistrations] = useState<any[]>([])
+
+  // スクロール連動用のrefs
+  const subjectSuggestionsRef = useRef<HTMLDivElement>(null)
+  const registrationSuggestionsRef = useRef<HTMLDivElement>(null)
+
+  // 件名サジェストのスクロール連動
+  useEffect(() => {
+    if (selectedSubjectIndex >= 0 && subjectSuggestionsRef.current) {
+      const container = subjectSuggestionsRef.current
+      const selectedElement = container.children[selectedSubjectIndex] as HTMLElement
+      if (selectedElement) {
+        const containerTop = container.scrollTop
+        const containerBottom = containerTop + container.clientHeight
+        const elementTop = selectedElement.offsetTop
+        const elementBottom = elementTop + selectedElement.offsetHeight
+        
+        if (elementTop < containerTop) {
+          container.scrollTop = elementTop
+        } else if (elementBottom > containerBottom) {
+          container.scrollTop = elementBottom - container.clientHeight
+        }
+      }
+    }
+  }, [selectedSubjectIndex])
+
+  // 登録番号サジェストのスクロール連動
+  useEffect(() => {
+    if (selectedRegistrationIndex >= 0 && registrationSuggestionsRef.current) {
+      const container = registrationSuggestionsRef.current
+      const selectedElement = container.children[selectedRegistrationIndex] as HTMLElement
+      if (selectedElement) {
+        const containerTop = container.scrollTop
+        const containerBottom = containerTop + container.clientHeight
+        const elementTop = selectedElement.offsetTop
+        const elementBottom = elementTop + selectedElement.offsetHeight
+        
+        if (elementTop < containerTop) {
+          container.scrollTop = elementTop
+        } else if (elementBottom > containerBottom) {
+          container.scrollTop = elementBottom - container.clientHeight
+        }
+      }
+    }
+  }, [selectedRegistrationIndex])
 
   // あいまい検索用の正規化関数
   const normalizeText = (text: string): string => {
@@ -615,22 +714,108 @@ export default function InvoiceCreatePage() {
       .replace(/[Ａ-Ｚａ-ｚ０-９]/g, (match) => String.fromCharCode(match.charCodeAt(0) - 0xFEE0)) // 全角→半角
   }
 
+  // Supabaseから件名マスタデータを取得
+  const fetchSubjectMasterData = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('subject_master')
+        .select('id, subject_name, subject_name_kana')
+        .order('subject_name')
+      
+      if (error) {
+        console.error('件名マスタ取得エラー:', error)
+        return
+      }
+      
+      console.log('件名マスタデータ取得成功:', data?.length, '件')
+      setAllSubjects(data || [])
+    } catch (error) {
+      console.error('件名マスタ取得エラー:', error)
+    }
+  }
+
+  // 件名検索機能（曖昧検索対応）
+  const searchSubjects = (query: string) => {
+    if (!query.trim()) {
+      return []
+    }
+
+    const normalizedQuery = fuzzyMatch.bind(null, '', query)
+    
+    return allSubjects
+      .filter(subject => fuzzyMatch(subject.subject_name, query))
+      .slice(0, 30) // 30件に制限
+  }
+
+
   // 件名選択時の登録番号絞り込み機能
-  const handleSubjectSelection = (selectedSubjectName: string) => {
-    if (!registrationDb) return
-    
-    // 選択された件名に関連する登録番号を検索
-    const allRegistrations = registrationDb.searchRegistrations('')
-    const relatedRegistrations = allRegistrations.filter((reg: any) => 
-      // 件名との関連性をチェック（この例では件名が部分的に含まれるかチェック）
-      normalizeText(reg.subjectName || '').includes(normalizeText(selectedSubjectName)) ||
-      normalizeText(selectedSubjectName).includes(normalizeText(reg.subjectName || ''))
-    ).slice(0, 30)
-    
-    // 関連する登録番号が見つかった場合、最初のものを自動選択
-    if (relatedRegistrations.length > 0) {
-      setRegistrationNumber(relatedRegistrations[0].registrationNumber)
-      setRegistrationSuggestions(relatedRegistrations)
+  const handleSubjectSelection = async (selectedSubjectName: string) => {
+    try {
+      console.log('=== 件名選択時の登録番号絞り込み開始 ===')
+      console.log('選択された件名:', selectedSubjectName)
+      
+      // まず件名マスタから件名IDを取得
+      const { data: subjectData, error: subjectError } = await supabase
+        .from('subject_master')
+        .select('id')
+        .eq('subject_name', selectedSubjectName)
+        .single()
+      
+      if (subjectError || !subjectData) {
+        console.log('件名マスタで該当件名が見つからない:', selectedSubjectName)
+        return
+      }
+      
+      console.log('件名ID取得成功:', subjectData.id)
+      
+      // 件名IDに基づいて関連する登録番号を検索
+      const { data: relations, error: relationsError } = await supabase
+        .from('subject_registration_numbers')
+        .select(`
+          registration_number_master(registration_number),
+          usage_count,
+          is_primary
+        `)
+        .eq('subject_id', subjectData.id)
+        .order('usage_count', { ascending: false })
+        .limit(30)
+      
+      console.log('関連登録番号クエリ結果:', relations)
+      
+      if (relationsError) {
+        console.error('関連登録番号取得エラー:', relationsError)
+        return
+      }
+      
+      if (relations && relations.length > 0) {
+        const relatedRegistrations = relations.map(rel => ({
+          registrationNumber: rel.registration_number_master?.registration_number,
+          usage_count: rel.usage_count,
+          is_primary: rel.is_primary
+        }))
+        
+        console.log('登録番号データ変換結果:', relatedRegistrations)
+        
+        // プライマリの登録番号があれば最初に表示、なければ使用頻度順
+        const sortedRegistrations = relatedRegistrations.sort((a, b) => {
+          if (a.is_primary && !b.is_primary) return -1
+          if (!a.is_primary && b.is_primary) return 1
+          return b.usage_count - a.usage_count
+        })
+        
+        console.log('ソート後の登録番号リスト:', sortedRegistrations)
+        
+        // デフォルトでは登録番号を自動設定しない（誤入力防止のため）
+        // ユーザーがクリックして選択する方式に変更
+        console.log('プライマリ登録番号:', sortedRegistrations[0]?.registrationNumber)
+        // setRegistrationNumber(sortedRegistrations[0].registrationNumber) // 自動設定を無効化
+        setRegistrationSuggestions(sortedRegistrations)
+      } else {
+        console.log('該当する登録番号が見つからなかった')
+        setRegistrationSuggestions([])
+      }
+    } catch (error) {
+      console.error('関連登録番号取得エラー:', error)
     }
   }
   
@@ -663,12 +848,120 @@ export default function InvoiceCreatePage() {
     setSubjectDb(subjectDatabase)
     setRegistrationDb(registrationDatabase)
     
+    // Supabaseから件名マスタデータを取得
+    fetchSubjectMasterData()
+    
     // 初期選択したカテゴリーの会社名を設定
     const initialCategory = catDb.getCategoryById('ud')
     if (initialCategory && initialCategory.companyName) {
       setCustomerName(initialCategory.companyName)
     }
+
+    // 初期番号生成
+    const initializeDocumentNumber = async () => {
+      try {
+        const newNumber = await generateDocumentNumber('invoice', getMaxSequence)
+        setInvoiceNumber(newNumber)
+      } catch (error) {
+        console.error('Error generating initial document number:', error)
+      }
+    }
+    initializeDocumentNumber()
   }, [])
+
+  // documentType変更時に新しい番号を生成
+  useEffect(() => {
+    const generateNewNumber = async () => {
+      try {
+        const newNumber = await generateDocumentNumber(documentType, getMaxSequence)
+        setInvoiceNumber(newNumber)
+      } catch (error) {
+        console.error('Error generating document number:', error)
+      }
+    }
+    if (!isEditMode) {
+      generateNewNumber()
+    }
+  }, [documentType, isEditMode])
+
+  // 編集モード時の初期データ読み込み
+  useEffect(() => {
+    if (isEditMode && editInvoiceId) {
+      const loadInvoiceForEdit = async () => {
+        try {
+          console.log('Loading invoice for edit:', editInvoiceId)
+          
+          // 請求書基本データを取得
+          const { data: invoiceData, error: invoiceError } = await supabase
+            .from('invoices')
+            .select('*')
+            .eq('invoice_id', editInvoiceId)
+            .single()
+
+          if (invoiceError) throw invoiceError
+          if (!invoiceData) throw new Error('請求書が見つかりません')
+
+          // 下書きのみ編集可能
+          if (invoiceData.status !== 'draft') {
+            alert('下書きの請求書のみ編集できます')
+            router.push('/invoice-list')
+            return
+          }
+
+          // 基本情報をセット
+          setInvoiceNumber(invoiceData.invoice_id)
+          const billingDate = invoiceData.billing_date || invoiceData.issue_date
+          if (billingDate) {
+            setBillingDate(billingDate.split('T')[0])
+            const date = new Date(billingDate)
+            setInvoiceYear(date.getFullYear())
+            setInvoiceMonth(date.getMonth() + 1)
+          }
+          
+          setCustomerCategory(invoiceData.customer_category === 'UD' ? 'ud' : 'other')
+          setCustomerName(invoiceData.customer_name || '')
+          setSubject(invoiceData.subject_name || '')
+          setRegistrationNumber(invoiceData.registration_number || '')
+          setOrderNumber(invoiceData.order_number || '')
+          setInternalOrderNumber(invoiceData.purchase_order_number || '')
+          setMemo(invoiceData.remarks || '')
+
+          // 明細データを取得
+          const { data: lineItems, error: lineError } = await supabase
+            .from('invoice_line_items')
+            .select('*')
+            .eq('invoice_id', editInvoiceId)
+            .order('line_no', { ascending: true })
+
+          if (lineError) throw lineError
+
+          // 明細データを作業項目に変換
+          if (lineItems && lineItems.length > 0) {
+            const items: WorkItem[] = lineItems.map((item, index) => ({
+              id: index + 1,
+              type: item.task_type === 'セット作業' ? 'set' : 'individual',
+              target: item.target || '',
+              action: item.action || '',
+              position: item.position || '',
+              unitPrice: Number(item.unit_price || 0),
+              quantity: Number(item.quantity || 1),
+              amount: Number(item.amount || 0),
+              memo: item.raw_label || '',
+              performedAt: item.performed_at || new Date().toISOString().split('T')[0]
+            }))
+            setWorkItems(items)
+          }
+
+          console.log('Invoice loaded successfully for editing')
+        } catch (error) {
+          console.error('Error loading invoice for edit:', error)
+          alert('請求書の読み込みに失敗しました: ' + (error as Error).message)
+        }
+      }
+
+      loadInvoiceForEdit()
+    }
+  }, [isEditMode, editInvoiceId, router])
 
   // 年月調整関数
   const adjustMonth = (delta: number) => {
@@ -868,6 +1161,7 @@ export default function InvoiceCreatePage() {
       position: detailPosition,
       memo: detailOther,
       label: label,
+      quantity: detailQuantity,
       unitPrice: unitPrice
     }
     
@@ -876,7 +1170,7 @@ export default function InvoiceCreatePage() {
     // セット価格を明細価格の合計で自動更新
     const newTotalPrice = [...setDetails, newDetail].reduce((sum, detail) => sum + (detail.unitPrice || 0), 0)
     if (newTotalPrice > 0) {
-      setSetPrice(newTotalPrice)
+      setSetPrice(newTotalPrice.toString())
     }
     
     // リセット
@@ -884,6 +1178,7 @@ export default function InvoiceCreatePage() {
     setDetailAction('')
     setDetailPosition('')
     setDetailOther('')
+    setDetailQuantity(1)
   }
 
   // セット詳細追加（既存セット編集時）
@@ -947,7 +1242,10 @@ export default function InvoiceCreatePage() {
   }
 
   // 保存処理
-  const handleSave = (isDraft = true) => {
+  const handleSave = async (isDraft = true) => {
+    // 見積書の場合のメッセージ調整
+    const docTypeName = documentType === 'estimate' ? '見積書' : '請求書'
+    
     // 基本情報バリデーション
     if (!billingDate) {
       alert('請求日を入力してください')
@@ -1013,23 +1311,69 @@ export default function InvoiceCreatePage() {
     }
 
     try {
-      if (typeof window !== 'undefined') {
-        // 請求書データを保存
-        const existingInvoices = JSON.parse(localStorage.getItem('bankin_invoices') || '[]')
-        const newInvoice = {
-          id: Date.now(),
-          ...invoiceData,
-          created_at: new Date().toISOString(),
-          status: isDraft ? 'draft' : 'finalized'
-        }
-        existingInvoices.push(newInvoice)
-        localStorage.setItem('bankin_invoices', JSON.stringify(existingInvoices))
-        
-        alert(isDraft ? '請求書を下書き保存しました' : '請求書を確定保存しました')
-        router.push('/invoice-list')
+      // Supabaseに保存
+      const invoiceRecord = {
+        invoice_id: invoiceNumber,
+        invoice_number: invoiceNumber,
+        issue_date: new Date().toISOString().split('T')[0],
+        billing_date: billingDate,
+        billing_month: `${invoiceYear}-${String(invoiceMonth).padStart(2, '0')}`,
+        customer_category: customerCategory === 'ud' ? 'UD' : 'その他',
+        customer_name: customerName,
+        subject_name: subject,
+        subject: subject,
+        registration_number: registrationNumber || null,
+        order_number: orderNumber || null,
+        purchase_order_number: internalOrderNumber || null,
+        subtotal: subtotal,
+        tax: taxAmount,
+        total_amount: totalAmount,
+        status: isDraft ? 'draft' : 'finalized',
+        payment_status: 'unpaid',
+        remarks: memo || null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       }
+
+      // 請求書基本情報を保存
+      const { data: invoiceData, error: invoiceError } = await supabase
+        .from('invoices')
+        .insert(invoiceRecord)
+        .select()
+
+      if (invoiceError) {
+        throw invoiceError
+      }
+
+      // 明細データを保存
+      if (workItems.length > 0) {
+        const lineItems = workItems.map((item, index) => ({
+          invoice_id: invoiceNumber,
+          line_no: index + 1,
+          task_type: item.type === 'set' ? 'S' : 'T',
+          target: item.work_name, // 作業名を target として保存
+          action: null,
+          position: null,
+          raw_label: item.type === 'set' ? item.set_details?.join(', ') || item.work_name : item.work_name,
+          unit_price: item.unit_price,
+          quantity: item.quantity,
+          amount: item.unit_price * item.quantity,
+          performed_at: billingDate
+        }))
+
+        const { error: lineItemsError } = await supabase
+          .from('invoice_line_items')
+          .insert(lineItems)
+
+        if (lineItemsError) {
+          throw lineItemsError
+        }
+      }
+
+      alert(isDraft ? `${docTypeName}を下書き保存しました` : `${docTypeName}を確定保存しました`)
+      router.push('/invoice-list')
     } catch (error) {
-      alert('保存に失敗しました')
+      alert('保存に失敗しました: ' + (error instanceof Error ? error.message : 'Unknown error'))
       console.error('Save error:', error)
     }
   }
@@ -1040,7 +1384,9 @@ export default function InvoiceCreatePage() {
         {/* ヘッダー */}
         <header className="bg-white rounded-lg shadow-sm p-6 mb-6">
           <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-bold text-gray-800">請求書作成</h1>
+            <h1 className="text-2xl font-bold text-gray-800">
+              {isEditMode ? '請求書編集' : '請求書作成'}
+            </h1>
             <div className="flex gap-2">
               <button
                 onClick={() => handleSave(true)}
@@ -1072,7 +1418,51 @@ export default function InvoiceCreatePage() {
           <div className="lg:col-span-2 space-y-6">
             {/* 基本情報 */}
             <div className="bg-white rounded-lg shadow-sm p-6">
-              <h2 className="text-lg font-semibold mb-6 text-gray-800">📋 基本情報</h2>
+              <div className="flex items-center justify-between mb-6 gap-4">
+                <div className="flex items-center gap-4">
+                  <h2 className="text-lg font-semibold text-gray-800">📋 基本情報</h2>
+                  
+                  {/* 請求書・見積書タブ */}
+                  <div className="flex bg-gray-100 rounded-lg p-1">
+                    <button
+                      type="button"
+                      onClick={() => setDocumentType('invoice')}
+                      className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                        documentType === 'invoice'
+                          ? 'bg-white text-blue-700 shadow-sm'
+                          : 'text-gray-600 hover:text-gray-800'
+                      }`}
+                    >
+                      📄 請求書
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDocumentType('estimate')}
+                      className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                        documentType === 'estimate'
+                          ? 'bg-white text-blue-700 shadow-sm'
+                          : 'text-gray-600 hover:text-gray-800'
+                      }`}
+                    >
+                      📊 見積書
+                    </button>
+                  </div>
+                </div>
+                
+                {/* 請求書No欄 */}
+                <div className="flex items-center gap-2">
+                  <label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                    {documentType === 'invoice' ? '請求書No' : '見積書No'}
+                  </label>
+                  <input
+                    type="text"
+                    value={invoiceNumber}
+                    onChange={(e) => setInvoiceNumber(e.target.value)}
+                    className="w-32 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder={documentType === 'invoice' ? '例: INV-001' : '例: EST-001'}
+                  />
+                </div>
+              </div>
               
               {/* 年月・日付セクション */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
@@ -1236,7 +1626,7 @@ export default function InvoiceCreatePage() {
                     </label>
                     <button
                       type="button"
-                      onClick={() => router.push('/subject-settings')}
+                      onClick={() => router.push('/subject-master')}
                       className="text-xs text-blue-600 hover:text-blue-800 underline"
                     >
                       件名設定
@@ -1245,26 +1635,35 @@ export default function InvoiceCreatePage() {
                   <input
                     type="text"
                     value={subject}
+                    onFocus={() => {
+                      // フォーカス時に件名候補を表示（空欄でも表示）
+                      console.log('=== 件名フィールドフォーカス ===')
+                      console.log('全件名数:', allSubjects.length)
+                      
+                      if (subject.trim()) {
+                        // 既に入力がある場合は、その内容で検索
+                        const filteredSuggestions = searchSubjects(subject.trim())
+                        setSubjectSuggestions(filteredSuggestions)
+                        setShowSubjectSuggestions(filteredSuggestions.length > 0)
+                      } else {
+                        // 空欄の場合は、全ての件名から最近使用されたものを表示
+                        const recentSubjects = allSubjects.slice(0, 20) // 最大20件
+                        console.log('最近の件名候補数:', recentSubjects.length)
+                        setSubjectSuggestions(recentSubjects)
+                        setShowSubjectSuggestions(recentSubjects.length > 0)
+                      }
+                    }}
                     onChange={(e) => {
                       setSubject(e.target.value)
                       setSelectedSubjectIndex(-1)
-                      if (subjectDb && e.target.value.trim()) {
-                        // あいまい検索の実装
-                        const keyword = normalizeText(e.target.value.trim())
-                        const allSubjects = subjectDb.searchSubjects('')
+                      
+                      if (e.target.value.trim()) {
+                        // Supabaseベースの曖昧検索
+                        const filteredSuggestions = searchSubjects(e.target.value.trim())
                         
-                        // デバッグ情報
                         console.log('=== 件名検索デバッグ ===')
-                        console.log('検索キーワード:', e.target.value, '→正規化:', keyword)
+                        console.log('検索キーワード:', e.target.value)
                         console.log('全件名数:', allSubjects.length)
-                        console.log('全件名サンプル:', allSubjects.slice(0, 3))
-                        
-                        const filteredSuggestions = allSubjects
-                          .filter((subject: any) => 
-                            normalizeText(subject.subjectName).includes(keyword)
-                          )
-                          .slice(0, 30) // 30件に制限
-                        
                         console.log('フィルター後件数:', filteredSuggestions.length)
                         console.log('フィルター結果:', filteredSuggestions.slice(0, 5))
                         
@@ -1294,14 +1693,11 @@ export default function InvoiceCreatePage() {
                           e.preventDefault()
                           if (selectedSubjectIndex >= 0 && selectedSubjectIndex < subjectSuggestions.length) {
                             const selectedSubject = subjectSuggestions[selectedSubjectIndex]
-                            setSubject(selectedSubject.subjectName)
+                            setSubject(selectedSubject.subject_name)
                             setShowSubjectSuggestions(false)
                             setSelectedSubjectIndex(-1)
-                            if (subjectDb) {
-                              subjectDb.autoRegisterSubject(selectedSubject.subjectName)
-                            }
                             // 件名選択後、登録番号の絞り込み実行
-                            handleSubjectSelection(selectedSubject.subjectName)
+                            handleSubjectSelection(selectedSubject.subject_name)
                           }
                           break
                         case 'Escape':
@@ -1323,21 +1719,17 @@ export default function InvoiceCreatePage() {
                     required
                   />
                   {showSubjectSuggestions && subjectSuggestions.length > 0 && (
-                    <div className="absolute z-20 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-80 overflow-y-auto">
+                    <div ref={subjectSuggestionsRef} className="absolute z-20 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-80 overflow-y-auto">
                       {subjectSuggestions.map((suggestion, index) => (
                         <button
                           key={suggestion.id}
                           type="button"
                           onClick={() => {
-                            setSubject(suggestion.subjectName)
+                            setSubject(suggestion.subject_name)
                             setShowSubjectSuggestions(false)
                             setSelectedSubjectIndex(-1)
-                            // 使用回数を増やす
-                            if (subjectDb) {
-                              subjectDb.autoRegisterSubject(suggestion.subjectName)
-                            }
                             // 件名選択後、登録番号の絞り込み実行
-                            handleSubjectSelection(suggestion.subjectName)
+                            handleSubjectSelection(suggestion.subject_name)
                           }}
                           className={`w-full px-3 py-2 text-left first:rounded-t-lg last:rounded-b-lg text-sm border-b border-gray-100 last:border-b-0 ${
                             index === selectedSubjectIndex 
@@ -1346,13 +1738,10 @@ export default function InvoiceCreatePage() {
                           }`}
                         >
                           <div className="flex justify-between items-center">
-                            <span className="font-medium">{suggestion.subjectName}</span>
-                            <div className="flex items-center gap-2 text-xs text-gray-500">
-                              {suggestion.category && (
-                                <span className="bg-gray-100 px-2 py-1 rounded">{suggestion.category}</span>
-                              )}
-                              <span>使用: {suggestion.usageCount}回</span>
-                            </div>
+                            <span className="font-medium">{suggestion.subject_name}</span>
+                            {suggestion.subject_name_kana && (
+                              <span className="text-xs text-gray-500">{suggestion.subject_name_kana}</span>
+                            )}
                           </div>
                         </button>
                       ))}
@@ -1376,23 +1765,90 @@ export default function InvoiceCreatePage() {
                   <input
                     type="text"
                     value={registrationNumber}
+                    onFocus={() => {
+                      // フォーカス時に件名関連の登録番号を表示（空欄でも表示）
+                      console.log('=== 登録番号フィールドフォーカス ===')
+                      console.log('現在の登録番号サジェスト数:', registrationSuggestions.length)
+                      
+                      const subjectRelatedOnly = registrationSuggestions.filter(reg => reg.usage_count > 0)
+                      console.log('件名関連の登録番号数:', subjectRelatedOnly.length)
+                      
+                      if (subjectRelatedOnly.length > 0) {
+                        // 件名関連の登録番号があれば表示
+                        setShowRegistrationSuggestions(true)
+                      } else if (!subject.trim()) {
+                        // 件名が空欄の場合のみ、全ての登録番号から候補を表示
+                        if (registrationDb) {
+                          const allSuggestions = registrationDb.searchRegistrations('').map((reg: any) => ({
+                            id: reg.id,
+                            registrationNumber: reg.registrationNumber,
+                            description: reg.description,
+                            usage_count: 0,
+                            is_primary: false
+                          })).slice(0, 10)
+                          console.log('全ての登録番号候補数:', allSuggestions.length)
+                          setRegistrationSuggestions(allSuggestions)
+                          setShowRegistrationSuggestions(allSuggestions.length > 0)
+                        }
+                      } else {
+                        // 件名が入力されているが関連登録番号がない場合は候補を表示しない
+                        console.log('件名が入力されているが関連登録番号なし - 候補非表示')
+                        setShowRegistrationSuggestions(false)
+                      }
+                    }}
                     onChange={(e) => {
                       setRegistrationNumber(e.target.value)
                       setSelectedRegistrationIndex(-1)
-                      if (registrationDb && e.target.value.trim()) {
-                        // あいまい検索の実装
-                        const keyword = normalizeText(e.target.value.trim())
-                        const allRegistrations = registrationDb.searchRegistrations('')
-                        const filteredSuggestions = allRegistrations
-                          .filter((registration: any) => 
-                            normalizeText(registration.registrationNumber).includes(keyword) ||
-                            normalizeText(registration.subjectName || '').includes(keyword)
-                          )
-                          .slice(0, 30) // 30件に制限
-                        setRegistrationSuggestions(filteredSuggestions)
-                        setShowRegistrationSuggestions(filteredSuggestions.length > 0)
+                      if (e.target.value.trim()) {
+                        // 1. 件名に紐づく登録番号を優先表示（既にhandleSubjectSelectionで設定済み）
+                        const keyword = e.target.value.trim()
+                        const subjectRelated = registrationSuggestions.filter(reg => 
+                          reg.registrationNumber && 
+                          fuzzyMatch(reg.registrationNumber, keyword)
+                        )
+                        
+                        // 2. 件名が入力されている場合は、件名関連の登録番号のみ表示
+                        // LocalStorageからの追加は、件名が空欄の場合のみ
+                        let additionalSuggestions = []
+                        if (!subject.trim() && registrationDb) {
+                          const allRegistrations = registrationDb.searchRegistrations('')
+                          additionalSuggestions = allRegistrations
+                            .filter((registration: any) => 
+                              fuzzyMatch(registration.registrationNumber, keyword) &&
+                              !subjectRelated.find(sr => sr.registrationNumber === registration.registrationNumber)
+                            )
+                            .map((registration: any) => ({ 
+                              registrationNumber: registration.registrationNumber, 
+                              usage_count: 0, 
+                              is_primary: false,
+                              id: registration.id 
+                            }))
+                            .slice(0, 10) // 追加分は10件まで
+                        }
+                        
+                        // 3. 件名関連を上位、その他を下位に表示（最大30件）
+                        const combinedSuggestions = [...subjectRelated, ...additionalSuggestions].slice(0, 30)
+                        setRegistrationSuggestions(combinedSuggestions)
+                        setShowRegistrationSuggestions(combinedSuggestions.length > 0)
                       } else {
-                        setShowRegistrationSuggestions(false)
+                        // 入力が空の場合の表示制御
+                        if (!subject.trim()) {
+                          // 件名も空欄の場合は、全ての登録番号候補を表示
+                          if (registrationDb) {
+                            const allSuggestions = registrationDb.searchRegistrations('').map((reg: any) => ({
+                              registrationNumber: reg.registrationNumber,
+                              usage_count: 0,
+                              is_primary: false,
+                              id: reg.id
+                            })).slice(0, 10)
+                            setRegistrationSuggestions(allSuggestions)
+                            setShowRegistrationSuggestions(allSuggestions.length > 0)
+                          }
+                        } else {
+                          // 件名が入力されている場合は、件名関連の登録番号のみ表示
+                          const subjectRelatedOnly = registrationSuggestions.filter(reg => reg.usage_count > 0)
+                          setShowRegistrationSuggestions(subjectRelatedOnly.length > 0)
+                        }
                       }
                     }}
                     onKeyDown={(e) => {
@@ -1441,42 +1897,64 @@ export default function InvoiceCreatePage() {
                     placeholder="登録番号"
                   />
                   {showRegistrationSuggestions && registrationSuggestions.length > 0 && (
-                    <div className="absolute z-20 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-80 overflow-y-auto">
-                      {registrationSuggestions.map((suggestion, index) => (
-                        <button
-                          key={suggestion.id}
-                          type="button"
-                          onClick={() => {
-                            setRegistrationNumber(suggestion.registrationNumber)
-                            setShowRegistrationSuggestions(false)
-                            setSelectedRegistrationIndex(-1)
-                            // 使用回数を増やす
-                            if (registrationDb) {
-                              registrationDb.autoRegisterRegistration(suggestion.registrationNumber)
-                            }
-                          }}
-                          className={`w-full px-3 py-2 text-left first:rounded-t-lg last:rounded-b-lg text-sm border-b border-gray-100 last:border-b-0 ${
-                            index === selectedRegistrationIndex 
-                              ? 'bg-blue-100 text-blue-900' 
-                              : 'hover:bg-blue-50'
-                          }`}
-                        >
-                          <div className="flex justify-between items-start">
-                            <div className="flex-1">
-                              <div className="font-medium">{suggestion.registrationNumber}</div>
-                              {suggestion.description && (
-                                <div className="text-xs text-gray-600 mt-1">{suggestion.description}</div>
-                              )}
+                    <div ref={registrationSuggestionsRef} className="absolute z-20 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-80 overflow-y-auto">
+                      {registrationSuggestions.map((suggestion, index) => {
+                        const isSubjectRelated = suggestion.usage_count > 0
+                        const isPrimary = suggestion.is_primary
+                        return (
+                          <button
+                            key={suggestion.id}
+                            type="button"
+                            onClick={() => {
+                              setRegistrationNumber(suggestion.registrationNumber)
+                              setShowRegistrationSuggestions(false)
+                              setSelectedRegistrationIndex(-1)
+                              // 使用回数を増やす
+                              if (registrationDb) {
+                                registrationDb.autoRegisterRegistration(suggestion.registrationNumber)
+                              }
+                            }}
+                            className={`w-full px-3 py-2 text-left first:rounded-t-lg last:rounded-b-lg text-sm border-b border-gray-100 last:border-b-0 ${
+                              index === selectedRegistrationIndex 
+                                ? 'bg-blue-100 text-blue-900' 
+                                : isSubjectRelated 
+                                  ? 'hover:bg-green-50 bg-green-25' 
+                                  : 'hover:bg-blue-50'
+                            } ${isSubjectRelated ? 'border-l-4 border-l-green-500' : ''}`}
+                          >
+                            <div className="flex justify-between items-start">
+                              <div className="flex-1">
+                                <div className={`font-medium ${isSubjectRelated ? 'text-green-800' : ''}`}>
+                                  {suggestion.registrationNumber}
+                                  {isPrimary && (
+                                    <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                                      プライマリ
+                                    </span>
+                                  )}
+                                </div>
+                                {suggestion.description && (
+                                  <div className="text-xs text-gray-600 mt-1">{suggestion.description}</div>
+                                )}
+                                {isSubjectRelated && (
+                                  <div className="text-xs text-green-600 mt-1">
+                                    📎 選択中の件名に関連
+                                  </div>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-2 text-xs text-gray-500 ml-2">
+                                {suggestion.category && (
+                                  <span className="bg-gray-100 px-2 py-1 rounded">{suggestion.category}</span>
+                                )}
+                                {isSubjectRelated ? (
+                                  <span className="text-green-600 font-medium">使用: {suggestion.usage_count}回</span>
+                                ) : (
+                                  <span>使用: {suggestion.usageCount || 0}回</span>
+                                )}
+                              </div>
                             </div>
-                            <div className="flex items-center gap-2 text-xs text-gray-500 ml-2">
-                              {suggestion.category && (
-                                <span className="bg-gray-100 px-2 py-1 rounded">{suggestion.category}</span>
-                              )}
-                              <span>使用: {suggestion.usageCount}回</span>
-                            </div>
-                          </div>
-                        </button>
-                      ))}
+                          </button>
+                        )
+                      })}
                     </div>
                   )}
                 </div>
@@ -1954,7 +2432,7 @@ export default function InvoiceCreatePage() {
                               value={setPrice}
                               onChange={(e) => {
                                 const value = e.target.value.replace(/[^0-9]/g, '')
-                                setSetPrice(value ? Number(value) : 0)
+                                setSetPrice(value || '')
                               }}
                               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                               placeholder="セット価格を入力してください"
@@ -1975,7 +2453,7 @@ export default function InvoiceCreatePage() {
                         {/* セット明細入力 */}
                         <div className="mb-4">
                           <h4 className="text-sm font-medium text-gray-700 mb-2">セット明細</h4>
-                          <div className="grid grid-cols-1 md:grid-cols-5 gap-3 items-start mb-2">
+                          <div className="grid grid-cols-1 md:grid-cols-6 gap-3 items-start mb-2">
                             <div className="relative">
                               <SimpleLabel>対象</SimpleLabel>
                               <input
@@ -2208,6 +2686,17 @@ export default function InvoiceCreatePage() {
                                 placeholder="その他"
                               />
                             </div>
+                            <div>
+                              <SimpleLabel>数量</SimpleLabel>
+                              <input
+                                type="number"
+                                value={detailQuantity}
+                                onChange={(e) => setDetailQuantity(Number(e.target.value) || 1)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                                placeholder="数量"
+                                min="1"
+                              />
+                            </div>
                             <div className="flex justify-center items-end">
                               <button
                                 type="button"
@@ -2244,7 +2733,7 @@ export default function InvoiceCreatePage() {
                                 <div>{detail.label}</div>
                                 {detail.unitPrice && detail.unitPrice > 0 && (
                                   <div className="text-xs text-blue-600 mt-1">
-                                    ¥{detail.unitPrice.toLocaleString()}
+                                    ¥{(detail.unitPrice || 0).toLocaleString()}
                                   </div>
                                 )}
                               </div>
@@ -2255,7 +2744,7 @@ export default function InvoiceCreatePage() {
                                   setSetDetails(newDetails)
                                   // セット価格を再計算
                                   const newTotalPrice = newDetails.reduce((sum, d) => sum + (d.unitPrice || 0), 0)
-                                  setSetPrice(newTotalPrice)
+                                  setSetPrice(newTotalPrice.toString())
                                 }}
                                 className="text-red-600 hover:text-red-800"
                               >
@@ -2311,10 +2800,10 @@ export default function InvoiceCreatePage() {
                             )}
                             
                             <div className="grid grid-cols-3 gap-4 text-sm text-gray-600">
-                              <div>単価: ¥{item.unit_price.toLocaleString()}</div>
-                              <div>数量: {item.quantity}</div>
+                              <div>単価: ¥{(item.unit_price || 0).toLocaleString()}</div>
+                              <div>数量: {item.quantity || 0}</div>
                               <div className="text-lg font-bold text-blue-600">
-                                金額: ¥{item.amount.toLocaleString()}
+                                金額: ¥{(item.amount || 0).toLocaleString()}
                               </div>
                             </div>
                             
@@ -2387,7 +2876,7 @@ export default function InvoiceCreatePage() {
                 <div className="mt-4 pt-4 border-t border-gray-200">
                   <h3 className="text-sm font-medium text-gray-700 mb-2">平均単価</h3>
                   <p className="text-lg font-semibold text-gray-600">
-                    ¥{Math.round(subtotal / workItems.length).toLocaleString()}
+                    ¥{workItems.length > 0 ? Math.round(subtotal / workItems.length).toLocaleString() : 0}
                   </p>
                 </div>
               )}

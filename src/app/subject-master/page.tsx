@@ -170,6 +170,13 @@ export default function SubjectMasterPage() {
               <ArrowLeft className="h-5 w-5" />
               メニューへ戻る
             </button>
+            <button
+              onClick={() => window.location.href = '/invoice-create'}
+              className="flex items-center gap-2 px-4 py-2 text-blue-600 hover:text-blue-900 hover:bg-blue-50 rounded-lg transition-colors"
+            >
+              <FileText className="h-5 w-5" />
+              請求書作成に戻る
+            </button>
           </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">件名マスタ管理</h1>
           <p className="text-gray-600">請求書の件名とその読み仮名を管理します</p>

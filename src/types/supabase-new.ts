@@ -1180,69 +1180,6 @@ export type Database = {
         }
         Relationships: []
       }
-      user_management: {
-        Row: {
-          id: string
-          google_email: string
-          display_name: string | null
-          status: "pending" | "approved" | "rejected"
-          requested_at: string | null
-          approved_at: string | null
-          approved_by: string | null
-          last_login_at: string | null
-          created_at: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          id?: string
-          google_email: string
-          display_name?: string | null
-          status?: "pending" | "approved" | "rejected"
-          requested_at?: string | null
-          approved_at?: string | null
-          approved_by?: string | null
-          last_login_at?: string | null
-          created_at?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          id?: string
-          google_email?: string
-          display_name?: string | null
-          status?: "pending" | "approved" | "rejected"
-          requested_at?: string | null
-          approved_at?: string | null
-          approved_by?: string | null
-          last_login_at?: string | null
-          created_at?: string | null
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
-      admin_settings: {
-        Row: {
-          id: string
-          setting_key: string
-          setting_value: string
-          created_at: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          id?: string
-          setting_key: string
-          setting_value: string
-          created_at?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          id?: string
-          setting_key?: string
-          setting_value?: string
-          created_at?: string | null
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
     }
     Views: {
       available_actions_by_target: {

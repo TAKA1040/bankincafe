@@ -1,57 +1,176 @@
-[09:11:04.657] Running build in Washington, D.C., USA (East) – iad1
-[09:11:04.657] Build machine configuration: 2 cores, 8 GB
-[09:11:04.673] Cloning github.com/TAKA1040/bankincafe (Branch: main, Commit: 877b345)
-[09:11:05.400] Cloning completed: 727.000ms
-[09:11:05.515] Found .vercelignore
-[09:11:05.536] Removed 32 ignored files defined in .vercelignore
-[09:11:05.537]   /請求書システム画像/invoice_items_transformed - コピー.csv
-[09:11:05.537]   /請求書システム画像/invoices_transformed - コピー.csv
-[09:11:05.538]   /請求書システム画像/TOPメニュー.png
-[09:11:05.538]   /請求書システム画像/スクリーンショット 2025-05-30 152856.png
-[09:11:05.538]   /請求書システム画像/スクリーンショット 2025-05-30 160424.png
-[09:11:05.539]   /請求書システム画像/ページデザイン/customer.page.tsx
-[09:11:05.539]   /請求書システム画像/ページデザイン/invoice.create.page.tsx
-[09:11:05.539]   /請求書システム画像/ページデザイン/invoice.history.page.tsx
-[09:11:05.540]   /請求書システム画像/ページデザイン/invoice.list.page.tsx
-[09:11:05.540]   /請求書システム画像/ページデザイン/main.page.tsx
-[09:11:06.839] Restored build cache from previous deployment (ArgEmpCkBwzvtQrVCMSf5rT7ZY6S)
-[09:11:07.418] Running "vercel build"
-[09:11:07.802] Vercel CLI 47.0.5
-[09:11:08.168] Warning: Detected "engines": { "node": ">=20.0.0" } in your `package.json` that will automatically upgrade when a new major Node.js Version is released. Learn More: http://vercel.link/node-version
-[09:11:08.178] Running "install" command: `npm install`...
-[09:11:10.985] 
-[09:11:10.985] up to date, audited 464 packages in 3s
-[09:11:10.985] 
-[09:11:10.986] 156 packages are looking for funding
-[09:11:10.986]   run `npm fund` for details
-[09:11:11.039] 
-[09:11:11.039] 1 critical severity vulnerability
-[09:11:11.039] 
-[09:11:11.039] To address all issues, run:
-[09:11:11.040]   npm audit fix --force
-[09:11:11.040] 
-[09:11:11.040] Run `npm audit` for details.
-[09:11:11.072] Detected Next.js version: 14.2.18
-[09:11:11.073] Running "npm run build"
-[09:11:11.182] 
-[09:11:11.183] > bankincafe@2.0.0 build
-[09:11:11.183] > next build
-[09:11:11.183] 
-[09:11:11.852]   ▲ Next.js 14.2.18
-[09:11:11.853] 
-[09:11:11.922]    Creating an optimized production build ...
-[09:11:23.577]  ✓ Compiled successfully
-[09:11:23.579]    Linting and checking validity of types ...
-[09:11:39.302] Failed to compile.
-[09:11:39.303] 
-[09:11:39.304] ./src/app/invoice-create/page.tsx:624:58
-[09:11:39.305] Type error: Parameter 'reg' implicitly has an 'any' type.
-[09:11:39.305] 
-[09:11:39.305] [0m [90m 622 |[39m     [90m// 選択された件名に関連する登録番号を検索[39m[0m
-[09:11:39.305] [0m [90m 623 |[39m     [36mconst[39m allRegistrations [33m=[39m registrationDb[33m.[39msearchRegistrations([32m''[39m)[0m
-[09:11:39.306] [0m[31m[1m>[22m[39m[90m 624 |[39m     [36mconst[39m relatedRegistrations [33m=[39m allRegistrations[33m.[39mfilter(reg [33m=>[39m [0m
-[09:11:39.306] [0m [90m     |[39m                                                          [31m[1m^[22m[39m[0m
-[09:11:39.306] [0m [90m 625 |[39m       [90m// 件名との関連性をチェック（この例では件名が部分的に含まれるかチェック）[39m[0m
-[09:11:39.307] [0m [90m 626 |[39m       normalizeText(reg[33m.[39msubjectName [33m||[39m [32m''[39m)[33m.[39mincludes(normalizeText(selectedSubjectName)) [33m||[39m[0m
-[09:11:39.307] [0m [90m 627 |[39m       normalizeText(selectedSubjectName)[33m.[39mincludes(normalizeText(reg[33m.[39msubjectName [33m||[39m [32m''[39m))[0m
-[09:11:39.361] Error: Command "npm run build" exited with 1
+多くの処理をおこなっているので、処理に入る前にプッシュしてください。
+
+プッシュ後に下記の処理に入ってください。
+fetch.js:30  GET https://auwmmosfteomieyexkeh.supabase.co/rest/v1/user_management?select=*&order=requested_at.desc 404 (Not Found)
+eval @ fetch.js:30
+eval @ fetch.js:51
+fulfilled @ fetch.js:11
+Promise.then
+step @ fetch.js:13
+eval @ fetch.js:14
+__awaiter @ fetch.js:10
+eval @ fetch.js:41
+then @ PostgrestBuilder.js:66
+page.tsx:60 Error fetching data: {code: 'PGRST205', details: null, hint: "Perhaps you meant the table 'public.user_preferences'", message: "Could not find the table 'public.user_management' in the schema cache"}
+window.console.error @ app-index.js:33
+console.error @ hydration-error-info.js:63
+fetchData @ page.tsx:60
+await in fetchData
+eval @ page.tsx:33
+commitHookEffectListMount @ react-dom.development.js:21102
+commitHookPassiveMountEffects @ react-dom.development.js:23154
+commitPassiveMountOnFiber @ react-dom.development.js:23259
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23267
+commitPassiveMountEffects @ react-dom.development.js:23225
+flushPassiveEffectsImpl @ react-dom.development.js:26497
+flushPassiveEffects @ react-dom.development.js:26438
+eval @ react-dom.development.js:26172
+workLoop @ scheduler.development.js:256
+flushWork @ scheduler.development.js:225
+performWorkUntilDeadline @ scheduler.development.js:534
+fetch.js:30  GET https://auwmmosfteomieyexkeh.supabase.co/rest/v1/user_management?select=*&order=requested_at.desc 404 (Not Found)
+eval @ fetch.js:30
+eval @ fetch.js:51
+fulfilled @ fetch.js:11
+Promise.then
+step @ fetch.js:13
+eval @ fetch.js:14
+__awaiter @ fetch.js:10
+eval @ fetch.js:41
+then @ PostgrestBuilder.js:66
+page.tsx:60 Error fetching data: {code: 'PGRST205', details: null, hint: "Perhaps you meant the table 'public.user_preferences'", message: "Could not find the table 'public.user_management' in the schema cache"}
+window.console.error @ app-index.js:33
+console.error @ hydration-error-info.js:63
+fetchData @ page.tsx:60
+await in fetchData
+eval @ page.tsx:33
+commitHookEffectListMount @ react-dom.development.js:21102
+invokePassiveEffectMountInDEV @ react-dom.development.js:23980
+invokeEffectsInDev @ react-dom.development.js:26852
+legacyCommitDoubleInvokeEffectsInDEV @ react-dom.development.js:26835
+commitDoubleInvokeEffectsInDEV @ react-dom.development.js:26816
+flushPassiveEffectsImpl @ react-dom.development.js:26514
+flushPassiveEffects @ react-dom.development.js:26438
+eval @ react-dom.development.js:26172
+workLoop @ scheduler.development.js:256
+flushWork @ scheduler.development.js:225
+performWorkUntilDeadline @ scheduler.development.js:534
+
+このプロジェクトのコードにバグや不具合がないかを、徹底的に調査・分析してください。
+
+- UltraThink を使用して深く読み解いてください
+- 現在のUIや機能を削除してエラーを修正することは禁止します。
+- Playwright を用いたUIやUXの挙動テストも検討してください
+- 潜在的なバグ・非推奨コード・改善ポイントもすべて洗い出してください
+- 不具合があれば修正案を提示し、可能なら直接修正してください
+- 修正後のコードについても問題がないか再チェックしてください
+- 最後に、**改善された内容をGitにプッシュし、Vercelへデプロイ**してください
