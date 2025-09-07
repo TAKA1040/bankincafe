@@ -621,7 +621,7 @@ export default function InvoiceCreatePage() {
     
     // 選択された件名に関連する登録番号を検索
     const allRegistrations = registrationDb.searchRegistrations('')
-    const relatedRegistrations = allRegistrations.filter(reg => 
+    const relatedRegistrations = allRegistrations.filter((reg: any) => 
       // 件名との関連性をチェック（この例では件名が部分的に含まれるかチェック）
       normalizeText(reg.subjectName || '').includes(normalizeText(selectedSubjectName)) ||
       normalizeText(selectedSubjectName).includes(normalizeText(reg.subjectName || ''))
@@ -1260,7 +1260,7 @@ export default function InvoiceCreatePage() {
                         console.log('全件名サンプル:', allSubjects.slice(0, 3))
                         
                         const filteredSuggestions = allSubjects
-                          .filter(subject => 
+                          .filter((subject: any) => 
                             normalizeText(subject.subjectName).includes(keyword)
                           )
                           .slice(0, 30) // 30件に制限
@@ -1384,7 +1384,7 @@ export default function InvoiceCreatePage() {
                         const keyword = normalizeText(e.target.value.trim())
                         const allRegistrations = registrationDb.searchRegistrations('')
                         const filteredSuggestions = allRegistrations
-                          .filter(registration => 
+                          .filter((registration: any) => 
                             normalizeText(registration.registrationNumber).includes(keyword) ||
                             normalizeText(registration.subjectName || '').includes(keyword)
                           )

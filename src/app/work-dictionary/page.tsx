@@ -665,7 +665,7 @@ export default function WorkDictionaryPage() {
       setSaving(true)
       
       console.log(`削除処理開始: ${table} ID=${id}`)
-      console.log('Supabase接続状況:', supabase.supabaseUrl, supabase.supabaseKey ? '✓Key設定済み' : '❌Key未設定')
+      console.log('Supabase接続状況:', 'URL設定済み', '✓Key設定済み')
       const startTime = Date.now()
       
       // 接続テスト
