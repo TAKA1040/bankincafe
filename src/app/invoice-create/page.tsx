@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useMemo, useRef } from 'react'
+import React, { useState, useEffect, useMemo, useRef, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { ArrowLeft, Plus, Trash2, Save, Search, Calculator } from 'lucide-react'
 import { useWorkDictionary } from '@/hooks/useWorkDictionary'
@@ -425,7 +425,7 @@ class CustomerCategoryDB {
   }
 }
 
-export default function InvoiceCreatePage() {
+function InvoiceCreateContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const editInvoiceId = searchParams?.get('edit')
@@ -2908,5 +2908,13 @@ export default function InvoiceCreatePage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function InvoiceCreatePage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-gray-50 flex items-center justify-center"><div className="text-center"><p className="text-lg text-gray-600">請求書作成画面を読み込み中...</p></div></div>}>
+      <InvoiceCreateContent />
+    </Suspense>
   )
 }
