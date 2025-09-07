@@ -643,8 +643,25 @@ export default function InvoiceCreatePage() {
     setCustomerCategories(categories)
     
     // 件名・登録番号マスターDB初期化
-    setSubjectDb(new SubjectMasterDB())
-    setRegistrationDb(new RegistrationMasterDB())
+    const subjectDatabase = new SubjectMasterDB()
+    const registrationDatabase = new RegistrationMasterDB()
+    
+    // デバッグ: 件名マスターDBの状態を確認
+    console.log('=== 件名マスターDB状態確認 ===')
+    console.log('件名マスター件数:', subjectDatabase.getSubjects().length)
+    console.log('件名マスターデータ:', subjectDatabase.getSubjects().slice(0, 10)) // 最初の10件を表示
+    console.log('LocalStorage件名キー:', 'bankin_subject_master')
+    if (typeof window !== 'undefined') {
+      const rawData = localStorage.getItem('bankin_subject_master')
+      console.log('LocalStorage生データ:', rawData ? rawData.substring(0, 200) + '...' : 'null')
+    }
+    
+    console.log('=== 登録番号マスターDB状態確認 ===')
+    console.log('登録番号マスター件数:', registrationDatabase.searchRegistrations('').length)
+    console.log('登録番号マスターデータ:', registrationDatabase.searchRegistrations('').slice(0, 5))
+    
+    setSubjectDb(subjectDatabase)
+    setRegistrationDb(registrationDatabase)
     
     // 初期選択したカテゴリーの会社名を設定
     const initialCategory = catDb.getCategoryById('ud')
@@ -1235,11 +1252,22 @@ export default function InvoiceCreatePage() {
                         // あいまい検索の実装
                         const keyword = normalizeText(e.target.value.trim())
                         const allSubjects = subjectDb.searchSubjects('')
+                        
+                        // デバッグ情報
+                        console.log('=== 件名検索デバッグ ===')
+                        console.log('検索キーワード:', e.target.value, '→正規化:', keyword)
+                        console.log('全件名数:', allSubjects.length)
+                        console.log('全件名サンプル:', allSubjects.slice(0, 3))
+                        
                         const filteredSuggestions = allSubjects
                           .filter(subject => 
                             normalizeText(subject.subjectName).includes(keyword)
                           )
                           .slice(0, 30) // 30件に制限
+                        
+                        console.log('フィルター後件数:', filteredSuggestions.length)
+                        console.log('フィルター結果:', filteredSuggestions.slice(0, 5))
+                        
                         setSubjectSuggestions(filteredSuggestions)
                         setShowSubjectSuggestions(filteredSuggestions.length > 0)
                       } else {
