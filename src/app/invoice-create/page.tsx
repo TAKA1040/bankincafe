@@ -604,6 +604,35 @@ export default function InvoiceCreatePage() {
   const [showSubjectSuggestions, setShowSubjectSuggestions] = useState(false)
   const [registrationSuggestions, setRegistrationSuggestions] = useState<any[]>([])
   const [showRegistrationSuggestions, setShowRegistrationSuggestions] = useState(false)
+  const [selectedSubjectIndex, setSelectedSubjectIndex] = useState(-1)
+  const [selectedRegistrationIndex, setSelectedRegistrationIndex] = useState(-1)
+
+  // あいまい検索用の正規化関数
+  const normalizeText = (text: string): string => {
+    return text
+      .toLowerCase() // 大文字小文字統一
+      .replace(/[ァ-ヶ]/g, (match) => String.fromCharCode(match.charCodeAt(0) - 0x60)) // カタカナ→ひらがな
+      .replace(/[Ａ-Ｚａ-ｚ０-９]/g, (match) => String.fromCharCode(match.charCodeAt(0) - 0xFEE0)) // 全角→半角
+  }
+
+  // 件名選択時の登録番号絞り込み機能
+  const handleSubjectSelection = (selectedSubjectName: string) => {
+    if (!registrationDb) return
+    
+    // 選択された件名に関連する登録番号を検索
+    const allRegistrations = registrationDb.searchRegistrations('')
+    const relatedRegistrations = allRegistrations.filter(reg => 
+      // 件名との関連性をチェック（この例では件名が部分的に含まれるかチェック）
+      normalizeText(reg.subjectName || '').includes(normalizeText(selectedSubjectName)) ||
+      normalizeText(selectedSubjectName).includes(normalizeText(reg.subjectName || ''))
+    ).slice(0, 30)
+    
+    // 関連する登録番号が見つかった場合、最初のものを自動選択
+    if (relatedRegistrations.length > 0) {
+      setRegistrationNumber(relatedRegistrations[0].registrationNumber)
+      setRegistrationSuggestions(relatedRegistrations)
+    }
+  }
   
   // クライアントサイドでDBを初期化
   useEffect(() => {
@@ -1201,12 +1230,56 @@ export default function InvoiceCreatePage() {
                     value={subject}
                     onChange={(e) => {
                       setSubject(e.target.value)
+                      setSelectedSubjectIndex(-1)
                       if (subjectDb && e.target.value.trim()) {
-                        const suggestions = subjectDb.searchSubjects(e.target.value)
-                        setSubjectSuggestions(suggestions)
-                        setShowSubjectSuggestions(suggestions.length > 0)
+                        // あいまい検索の実装
+                        const keyword = normalizeText(e.target.value.trim())
+                        const allSubjects = subjectDb.searchSubjects('')
+                        const filteredSuggestions = allSubjects
+                          .filter(subject => 
+                            normalizeText(subject.subjectName).includes(keyword)
+                          )
+                          .slice(0, 30) // 30件に制限
+                        setSubjectSuggestions(filteredSuggestions)
+                        setShowSubjectSuggestions(filteredSuggestions.length > 0)
                       } else {
                         setShowSubjectSuggestions(false)
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      if (!showSubjectSuggestions) return
+                      
+                      switch (e.key) {
+                        case 'ArrowDown':
+                          e.preventDefault()
+                          setSelectedSubjectIndex(prev => 
+                            prev < subjectSuggestions.length - 1 ? prev + 1 : 0
+                          )
+                          break
+                        case 'ArrowUp':
+                          e.preventDefault()
+                          setSelectedSubjectIndex(prev => 
+                            prev > 0 ? prev - 1 : subjectSuggestions.length - 1
+                          )
+                          break
+                        case 'Enter':
+                          e.preventDefault()
+                          if (selectedSubjectIndex >= 0 && selectedSubjectIndex < subjectSuggestions.length) {
+                            const selectedSubject = subjectSuggestions[selectedSubjectIndex]
+                            setSubject(selectedSubject.subjectName)
+                            setShowSubjectSuggestions(false)
+                            setSelectedSubjectIndex(-1)
+                            if (subjectDb) {
+                              subjectDb.autoRegisterSubject(selectedSubject.subjectName)
+                            }
+                            // 件名選択後、登録番号の絞り込み実行
+                            handleSubjectSelection(selectedSubject.subjectName)
+                          }
+                          break
+                        case 'Escape':
+                          setShowSubjectSuggestions(false)
+                          setSelectedSubjectIndex(-1)
+                          break
                       }
                     }}
                     onBlur={() => {
@@ -1230,12 +1303,19 @@ export default function InvoiceCreatePage() {
                           onClick={() => {
                             setSubject(suggestion.subjectName)
                             setShowSubjectSuggestions(false)
+                            setSelectedSubjectIndex(-1)
                             // 使用回数を増やす
                             if (subjectDb) {
                               subjectDb.autoRegisterSubject(suggestion.subjectName)
                             }
+                            // 件名選択後、登録番号の絞り込み実行
+                            handleSubjectSelection(suggestion.subjectName)
                           }}
-                          className="w-full px-3 py-2 text-left hover:bg-blue-50 first:rounded-t-lg last:rounded-b-lg text-sm border-b border-gray-100 last:border-b-0"
+                          className={`w-full px-3 py-2 text-left first:rounded-t-lg last:rounded-b-lg text-sm border-b border-gray-100 last:border-b-0 ${
+                            index === selectedSubjectIndex 
+                              ? 'bg-blue-100 text-blue-900' 
+                              : 'hover:bg-blue-50'
+                          }`}
                         >
                           <div className="flex justify-between items-center">
                             <span className="font-medium">{suggestion.subjectName}</span>
@@ -1270,12 +1350,55 @@ export default function InvoiceCreatePage() {
                     value={registrationNumber}
                     onChange={(e) => {
                       setRegistrationNumber(e.target.value)
+                      setSelectedRegistrationIndex(-1)
                       if (registrationDb && e.target.value.trim()) {
-                        const suggestions = registrationDb.searchRegistrations(e.target.value)
-                        setRegistrationSuggestions(suggestions)
-                        setShowRegistrationSuggestions(suggestions.length > 0)
+                        // あいまい検索の実装
+                        const keyword = normalizeText(e.target.value.trim())
+                        const allRegistrations = registrationDb.searchRegistrations('')
+                        const filteredSuggestions = allRegistrations
+                          .filter(registration => 
+                            normalizeText(registration.registrationNumber).includes(keyword) ||
+                            normalizeText(registration.subjectName || '').includes(keyword)
+                          )
+                          .slice(0, 30) // 30件に制限
+                        setRegistrationSuggestions(filteredSuggestions)
+                        setShowRegistrationSuggestions(filteredSuggestions.length > 0)
                       } else {
                         setShowRegistrationSuggestions(false)
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      if (!showRegistrationSuggestions) return
+                      
+                      switch (e.key) {
+                        case 'ArrowDown':
+                          e.preventDefault()
+                          setSelectedRegistrationIndex(prev => 
+                            prev < registrationSuggestions.length - 1 ? prev + 1 : 0
+                          )
+                          break
+                        case 'ArrowUp':
+                          e.preventDefault()
+                          setSelectedRegistrationIndex(prev => 
+                            prev > 0 ? prev - 1 : registrationSuggestions.length - 1
+                          )
+                          break
+                        case 'Enter':
+                          e.preventDefault()
+                          if (selectedRegistrationIndex >= 0 && selectedRegistrationIndex < registrationSuggestions.length) {
+                            const selectedRegistration = registrationSuggestions[selectedRegistrationIndex]
+                            setRegistrationNumber(selectedRegistration.registrationNumber)
+                            setShowRegistrationSuggestions(false)
+                            setSelectedRegistrationIndex(-1)
+                            if (registrationDb) {
+                              registrationDb.autoRegisterRegistration(selectedRegistration.registrationNumber)
+                            }
+                          }
+                          break
+                        case 'Escape':
+                          setShowRegistrationSuggestions(false)
+                          setSelectedRegistrationIndex(-1)
+                          break
                       }
                     }}
                     onBlur={() => {
@@ -1298,12 +1421,17 @@ export default function InvoiceCreatePage() {
                           onClick={() => {
                             setRegistrationNumber(suggestion.registrationNumber)
                             setShowRegistrationSuggestions(false)
+                            setSelectedRegistrationIndex(-1)
                             // 使用回数を増やす
                             if (registrationDb) {
                               registrationDb.autoRegisterRegistration(suggestion.registrationNumber)
                             }
                           }}
-                          className="w-full px-3 py-2 text-left hover:bg-blue-50 first:rounded-t-lg last:rounded-b-lg text-sm border-b border-gray-100 last:border-b-0"
+                          className={`w-full px-3 py-2 text-left first:rounded-t-lg last:rounded-b-lg text-sm border-b border-gray-100 last:border-b-0 ${
+                            index === selectedRegistrationIndex 
+                              ? 'bg-blue-100 text-blue-900' 
+                              : 'hover:bg-blue-50'
+                          }`}
                         >
                           <div className="flex justify-between items-start">
                             <div className="flex-1">

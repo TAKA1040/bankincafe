@@ -1,17 +1,7 @@
-Vercel TypeScriptエラー修正メモ
+件名のあいまい検索機能がなくなっている
+ひらがなカタカナ大文字小文字を選ばないあいまい検索
+検索結果は30件
+選択画面はカーソルでも移動可
 
-1. React type definitions version mismatch 解決済み
-   - @types/react v19 → v18.3.17に変更
-   - @types/react-dom v18.3.1と整合性確保
-
-2. 修正が必要なTypeScriptエラー一覧:
-   - Navbar.tsx: Button iconプロパティエラー
-   - useProgressiveFilter.ts: name_norm nullチェック必要
-   - useSubjectMaster.ts: canonical_name型定義の不整合
-   - useWorkDictionary.ts: nullチェックと型アサーション
-
-3. 修正戦略:
-   - ローカルで全エラーを一括修正
-   - npm run type-check で全件チェック
-   - 修正完了後に一括コミット&プッシュ
-   - Vercel 3分待ちを1回だけにする効率化
+件名に連動した登録番号の絞り込み機能
+こちらもカーソルで移動可
