@@ -10,7 +10,7 @@ interface UserManagement {
   google_email: string
   display_name: string | null
   status: 'pending' | 'approved' | 'rejected'
-  requested_at: string
+  requested_at: string | null
   approved_at: string | null
   last_login_at: string | null
 }
@@ -268,7 +268,7 @@ export default function AdminSettingsPage() {
                         </div>
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-600">
-                        {new Date(user.requested_at).toLocaleString('ja-JP')}
+                        {user.requested_at ? new Date(user.requested_at).toLocaleString('ja-JP') : '未設定'}
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-600">
                         {user.last_login_at 

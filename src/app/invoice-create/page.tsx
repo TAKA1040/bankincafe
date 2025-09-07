@@ -428,7 +428,7 @@ class CustomerCategoryDB {
 export default function InvoiceCreatePage() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const editInvoiceId = searchParams.get('edit')
+  const editInvoiceId = searchParams?.get('edit')
   const isEditMode = !!editInvoiceId
   
   const [db, setDb] = useState<WorkHistoryDB | null>(null)
@@ -940,14 +940,14 @@ export default function InvoiceCreatePage() {
             const items: WorkItem[] = lineItems.map((item, index) => ({
               id: index + 1,
               type: item.task_type === 'セット作業' ? 'set' : 'individual',
-              target: item.target || '',
-              action: item.action || '',
+              work_name: `${item.target || ''}${item.action || ''}${item.position ? ` (${item.position})` : ''}`,
               position: item.position || '',
-              unitPrice: Number(item.unit_price || 0),
+              unit_price: Number(item.unit_price || 0),
               quantity: Number(item.quantity || 1),
               amount: Number(item.amount || 0),
               memo: item.raw_label || '',
-              performedAt: item.performed_at || new Date().toISOString().split('T')[0]
+              set_details: [],
+              detail_positions: []
             }))
             setWorkItems(items)
           }
