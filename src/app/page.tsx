@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { FileText, Users, Search, Clock, BarChart3, Plus, Calculator, TrendingUp, Settings, Hash, BookOpen, Edit3, Building2, Tag, Shield } from 'lucide-react'
+import { FileText, Users, Search, Clock, BarChart3, Plus, Calculator, TrendingUp, Settings, Hash, BookOpen, Building2, Tag, Shield } from 'lucide-react'
 
 export default function HomePage() {
   const router = useRouter()
@@ -107,15 +107,6 @@ export default function HomePage() {
       category: 'settings'
     },
     {
-      title: '作業項目入力',
-      description: 'プログレッシブフィルタによる作業入力',
-      icon: Edit3,
-      path: '/work-entry/prototype2',
-      color: 'bg-cyan-600 hover:bg-cyan-700 shadow-lg',
-      textColor: 'text-white',
-      category: 'primary'
-    },
-    {
       title: '管理者設定',
       description: 'ユーザー管理・システム設定・Google認証',
       icon: Shield,
@@ -141,7 +132,7 @@ export default function HomePage() {
             Bankincafe
           </h1>
           <p className="text-gray-600 text-lg mb-2">請求書管理システム</p>
-          <p className="text-gray-500 text-sm">全9つの機能で請求書業務を効率化</p>
+          <p className="text-gray-500 text-sm">統合された機能で請求書業務を効率化</p>
         </header>
 
         {/* メインメニュー */}
