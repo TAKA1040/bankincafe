@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { FileText, Users, Search, Clock, BarChart3, Plus, Calculator, TrendingUp, Settings, Hash, BookOpen, Building2, Tag, Shield } from 'lucide-react'
+import { FileText, Users, Search, Clock, BarChart3, Plus, Calculator, TrendingUp, Settings, Hash, BookOpen, Building2, Tag, Shield, Send } from 'lucide-react'
 
 export default function HomePage() {
   const router = useRouter()
@@ -22,6 +22,15 @@ export default function HomePage() {
       icon: FileText,
       path: '/invoice-list',
       color: 'bg-emerald-600 hover:bg-emerald-700 shadow-lg',
+      textColor: 'text-white',
+      category: 'primary'
+    },
+    {
+      title: '請求書発行',
+      description: '印刷・メール・PDF作成',
+      icon: Send,
+      path: '/invoice-publish',
+      color: 'bg-orange-600 hover:bg-orange-700 shadow-lg',
       textColor: 'text-white',
       category: 'primary'
     },
@@ -142,7 +151,7 @@ export default function HomePage() {
             <h2 className="text-xl font-bold text-gray-800 mb-4 text-center">
               🚀 基本機能
             </h2>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-3 gap-3">
               {primaryItems.map((item) => {
                 const Icon = item.icon
                 return (

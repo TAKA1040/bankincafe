@@ -10,10 +10,34 @@ export function useAuth() {
   const supabase = createClient()
 
   useEffect(() => {
+    const checkAndSetUser = async (user: AuthUser | null) => {
+      if (!user) {
+        setUser(null)
+        return
+      }
+      
+      const allowedEmails = process.env.NEXT_PUBLIC_ALLOWED_EMAILS?.split(',').map(email => email.trim()) || []
+      // 本番環境でのみ認証チェックログを出力
+      if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
+        console.log('認証チェック:', {
+          userEmail: user.email?.substring(0, 3) + '***', // メールアドレスを一部隠す
+          isAllowed: user.email ? allowedEmails.includes(user.email) : false
+        })
+      }
+      
+      if (user.email && !allowedEmails.includes(user.email)) {
+        console.log('許可されていないアカウントです。サインアウトします。')
+        await supabase.auth.signOut()
+        setUser(null)
+      } else {
+        setUser(user)
+      }
+    }
+
     const getUser = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser()
-        setUser(user as AuthUser)
+        await checkAndSetUser(user as AuthUser)
       } catch (error) {
         if (process.env.NODE_ENV === 'development') {
           console.error('Auth error:', error)
@@ -26,8 +50,9 @@ export function useAuth() {
     getUser()
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setUser(session?.user as AuthUser ?? null)
+      async (event, session) => {
+        const user = session?.user as AuthUser ?? null
+        await checkAndSetUser(user)
         setLoading(false)
       }
     )
@@ -39,10 +64,10 @@ export function useAuth() {
     await supabase.auth.signOut()
   }
 
-  const isAdmin = user?.email && (
-    process.env.NODE_ENV === 'development' || 
-    process.env.NEXT_PUBLIC_ALLOWED_EMAILS?.split(',').map(email => email.trim()).includes(user.email)
-  ) || false
+  const isAdmin = user?.email ? 
+    (process.env.NEXT_PUBLIC_ALLOWED_EMAILS?.split(',').map(email => email.trim()).includes(user.email) || false)
+    : false
+
 
   return {
     user,

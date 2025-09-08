@@ -2,10 +2,17 @@
 
 import React from 'react'
 import { useRouter } from 'next/navigation'
-import { Clock, Mail, ArrowLeft, Shield } from 'lucide-react'
+import { Clock, Mail, ArrowLeft, Shield, LogOut } from 'lucide-react'
+import { useAuth } from '@/hooks/useAuth'
 
 export default function PendingApprovalPage() {
   const router = useRouter()
+  const { signOut, user } = useAuth()
+
+  const handleSignOut = async () => {
+    await signOut()
+    router.push('/login')
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
@@ -24,10 +31,20 @@ export default function PendingApprovalPage() {
           </h1>
 
           {/* メッセージ */}
-          <p className="text-gray-600 mb-6 leading-relaxed">
+          <p className="text-gray-600 mb-2 leading-relaxed">
             ご利用いただきありがとうございます。<br />
             あなたのアカウントは現在、管理者の承認待ち状態です。
           </p>
+          
+          {/* ユーザー情報 */}
+          {user?.email && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-6">
+              <p className="text-sm text-blue-800">
+                <strong>ログイン中のアカウント:</strong><br />
+                {user.email}
+              </p>
+            </div>
+          )}
 
           {/* 詳細情報 */}
           <div className="bg-gray-50 rounded-lg p-4 mb-6">
@@ -82,11 +99,19 @@ export default function PendingApprovalPage() {
             </button>
             
             <button
-              onClick={() => router.push('/')}
+              onClick={handleSignOut}
+              className="w-full px-4 py-3 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center gap-2"
+            >
+              <LogOut className="w-4 h-4" />
+              サインアウトして別のアカウントでログイン
+            </button>
+            
+            <button
+              onClick={() => router.push('/login')}
               className="w-full px-4 py-3 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
             >
               <ArrowLeft className="w-4 h-4" />
-              トップページに戻る
+              ログイン画面に戻る
             </button>
           </div>
 

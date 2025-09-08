@@ -15,23 +15,14 @@ export default function SecurityWrapper({ children, redirectTo = '/login' }: Sec
   const router = useRouter()
 
   useEffect(() => {
-    // 開発モードでは認証をバイパス
-    if (process.env.NODE_ENV === 'development') {
-      return
-    }
-    
     if (!loading && !user) {
       router.push(redirectTo)
     } else if (!loading && user && !isAdmin) {
-      // 管理者権限なしのユーザー
-      router.push('/auth/auth-code-error')
+      // 管理者権限なしのユーザーは強制サインアウト
+      console.log('許可されていないアカウントです:', user.email)
+      router.push('/auth/pending')
     }
   }, [user, loading, isAdmin, router, redirectTo])
-
-  // 開発モードでは認証をバイパス
-  if (process.env.NODE_ENV === 'development') {
-    return <>{children}</>
-  }
 
   if (loading) {
     return (
