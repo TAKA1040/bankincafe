@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
-import { Settings, Plus, Trash2, Edit2, Save, X, ArrowLeft, ArrowUp, ArrowDown } from 'lucide-react'
+import { Settings, Plus, Trash2, Edit2, Save, X, ArrowLeft, ArrowUp, ArrowDown, Home } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import type { Target, Action, Position, ReadingMapping, TargetAction, ActionPosition, PriceSuggestion } from '@/hooks/useWorkDictionary'
 
@@ -979,10 +979,10 @@ export default function WorkDictionaryPage() {
             <div className="flex items-center gap-4">
               <button
                 onClick={() => router.push('/')}
-                className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 flex items-center gap-2"
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
               >
-                <ArrowLeft size={20} />
-                メニューに戻る
+                <Home size={20} />
+                メニューへ
               </button>
               <div className="flex items-center gap-2">
                 <Settings size={24} className="text-blue-600" />

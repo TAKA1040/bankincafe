@@ -2,42 +2,30 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Save, Building2, Phone, Mail, MapPin, FileText, User, CreditCard } from 'lucide-react'
+import { ArrowLeft, Save, Building2, Home } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Separator } from '@/components/ui/separator'
 import { useToast } from '@/hooks/use-toast'
+import { supabase } from '@/lib/supabase'
 
 interface CompanyInfo {
-  // 基本情報
   companyName: string
   companyNameKana: string
   representativeName: string
-  
-  // 住所情報
   postalCode: string
   prefecture: string
   city: string
   address: string
   buildingName: string
-  
-  // 連絡先情報
   phoneNumber: string
   faxNumber: string
   mobileNumber: string
   email: string
   website: string
-  
-  // 事業情報
-  businessType: string
-  establishedDate: string
-  capital: string
   fiscalYearEndMonth: string
-  
-  // 税務・請求情報
   taxRegistrationNumber: string
   invoiceRegistrationNumber: string
   bankName: string
@@ -45,8 +33,6 @@ interface CompanyInfo {
   accountType: string
   accountNumber: string
   accountHolder: string
-  
-  // その他
   remarks: string
 }
 
@@ -64,9 +50,6 @@ const defaultCompanyInfo: CompanyInfo = {
   mobileNumber: '',
   email: '',
   website: '',
-  businessType: '',
-  establishedDate: '',
-  capital: '',
   fiscalYearEndMonth: '3',
   taxRegistrationNumber: '',
   invoiceRegistrationNumber: '',
@@ -78,41 +61,68 @@ const defaultCompanyInfo: CompanyInfo = {
   remarks: ''
 }
 
-// 会社情報管理クラス
-class CompanyInfoDB {
-  private readonly STORAGE_KEY = 'bankin_company_info'
-
-  getCompanyInfo(): CompanyInfo {
-    try {
-      const stored = localStorage.getItem(this.STORAGE_KEY)
-      return stored ? { ...defaultCompanyInfo, ...JSON.parse(stored) } : defaultCompanyInfo
-    } catch {
-      return defaultCompanyInfo
-    }
-  }
-
-  saveCompanyInfo(companyInfo: CompanyInfo): void {
-    try {
-      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(companyInfo))
-    } catch (error) {
-      console.error('Failed to save company info:', error)
-      throw new Error('会社情報の保存に失敗しました')
-    }
-  }
-}
-
-const companyInfoDB = new CompanyInfoDB()
-
 export default function CompanySettingsPage() {
   const router = useRouter()
   const { toast } = useToast()
   const [companyInfo, setCompanyInfo] = useState<CompanyInfo>(defaultCompanyInfo)
-  const [isLoading, setSaving] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
-    const savedInfo = companyInfoDB.getCompanyInfo()
-    setCompanyInfo(savedInfo)
+    loadCompanyInfo()
   }, [])
+
+  const loadCompanyInfo = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      const userId = user?.id || '00000000-0000-0000-0000-000000000000'
+      
+      console.log('データ読み込み開始 - ユーザーID:', userId)
+
+      const { data, error } = await (supabase as any)
+        .from('company_info')
+        .select('*')
+        .eq('user_id', userId)
+        .single()
+
+      if (error) {
+        if (error.code !== 'PGRST116') {
+          console.error('データ読み込みエラー:', error)
+        } else {
+          console.log('会社情報データが見つかりません')
+        }
+        return
+      }
+
+      console.log('読み込み成功:', data)
+
+      setCompanyInfo({
+        companyName: data.company_name || '',
+        companyNameKana: data.company_name_kana || '',
+        representativeName: data.representative_name || '',
+        postalCode: data.postal_code || '',
+        prefecture: data.prefecture || '',
+        city: data.city || '',
+        address: data.address || '',
+        buildingName: data.building_name || '',
+        phoneNumber: data.phone_number || '',
+        faxNumber: data.fax_number || '',
+        mobileNumber: data.mobile_number || '',
+        email: data.email || '',
+        website: data.website || '',
+        fiscalYearEndMonth: data.fiscal_year_end_month || '3',
+        taxRegistrationNumber: data.tax_registration_number || '',
+        invoiceRegistrationNumber: data.invoice_registration_number || '',
+        bankName: data.bank_name || '',
+        bankBranch: data.bank_branch || '',
+        accountType: data.account_type || '普通',
+        accountNumber: data.account_number || '',
+        accountHolder: data.account_holder || '',
+        remarks: data.remarks || ''
+      })
+    } catch (error) {
+      console.error('会社情報読み込みエラー:', error)
+    }
+  }
 
   const handleInputChange = (field: keyof CompanyInfo, value: string) => {
     setCompanyInfo(prev => ({
@@ -122,21 +132,75 @@ export default function CompanySettingsPage() {
   }
 
   const handleSave = async () => {
-    setSaving(true)
+    setIsLoading(true)
     try {
-      companyInfoDB.saveCompanyInfo(companyInfo)
+      console.log('保存開始...')
+      const { data: { user }, error: authError } = await supabase.auth.getUser()
+      console.log('認証情報:', { user: user?.id, authError })
+      
+      const userId = user?.id || '00000000-0000-0000-0000-000000000000'
+      console.log('使用するユーザーID:', userId)
+
+      const dbData = {
+        user_id: userId,
+        company_name: companyInfo.companyName,
+        company_name_kana: companyInfo.companyNameKana,
+        representative_name: companyInfo.representativeName,
+        postal_code: companyInfo.postalCode,
+        prefecture: companyInfo.prefecture,
+        city: companyInfo.city,
+        address: companyInfo.address,
+        building_name: companyInfo.buildingName,
+        phone_number: companyInfo.phoneNumber,
+        fax_number: companyInfo.faxNumber,
+        mobile_number: companyInfo.mobileNumber,
+        email: companyInfo.email,
+        website: companyInfo.website,
+        fiscal_year_end_month: companyInfo.fiscalYearEndMonth,
+        tax_registration_number: companyInfo.taxRegistrationNumber,
+        invoice_registration_number: companyInfo.invoiceRegistrationNumber,
+        bank_name: companyInfo.bankName,
+        bank_branch: companyInfo.bankBranch,
+        account_type: companyInfo.accountType,
+        account_number: companyInfo.accountNumber,
+        account_holder: companyInfo.accountHolder,
+        remarks: companyInfo.remarks
+      }
+      
+      console.log('データベースに送信するデータ:', dbData)
+
+      const { data: result, error } = await (supabase as any)
+        .from('company_info')
+        .upsert(dbData)
+        
+      console.log('データベース応答:', { result, error })
+
+      if (error) {
+        throw error
+      }
+
       toast({
         title: "保存完了",
         description: "会社情報が正常に保存されました。",
       })
-    } catch (error) {
+      
+      // 保存後にデータを再読み込み
+      await loadCompanyInfo()
+    } catch (error: any) {
+      console.error('保存エラー詳細:', {
+        error,
+        message: error?.message,
+        code: error?.code,
+        details: error?.details,
+        hint: error?.hint
+      })
       toast({
         title: "保存エラー",
-        description: "会社情報の保存に失敗しました。",
+        description: `会社情報の保存に失敗しました。エラー: ${error?.message || 'Unknown error'}`,
         variant: "destructive"
       })
     } finally {
-      setSaving(false)
+      setIsLoading(false)
     }
   }
 
@@ -145,15 +209,26 @@ export default function CompanySettingsPage() {
       {/* ヘッダー */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => router.push('/')}
-            className="gap-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            戻る
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => router.back()}
+              className="gap-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              戻る
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => router.push('/')}
+              className="gap-2"
+            >
+              <Home className="h-4 w-4" />
+              メニューへ
+            </Button>
+          </div>
           <div className="flex items-center gap-2">
             <Building2 className="h-6 w-6" />
             <h1 className="text-2xl font-bold">会社情報設定</h1>
@@ -182,7 +257,7 @@ export default function CompanySettingsPage() {
               <Label htmlFor="companyName">会社名 *</Label>
               <Input
                 id="companyName"
-                placeholder="株式会社〇〇"
+                placeholder="例：株式会社〇〇"
                 value={companyInfo.companyName}
                 onChange={(e) => handleInputChange('companyName', e.target.value)}
               />
@@ -191,47 +266,20 @@ export default function CompanySettingsPage() {
               <Label htmlFor="companyNameKana">会社名（フリガナ）</Label>
               <Input
                 id="companyNameKana"
-                placeholder="カブシキガイシャ○○"
+                placeholder="例：カブシキガイシャ○○"
                 value={companyInfo.companyNameKana}
                 onChange={(e) => handleInputChange('companyNameKana', e.target.value)}
               />
             </div>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="representativeName">代表者名</Label>
-            <Input
-              id="representativeName"
-              placeholder="代表取締役 山田太郎"
-              value={companyInfo.representativeName}
-              onChange={(e) => handleInputChange('representativeName', e.target.value)}
-            />
-          </div>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="businessType">事業内容</Label>
+            <div className="md:col-span-3 space-y-2">
+              <Label htmlFor="representativeName">代表者名</Label>
               <Input
-                id="businessType"
-                placeholder="自動車整備業"
-                value={companyInfo.businessType}
-                onChange={(e) => handleInputChange('businessType', e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="establishedDate">設立年月日</Label>
-              <Input
-                id="establishedDate"
-                type="date"
-                value={companyInfo.establishedDate}
-                onChange={(e) => handleInputChange('establishedDate', e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="capital">資本金</Label>
-              <Input
-                id="capital"
-                placeholder="1,000万円"
-                value={companyInfo.capital}
-                onChange={(e) => handleInputChange('capital', e.target.value)}
+                id="representativeName"
+                placeholder="例：代表取締役 山田太郎"
+                value={companyInfo.representativeName}
+                onChange={(e) => handleInputChange('representativeName', e.target.value)}
               />
             </div>
             <div className="space-y-2">
@@ -263,10 +311,7 @@ export default function CompanySettingsPage() {
       {/* 住所情報 */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <MapPin className="h-5 w-5" />
-            住所情報
-          </CardTitle>
+          <CardTitle>住所情報</CardTitle>
           <CardDescription>
             請求書の送付先として使用される会社住所を設定してください
           </CardDescription>
@@ -301,23 +346,25 @@ export default function CompanySettingsPage() {
               />
             </div>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="address">住所 *</Label>
-            <Input
-              id="address"
-              placeholder="赤坂1-2-3"
-              value={companyInfo.address}
-              onChange={(e) => handleInputChange('address', e.target.value)}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="buildingName">建物名・部屋番号</Label>
-            <Input
-              id="buildingName"
-              placeholder="○○ビル 4階"
-              value={companyInfo.buildingName}
-              onChange={(e) => handleInputChange('buildingName', e.target.value)}
-            />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="address">住所 *</Label>
+              <Input
+                id="address"
+                placeholder="赤坂1-2-3"
+                value={companyInfo.address}
+                onChange={(e) => handleInputChange('address', e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="buildingName">建物名・部屋番号</Label>
+              <Input
+                id="buildingName"
+                placeholder="○○ビル 4階"
+                value={companyInfo.buildingName}
+                onChange={(e) => handleInputChange('buildingName', e.target.value)}
+              />
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -325,10 +372,7 @@ export default function CompanySettingsPage() {
       {/* 連絡先情報 */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Phone className="h-5 w-5" />
-            連絡先情報
-          </CardTitle>
+          <CardTitle>連絡先情報</CardTitle>
           <CardDescription>
             請求書やお客様との連絡に使用する連絡先情報を設定してください
           </CardDescription>
@@ -390,10 +434,7 @@ export default function CompanySettingsPage() {
       {/* 税務・請求情報 */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <FileText className="h-5 w-5" />
-            税務・請求情報
-          </CardTitle>
+          <CardTitle>税務・請求情報</CardTitle>
           <CardDescription>
             適格請求書（インボイス）発行に必要な税務情報を設定してください
           </CardDescription>
@@ -425,10 +466,7 @@ export default function CompanySettingsPage() {
       {/* 銀行口座情報 */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <CreditCard className="h-5 w-5" />
-            銀行口座情報
-          </CardTitle>
+          <CardTitle>銀行口座情報</CardTitle>
           <CardDescription>
             請求書に記載する振込先口座情報を設定してください
           </CardDescription>
@@ -491,10 +529,7 @@ export default function CompanySettingsPage() {
       {/* その他・備考 */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <User className="h-5 w-5" />
-            その他・備考
-          </CardTitle>
+          <CardTitle>その他・備考</CardTitle>
           <CardDescription>
             その他の情報や特記事項を記載してください
           </CardDescription>

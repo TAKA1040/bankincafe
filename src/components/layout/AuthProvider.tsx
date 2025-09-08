@@ -14,7 +14,7 @@ export default function AuthProvider({ children }: AuthProviderProps) {
   const pathname = usePathname()
   
   // 認証不要なページの場合は認証チェックをスキップ
-  if (PUBLIC_PATHS.includes(pathname)) {
+  if (pathname && PUBLIC_PATHS.includes(pathname)) {
     return <>{children}</>
   }
   

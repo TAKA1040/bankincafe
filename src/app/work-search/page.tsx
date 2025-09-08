@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Search, Download, BarChart3, X } from 'lucide-react'
+import { ArrowLeft, Search, Download, BarChart3, X, Home } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import type { Database } from '@/types/supabase'
 import { CustomerCategoryDB, CustomerCategory } from '@/lib/customer-categories'
@@ -503,7 +503,7 @@ export default function WorkSearchPage() {
             </div>
             <div className="flex gap-2">
               <button onClick={handleExportCSV} className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2"><Download size={20} />CSV出力</button>
-              <button onClick={() => router.push('/')} className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 flex items-center gap-2"><ArrowLeft size={20} />戻る</button>
+              <button onClick={() => router.push('/')} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"><Home size={20} />メニューへ</button>
             </div>
           </div>
         </header>

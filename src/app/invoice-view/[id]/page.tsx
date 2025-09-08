@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Edit, Download, Trash2, RotateCcw, FileText, Calendar, User, Hash, Building2, Phone } from 'lucide-react';
+import { ArrowLeft, Edit, Download, Trash2, RotateCcw, FileText, Calendar, User, Hash, Building2, Phone, Printer } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import type { InvoiceWithItems } from '@/hooks/useInvoiceList';
 
@@ -197,10 +197,10 @@ export default function InvoiceViewPage({ params }: PageProps) {
               <p className="mt-2 text-red-700">{error}</p>
               <div className="mt-4">
                 <button
-                  onClick={() => router.push('/invoice-list')}
+                  onClick={() => router.back()}
                   className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700"
                 >
-                  一覧に戻る
+                  戻る
                 </button>
               </div>
             </div>
@@ -219,10 +219,10 @@ export default function InvoiceViewPage({ params }: PageProps) {
           <p className="mt-1 text-gray-500">指定された請求書は存在しないか、削除されています。</p>
           <div className="mt-6">
             <button
-              onClick={() => router.push('/invoice-list')}
+              onClick={() => router.back()}
               className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
             >
-              一覧に戻る
+              戻る
             </button>
           </div>
         </div>
@@ -236,7 +236,7 @@ export default function InvoiceViewPage({ params }: PageProps) {
       <div className="flex justify-between items-start mb-8">
         <div className="flex items-center gap-4">
           <button
-            onClick={() => router.push('/invoice-list')}
+            onClick={() => router.back()}
             className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -254,7 +254,17 @@ export default function InvoiceViewPage({ params }: PageProps) {
             <Edit className="w-4 h-4" />
             編集
           </button>
-          <button className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 flex items-center gap-2">
+          <button
+            onClick={() => router.push(`/invoice-print/${invoice.invoice_id}`)}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2"
+          >
+            <Printer className="w-4 h-4" />
+            印刷
+          </button>
+          <button
+            onClick={() => router.push(`/invoice-print/${invoice.invoice_id}`)}
+            className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 flex items-center gap-2"
+          >
             <Download className="w-4 h-4" />
             PDF出力
           </button>

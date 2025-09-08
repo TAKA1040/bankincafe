@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Plus, Edit2, Trash2, Save, X, GripVertical, ChevronUp, ChevronDown } from 'lucide-react'
+import { ArrowLeft, Plus, Edit2, Trash2, Save, X, GripVertical, ChevronUp, ChevronDown, RotateCcw, Home } from 'lucide-react'
 
 import { CustomerCategory, CustomerCategoryDB } from '@/lib/customer-categories'
 
@@ -16,14 +16,28 @@ export default function CustomerSettingsPage() {
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
 
   useEffect(() => {
-    setCategories(db.getCategories())
+    console.log('=== CustomerSettings初期化 ===')
+    console.log('localStorage確認:', localStorage.getItem('bankin_customer_categories'))
+    const initialCategories = db.getCategories()
+    console.log('初期カテゴリー一覧:', initialCategories)
+    setCategories(initialCategories)
   }, [db])
 
   const handleSaveEdit = (id: string, name: string, companyName: string) => {
+    console.log('=== 編集保存実行 ===', { id, name, companyName })
+    
     if (name.trim() && companyName.trim()) {
+      console.log('編集前のカテゴリー一覧:', db.getCategories())
+      
       db.updateCategory(id, { name: name.trim(), companyName: companyName.trim() })
-      setCategories(db.getCategories())
+      
+      const updatedCategories = db.getCategories()
+      console.log('編集後のカテゴリー一覧:', updatedCategories)
+      
+      setCategories(updatedCategories)
       setEditingId(null)
+    } else {
+      console.log('編集保存失敗: 必須項目が空です')
     }
   }
 
@@ -43,6 +57,24 @@ export default function CustomerSettingsPage() {
     if (confirm('この顧客カテゴリーを削除してもよろしいですか？')) {
       db.deleteCategory(id)
       setCategories(db.getCategories())
+    }
+  }
+
+  const handleResetToDefaults = () => {
+    if (confirm('顧客カテゴリーをデフォルト状態にリセットしますか？\n※カスタム追加したカテゴリーは削除されます')) {
+      console.log('=== リセット実行 ===')
+      console.log('リセット前localStorage:', localStorage.getItem('bankin_customer_categories'))
+      
+      db.resetToDefaults()
+      
+      console.log('リセット後localStorage:', localStorage.getItem('bankin_customer_categories'))
+      
+      const resetCategories = db.getCategories()
+      console.log('リセット後カテゴリー:', resetCategories)
+      
+      setCategories(resetCategories)
+      setEditingId(null)
+      setShowAddForm(false)
     }
   }
 
@@ -81,7 +113,6 @@ export default function CustomerSettingsPage() {
     setDraggedIndex(null)
   }
 
-  const handleBack = () => router.push('/invoice-create')
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -102,11 +133,25 @@ export default function CustomerSettingsPage() {
                 新規追加
               </button>
               <button
-                onClick={handleBack}
+                onClick={handleResetToDefaults}
+                className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 flex items-center gap-2"
+              >
+                <RotateCcw size={20} />
+                リセット
+              </button>
+              <button
+                onClick={() => router.back()}
                 className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 flex items-center gap-2"
               >
                 <ArrowLeft size={20} />
                 戻る
+              </button>
+              <button
+                onClick={() => router.push('/')}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+              >
+                <Home size={20} />
+                メニューへ
               </button>
             </div>
           </div>
@@ -239,10 +284,7 @@ export default function CustomerSettingsPage() {
                         <input
                           type="text"
                           defaultValue={category.name}
-                          onBlur={(e) => {
-                            const companyInput = document.querySelector(`input[data-company-for="${category.id}"]`) as HTMLInputElement
-                            handleSaveEdit(category.id, e.target.value, companyInput?.value || category.companyName)
-                          }}
+                          data-name-for={category.id}
                           className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
                         />
                       ) : (
@@ -274,7 +316,14 @@ export default function CustomerSettingsPage() {
                       <div className="flex justify-center gap-2">
                         {editingId === category.id ? (
                           <button
-                            onClick={() => setEditingId(null)}
+                            onClick={() => {
+                              console.log('=== 保存ボタンクリック ===', category.id)
+                              const nameInput = document.querySelector(`input[data-name-for="${category.id}"]`) as HTMLInputElement
+                              const companyInput = document.querySelector(`input[data-company-for="${category.id}"]`) as HTMLInputElement
+                              if (nameInput && companyInput) {
+                                handleSaveEdit(category.id, nameInput.value, companyInput.value)
+                              }
+                            }}
                             className="p-1 text-green-600 hover:bg-green-50 rounded"
                             title="保存"
                           >
@@ -282,7 +331,10 @@ export default function CustomerSettingsPage() {
                           </button>
                         ) : (
                           <button
-                            onClick={() => setEditingId(category.id)}
+                            onClick={() => {
+                              console.log('=== 編集ボタンクリック ===', category.id)
+                              setEditingId(category.id)
+                            }}
                             className="p-1 text-blue-600 hover:bg-blue-50 rounded"
                             title="編集"
                           >

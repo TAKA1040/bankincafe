@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect, Fragment } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, BarChart3, Download, TrendingUp, Calendar, DollarSign, RefreshCw, Banknote } from 'lucide-react'
+import { ArrowLeft, BarChart3, Download, TrendingUp, Calendar, DollarSign, RefreshCw, Banknote, Home } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 import { useSalesData } from '@/hooks/useSalesData'
 import { supabase } from '@/lib/supabase'
@@ -266,12 +266,12 @@ export default function SalesManagementPage() {
                 CSV出力
               </button>
               <button
-                aria-label="戻る"
+                aria-label="メニューへ"
                 onClick={handleBack}
-                className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 flex items-center gap-2"
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
               >
-                <ArrowLeft size={20} />
-                戻る
+                <Home size={20} />
+                メニューへ
               </button>
             </div>
 
@@ -286,12 +286,12 @@ export default function SalesManagementPage() {
                 CSV
               </button>
               <button
-                aria-label="戻る"
+                aria-label="メニューへ"
                 onClick={handleBack}
-                className="px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 flex items-center gap-1 text-sm font-medium"
+                className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-1 text-sm font-medium"
               >
-                <ArrowLeft size={18} />
-                戻る
+                <Home size={18} />
+                メニューへ
               </button>
             </div>
           </div>
