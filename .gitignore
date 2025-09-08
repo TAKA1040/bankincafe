@@ -111,3 +111,7 @@ database_import_guide.md
 reports/
 docs/作業ログ.md
 docs/変換ルール.md
+
+# Archive folder containing sensitive business/accounting data and unused pages
+archive/
+FILE_ORGANIZATION_LOG.md

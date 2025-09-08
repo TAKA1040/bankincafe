@@ -1,176 +1,27 @@
-多くの処理をおこなっているので、処理に入る前にプッシュしてください。
+請求書発行画面の作成
+ここでは、下書きの請求書を完成させる、または完成させた請求書を印刷したり、メールで送ったりするための画面です。
 
-プッシュ後に下記の処理に入ってください。
-fetch.js:30  GET https://auwmmosfteomieyexkeh.supabase.co/rest/v1/user_management?select=*&order=requested_at.desc 404 (Not Found)
-eval @ fetch.js:30
-eval @ fetch.js:51
-fulfilled @ fetch.js:11
-Promise.then
-step @ fetch.js:13
-eval @ fetch.js:14
-__awaiter @ fetch.js:10
-eval @ fetch.js:41
-then @ PostgrestBuilder.js:66
-page.tsx:60 Error fetching data: {code: 'PGRST205', details: null, hint: "Perhaps you meant the table 'public.user_preferences'", message: "Could not find the table 'public.user_management' in the schema cache"}
-window.console.error @ app-index.js:33
-console.error @ hydration-error-info.js:63
-fetchData @ page.tsx:60
-await in fetchData
-eval @ page.tsx:33
-commitHookEffectListMount @ react-dom.development.js:21102
-commitHookPassiveMountEffects @ react-dom.development.js:23154
-commitPassiveMountOnFiber @ react-dom.development.js:23259
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23256
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23256
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23256
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23256
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23256
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23256
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23256
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23256
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23256
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23256
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23256
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23256
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23256
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23256
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23256
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23256
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23256
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23256
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23256
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23256
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23256
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23256
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23256
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23256
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23256
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23256
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23370
-recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
-commitPassiveMountOnFiber @ react-dom.development.js:23267
-commitPassiveMountEffects @ react-dom.development.js:23225
-flushPassiveEffectsImpl @ react-dom.development.js:26497
-flushPassiveEffects @ react-dom.development.js:26438
-eval @ react-dom.development.js:26172
-workLoop @ scheduler.development.js:256
-flushWork @ scheduler.development.js:225
-performWorkUntilDeadline @ scheduler.development.js:534
-fetch.js:30  GET https://auwmmosfteomieyexkeh.supabase.co/rest/v1/user_management?select=*&order=requested_at.desc 404 (Not Found)
-eval @ fetch.js:30
-eval @ fetch.js:51
-fulfilled @ fetch.js:11
-Promise.then
-step @ fetch.js:13
-eval @ fetch.js:14
-__awaiter @ fetch.js:10
-eval @ fetch.js:41
-then @ PostgrestBuilder.js:66
-page.tsx:60 Error fetching data: {code: 'PGRST205', details: null, hint: "Perhaps you meant the table 'public.user_preferences'", message: "Could not find the table 'public.user_management' in the schema cache"}
-window.console.error @ app-index.js:33
-console.error @ hydration-error-info.js:63
-fetchData @ page.tsx:60
-await in fetchData
-eval @ page.tsx:33
-commitHookEffectListMount @ react-dom.development.js:21102
-invokePassiveEffectMountInDEV @ react-dom.development.js:23980
-invokeEffectsInDev @ react-dom.development.js:26852
-legacyCommitDoubleInvokeEffectsInDEV @ react-dom.development.js:26835
-commitDoubleInvokeEffectsInDEV @ react-dom.development.js:26816
-flushPassiveEffectsImpl @ react-dom.development.js:26514
-flushPassiveEffects @ react-dom.development.js:26438
-eval @ react-dom.development.js:26172
-workLoop @ scheduler.development.js:256
-flushWork @ scheduler.development.js:225
-performWorkUntilDeadline @ scheduler.development.js:534
+フィルター
+作業選択ボックス（印刷、メール、PDF作成）
+請求先の選択（ボタン）
+大文字小文字ひらがなカタカナを選ばないあいまい検索
+デフォルトで発行１ヶ月以内の請求書（及び全表示の選択）
+１列目
+選択用のチェックボックス
+2列目
+請求書番号
+請求月
+3列目
+件名
+登録番号
+4列目（上から２段のみ表示】
+作業名１
+作業名2
+5列目
+請求金額
+ステータス
+6列目
+詳細ボタン（詳細確認画面）
+修正ボタン（請求書作成画面で修正）
 
-このプロジェクトのコードにバグや不具合がないかを、徹底的に調査・分析してください。
-
-- UltraThink を使用して深く読み解いてください
-- 現在のUIや機能を削除してエラーを修正することは禁止します。
-- Playwright を用いたUIやUXの挙動テストも検討してください
-- 潜在的なバグ・非推奨コード・改善ポイントもすべて洗い出してください
-- 不具合があれば修正案を提示し、可能なら直接修正してください
-- 修正後のコードについても問題がないか再チェックしてください
-- 最後に、**改善された内容をGitにプッシュし、Vercelへデプロイ**してください
+これで作成してください。
