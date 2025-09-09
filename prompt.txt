@@ -1,20 +1,26 @@
-認証アドレスでログインの結果
-
-layout-4705832c76639ba3.js:1 認証チェック: {userEmail: 'dash201206@gmail.com', envVariable: 'dash201206@gmail.com', allowedEmails: Array(1), isAllowed: true, hostname: 'bankincafe.apaf.me'}
-layout-4705832c76639ba3.js:1 ✅ 管理者アカウントでログイン成功
-layout-4705832c76639ba3.js:1 ✅ 認証済み・許可済みユーザー: dash201206@gmail.com
-layout-4705832c76639ba3.js:1 認証チェック: {userEmail: 'dash201206@gmail.com', envVariable: 'dash201206@gmail.com', allowedEmails: Array(1), isAllowed: true, hostname: 'bankincafe.apaf.me'}
-layout-4705832c76639ba3.js:1 ✅ 管理者アカウントでログイン成功
-layout-4705832c76639ba3.js:1 認証チェック: {userEmail: 'dash201206@gmail.com', envVariable: 'dash201206@gmail.com', allowedEmails: Array(1), isAllowed: true, hostname: 'bankincafe.apaf.me'}
-layout-4705832c76639ba3.js:1 ✅ 管理者アカウントでログイン成功
-layout-4705832c76639ba3.js:1 ✅ 認証済み・許可済みユーザー: dash201206@gmail.com
-layout-4705832c76639ba3.js:1 認証チェック: {userEmail: 'dash201206@gmail.com', envVariable: 'dash201206@gmail.com', allowedEmails: Array(1), isAllowed: true, hostname: 'bankincafe.apaf.me'}
-layout-4705832c76639ba3.js:1 ✅ 管理者アカウントでログイン成功
-layout-4705832c76639ba3.js:1 ✅ 認証済み・許可済みユーザー: dash201206@gmail.com
+layout-fdec0219bda655a3.js:1 🔄 AuthProviderSimple レンダリング: Object
+layout-fdec0219bda655a3.js:1 🚀 [AuthProviderSimple] useEffect実行 Object
+layout-fdec0219bda655a3.js:1 🔍 [AuthProviderSimple] 認証チェック開始 Object
+layout-fdec0219bda655a3.js:1 🔍 [AuthProviderSimple] 認証状態取得結果: Object
+layout-fdec0219bda655a3.js:1 🔐 [AuthProviderSimple] 管理者権限チェック: Object
+layout-fdec0219bda655a3.js:1 ✅ [AuthProviderSimple] 認証・認可完了: dash201206@gmail.com - メインコンテンツ表示
+layout-fdec0219bda655a3.js:1 🔍 [AuthProviderSimple] FINAL SUCCESS: Object
 
 
-それ以外のアドレスでログインの結果
-layout-4705832c76639ba3.js:1 認証チェック: Object
+layout-4705832c76639ba3.js:1 認証チェック: {userEmail: 'auau1000ttnt@gmail.com', envVariable: 'dash201206@gmail.com', allowedEmails: Array(1), isAllowed: false, hostname: 'bankincafe.apaf.me'}
 layout-4705832c76639ba3.js:1 ❌ 許可されていないアカウントです。サインアウトします。
+login:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+login:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+login:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+login:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+login:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
 
-このあとは、リロードしても何をしても認証中の画面が消えることがない。
+
+コンソールに違いはあるけど
+画面はともに
+
+認証確認中...
+
+しばらくお待ちください
+
+でとまる

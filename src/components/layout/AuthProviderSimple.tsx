@@ -1,7 +1,7 @@
 'use client'
 
 import { usePathname } from 'next/navigation'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Car } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
@@ -16,6 +16,7 @@ interface AuthProviderProps {
 export default function AuthProviderSimple({ children }: AuthProviderProps) {
   const pathname = usePathname()
   const router = useRouter()
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null)
   
   console.log('🔄 AuthProviderSimple レンダリング:', { pathname })
 
@@ -121,6 +122,7 @@ export default function AuthProviderSimple({ children }: AuthProviderProps) {
             finalIsAdmin: isAdmin,
             timestamp: new Date().toISOString()
           })
+          setIsAuthenticated(false)
           router.push('/auth/pending')
           return
         }
@@ -135,8 +137,12 @@ export default function AuthProviderSimple({ children }: AuthProviderProps) {
           finalIsAdmin: isAdmin,
           timestamp: new Date().toISOString()
         })
+        
+        // 認証成功時に状態を更新
+        setIsAuthenticated(true)
       } catch (error) {
         console.error('❌ [AuthProviderSimple] 認証チェック処理エラー:', error)
+        setIsAuthenticated(false)
         router.push('/login')
       }
     }
@@ -150,7 +156,13 @@ export default function AuthProviderSimple({ children }: AuthProviderProps) {
     return <>{children}</>
   }
 
-  // ローディング表示
+  // 認証成功時はメインコンテンツを表示
+  if (isAuthenticated === true) {
+    console.log('🎉 [AuthProviderSimple] メインコンテンツ表示')
+    return <>{children}</>
+  }
+
+  // 認証チェック中または失敗時はローディング表示
   return (
     <div className="min-h-screen flex items-center justify-center bg-secondary-50">
       <div className="text-center">
