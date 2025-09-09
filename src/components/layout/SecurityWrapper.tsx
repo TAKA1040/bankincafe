@@ -1,9 +1,7 @@
 'use client'
 
-import { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import { useAuth } from '@/hooks/useAuth'
-import { Car } from 'lucide-react'
+// ⚠️ このファイルは廃止されました - AuthProviderSimpleを使用してください
+// このファイルが誤って使用されることを防ぐため、エラーを表示します
 
 interface SecurityWrapperProps {
   children: React.ReactNode
@@ -11,61 +9,27 @@ interface SecurityWrapperProps {
 }
 
 export default function SecurityWrapper({ children, redirectTo = '/login' }: SecurityWrapperProps) {
-  const { user, loading, isAdmin } = useAuth()
-  const router = useRouter()
-
-  useEffect(() => {
-    if (!loading) {
-      if (!user) {
-        console.log('🔒 未認証ユーザーをログインページにリダイレクト')
-        router.push(redirectTo)
-        return
-      }
-      
-      if (user && !isAdmin) {
-        // 管理者権限なしのユーザーは承認待ちページへ
-        console.log('❌ 許可されていないアカウントです:', user.email, 'サインアウトして承認待ちページへリダイレクト')
-        // 強制リダイレクト
-        if (typeof window !== 'undefined') {
-          window.location.href = '/auth/pending'
-        } else {
-          router.push('/auth/pending')
-        }
-        return
-      }
-      
-      if (user && isAdmin) {
-        console.log('✅ 認証済み・許可済みユーザー:', user.email)
-      }
-    }
-  }, [user, loading, isAdmin, router, redirectTo])
-
-  if (loading) {
+  console.error('❌ 廃止されたSecurityWrapperが呼び出されました！AuthProviderSimpleを使用してください')
+  
+  // 開発環境では警告を表示
+  if (process.env.NODE_ENV === 'development') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-secondary-50">
-        <div className="text-center">
-          <div className="flex justify-center mb-4">
-            <div className="p-4 bg-primary-600 rounded-full animate-bounce">
-              <Car className="h-8 w-8 text-white" />
-            </div>
-          </div>
-          <p className="text-secondary-600">認証中...</p>
-        </div>
+      <div style={{ 
+        position: 'fixed', 
+        top: 0, 
+        left: 0, 
+        right: 0, 
+        background: 'red', 
+        color: 'white', 
+        padding: '10px', 
+        zIndex: 9999,
+        textAlign: 'center'
+      }}>
+        ⚠️ 廃止されたSecurityWrapperが使用されています！AuthProviderSimpleに変更してください
       </div>
     )
   }
-
-  if (!user || !isAdmin) {
-    // 追加の安全装置 - この状態になった場合は即座にリダイレクト
-    if (typeof window !== 'undefined' && !loading) {
-      if (!user) {
-        window.location.href = '/login'
-      } else if (!isAdmin) {
-        window.location.href = '/auth/pending'
-      }
-    }
-    return null
-  }
-
+  
+  // 本番環境では子コンポーネントを表示（安全装置）
   return <>{children}</>
 }

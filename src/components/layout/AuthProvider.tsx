@@ -1,27 +1,34 @@
 'use client'
 
-import { usePathname } from 'next/navigation'
-import SecurityWrapper from './SecurityWrapper'
-
-// 認証不要なページのパス
-const PUBLIC_PATHS = ['/login', '/auth/pending']
+// ⚠️ このファイルは廃止されました - AuthProviderSimpleを使用してください
+// このファイルが誤って使用されることを防ぐため、エラーを表示します
 
 interface AuthProviderProps {
   children: React.ReactNode
 }
 
 export default function AuthProvider({ children }: AuthProviderProps) {
-  const pathname = usePathname()
+  console.error('❌ 廃止されたAuthProviderが呼び出されました！AuthProviderSimpleを使用してください')
   
-  // 認証不要なページの場合はそのまま表示
-  if (pathname && PUBLIC_PATHS.includes(pathname)) {
-    return <>{children}</>
+  // 開発環境では警告を表示
+  if (process.env.NODE_ENV === 'development') {
+    return (
+      <div style={{ 
+        position: 'fixed', 
+        top: 0, 
+        left: 0, 
+        right: 0, 
+        background: 'red', 
+        color: 'white', 
+        padding: '10px', 
+        zIndex: 9999,
+        textAlign: 'center'
+      }}>
+        ⚠️ 廃止されたAuthProviderが使用されています！AuthProviderSimpleに変更してください
+      </div>
+    )
   }
   
-  // 認証が必要なページはSecurityWrapperで保護
-  return (
-    <SecurityWrapper>
-      {children}
-    </SecurityWrapper>
-  )
+  // 本番環境では子コンポーネントを表示（安全装置）
+  return <>{children}</>
 }
