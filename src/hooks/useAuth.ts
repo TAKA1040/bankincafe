@@ -31,14 +31,23 @@ export function useAuth() {
       // 環境変数が設定されていない場合は警告
       if (!allowedEmailsEnv) {
         console.warn('⚠️ NEXT_PUBLIC_ALLOWED_EMAILS環境変数が設定されていません。全てのユーザーを許可します。')
-        return // 環境変数未設定の場合はスキップ
+        setUser(user) // 環境変数未設定の場合は全ユーザー許可
+        return
+      }
+      
+      // dash201206@gmail.com は常に許可
+      if (user.email === 'dash201206@gmail.com') {
+        console.log('✅ 管理者アカウントでログイン成功')
+        setUser(user)
+        return
       }
       
       if (user.email && !allowedEmails.includes(user.email)) {
-        console.log('許可されていないアカウントです。サインアウトします。')
+        console.log('❌ 許可されていないアカウントです。サインアウトします。')
         await supabase.auth.signOut()
         setUser(null)
       } else {
+        console.log('✅ 許可されたアカウントでログイン成功')
         setUser(user)
       }
     }
@@ -84,7 +93,7 @@ export function useAuth() {
   }
 
   const allowedEmails = getAllowedEmails()
-  const isAdmin = user?.email ? allowedEmails.includes(user.email) : false
+  const isAdmin = user?.email === 'dash201206@gmail.com' || (user?.email ? allowedEmails.includes(user.email) : false)
 
 
   return {
