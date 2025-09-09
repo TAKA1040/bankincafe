@@ -1,26 +1,19 @@
-layout-fdec0219bda655a3.js:1 🔄 AuthProviderSimple レンダリング: Object
-layout-fdec0219bda655a3.js:1 🚀 [AuthProviderSimple] useEffect実行 Object
-layout-fdec0219bda655a3.js:1 🔍 [AuthProviderSimple] 認証チェック開始 Object
-layout-fdec0219bda655a3.js:1 🔍 [AuthProviderSimple] 認証状態取得結果: Object
-layout-fdec0219bda655a3.js:1 🔐 [AuthProviderSimple] 管理者権限チェック: Object
-layout-fdec0219bda655a3.js:1 ✅ [AuthProviderSimple] 認証・認可完了: dash201206@gmail.com - メインコンテンツ表示
-layout-fdec0219bda655a3.js:1 🔍 [AuthProviderSimple] FINAL SUCCESS: Object
+layout-fd0b3ea33087622a.js:1 🔄 AuthProviderSimple レンダリング: {pathname: '/'}
+layout-fd0b3ea33087622a.js:1 🚀 [AuthProviderSimple] useEffect実行 {pathname: '/'}
+layout-fd0b3ea33087622a.js:1 🔍 [AuthProviderSimple] 認証チェック開始 {pathname: '/', timestamp: '23:26:59'}
 
 
-layout-4705832c76639ba3.js:1 認証チェック: {userEmail: 'auau1000ttnt@gmail.com', envVariable: 'dash201206@gmail.com', allowedEmails: Array(1), isAllowed: false, hostname: 'bankincafe.apaf.me'}
-layout-4705832c76639ba3.js:1 ❌ 許可されていないアカウントです。サインアウトします。
-login:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
-login:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
-login:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
-login:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
-login:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+認証中になる場合と、
 
 
-コンソールに違いはあるけど
-画面はともに
+layout-fd0b3ea33087622a.js:1 🔄 AuthProviderSimple レンダリング: Object
+layout-fd0b3ea33087622a.js:1 🚀 [AuthProviderSimple] useEffect実行 Object
+layout-fd0b3ea33087622a.js:1 🔍 [AuthProviderSimple] 認証チェック開始 Object
+layout-fd0b3ea33087622a.js:1 🔍 [AuthProviderSimple] 認証状態取得結果: Object
+117-baf0baeee314f75e.js:1 ❌ [AuthProviderSimple] 認証取得エラー: Object
+window.console.error @ 117-baf0baeee314f75e.js:1
+layout-fd0b3ea33087622a.js:1 🔄 AuthProviderSimple レンダリング: Object
+layout-fd0b3ea33087622a.js:1 ✅ パブリックページ表示: /login
 
-認証確認中...
 
-しばらくお待ちください
-
-でとまる
+こうやってログイン画面にもどされるぱたーんがある

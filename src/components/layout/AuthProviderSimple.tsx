@@ -38,8 +38,10 @@ export default function AuthProviderSimple({ children }: AuthProviderProps) {
         })
         
         const supabase = createClient()
+        console.log('📡 [AuthProviderSimple] Supabaseクライアント作成完了')
         
         // セッション情報も同時に取得して整合性をチェック
+        console.log('📡 [AuthProviderSimple] 認証API呼び出し開始')
         const [
           { data: { user }, error: userError },
           { data: { session }, error: sessionError }
@@ -47,6 +49,7 @@ export default function AuthProviderSimple({ children }: AuthProviderProps) {
           supabase.auth.getUser(),
           supabase.auth.getSession()
         ])
+        console.log('📡 [AuthProviderSimple] 認証API呼び出し完了')
         
         console.log('🔍 [AuthProviderSimple] 認証状態取得結果:', { 
           userExists: !!user, 
@@ -55,14 +58,24 @@ export default function AuthProviderSimple({ children }: AuthProviderProps) {
           sessionExists: !!session,
           sessionUserEmail: session?.user?.email,
           sessionUserId: session?.user?.id,
-          userError: userError?.message,
-          sessionError: sessionError?.message,
-          consistent: user?.id === session?.user?.id
+          userError: userError?.message || userError,
+          sessionError: sessionError?.message || sessionError,
+          userErrorFull: userError,
+          sessionErrorFull: sessionError,
+          consistent: user?.id === session?.user?.id,
+          timestamp: new Date().toISOString()
         })
         
         // エラーチェック
         if (userError || sessionError) {
-          console.error('❌ [AuthProviderSimple] 認証取得エラー:', { userError, sessionError })
+          console.error('❌ [AuthProviderSimple] 認証取得エラー:', { 
+            userError: userError?.message || JSON.stringify(userError),
+            sessionError: sessionError?.message || JSON.stringify(sessionError),
+            userErrorFull: userError,
+            sessionErrorFull: sessionError,
+            timestamp: new Date().toISOString()
+          })
+          setIsAuthenticated(false)
           router.push('/login')
           return
         }
@@ -141,7 +154,13 @@ export default function AuthProviderSimple({ children }: AuthProviderProps) {
         // 認証成功時に状態を更新
         setIsAuthenticated(true)
       } catch (error) {
-        console.error('❌ [AuthProviderSimple] 認証チェック処理エラー:', error)
+        console.error('❌ [AuthProviderSimple] 認証チェック処理エラー:', {
+          error: error,
+          errorMessage: error instanceof Error ? error.message : 'Unknown error',
+          errorStack: error instanceof Error ? error.stack : undefined,
+          timestamp: new Date().toISOString(),
+          pathname: pathname
+        })
         setIsAuthenticated(false)
         router.push('/login')
       }
