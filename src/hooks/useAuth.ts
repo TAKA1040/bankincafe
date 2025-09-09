@@ -17,13 +17,13 @@ export function useAuth() {
       }
       
       const allowedEmails = process.env.NEXT_PUBLIC_ALLOWED_EMAILS?.split(',').map(email => email.trim()) || []
-      // 本番環境でのみ認証チェックログを出力
-      if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
-        console.log('認証チェック:', {
-          userEmail: user.email?.substring(0, 3) + '***', // メールアドレスを一部隠す
-          isAllowed: user.email ? allowedEmails.includes(user.email) : false
-        })
-      }
+      // 認証チェックログを出力（デバッグ用）
+      console.log('認証チェック:', {
+        userEmail: user.email,
+        allowedEmails,
+        isAllowed: user.email ? allowedEmails.includes(user.email) : false,
+        hostname: typeof window !== 'undefined' ? window.location.hostname : 'server'
+      })
       
       if (user.email && !allowedEmails.includes(user.email)) {
         console.log('許可されていないアカウントです。サインアウトします。')
