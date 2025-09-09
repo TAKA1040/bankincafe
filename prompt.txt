@@ -1,10 +1,9 @@
-layout-ad0c8ef375f64cf1.js:1 🔄 AuthProviderSimple レンダリング: {pathname: '/'}
-layout-ad0c8ef375f64cf1.js:1 🚀 [AuthProviderSimple] useEffect実行 {pathname: '/'}
-layout-ad0c8ef375f64cf1.js:1 🔍 [AuthProviderSimple] 認証チェック開始 {pathname: '/', timestamp: '0:22:57'}
-layout-ad0c8ef375f64cf1.js:1 📡 [AuthProviderSimple] Supabaseクライアント作成完了
-layout-ad0c8ef375f64cf1.js:1 📡 [AuthProviderSimple] セッションチェック開始
-
-これで認証中のまま
+layout-ee5642a256b95925.js:1 🔄 AuthProviderSimple レンダリング: {pathname: '/'}
+layout-ee5642a256b95925.js:1 🚀 [AuthProviderSimple] 緊急回避モード - ログインページにリダイレクト
+layout-ee5642a256b95925.js:1 🔄 AuthProviderSimple レンダリング: {pathname: '/login'}
+layout-ee5642a256b95925.js:1 ✅ パブリックページ表示: /login
 
 
-いい加減に完成させて
+承認されたアドレスでもこうなる
+なにも改善されないまま
+小手先で修正をしたふりをせずに、真面目に改善して
