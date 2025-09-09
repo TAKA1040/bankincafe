@@ -56,12 +56,9 @@ export default function LoginPageSimple() {
           </div>
 
           {/* タイトル */}
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            鈑金Cafe
+          <h1 className="text-3xl font-bold text-gray-900 mb-8">
+            ログイン
           </h1>
-          <h2 className="text-xl font-semibold text-gray-700 mb-6">
-            請求書管理システム
-          </h2>
 
           {/* エラー表示 */}
           {loginError && (
@@ -93,16 +90,6 @@ export default function LoginPageSimple() {
             )}
           </Button>
 
-          {/* デバッグ情報 */}
-          <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded text-xs">
-            <p className="font-medium text-yellow-800">テスト情報:</p>
-            <p className="text-yellow-700">
-              許可アカウント: {process.env.NEXT_PUBLIC_ALLOWED_EMAILS || 'dash201206@gmail.com'}
-            </p>
-            <p className="text-yellow-700 mt-1">
-              ログイン後は自動的にアクセス権限がチェックされます
-            </p>
-          </div>
         </div>
       </div>
     </div>

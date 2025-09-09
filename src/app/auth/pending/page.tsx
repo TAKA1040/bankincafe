@@ -152,8 +152,8 @@ export default function PendingApprovalPage() {
           {/* フッター */}
           <div className="mt-6 pt-6 border-t border-gray-200">
             <p className="text-xs text-gray-500">
-              このページは自動的に更新されます。<br />
-              しばらくお待ちいただいた後、再度アクセスしてください。
+              承認完了後は「承認状況を確認」ボタンで<br />
+              承認状況をご確認いただけます。
             </p>
           </div>
         </div>
