@@ -94,33 +94,56 @@ export default function AuthProviderSimple({ children }: AuthProviderProps) {
         
         if (!isAdmin) {
           console.log('❌ 許可されていないアカウント - 承認待ちページへ')
+          console.log('📋 新規ユーザー登録開始:', {
+            email: userEmail,
+            full_name: session.user.user_metadata?.full_name,
+            user_metadata: session.user.user_metadata
+          })
           
           // 未承認ユーザーをuser_managementテーブルに登録
           try {
-            const { error: insertError } = await supabase
-              .from('user_management')
-              .insert({
-                google_email: userEmail,
-                display_name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || '未設定',
-                status: 'pending',
-                requested_at: new Date().toISOString(),
-                last_login_at: new Date().toISOString()
-              })
-            
-            // 既存ユーザーの場合はlast_login_atを更新
-            if (insertError && insertError.code === '23505') {
-              await supabase
-                .from('user_management')
-                .update({
-                  last_login_at: new Date().toISOString(),
-                  display_name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || '未設定'
-                })
-                .eq('google_email', userEmail)
+            const newUserData = {
+              google_email: userEmail,
+              display_name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || '未設定',
+              status: 'pending' as const,
+              requested_at: new Date().toISOString(),
+              last_login_at: new Date().toISOString()
             }
             
-            console.log('📝 承認待ちユーザーをデータベースに登録')
+            console.log('📝 データベース挿入データ:', newUserData)
+            
+            const { data: insertData, error: insertError } = await supabase
+              .from('user_management')
+              .insert(newUserData)
+              .select()
+            
+            if (insertError) {
+              if (insertError.code === '23505') {
+                console.log('👤 既存ユーザー - ログイン履歴を更新')
+                const { data: updateData, error: updateError } = await supabase
+                  .from('user_management')
+                  .update({
+                    last_login_at: new Date().toISOString(),
+                    display_name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || '未設定'
+                  })
+                  .eq('google_email', userEmail)
+                  .select()
+                
+                if (updateError) {
+                  console.error('❌ 既存ユーザー更新エラー:', updateError)
+                } else {
+                  console.log('✅ 既存ユーザー更新完了:', updateData)
+                }
+              } else {
+                console.error('❌ 新規ユーザー挿入エラー:', insertError)
+              }
+            } else {
+              console.log('✅ 新規ユーザー登録完了:', insertData)
+            }
+            
+            console.log('📝 承認待ちユーザーをデータベースに登録/更新完了')
           } catch (dbError) {
-            console.warn('⚠️ ユーザー登録でエラー:', dbError)
+            console.error('❌ ユーザー登録処理で例外発生:', dbError)
           }
           
           setIsAuthenticated(false)

@@ -1,17 +1,40 @@
 'use client'
 
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Clock, Mail, ArrowLeft, Shield, LogOut } from 'lucide-react'
-import { useAuthNew } from '@/hooks/useAuthNew'
+import { createClient } from '@/lib/supabase/client'
 
 export default function PendingApprovalPage() {
   const router = useRouter()
-  const { signOut, user } = useAuthNew()
+  const [user, setUser] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const getUser = async () => {
+      try {
+        const supabase = createClient()
+        const { data: { session } } = await supabase.auth.getSession()
+        setUser(session?.user || null)
+      } catch (error) {
+        console.error('ユーザー情報取得エラー:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    
+    getUser()
+  }, [])
 
   const handleSignOut = async () => {
-    await signOut()
-    router.push('/login')
+    try {
+      const supabase = createClient()
+      await supabase.auth.signOut()
+      router.push('/login')
+    } catch (error) {
+      console.error('サインアウトエラー:', error)
+      router.push('/login')
+    }
   }
 
   return (
@@ -42,6 +65,17 @@ export default function PendingApprovalPage() {
               <p className="text-sm text-blue-800">
                 <strong>ログイン中のアカウント:</strong><br />
                 {user.email}
+              </p>
+              <p className="text-xs text-blue-600 mt-2">
+                申請日時: {new Date().toLocaleString('ja-JP')}
+              </p>
+            </div>
+          )}
+          
+          {loading && (
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 mb-6">
+              <p className="text-sm text-gray-600">
+                ユーザー情報を読み込み中...
               </p>
             </div>
           )}
