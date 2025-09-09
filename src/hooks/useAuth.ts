@@ -16,7 +16,7 @@ export function useAuth() {
         return
       }
       
-      const allowedEmailsEnv = process.env.NEXT_PUBLIC_ALLOWED_EMAILS
+      const allowedEmailsEnv = process.env.NEXT_PUBLIC_ALLOWED_EMAILS?.replace(/[\r\n]/g, '')
       const allowedEmails = allowedEmailsEnv?.split(',').map(email => email.trim()).filter(email => email) || []
       
       // 認証チェックログを出力（デバッグ用）
@@ -33,7 +33,16 @@ export function useAuth() {
         console.error('🚨 NEXT_PUBLIC_ALLOWED_EMAILS環境変数が設定されていません。セキュリティのため管理者のみ許可します。')
         if (user.email !== 'dash201206@gmail.com') {
           console.log('❌ 環境変数未設定のため、管理者以外はアクセス禁止です。サインアウトします。')
-          await supabase.auth.signOut()
+          try {
+            await supabase.auth.signOut()
+            // セッションストレージとローカルストレージをクリア
+            if (typeof window !== 'undefined') {
+              sessionStorage.clear()
+              localStorage.clear()
+            }
+          } catch (error) {
+            console.error('サインアウトエラー:', error)
+          }
           setUser(null)
           return
         }
@@ -51,7 +60,16 @@ export function useAuth() {
       
       if (user.email && !allowedEmails.includes(user.email)) {
         console.log('❌ 許可されていないアカウントです。サインアウトします。')
-        await supabase.auth.signOut()
+        try {
+          await supabase.auth.signOut()
+          // セッションストレージとローカルストレージをクリア
+          if (typeof window !== 'undefined') {
+            sessionStorage.clear()
+            localStorage.clear()
+          }
+        } catch (error) {
+          console.error('サインアウトエラー:', error)
+        }
         setUser(null)
         return
       } else {
@@ -92,7 +110,7 @@ export function useAuth() {
 
   // 許可されたメールアドレスリストを取得
   const getAllowedEmails = () => {
-    const allowedEmails = process.env.NEXT_PUBLIC_ALLOWED_EMAILS
+    const allowedEmails = process.env.NEXT_PUBLIC_ALLOWED_EMAILS?.replace(/[\r\n]/g, '')
     if (!allowedEmails) {
       console.warn('NEXT_PUBLIC_ALLOWED_EMAILS環境変数が設定されていません')
       return []

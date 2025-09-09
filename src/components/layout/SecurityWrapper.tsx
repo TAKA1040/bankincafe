@@ -25,7 +25,12 @@ export default function SecurityWrapper({ children, redirectTo = '/login' }: Sec
       if (user && !isAdmin) {
         // 管理者権限なしのユーザーは承認待ちページへ
         console.log('❌ 許可されていないアカウントです:', user.email, 'サインアウトして承認待ちページへリダイレクト')
-        router.push('/auth/pending')
+        // 強制リダイレクト
+        if (typeof window !== 'undefined') {
+          window.location.href = '/auth/pending'
+        } else {
+          router.push('/auth/pending')
+        }
         return
       }
       

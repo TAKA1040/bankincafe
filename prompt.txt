@@ -1,4 +1,6 @@
-認証チェック: Object
-layout-b26487360fc106a3.js:1 ❌ 許可されていないアカウントです。サインアウトします。
+layout-142f1de6f320d9ad.js:1 認証チェック: {userEmail: 'auau1000ttnt@gmail.com', envVariable: 'dash201206@gmail.com\n', allowedEmails: Array(1), isAllowed: false, hostname: 'bankincafe.apaf.me'}
+layout-142f1de6f320d9ad.js:1 ❌ 許可されていないアカウントです。サインアウトします。
 
-システム的には上手くいってるが、画面が認証中のまま止まってしまう
+
+状況は変わらない
+あと、強制リロードしても履歴を削除しないと認証中のまま。
