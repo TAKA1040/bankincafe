@@ -44,6 +44,13 @@ export function useAuth() {
             console.error('サインアウトエラー:', error)
           }
           setUser(null)
+          setLoading(false)
+          // 強制リダイレクト
+          if (typeof window !== 'undefined') {
+            setTimeout(() => {
+              window.location.href = '/auth/pending'
+            }, 100)
+          }
           return
         }
         console.log('✅ 管理者アカウントのため許可します（環境変数未設定警告あり）')
@@ -71,6 +78,14 @@ export function useAuth() {
           console.error('サインアウトエラー:', error)
         }
         setUser(null)
+        // 認証状態変更を強制的にトリガー
+        setLoading(false)
+        // 強制リダイレクト
+        if (typeof window !== 'undefined') {
+          setTimeout(() => {
+            window.location.href = '/auth/pending'
+          }, 100)
+        }
         return
       } else {
         console.log('✅ 許可されたアカウントでログイン成功')

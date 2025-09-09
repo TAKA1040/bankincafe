@@ -56,6 +56,14 @@ export default function SecurityWrapper({ children, redirectTo = '/login' }: Sec
   }
 
   if (!user || !isAdmin) {
+    // 追加の安全装置 - この状態になった場合は即座にリダイレクト
+    if (typeof window !== 'undefined' && !loading) {
+      if (!user) {
+        window.location.href = '/login'
+      } else if (!isAdmin) {
+        window.location.href = '/auth/pending'
+      }
+    }
     return null
   }
 
