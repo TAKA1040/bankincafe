@@ -3,11 +3,11 @@
 import React from 'react'
 import { useRouter } from 'next/navigation'
 import { Clock, Mail, ArrowLeft, Shield, LogOut } from 'lucide-react'
-import { useAuth } from '@/hooks/useAuth'
+import { useAuthNew } from '@/hooks/useAuthNew'
 
 export default function PendingApprovalPage() {
   const router = useRouter()
-  const { signOut, user } = useAuth()
+  const { signOut, user } = useAuthNew()
 
   const handleSignOut = async () => {
     await signOut()

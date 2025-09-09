@@ -5,7 +5,7 @@
 'use client'
 import React from 'react'
 import { useRouter } from 'next/navigation'
-import { useAuth } from '@/hooks/useAuth'
+import { useAuthNew } from '@/hooks/useAuthNew'
 import SecurityWrapper from './security-wrapper'
 
 interface DashboardClientProps {
@@ -29,7 +29,7 @@ interface MenuItem {
 
 export default function DashboardClient({ user }: DashboardClientProps) {
   const router = useRouter()
-  const { isAdmin } = useAuth()
+  const { isAdmin } = useAuthNew()
 
   // 表示名の取得
   const displayName = user.user_metadata?.full_name || user.email

@@ -1,44 +1,68 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { LogIn, Shield, Car } from 'lucide-react'
+import { LogIn, Shield, Car, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { createClient } from '@/lib/supabase/client'
-import { useAuth } from '@/hooks/useAuth'
+import { useAuthNew } from '@/hooks/useAuthNew'
 
-export default function LoginPage() {
+export default function LoginPageNew() {
   const router = useRouter()
-  const { user, loading, isAdmin } = useAuth()
+  const { user, loading, isAdmin } = useAuthNew()
+  const [isLoggingIn, setIsLoggingIn] = useState(false)
+  const [loginError, setLoginError] = useState<string | null>(null)
 
+  // 既にログイン済みの場合のリダイレクト処理
   useEffect(() => {
-    if (!loading && user && isAdmin) {
-      router.push('/')
-    } else if (!loading && user && !isAdmin) {
-      router.push('/auth/pending')
+    if (!loading) {
+      if (user && isAdmin) {
+        console.log('✅ 既にログイン済み - ダッシュボードへ')
+        router.push('/')
+      } else if (user && !isAdmin) {
+        console.log('⏳ ユーザー存在するが管理者権限なし - 承認待ちページへ')
+        router.push('/auth/pending')
+      }
     }
   }, [user, loading, isAdmin, router])
 
   const handleGoogleLogin = async () => {
+    if (isLoggingIn) return
+
     try {
-      console.log('ログイン開始 - リダイレクト先:', window.location.origin)
+      setIsLoggingIn(true)
+      setLoginError(null)
+      
+      console.log('🚀 Googleログイン開始')
       const supabase = createClient()
       
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/`
+          redirectTo: `${window.location.origin}/`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          }
         }
       })
 
       if (error) {
-        console.error('ログインエラー:', error.message)
+        console.error('❌ ログインエラー:', error)
+        setLoginError(error.message)
+      } else {
+        console.log('🔄 Google認証画面にリダイレクト中...')
       }
     } catch (error) {
-      console.error('予期しないエラー:', error)
+      console.error('❌ 予期しないログインエラー:', error)
+      setLoginError('ログイン処理中にエラーが発生しました')
+    } finally {
+      // リダイレクトが発生しない場合のみリセット
+      setTimeout(() => setIsLoggingIn(false), 3000)
     }
   }
 
+  // ローディング中の表示
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-secondary-50">
@@ -48,13 +72,14 @@ export default function LoginPage() {
               <Car className="h-8 w-8 text-white" />
             </div>
           </div>
-          <p className="text-secondary-600">読み込み中...</p>
+          <p className="text-secondary-600">認証状態確認中...</p>
         </div>
       </div>
     )
   }
 
-  if (user && isAdmin) {
+  // 既にログイン済みの場合は表示しない
+  if (user) {
     return null
   }
 
@@ -90,18 +115,39 @@ export default function LoginPage() {
               <span className="font-medium">セキュリティ保護</span>
             </div>
             <p className="text-sm text-gray-600">
-              承認されたGoogleアカウントのみがアクセス可能です。
+              承認されたGoogleアカウントのみがアクセス可能です。<br />
               未承認のアカウントの場合は承認待ち画面に移動します。
             </p>
           </div>
 
+          {/* エラー表示 */}
+          {loginError && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+              <div className="flex items-center gap-2 text-red-700">
+                <AlertCircle className="w-4 h-4" />
+                <span className="font-medium">ログインエラー</span>
+              </div>
+              <p className="text-sm text-red-600 mt-1">{loginError}</p>
+            </div>
+          )}
+
           {/* ログインボタン */}
           <Button 
             onClick={handleGoogleLogin}
+            disabled={isLoggingIn}
             className="w-full gap-2 py-3 text-lg"
           >
-            <LogIn className="w-5 h-5" />
-            Googleアカウントでログイン
+            {isLoggingIn ? (
+              <>
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                ログイン中...
+              </>
+            ) : (
+              <>
+                <LogIn className="w-5 h-5" />
+                Googleアカウントでログイン
+              </>
+            )}
           </Button>
 
           {/* フッター */}
@@ -110,6 +156,16 @@ export default function LoginPage() {
               ログインすることで利用規約に同意したものとみなします
             </p>
           </div>
+
+          {/* デバッグ情報（開発環境のみ） */}
+          {process.env.NODE_ENV === 'development' && (
+            <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded text-xs">
+              <p className="font-medium text-yellow-800">開発環境情報:</p>
+              <p className="text-yellow-700">
+                許可アカウント: {process.env.NEXT_PUBLIC_ALLOWED_EMAILS || 'dash201206@gmail.com'}
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>
