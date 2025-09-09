@@ -94,12 +94,72 @@ export default function AuthProviderSimple({ children }: AuthProviderProps) {
         
         if (!isAdmin) {
           console.log('❌ 許可されていないアカウント - 承認待ちページへ')
+          
+          // 未承認ユーザーをuser_managementテーブルに登録
+          try {
+            const { error: insertError } = await supabase
+              .from('user_management')
+              .insert({
+                google_email: userEmail,
+                display_name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || '未設定',
+                status: 'pending',
+                requested_at: new Date().toISOString(),
+                last_login_at: new Date().toISOString()
+              })
+            
+            // 既存ユーザーの場合はlast_login_atを更新
+            if (insertError && insertError.code === '23505') {
+              await supabase
+                .from('user_management')
+                .update({
+                  last_login_at: new Date().toISOString(),
+                  display_name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || '未設定'
+                })
+                .eq('google_email', userEmail)
+            }
+            
+            console.log('📝 承認待ちユーザーをデータベースに登録')
+          } catch (dbError) {
+            console.warn('⚠️ ユーザー登録でエラー:', dbError)
+          }
+          
           setIsAuthenticated(false)
           router.push('/auth/pending')
           return
         }
         
         console.log('✅ 認証・認可完了 - メインコンテンツ表示')
+        
+        // 承認済みユーザーのログイン履歴も記録
+        try {
+          const { error: insertError } = await supabase
+            .from('user_management')
+            .insert({
+              google_email: userEmail,
+              display_name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || '管理者',
+              status: 'approved',
+              requested_at: new Date().toISOString(),
+              approved_at: new Date().toISOString(),
+              last_login_at: new Date().toISOString()
+            })
+          
+          // 既存ユーザーの場合はlast_login_atを更新
+          if (insertError && insertError.code === '23505') {
+            await supabase
+              .from('user_management')
+              .update({
+                last_login_at: new Date().toISOString(),
+                display_name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || '管理者',
+                status: 'approved' // 承認済みユーザーとして確実に設定
+              })
+              .eq('google_email', userEmail)
+          }
+          
+          console.log('📝 管理者ログイン履歴を記録')
+        } catch (dbError) {
+          console.warn('⚠️ ログイン履歴記録でエラー:', dbError)
+        }
+        
         setIsAuthenticated(true)
         
       } catch (error) {

@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Users, Settings, Shield, CheckCircle, Clock, XCircle } from 'lucide-react'
-import { supabase } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase/client'
 
 interface UserManagement {
   id: string
@@ -37,6 +37,8 @@ export default function AdminSettingsPage() {
     try {
       setLoading(true)
       setError(null)
+      
+      const supabase = createClient()
 
       // ユーザー管理データを取得
       const { data: usersData, error: usersError } = await supabase
@@ -44,7 +46,13 @@ export default function AdminSettingsPage() {
         .select('*')
         .order('requested_at', { ascending: false })
 
-      if (usersError) throw usersError
+      if (usersError && usersError.code !== 'PGRST116') {
+        // テーブルが存在しない場合は空配列を設定
+        console.log('user_management テーブルが存在しない、または空です')
+        setUsers([])
+      } else {
+        setUsers(usersData || [])
+      }
 
       // 管理者設定データを取得
       const { data: settingsData, error: settingsError } = await supabase
@@ -52,10 +60,12 @@ export default function AdminSettingsPage() {
         .select('*')
         .order('setting_key')
 
-      if (settingsError) throw settingsError
-
-      setUsers(usersData || [])
-      setSettings(settingsData || [])
+      if (settingsError && settingsError.code !== 'PGRST116') {
+        console.log('admin_settings テーブルが存在しない、または空です')
+        setSettings([])
+      } else {
+        setSettings(settingsData || [])
+      }
     } catch (err) {
       console.error('Error fetching data:', err)
       setError(err instanceof Error ? err.message : 'データの取得に失敗しました')
@@ -67,6 +77,7 @@ export default function AdminSettingsPage() {
   // 管理者ユーザー追加
   const addAdminUser = async (email: string) => {
     try {
+      const supabase = createClient()
       const { error } = await supabase
         .from('user_management')
         .insert({
@@ -104,9 +115,46 @@ export default function AdminSettingsPage() {
     }
   }
 
+  // テスト用承認待ちユーザー追加
+  const addTestPendingUser = async () => {
+    const testEmails = [
+      'test.user1@gmail.com',
+      'test.user2@gmail.com', 
+      'pending.user@yahoo.com',
+      'sample.user@outlook.com'
+    ]
+    
+    const randomEmail = testEmails[Math.floor(Math.random() * testEmails.length)]
+    
+    try {
+      const supabase = createClient()
+      const { error } = await supabase
+        .from('user_management')
+        .insert({
+          google_email: randomEmail,
+          display_name: `テストユーザー${Math.floor(Math.random() * 100)}`,
+          status: 'pending',
+          requested_at: new Date().toISOString(),
+          last_login_at: new Date().toISOString()
+        })
+
+      if (error && error.code !== '23505') {
+        throw error
+      }
+
+      // データを再取得
+      await fetchData()
+      alert(`${randomEmail} をテスト承認待ちユーザーとして追加しました`)
+    } catch (err) {
+      console.error('Error adding test user:', err)
+      alert('テストユーザーの追加に失敗しました: ' + (err as Error).message)
+    }
+  }
+
   // ユーザーステータス更新
   const updateUserStatus = async (userId: string, newStatus: 'approved' | 'rejected') => {
     try {
+      const supabase = createClient()
       const updates: any = {
         status: newStatus,
         updated_at: new Date().toISOString()
@@ -135,6 +183,7 @@ export default function AdminSettingsPage() {
   // 設定値更新
   const updateSetting = async (settingKey: string, newValue: string) => {
     try {
+      const supabase = createClient()
       const { error } = await supabase
         .from('admin_settings')
         .update({
@@ -224,13 +273,22 @@ export default function AdminSettingsPage() {
               <Users className="w-6 h-6 text-blue-600" />
               <h2 className="text-xl font-semibold text-gray-800">ユーザー管理</h2>
             </div>
-            <button
-              onClick={() => addAdminUser('dash201206@gmail.com')}
-              className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 flex items-center gap-2"
-            >
-              <Shield className="w-4 h-4" />
-              管理者を追加
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={() => addAdminUser('dash201206@gmail.com')}
+                className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 flex items-center gap-2"
+              >
+                <Shield className="w-4 h-4" />
+                管理者を追加
+              </button>
+              <button
+                onClick={() => addTestPendingUser()}
+                className="px-4 py-2 bg-yellow-600 text-white text-sm rounded-lg hover:bg-yellow-700 flex items-center gap-2"
+              >
+                <Clock className="w-4 h-4" />
+                テストユーザー追加
+              </button>
+            </div>
           </div>
 
           <div className="overflow-x-auto">
