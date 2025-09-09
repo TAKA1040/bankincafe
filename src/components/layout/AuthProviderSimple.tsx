@@ -42,13 +42,23 @@ export default function AuthProviderSimple({ children }: AuthProviderProps) {
         
         // セッション情報も同時に取得して整合性をチェック
         console.log('📡 [AuthProviderSimple] 認証API呼び出し開始')
-        const [
-          { data: { user }, error: userError },
-          { data: { session }, error: sessionError }
-        ] = await Promise.all([
-          supabase.auth.getUser(),
-          supabase.auth.getSession()
+        
+        // タイムアウト付きのAPI呼び出しのラッパー関数
+        const withTimeout = (promise: Promise<any>, timeoutMs: number): Promise<any> => {
+          const timeoutPromise = new Promise((_, reject) => {
+            setTimeout(() => reject(new Error(`Operation timeout after ${timeoutMs}ms`)), timeoutMs)
+          })
+          return Promise.race([promise, timeoutPromise])
+        }
+        
+        const [userResult, sessionResult] = await Promise.all([
+          withTimeout(supabase.auth.getUser(), 8000),
+          withTimeout(supabase.auth.getSession(), 8000)
         ])
+        
+        const { data: { user }, error: userError } = userResult
+        const { data: { session }, error: sessionError } = sessionResult
+        
         console.log('📡 [AuthProviderSimple] 認証API呼び出し完了')
         
         console.log('🔍 [AuthProviderSimple] 認証状態取得結果:', { 

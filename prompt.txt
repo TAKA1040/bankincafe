@@ -1,19 +1,7 @@
-layout-fd0b3ea33087622a.js:1 🔄 AuthProviderSimple レンダリング: {pathname: '/'}
-layout-fd0b3ea33087622a.js:1 🚀 [AuthProviderSimple] useEffect実行 {pathname: '/'}
-layout-fd0b3ea33087622a.js:1 🔍 [AuthProviderSimple] 認証チェック開始 {pathname: '/', timestamp: '23:26:59'}
+layout-673fc224b62b17af.js:1 🔄 AuthProviderSimple レンダリング: {pathname: '/'}
+layout-673fc224b62b17af.js:1 🚀 [AuthProviderSimple] useEffect実行 {pathname: '/'}
+layout-673fc224b62b17af.js:1 🔍 [AuthProviderSimple] 認証チェック開始 {pathname: '/', timestamp: '23:52:49'}
+layout-673fc224b62b17af.js:1 📡 [AuthProviderSimple] Supabaseクライアント作成完了
+layout-673fc224b62b17af.js:1 📡 [AuthProviderSimple] 認証API呼び出し開始
 
-
-認証中になる場合と、
-
-
-layout-fd0b3ea33087622a.js:1 🔄 AuthProviderSimple レンダリング: Object
-layout-fd0b3ea33087622a.js:1 🚀 [AuthProviderSimple] useEffect実行 Object
-layout-fd0b3ea33087622a.js:1 🔍 [AuthProviderSimple] 認証チェック開始 Object
-layout-fd0b3ea33087622a.js:1 🔍 [AuthProviderSimple] 認証状態取得結果: Object
-117-baf0baeee314f75e.js:1 ❌ [AuthProviderSimple] 認証取得エラー: Object
-window.console.error @ 117-baf0baeee314f75e.js:1
-layout-fd0b3ea33087622a.js:1 🔄 AuthProviderSimple レンダリング: Object
-layout-fd0b3ea33087622a.js:1 ✅ パブリックページ表示: /login
-
-
-こうやってログイン画面にもどされるぱたーんがある
+この認証API呼び出し開始ってのがでると認証確認ちゅで止まるみたい。
