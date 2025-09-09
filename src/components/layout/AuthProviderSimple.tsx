@@ -22,14 +22,13 @@ export default function AuthProviderSimple({ children }: AuthProviderProps) {
   // 認証不要なページかチェック
   const isPublicPath = pathname && PUBLIC_PATHS.some(path => pathname.startsWith(path))
 
-  // 認証不要なページの場合はそのまま表示
-  if (isPublicPath) {
-    console.log('✅ パブリックページ表示:', pathname)
-    return <>{children}</>
-  }
-
   // 認証が必要なページ - 簡単な認証チェック
   useEffect(() => {
+    // 認証不要なページの場合は何もしない
+    if (isPublicPath) {
+      console.log('✅ パブリックページ表示:', pathname)
+      return
+    }
     const checkAuth = async () => {
       try {
         console.log('🔍 [AuthProviderSimple] 認証チェック開始', { 
@@ -144,7 +143,12 @@ export default function AuthProviderSimple({ children }: AuthProviderProps) {
 
     console.log('🚀 [AuthProviderSimple] useEffect実行', { pathname })
     checkAuth()
-  }, [router, pathname])
+  }, [router, pathname, isPublicPath])
+
+  // 認証不要なページの場合はそのまま表示
+  if (isPublicPath) {
+    return <>{children}</>
+  }
 
   // ローディング表示
   return (

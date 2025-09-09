@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 
 export default function TestAuthPage() {
@@ -125,7 +126,7 @@ export default function TestAuthPage() {
         
       } catch (error) {
         console.error('❌ [TestAuth] エラー:', error)
-        setAuthInfo({ error: error.message })
+        setAuthInfo({ error: error instanceof Error ? error.message : 'Unknown error' })
       } finally {
         setLoading(false)
       }
@@ -151,15 +152,15 @@ export default function TestAuthPage() {
       </pre>
       
       <div className="mt-4 space-x-2 flex flex-wrap gap-2">
-        <a href="/login" className="bg-blue-500 text-white px-4 py-2 rounded">
+        <Link href="/login" className="bg-blue-500 text-white px-4 py-2 rounded">
           ログインページへ
-        </a>
-        <a href="/" className="bg-green-500 text-white px-4 py-2 rounded">
+        </Link>
+        <Link href="/" className="bg-green-500 text-white px-4 py-2 rounded">
           ホームページへ
-        </a>
-        <a href="/auth/pending" className="bg-yellow-500 text-white px-4 py-2 rounded">
+        </Link>
+        <Link href="/auth/pending" className="bg-yellow-500 text-white px-4 py-2 rounded">
           承認待ちページへ
-        </a>
+        </Link>
         <button 
           onClick={handleClearSession}
           className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"

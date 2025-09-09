@@ -14,7 +14,7 @@ export function useAuth() {
   }
   
   // 本番環境では空の状態を返す（安全装置）
-  const [user] = useState(null)
+  const [user] = useState<any>(null)
   const [loading] = useState(false)
   const [error] = useState('廃止されたuseAuthが使用されました')
   
@@ -22,6 +22,9 @@ export function useAuth() {
     user, 
     loading, 
     isAdmin: false, 
-    error 
+    error,
+    signOut: async () => {
+      console.error('❌ 廃止されたuseAuth.signOutが呼び出されました！')
+    }
   }
 }
