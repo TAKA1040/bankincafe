@@ -16,14 +16,23 @@ export function useAuth() {
         return
       }
       
-      const allowedEmails = process.env.NEXT_PUBLIC_ALLOWED_EMAILS?.split(',').map(email => email.trim()) || []
+      const allowedEmailsEnv = process.env.NEXT_PUBLIC_ALLOWED_EMAILS
+      const allowedEmails = allowedEmailsEnv?.split(',').map(email => email.trim()).filter(email => email) || []
+      
       // 認証チェックログを出力（デバッグ用）
       console.log('認証チェック:', {
         userEmail: user.email,
+        envVariable: allowedEmailsEnv,
         allowedEmails,
         isAllowed: user.email ? allowedEmails.includes(user.email) : false,
         hostname: typeof window !== 'undefined' ? window.location.hostname : 'server'
       })
+      
+      // 環境変数が設定されていない場合は警告
+      if (!allowedEmailsEnv) {
+        console.warn('⚠️ NEXT_PUBLIC_ALLOWED_EMAILS環境変数が設定されていません。全てのユーザーを許可します。')
+        return // 環境変数未設定の場合はスキップ
+      }
       
       if (user.email && !allowedEmails.includes(user.email)) {
         console.log('許可されていないアカウントです。サインアウトします。')
@@ -64,9 +73,18 @@ export function useAuth() {
     await supabase.auth.signOut()
   }
 
-  const isAdmin = user?.email ? 
-    (process.env.NEXT_PUBLIC_ALLOWED_EMAILS?.split(',').map(email => email.trim()).includes(user.email) || false)
-    : false
+  // 許可されたメールアドレスリストを取得
+  const getAllowedEmails = () => {
+    const allowedEmails = process.env.NEXT_PUBLIC_ALLOWED_EMAILS
+    if (!allowedEmails) {
+      console.warn('NEXT_PUBLIC_ALLOWED_EMAILS環境変数が設定されていません')
+      return []
+    }
+    return allowedEmails.split(',').map(email => email.trim()).filter(email => email)
+  }
+
+  const allowedEmails = getAllowedEmails()
+  const isAdmin = user?.email ? allowedEmails.includes(user.email) : false
 
 
   return {
