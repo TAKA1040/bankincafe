@@ -5,6 +5,7 @@
 'use client'
 import React from 'react'
 import { useRouter } from 'next/navigation'
+import { useAuth } from '@/hooks/useAuth'
 import SecurityWrapper from './security-wrapper'
 
 interface DashboardClientProps {
@@ -28,9 +29,9 @@ interface MenuItem {
 
 export default function DashboardClient({ user }: DashboardClientProps) {
   const router = useRouter()
+  const { isAdmin } = useAuth()
 
-  // 管理者判定
-  const isAdmin = user.email === 'dash201206@gmail.com'
+  // 表示名の取得
   const displayName = user.user_metadata?.full_name || user.email
 
   // Tailwind CSSクラスを使用（XSS脆弱性を回避）

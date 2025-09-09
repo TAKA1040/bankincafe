@@ -28,10 +28,17 @@ export function useAuth() {
         hostname: typeof window !== 'undefined' ? window.location.hostname : 'server'
       })
       
-      // 環境変数が設定されていない場合は警告
+      // 環境変数が設定されていない場合は管理者のみ許可
       if (!allowedEmailsEnv) {
-        console.warn('⚠️ NEXT_PUBLIC_ALLOWED_EMAILS環境変数が設定されていません。全てのユーザーを許可します。')
-        setUser(user) // 環境変数未設定の場合は全ユーザー許可
+        console.error('🚨 NEXT_PUBLIC_ALLOWED_EMAILS環境変数が設定されていません。セキュリティのため管理者のみ許可します。')
+        if (user.email !== 'dash201206@gmail.com') {
+          console.log('❌ 環境変数未設定のため、管理者以外はアクセス禁止です。サインアウトします。')
+          await supabase.auth.signOut()
+          setUser(null)
+          return
+        }
+        console.log('✅ 管理者アカウントのため許可します（環境変数未設定警告あり）')
+        setUser(user)
         return
       }
       
