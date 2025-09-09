@@ -1,9 +1,13 @@
-layout-4705832c76639ba3.js:1 認証チェック: {userEmail: 'dash201206@gmail.com', envVariable: 'dash201206@gmail.com', allowedEmails: Array(1), isAllowed: true, hostname: 'bankincafe.apaf.me'}
-layout-4705832c76639ba3.js:1 ✅ 管理者アカウントでログイン成功
-layout-4705832c76639ba3.js:1 ✅ 認証済み・許可済みユーザー: dash201206@gmail.com
-layout-4705832c76639ba3.js:1 認証チェック: {userEmail: 'dash201206@gmail.com', envVariable: 'dash201206@gmail.com', allowedEmails: Array(1), isAllowed: true, hostname: 'bankincafe.apaf.me'}
-layout-4705832c76639ba3.js:1 ✅ 管理者アカウントでログイン成功
-layout-4705832c76639ba3.js:1 ✅ 認証済み・許可済みユーザー: dash201206@gmail.com
-layout-4705832c76639ba3.js:1 認証チェック: {userEmail: 'dash201206@gmail.com', envVariable: 'dash201206@gmail.com', allowedEmails: Array(1), isAllowed: true, hostname: 'bankincafe.apaf.me'}
-layout-4705832c76639ba3.js:1 ✅ 管理者アカウントでログイン成功
-layout-4705832c76639ba3.js:1 ✅ 認証済み・許可済みユーザー: dash201206@gmail.com
+鈑金Cafe
+請求書管理システム
+システムにアクセスするには
+Googleアカウントでのログインが必要です
+
+セキュリティ保護
+承認されたGoogleアカウントのみがアクセス可能です。 未承認のアカウントの場合は承認待ち画面に移動します。
+
+Googleアカウントでログイン
+ログインすることで利用規約に同意したものとみなします
+
+
+今度はメインのアドレスでもログインできない

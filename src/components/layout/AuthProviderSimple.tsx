@@ -112,11 +112,30 @@ export default function AuthProviderSimple({ children }: AuthProviderProps) {
 
         if (!isAdmin) {
           console.log('❌ [AuthProviderSimple] 許可されていないアカウント:', userEmail, '- 承認待ちページへ')
+          console.log('🔍 [AuthProviderSimple] FAILED AUTH DETAILS:', {
+            userEmail: userEmail,
+            rawAllowedEmails: rawAllowedEmails,
+            cleanedAllowedEmails: allowedEmails,
+            allowedEmailsList: allowedEmailsList,
+            isDash206: isDash206,
+            isInAllowedList: isInAllowedList,
+            finalIsAdmin: isAdmin,
+            timestamp: new Date().toISOString()
+          })
           router.push('/auth/pending')
           return
         }
 
         console.log('✅ [AuthProviderSimple] 認証・認可完了:', userEmail, '- メインコンテンツ表示')
+        
+        // 追加のデバッグ出力
+        console.log('🔍 [AuthProviderSimple] FINAL SUCCESS:', {
+          userEmail: userEmail,
+          isDash206: isDash206,
+          isInAllowedList: isInAllowedList,
+          finalIsAdmin: isAdmin,
+          timestamp: new Date().toISOString()
+        })
       } catch (error) {
         console.error('❌ [AuthProviderSimple] 認証チェック処理エラー:', error)
         router.push('/login')
