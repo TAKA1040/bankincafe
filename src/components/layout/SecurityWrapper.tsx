@@ -15,15 +15,23 @@ export default function SecurityWrapper({ children, redirectTo = '/login' }: Sec
   const router = useRouter()
 
   useEffect(() => {
-    if (!loading && !user) {
-      console.log('🔒 未認証ユーザーをログインページにリダイレクト')
-      router.push(redirectTo)
-    } else if (!loading && user && !isAdmin) {
-      // 管理者権限なしのユーザーは強制サインアウトして承認待ちページへ
-      console.log('❌ 許可されていないアカウントです:', user.email, 'サインアウトして承認待ちページへリダイレクト')
-      router.push('/auth/pending')
-    } else if (!loading && user && isAdmin) {
-      console.log('✅ 認証済み・許可済みユーザー:', user.email)
+    if (!loading) {
+      if (!user) {
+        console.log('🔒 未認証ユーザーをログインページにリダイレクト')
+        router.push(redirectTo)
+        return
+      }
+      
+      if (user && !isAdmin) {
+        // 管理者権限なしのユーザーは承認待ちページへ
+        console.log('❌ 許可されていないアカウントです:', user.email, 'サインアウトして承認待ちページへリダイレクト')
+        router.push('/auth/pending')
+        return
+      }
+      
+      if (user && isAdmin) {
+        console.log('✅ 認証済み・許可済みユーザー:', user.email)
+      }
     }
   }, [user, loading, isAdmin, router, redirectTo])
 

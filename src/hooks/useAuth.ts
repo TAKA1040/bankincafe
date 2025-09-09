@@ -53,6 +53,7 @@ export function useAuth() {
         console.log('❌ 許可されていないアカウントです。サインアウトします。')
         await supabase.auth.signOut()
         setUser(null)
+        return
       } else {
         console.log('✅ 許可されたアカウントでログイン成功')
         setUser(user)
