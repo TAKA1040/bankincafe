@@ -63,7 +63,7 @@ export function useAuthNew() {
         keysToRemove.forEach(key => localStorage.removeItem(key))
       }
       
-      // 状態リセット
+      // 状態リセット（必ずloadingをfalseに）
       setAuthState({
         user: null,
         loading: false,
@@ -71,7 +71,7 @@ export function useAuthNew() {
         error: null
       })
       
-      console.log('✅ サインアウト処理完了')
+      console.log('✅ サインアウト処理完了 - ローディング解除')
     } catch (error) {
       console.error('❌ サインアウトエラー:', error)
       setAuthState(prev => ({
@@ -99,50 +99,72 @@ export function useAuthNew() {
       userEmail: user?.email 
     })
 
-    // ユーザーが存在しない場合
-    if (!user) {
-      console.log('🔒 未認証状態')
+    try {
+      // ユーザーが存在しない場合
+      if (!user) {
+        console.log('🔒 未認証状態 - ローディング解除')
+        setAuthState({
+          user: null,
+          loading: false,
+          isAdmin: false,
+          error: null
+        })
+        return
+      }
+
+      // ユーザーのメールアドレスチェック
+      const userEmail = user.email
+      if (!userEmail) {
+        console.log('❌ メールアドレスが取得できません - ローディング解除してサインアウト')
+        setAuthState({
+          user: null,
+          loading: false,
+          isAdmin: false,
+          error: null
+        })
+        await signOut()
+        forceRedirect('/login')
+        return
+      }
+
+      // 管理者権限チェック
+      const isAdmin = checkAdminPermission(userEmail)
+      console.log('🔐 権限チェック:', { 
+        email: userEmail, 
+        isAdmin,
+        allowedEmails: getAllowedEmails()
+      })
+
+      if (!isAdmin) {
+        console.log('❌ 許可されていないアカウント - ローディング解除してサインアウト')
+        setAuthState({
+          user: null,
+          loading: false,
+          isAdmin: false,
+          error: null
+        })
+        await signOut()
+        forceRedirect('/auth/pending')
+        return
+      }
+
+      // 認証成功
+      console.log('✅ 認証・認可成功 - ローディング解除:', userEmail)
+      setAuthState({
+        user: user as AuthUser,
+        loading: false,
+        isAdmin: true,
+        error: null
+      })
+    } catch (error) {
+      console.error('❌ 認証処理エラー:', error)
       setAuthState({
         user: null,
         loading: false,
         isAdmin: false,
-        error: null
+        error: '認証処理中にエラーが発生しました'
       })
-      return
     }
-
-    // ユーザーのメールアドレスチェック
-    const userEmail = user.email
-    if (!userEmail) {
-      console.log('❌ メールアドレスが取得できません')
-      await signOut()
-      forceRedirect('/login')
-      return
-    }
-
-    // 管理者権限チェック
-    const isAdmin = checkAdminPermission(userEmail)
-    console.log('🔐 権限チェック:', { 
-      email: userEmail, 
-      isAdmin,
-      allowedEmails: getAllowedEmails()
-    })
-
-    if (!isAdmin) {
-      console.log('❌ 許可されていないアカウント - サインアウトして承認待ちページへ')
-      await signOut()
-      forceRedirect('/auth/pending')
-      return
-    }
-
-    // 認証成功
-    console.log('✅ 認証・認可成功:', userEmail)
-    setAuthState({
-      user: user as AuthUser,
-      loading: false,
-      isAdmin: true,
-      error: null
-    })
   }, [signOut, forceRedirect, checkAdminPermission, getAllowedEmails])
 
   // 初期化とイベントリスナー設定
@@ -157,22 +179,25 @@ export function useAuthNew() {
         const { data: { user }, error } = await supabase.auth.getUser()
         
         if (error) {
-          console.error('認証取得エラー:', error)
+          console.error('❌ 認証取得エラー:', error)
           if (isMounted) {
-            setAuthState(prev => ({
-              ...prev,
+            setAuthState({
+              user: null,
               loading: false,
+              isAdmin: false,
               error: error.message
-            }))
+            })
           }
           return
         }
+
+        console.log('📋 取得したユーザー情報:', { hasUser: !!user, email: user?.email })
 
         if (isMounted) {
           await processAuthState(user)
         }
       } catch (error) {
-        console.error('認証初期化エラー:', error)
+        console.error('❌ 認証初期化エラー:', error)
         if (isMounted) {
           setAuthState({
             user: null,
@@ -211,7 +236,7 @@ export function useAuthNew() {
       isMounted = false
       subscription.unsubscribe()
     }
-  }, [supabase.auth, processAuthState])
+  }, [supabase.auth])
 
   return {
     user: authState.user,
