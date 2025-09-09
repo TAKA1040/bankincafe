@@ -40,76 +40,42 @@ export default function AuthProviderSimple({ children }: AuthProviderProps) {
         const supabase = createClient()
         console.log('📡 [AuthProviderSimple] Supabaseクライアント作成完了')
         
-        // セッション情報も同時に取得して整合性をチェック
-        console.log('📡 [AuthProviderSimple] 認証API呼び出し開始')
+        // まずセッションだけ取得してみる
+        console.log('📡 [AuthProviderSimple] セッションチェック開始')
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession()
         
-        // タイムアウト付きのAPI呼び出しのラッパー関数
-        const withTimeout = (promise: Promise<any>, timeoutMs: number): Promise<any> => {
-          const timeoutPromise = new Promise((_, reject) => {
-            setTimeout(() => reject(new Error(`Operation timeout after ${timeoutMs}ms`)), timeoutMs)
-          })
-          return Promise.race([promise, timeoutPromise])
-        }
-        
-        const [userResult, sessionResult] = await Promise.all([
-          withTimeout(supabase.auth.getUser(), 8000),
-          withTimeout(supabase.auth.getSession(), 8000)
-        ])
-        
-        const { data: { user }, error: userError } = userResult
-        const { data: { session }, error: sessionError } = sessionResult
-        
-        console.log('📡 [AuthProviderSimple] 認証API呼び出し完了')
-        
-        console.log('🔍 [AuthProviderSimple] 認証状態取得結果:', { 
-          userExists: !!user, 
-          userEmail: user?.email,
-          userId: user?.id,
-          sessionExists: !!session,
-          sessionUserEmail: session?.user?.email,
-          sessionUserId: session?.user?.id,
-          userError: userError?.message || userError,
-          sessionError: sessionError?.message || sessionError,
-          userErrorFull: userError,
-          sessionErrorFull: sessionError,
-          consistent: user?.id === session?.user?.id,
-          timestamp: new Date().toISOString()
-        })
-        
-        // エラーチェック
-        if (userError || sessionError) {
-          console.error('❌ [AuthProviderSimple] 認証取得エラー:', { 
-            userError: userError?.message || JSON.stringify(userError),
-            sessionError: sessionError?.message || JSON.stringify(sessionError),
-            userErrorFull: userError,
-            sessionErrorFull: sessionError,
-            timestamp: new Date().toISOString()
-          })
+        if (sessionError) {
+          console.error('❌ [AuthProviderSimple] セッション取得エラー:', sessionError)
           setIsAuthenticated(false)
           router.push('/login')
           return
         }
-
-        // ユーザー存在チェック（sessionとuser両方で確認）
-        if (!user || !session?.user) {
-          console.log('🔒 [AuthProviderSimple] 未認証状態 - ログインページへ')
+        
+        if (!session?.user) {
+          console.log('🔒 [AuthProviderSimple] セッションなし - ログインページへ')
+          setIsAuthenticated(false)
           router.push('/login')
           return
         }
-
-        // 整合性チェック
-        if (user.id !== session.user.id || user.email !== session.user.email) {
-          console.warn('⚠️ [AuthProviderSimple] セッション整合性エラー - 再ログインが必要')
-          await supabase.auth.signOut()
-          router.push('/login')
-          return
-        }
-
-        // 管理者チェック（より厳密に）
-        const userEmail = user.email
+        
+        console.log('📡 [AuthProviderSimple] セッションチェック完了')
+        
+        // セッションからユーザー情報を取得
+        const user = session.user
+        const userEmail = user?.email
+        
+        console.log('🔍 [AuthProviderSimple] セッションユーザー情報:', { 
+          userExists: !!user, 
+          userEmail: userEmail,
+          userId: user?.id,
+          provider: user?.app_metadata?.provider,
+          timestamp: new Date().toISOString()
+        })
+        
         if (!userEmail) {
           console.error('❌ [AuthProviderSimple] ユーザーメールアドレスが取得できません')
           await supabase.auth.signOut()
+          setIsAuthenticated(false)
           router.push('/login')
           return
         }
