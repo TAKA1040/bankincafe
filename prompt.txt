@@ -1,7 +1,10 @@
-layout-673fc224b62b17af.js:1 🔄 AuthProviderSimple レンダリング: {pathname: '/'}
-layout-673fc224b62b17af.js:1 🚀 [AuthProviderSimple] useEffect実行 {pathname: '/'}
-layout-673fc224b62b17af.js:1 🔍 [AuthProviderSimple] 認証チェック開始 {pathname: '/', timestamp: '23:52:49'}
-layout-673fc224b62b17af.js:1 📡 [AuthProviderSimple] Supabaseクライアント作成完了
-layout-673fc224b62b17af.js:1 📡 [AuthProviderSimple] 認証API呼び出し開始
+layout-ad0c8ef375f64cf1.js:1 🔄 AuthProviderSimple レンダリング: {pathname: '/'}
+layout-ad0c8ef375f64cf1.js:1 🚀 [AuthProviderSimple] useEffect実行 {pathname: '/'}
+layout-ad0c8ef375f64cf1.js:1 🔍 [AuthProviderSimple] 認証チェック開始 {pathname: '/', timestamp: '0:22:57'}
+layout-ad0c8ef375f64cf1.js:1 📡 [AuthProviderSimple] Supabaseクライアント作成完了
+layout-ad0c8ef375f64cf1.js:1 📡 [AuthProviderSimple] セッションチェック開始
 
-この認証API呼び出し開始ってのがでると認証確認ちゅで止まるみたい。
+これで認証中のまま
+
+
+いい加減に完成させて
