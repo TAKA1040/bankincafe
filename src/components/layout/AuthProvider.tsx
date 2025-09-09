@@ -11,17 +11,7 @@ interface AuthProviderProps {
 }
 
 export default function AuthProvider({ children }: AuthProviderProps) {
-  const pathname = usePathname()
-  
-  // 認証不要なページの場合は認証チェックをスキップ
-  if (pathname && PUBLIC_PATHS.includes(pathname)) {
-    return <>{children}</>
-  }
-  
-  // その他のページは認証が必要
-  return (
-    <SecurityWrapper redirectTo="/login">
-      {children}
-    </SecurityWrapper>
-  )
+  // 認証システムを完全に無効化（一時的な措置）
+  // 全ユーザーがアクセス可能な状態に戻す
+  return <>{children}</>
 }
