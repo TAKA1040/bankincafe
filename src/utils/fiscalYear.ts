@@ -100,12 +100,8 @@ function getLastDayOfMonth(year: number, month: number): string {
 
 /**
  * 決算期の表示名を取得
- * 例: 2024年度 (2023/04～2024/03)
+ * 例: 2024年度
  */
 export function getFiscalYearDisplayName(fiscalYear: number, fiscalYearEndMonth: number): string {
-  const { startDate, endDate } = getFiscalYearRange(fiscalYear, fiscalYearEndMonth)
-  const startStr = startDate.substring(2, 4) + '/' + startDate.substring(5, 7)  // YY/MM
-  const endStr = endDate.substring(2, 4) + '/' + endDate.substring(5, 7)        // YY/MM
-  
-  return `${fiscalYear}年度 (${startStr}～${endStr})`
+  return `${fiscalYear}年度`
 }
