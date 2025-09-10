@@ -167,9 +167,8 @@ export function useInvoiceList(yearFilter?: string) {
           .lte('billing_date', endDate)
         console.log(`🗓️ 年度フィルター適用: ${year}年 (${startDate} ～ ${endDate})`)
       } else {
-        // 年度フィルター未選択時のみ1000件制限を適用
-        query = query.range(0, 999)
-        console.log('📋 年度未選択 - 1000件制限適用')
+        // 年度フィルター未選択時も全件取得に変更
+        console.log('📋 年度未選択 - 全件取得実行')
       }
 
       const { data: joinedData, error: joinError } = await query

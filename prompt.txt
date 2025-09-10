@@ -1,80 +1,14 @@
-layout-b920401737e75a6c.js:1 🔄 AuthProviderSimple レンダリング: {pathname: '/invoice-list'}
-layout-b920401737e75a6c.js:1 🔍 [AuthProviderSimple] 新しい認証システム開始: {pathname: '/invoice-list', timestamp: '2025-09-10T05:54:21.574Z'}
-439-9efe6c9b4d85d050.js:21 Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
-tK @ 439-9efe6c9b4d85d050.js:21
-tH @ 439-9efe6c9b4d85d050.js:21
-_initSupabaseAuthClient @ 439-9efe6c9b4d85d050.js:21
-tJ @ 439-9efe6c9b4d85d050.js:21
-tV @ 439-9efe6c9b4d85d050.js:21
-s @ layout-b920401737e75a6c.js:1
-（匿名） @ layout-b920401737e75a6c.js:1
-（匿名） @ layout-b920401737e75a6c.js:1
-aW @ fd9d1056-be6cb3b9718cb444.js:1
-oe @ fd9d1056-be6cb3b9718cb444.js:1
-ol @ fd9d1056-be6cb3b9718cb444.js:1
-or @ fd9d1056-be6cb3b9718cb444.js:1
-ol @ fd9d1056-be6cb3b9718cb444.js:1
-or @ fd9d1056-be6cb3b9718cb444.js:1
-ol @ fd9d1056-be6cb3b9718cb444.js:1
-or @ fd9d1056-be6cb3b9718cb444.js:1
-ol @ fd9d1056-be6cb3b9718cb444.js:1
-or @ fd9d1056-be6cb3b9718cb444.js:1
-ol @ fd9d1056-be6cb3b9718cb444.js:1
-or @ fd9d1056-be6cb3b9718cb444.js:1
-ol @ fd9d1056-be6cb3b9718cb444.js:1
-or @ fd9d1056-be6cb3b9718cb444.js:1
-ol @ fd9d1056-be6cb3b9718cb444.js:1
-or @ fd9d1056-be6cb3b9718cb444.js:1
-ol @ fd9d1056-be6cb3b9718cb444.js:1
-or @ fd9d1056-be6cb3b9718cb444.js:1
-ol @ fd9d1056-be6cb3b9718cb444.js:1
-or @ fd9d1056-be6cb3b9718cb444.js:1
-ol @ fd9d1056-be6cb3b9718cb444.js:1
-or @ fd9d1056-be6cb3b9718cb444.js:1
-ol @ fd9d1056-be6cb3b9718cb444.js:1
-or @ fd9d1056-be6cb3b9718cb444.js:1
-ol @ fd9d1056-be6cb3b9718cb444.js:1
-or @ fd9d1056-be6cb3b9718cb444.js:1
-ol @ fd9d1056-be6cb3b9718cb444.js:1
-or @ fd9d1056-be6cb3b9718cb444.js:1
-ol @ fd9d1056-be6cb3b9718cb444.js:1
-or @ fd9d1056-be6cb3b9718cb444.js:1
-ol @ fd9d1056-be6cb3b9718cb444.js:1
-or @ fd9d1056-be6cb3b9718cb444.js:1
-ol @ fd9d1056-be6cb3b9718cb444.js:1
-or @ fd9d1056-be6cb3b9718cb444.js:1
-ol @ fd9d1056-be6cb3b9718cb444.js:1
-or @ fd9d1056-be6cb3b9718cb444.js:1
-ol @ fd9d1056-be6cb3b9718cb444.js:1
-or @ fd9d1056-be6cb3b9718cb444.js:1
-ol @ fd9d1056-be6cb3b9718cb444.js:1
-or @ fd9d1056-be6cb3b9718cb444.js:1
-ol @ fd9d1056-be6cb3b9718cb444.js:1
-or @ fd9d1056-be6cb3b9718cb444.js:1
-ol @ fd9d1056-be6cb3b9718cb444.js:1
-or @ fd9d1056-be6cb3b9718cb444.js:1
-ol @ fd9d1056-be6cb3b9718cb444.js:1
-or @ fd9d1056-be6cb3b9718cb444.js:1
-ol @ fd9d1056-be6cb3b9718cb444.js:1
-id @ fd9d1056-be6cb3b9718cb444.js:1
-o @ fd9d1056-be6cb3b9718cb444.js:1
-T @ 117-baf0baeee314f75e.js:1
-layout-b920401737e75a6c.js:1 📡 [AuthProviderSimple] 標準Supabaseクライアント作成完了
-layout-b920401737e75a6c.js:1 📡 [AuthProviderSimple] セッション取得完了: {hasSession: true, hasUser: true, userEmail: 'dash201206@gmail.com', error: undefined}
-layout-b920401737e75a6c.js:1 🔐 管理者権限チェック: {userEmail: 'dash201206@gmail.com', isDash206: true, isInAllowedList: true, isAdmin: true}
-layout-b920401737e75a6c.js:1 ✅ 認証・認可完了 - メインコンテンツ表示
-439-9efe6c9b4d85d050.js:21  POST https://auwmmosfteomieyexkeh.supabase.co/rest/v1/user_management 409 (Conflict)
-（匿名） @ 439-9efe6c9b4d85d050.js:21
-h @ 439-9efe6c9b4d85d050.js:21
-r @ 439-9efe6c9b4d85d050.js:21
-Promise.then
-i @ 439-9efe6c9b4d85d050.js:21
-（匿名） @ 439-9efe6c9b4d85d050.js:21
-（匿名） @ 439-9efe6c9b4d85d050.js:21
-then @ 439-9efe6c9b4d85d050.js:1
-layout-b920401737e75a6c.js:1 📝 管理者ログイン履歴を記録
-layout-b920401737e75a6c.js:1 🔄 AuthProviderSimple レンダリング: {pathname: '/invoice-list'}
-layout-b920401737e75a6c.js:1 🎉 メインコンテンツ表示
-271-c0c161bc0fbc07a5.js:1 === 請求書データ取得開始 ===
-271-c0c161bc0fbc07a5.js:1 データ取得完了: 75.09999999403954ms
-271-c0c161bc0fbc07a5.js:1 処理完了: 11072.59999999404ms, 件数: 200
+1000件しか読み込まない問題についてこのプロジェクトのコードにバグや不具合がないかを、徹底的に調査・分析してください。
+
+- UltraThink を使用して深く読み解いてください
+- Playwright を用いたUIやUXの挙動テストも検討してください
+- 潜在的なバグ・非推奨コード・改善ポイントもすべて洗い出してください
+- 不具合があれば修正案を提示し、可能なら直接修正してください
+- 修正後のコードについても問題がないか再チェックしてください
+- 最後に、**改善された内容をGitにプッシュし、Vercelへデプロイ**してください
+
+- **注意：過去のコミットへ戻す、ページや機能を削除して簡易化するなど、内容を失う可能性がある方法は絶対に選択してはいけません。その場合は必ず私から明示的に指示します。**
+
+- **修正は必ず小さな単位に分け、各修正ごとに自動でビルドとテストを実行し、既存機能に影響が出ていないかセルフチェックしてください。**
+- **修正や改善は独立して進めてください。こちらに承認を求める必要はありません。**
+
