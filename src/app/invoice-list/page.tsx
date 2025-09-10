@@ -4,16 +4,17 @@ import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Search, Filter, Plus, Eye, Edit, Download, Trash2, RotateCcw, ArrowLeft, Home } from 'lucide-react';
 import { useInvoiceList, type SearchFilters } from '@/hooks/useInvoiceList';
+import { getFiscalYearInfo, getFiscalYearDisplayName, type FiscalYearInfo } from '@/utils/fiscalYear';
 
 export default function InvoiceListPage() {
   const router = useRouter();
   
-  // 年度フィルター状態（フックよりも前に定義）
-  const currentYear = new Date().getFullYear();
-  const defaultYears = [currentYear.toString(), (currentYear - 1).toString()]; // 今期と前期
+  // 決算期情報の状態
+  const [fiscalYearInfo, setFiscalYearInfo] = useState<FiscalYearInfo | null>(null);
   
+  // 年度フィルター状態（フックよりも前に定義）
   const [selectedYear, setSelectedYear] = useState<string>('multi'); // 複数年度選択
-  const [selectedYears, setSelectedYears] = useState<string[]>(defaultYears);
+  const [selectedYears, setSelectedYears] = useState<string[]>([]);
   const [isYearDropdownOpen, setIsYearDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   
@@ -64,26 +65,36 @@ export default function InvoiceListPage() {
     };
   }, [filteredInvoices]);
 
-  // 年度選択肢を動的生成（確実に全年度を含む）
+  // 年度選択肢を動的生成（決算期ベース）
   const yearOptions = useMemo(() => {
+    if (!fiscalYearInfo) return []; // 決算期情報が読み込まれるまで待機
+    
     const years = new Set<number>();
     
-    // データから年度を抽出
+    // 決算期ベースで年度を算出
     invoices.forEach(invoice => {
       if (invoice.billing_date) {
-        const year = new Date(invoice.billing_date).getFullYear();
-        years.add(year);
+        const billingDate = new Date(invoice.billing_date);
+        const billingYear = billingDate.getFullYear();
+        const billingMonth = billingDate.getMonth() + 1;
+        
+        // 請求日の月が決算月より後の場合は翌年度、そうでない場合は当年度
+        const fiscalYear = billingMonth > fiscalYearInfo.fiscalYearEndMonth 
+          ? billingYear + 1 
+          : billingYear;
+        
+        years.add(fiscalYear);
       }
     });
     
-    // デフォルト年度も必ず含める（2020-2030年の範囲で）
-    const currentYear = new Date().getFullYear();
-    for (let year = currentYear - 5; year <= currentYear + 1; year++) {
+    // 現在の決算期周辺の年度も必ず含める
+    const baseYear = fiscalYearInfo.currentFiscalYear;
+    for (let year = baseYear - 5; year <= baseYear + 1; year++) {
       years.add(year);
     }
     
     return Array.from(years).sort((a, b) => b - a); // 降順でソート
-  }, [invoices]);
+  }, [invoices, fiscalYearInfo]);
 
   // 年度フィルター更新
   const updateYearFilter = (year: string) => {
@@ -126,6 +137,37 @@ export default function InvoiceListPage() {
     setCurrentPage(1);
     setIsYearDropdownOpen(false);
   };
+
+  // 決算期情報の初期化
+  useEffect(() => {
+    const initializeFiscalYear = async () => {
+      try {
+        const info = await getFiscalYearInfo();
+        setFiscalYearInfo(info);
+        
+        // 今期と前期をデフォルト選択に設定
+        const defaultYears = [
+          info.currentFiscalYear.toString(),
+          info.previousFiscalYear.toString()
+        ];
+        setSelectedYears(defaultYears);
+        
+        console.log('📅 決算期情報初期化完了:', {
+          決算月: info.fiscalYearEndMonth + '月',
+          今期: info.currentFiscalYear + '年度',
+          前期: info.previousFiscalYear + '年度',
+          デフォルト選択: defaultYears
+        });
+      } catch (error) {
+        console.error('決算期情報の初期化エラー:', error);
+        // エラー時は従来通りカレンダー年を使用
+        const currentYear = new Date().getFullYear();
+        setSelectedYears([currentYear.toString(), (currentYear - 1).toString()]);
+      }
+    };
+    
+    initializeFiscalYear();
+  }, []);
 
   // ドロップダウン外クリックで閉じる
   useEffect(() => {
@@ -312,13 +354,13 @@ export default function InvoiceListPage() {
                 <span>
                   {selectedYear === 'all' 
                     ? `全期間 (${invoices.length}件)`
-                    : selectedYear === 'multi' && selectedYears.length > 1
-                    ? `${selectedYears.sort().join('・')}年 (${selectedYears.length}年度)`
-                    : selectedYears.length === 1
-                    ? `${selectedYears[0]}年`
-                    : selectedYears.length > 1
-                    ? `${selectedYears.sort().join('・')}年 (${selectedYears.length}年度)`
-                    : '年度を選択'
+                    : selectedYear === 'multi' && selectedYears.length > 1 && fiscalYearInfo
+                    ? selectedYears.sort().map(y => getFiscalYearDisplayName(parseInt(y), fiscalYearInfo.fiscalYearEndMonth)).join('・')
+                    : selectedYears.length === 1 && fiscalYearInfo
+                    ? getFiscalYearDisplayName(parseInt(selectedYears[0]), fiscalYearInfo.fiscalYearEndMonth)
+                    : selectedYears.length > 1 && fiscalYearInfo
+                    ? selectedYears.sort().map(y => getFiscalYearDisplayName(parseInt(y), fiscalYearInfo.fiscalYearEndMonth)).join('・')
+                    : '決算期を選択'
                   }
                 </span>
                 <div className={`transform transition-transform ${isYearDropdownOpen ? 'rotate-180' : ''}`}>
@@ -341,19 +383,35 @@ export default function InvoiceListPage() {
                     </label>
                     
                     {/* 年度別オプション */}
-                    {yearOptions.map(year => {
-                      const yearCount = invoices.filter(inv => 
-                        inv.billing_date && new Date(inv.billing_date).getFullYear() === year
-                      ).length;
+                    {yearOptions.map(fiscalYear => {
+                      // 決算期ベースで件数を計算
+                      const yearCount = fiscalYearInfo ? invoices.filter(inv => {
+                        if (!inv.billing_date) return false;
+                        const billingDate = new Date(inv.billing_date);
+                        const billingYear = billingDate.getFullYear();
+                        const billingMonth = billingDate.getMonth() + 1;
+                        
+                        // 請求日の月が決算月より後の場合は翌年度、そうでない場合は当年度
+                        const invoiceFiscalYear = billingMonth > fiscalYearInfo.fiscalYearEndMonth 
+                          ? billingYear + 1 
+                          : billingYear;
+                        
+                        return invoiceFiscalYear === fiscalYear;
+                      }).length : 0;
+                      
+                      const displayName = fiscalYearInfo 
+                        ? getFiscalYearDisplayName(fiscalYear, fiscalYearInfo.fiscalYearEndMonth)
+                        : `${fiscalYear}年度`;
+                      
                       return (
-                        <label key={year} className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
+                        <label key={fiscalYear} className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
                           <input
                             type="checkbox"
-                            checked={selectedYears.includes(year.toString())}
-                            onChange={() => toggleYearSelection(year.toString())}
+                            checked={selectedYears.includes(fiscalYear.toString())}
+                            onChange={() => toggleYearSelection(fiscalYear.toString())}
                             className="rounded"
                           />
-                          <span>{year}年 ({yearCount}件)</span>
+                          <span>{displayName} ({yearCount}件)</span>
                         </label>
                       );
                     })}

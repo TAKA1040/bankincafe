@@ -170,17 +170,21 @@ export function useInvoiceList(yearFilter?: string | string[]) {
           console.log(`🗓️ 単一年度フィルター適用: ${year}年 (${startDate} ～ ${endDate})`)
         }
       } else if (Array.isArray(yearFilter) && yearFilter.length > 0) {
-        // 複数年度指定
-        const years = yearFilter.map(y => parseInt(y)).filter(y => !isNaN(y))
-        if (years.length > 0) {
-          const minYear = Math.min(...years)
-          const maxYear = Math.max(...years)
-          const startDate = `${minYear}-01-01`
-          const endDate = `${maxYear}-12-31`
+        // 複数年度指定（決算期ベース）
+        const fiscalYears = yearFilter.map(y => parseInt(y)).filter(y => !isNaN(y))
+        if (fiscalYears.length > 0) {
+          const minFiscalYear = Math.min(...fiscalYears)
+          const maxFiscalYear = Math.max(...fiscalYears)
+          
+          // 決算期の期間を計算（3月決算と仮定、実際はcompany_infoから取得すべき）
+          // 最小決算期の開始日（前年4月）から最大決算期の終了日（当年3月）まで
+          const startDate = `${minFiscalYear - 1}-04-01`
+          const endDate = `${maxFiscalYear}-03-31`
+          
           query = query
             .gte('billing_date', startDate)
             .lte('billing_date', endDate)
-          console.log(`🗓️ 複数年度フィルター適用: ${years.join(', ')}年 (${startDate} ～ ${endDate})`)
+          console.log(`🗓️ 複数決算期フィルター適用: ${fiscalYears.join(', ')}年度 (${startDate} ～ ${endDate})`)
         }
       } else {
         console.log('📋 年度未選択 - 全件取得実行（ページネーション方式）')
