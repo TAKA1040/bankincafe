@@ -9,12 +9,19 @@ export default function InvoiceListPage() {
   const router = useRouter();
   
   // 年度フィルター状態（フックよりも前に定義）
-  const [selectedYear, setSelectedYear] = useState<string>('all');
-  const [selectedYears, setSelectedYears] = useState<string[]>([]);
+  const currentYear = new Date().getFullYear();
+  const defaultYears = [currentYear.toString(), (currentYear - 1).toString()]; // 今期と前期
+  
+  const [selectedYear, setSelectedYear] = useState<string>('multi'); // 複数年度選択
+  const [selectedYears, setSelectedYears] = useState<string[]>(defaultYears);
   const [isYearDropdownOpen, setIsYearDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   
-  const { invoices, loading, error, searchInvoices, updateInvoiceStatus, updatePaymentStatus, createRedInvoice, deleteInvoice } = useInvoiceList(selectedYear);
+  const { invoices, loading, error, searchInvoices, updateInvoiceStatus, updatePaymentStatus, createRedInvoice, deleteInvoice } = useInvoiceList(
+    selectedYear === 'all' ? 'all' : 
+    selectedYear === 'multi' ? selectedYears : 
+    selectedYear
+  );
   
   console.log('📊 現在のselectedYear:', selectedYear);
 
@@ -57,15 +64,24 @@ export default function InvoiceListPage() {
     };
   }, [filteredInvoices]);
 
-  // 年度選択肢を動的生成
+  // 年度選択肢を動的生成（確実に全年度を含む）
   const yearOptions = useMemo(() => {
     const years = new Set<number>();
+    
+    // データから年度を抽出
     invoices.forEach(invoice => {
       if (invoice.billing_date) {
         const year = new Date(invoice.billing_date).getFullYear();
         years.add(year);
       }
     });
+    
+    // デフォルト年度も必ず含める（2020-2030年の範囲で）
+    const currentYear = new Date().getFullYear();
+    for (let year = currentYear - 5; year <= currentYear + 1; year++) {
+      years.add(year);
+    }
+    
     return Array.from(years).sort((a, b) => b - a); // 降順でソート
   }, [invoices]);
 
@@ -76,29 +92,14 @@ export default function InvoiceListPage() {
     setCurrentPage(1);
   };
 
-  // 複数年度選択の切り替え（即座適用版）
+  // 複数年度選択の切り替え
   const toggleYearSelection = (year: string) => {
     setSelectedYears(prev => {
       const newSelection = prev.includes(year) 
         ? prev.filter(y => y !== year)
         : [...prev, year];
       
-      // 選択変更後、即座にフィルターを適用
-      setTimeout(() => {
-        let newYear: string;
-        if (newSelection.length === 0) {
-          newYear = 'all';
-        } else if (newSelection.length === 1) {
-          newYear = newSelection[0];
-        } else {
-          // 複数年度選択時は最初の年度を使用
-          newYear = newSelection[0];
-        }
-        console.log('📅 toggleYearSelection即座適用:', newYear, 'selection:', newSelection);
-        setSelectedYear(newYear);
-        setCurrentPage(1);
-      }, 0);
-      
+      console.log('📅 年度選択変更:', newSelection);
       return newSelection;
     });
   };
@@ -110,11 +111,20 @@ export default function InvoiceListPage() {
     } else if (selectedYears.length === 1) {
       setSelectedYear(selectedYears[0]);
     } else {
-      // 複数年度選択時は最初の年度を使用（または独自のロジック）
-      setSelectedYear(selectedYears[0]);
+      // 複数年度選択時は'multi'モードに設定
+      setSelectedYear('multi');
     }
     setIsYearDropdownOpen(false);
     setCurrentPage(1);
+    console.log('📅 フィルター適用:', selectedYears);
+  };
+
+  // 全期間選択
+  const selectAllYears = () => {
+    setSelectedYears([]);
+    setSelectedYear('all');
+    setCurrentPage(1);
+    setIsYearDropdownOpen(false);
   };
 
   // ドロップダウン外クリックで閉じる
@@ -300,11 +310,15 @@ export default function InvoiceListPage() {
                 className="border border-gray-300 rounded-lg px-3 py-2 min-w-[200px] bg-blue-50 border-blue-200 text-left flex items-center justify-between"
               >
                 <span>
-                  {selectedYears.length === 0 
+                  {selectedYear === 'all' 
                     ? `全期間 (${invoices.length}件)`
+                    : selectedYear === 'multi' && selectedYears.length > 1
+                    ? `${selectedYears.sort().join('・')}年 (${selectedYears.length}年度)`
                     : selectedYears.length === 1
                     ? `${selectedYears[0]}年`
-                    : `${selectedYears.length}年度選択中`
+                    : selectedYears.length > 1
+                    ? `${selectedYears.sort().join('・')}年 (${selectedYears.length}年度)`
+                    : '年度を選択'
                   }
                 </span>
                 <div className={`transform transition-transform ${isYearDropdownOpen ? 'rotate-180' : ''}`}>
@@ -319,13 +333,8 @@ export default function InvoiceListPage() {
                     <label className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
                       <input
                         type="checkbox"
-                        checked={selectedYears.length === 0}
-                        onChange={() => {
-                          setSelectedYears([]);
-                          setSelectedYear('all');
-                          setCurrentPage(1);
-                          setIsYearDropdownOpen(false);
-                        }}
+                        checked={selectedYear === 'all'}
+                        onChange={selectAllYears}
                         className="rounded"
                       />
                       <span>全期間 ({invoices.length}件)</span>

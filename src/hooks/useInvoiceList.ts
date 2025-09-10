@@ -93,7 +93,7 @@ const normalizeSearchText = (text: string): string => {
     .trim()
 }
 
-export function useInvoiceList(yearFilter?: string) {
+export function useInvoiceList(yearFilter?: string | string[]) {
   const [invoices, setInvoices] = useState<InvoiceWithItems[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -158,14 +158,30 @@ export function useInvoiceList(yearFilter?: string) {
         .order('billing_date', { ascending: false })
 
       // 年度フィルターが指定されている場合は条件を追加
-      if (yearFilter && yearFilter !== 'all') {
-        const year = parseInt(yearFilter)
-        const startDate = `${year}-01-01`
-        const endDate = `${year}-12-31`
-        query = query
-          .gte('billing_date', startDate)
-          .lte('billing_date', endDate)
-        console.log(`🗓️ 年度フィルター適用: ${year}年 (${startDate} ～ ${endDate})`)
+      if (yearFilter && yearFilter !== 'all' && yearFilter !== 'multi') {
+        // 単一年度指定
+        if (typeof yearFilter === 'string') {
+          const year = parseInt(yearFilter)
+          const startDate = `${year}-01-01`
+          const endDate = `${year}-12-31`
+          query = query
+            .gte('billing_date', startDate)
+            .lte('billing_date', endDate)
+          console.log(`🗓️ 単一年度フィルター適用: ${year}年 (${startDate} ～ ${endDate})`)
+        }
+      } else if (Array.isArray(yearFilter) && yearFilter.length > 0) {
+        // 複数年度指定
+        const years = yearFilter.map(y => parseInt(y)).filter(y => !isNaN(y))
+        if (years.length > 0) {
+          const minYear = Math.min(...years)
+          const maxYear = Math.max(...years)
+          const startDate = `${minYear}-01-01`
+          const endDate = `${maxYear}-12-31`
+          query = query
+            .gte('billing_date', startDate)
+            .lte('billing_date', endDate)
+          console.log(`🗓️ 複数年度フィルター適用: ${years.join(', ')}年 (${startDate} ～ ${endDate})`)
+        }
       } else {
         console.log('📋 年度未選択 - 全件取得実行（ページネーション方式）')
       }
