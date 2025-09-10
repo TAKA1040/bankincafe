@@ -211,7 +211,7 @@ export function useAuthNew() {
 
     // 認証状態変更リスナー
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      async (event: any, session: any) => {
         console.log('🔄 認証状態変更:', { event, hasSession: !!session })
         
         if (isMounted) {

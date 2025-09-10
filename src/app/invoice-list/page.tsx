@@ -16,13 +16,17 @@ export default function InvoiceListPage() {
   const [selectedYear, setSelectedYear] = useState<string>('multi'); // 複数年度選択
   const [selectedYears, setSelectedYears] = useState<string[]>([]);
   const [isYearDropdownOpen, setIsYearDropdownOpen] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false); // 初期化状態管理
   const dropdownRef = useRef<HTMLDivElement>(null);
   
-  const { invoices, loading, error, searchInvoices, updateInvoiceStatus, updatePaymentStatus, createRedInvoice, deleteInvoice } = useInvoiceList(
+  // 初期化完了まではallを使用
+  const yearFilter = !isInitialized ? 'all' : (
     selectedYear === 'all' ? 'all' : 
     selectedYear === 'multi' ? selectedYears : 
     selectedYear
   );
+
+  const { invoices, loading, error, searchInvoices, updateInvoiceStatus, updatePaymentStatus, createRedInvoice, deleteInvoice } = useInvoiceList(yearFilter);
   
   console.log('📊 現在のselectedYear:', selectedYear);
 
@@ -65,13 +69,13 @@ export default function InvoiceListPage() {
     };
   }, [filteredInvoices]);
 
-  // 年度選択肢を動的生成（決算期ベース）
+  // 年度選択肢を動的生成（決算期ベース、データがある年度のみ）
   const yearOptions = useMemo(() => {
     if (!fiscalYearInfo) return []; // 決算期情報が読み込まれるまで待機
     
     const years = new Set<number>();
     
-    // 決算期ベースで年度を算出
+    // データから存在する決算期のみを抽出
     invoices.forEach(invoice => {
       if (invoice.billing_date) {
         const billingDate = new Date(invoice.billing_date);
@@ -83,15 +87,14 @@ export default function InvoiceListPage() {
           ? billingYear + 1 
           : billingYear;
         
-        years.add(fiscalYear);
+        // 現在の決算期以降（未来）の年度は除外
+        if (fiscalYear <= fiscalYearInfo.currentFiscalYear) {
+          years.add(fiscalYear);
+        }
       }
     });
     
-    // 現在の決算期周辺の年度も必ず含める
-    const baseYear = fiscalYearInfo.currentFiscalYear;
-    for (let year = baseYear - 5; year <= baseYear + 1; year++) {
-      years.add(year);
-    }
+    console.log('📅 データがある決算期:', Array.from(years).sort((a, b) => b - a));
     
     return Array.from(years).sort((a, b) => b - a); // 降順でソート
   }, [invoices, fiscalYearInfo]);
@@ -138,31 +141,63 @@ export default function InvoiceListPage() {
     setIsYearDropdownOpen(false);
   };
 
+  // 決算期情報の初期化（データ読み込み後に実行）
+  useEffect(() => {
+    if (!fiscalYearInfo || invoices.length === 0 || isInitialized) return;
+    
+    // データがある年度のみを抽出
+    const availableYears = new Set<number>();
+    invoices.forEach(invoice => {
+      if (invoice.billing_date) {
+        const billingDate = new Date(invoice.billing_date);
+        const billingYear = billingDate.getFullYear();
+        const billingMonth = billingDate.getMonth() + 1;
+        
+        const fiscalYear = billingMonth > fiscalYearInfo.fiscalYearEndMonth 
+          ? billingYear + 1 
+          : billingYear;
+        
+        if (fiscalYear <= fiscalYearInfo.currentFiscalYear) {
+          availableYears.add(fiscalYear);
+        }
+      }
+    });
+    
+    // 今期と前期のうち、データが存在するもののみデフォルト選択
+    const defaultYears: string[] = [];
+    if (availableYears.has(fiscalYearInfo.currentFiscalYear)) {
+      defaultYears.push(fiscalYearInfo.currentFiscalYear.toString());
+    }
+    if (availableYears.has(fiscalYearInfo.previousFiscalYear)) {
+      defaultYears.push(fiscalYearInfo.previousFiscalYear.toString());
+    }
+    
+    // データがない場合は、最新の2年度をデフォルト選択
+    if (defaultYears.length === 0) {
+      const sortedYears = Array.from(availableYears).sort((a, b) => b - a);
+      defaultYears.push(...sortedYears.slice(0, 2).map(y => y.toString()));
+    }
+    
+    setSelectedYears(defaultYears);
+    setIsInitialized(true);
+    
+    console.log('📅 決算期情報初期化完了:', {
+      決算月: fiscalYearInfo.fiscalYearEndMonth + '月',
+      今期: fiscalYearInfo.currentFiscalYear + '年度',
+      前期: fiscalYearInfo.previousFiscalYear + '年度',
+      利用可能な年度: Array.from(availableYears).sort((a, b) => b - a),
+      デフォルト選択: defaultYears
+    });
+  }, [fiscalYearInfo, invoices, isInitialized]);
+
   // 決算期情報の初期化
   useEffect(() => {
     const initializeFiscalYear = async () => {
       try {
         const info = await getFiscalYearInfo();
         setFiscalYearInfo(info);
-        
-        // 今期と前期をデフォルト選択に設定
-        const defaultYears = [
-          info.currentFiscalYear.toString(),
-          info.previousFiscalYear.toString()
-        ];
-        setSelectedYears(defaultYears);
-        
-        console.log('📅 決算期情報初期化完了:', {
-          決算月: info.fiscalYearEndMonth + '月',
-          今期: info.currentFiscalYear + '年度',
-          前期: info.previousFiscalYear + '年度',
-          デフォルト選択: defaultYears
-        });
       } catch (error) {
         console.error('決算期情報の初期化エラー:', error);
-        // エラー時は従来通りカレンダー年を使用
-        const currentYear = new Date().getFullYear();
-        setSelectedYears([currentYear.toString(), (currentYear - 1).toString()]);
       }
     };
     

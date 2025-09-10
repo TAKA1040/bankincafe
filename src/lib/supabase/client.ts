@@ -7,12 +7,23 @@ if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Supabase環境変数が設定されていません')
 }
 
+// シングルトンクライアントインスタンス
+let _supabaseClient: any = null;
+
 export const createClient = () => {
-  return createSupabaseClient(supabaseUrl, supabaseAnonKey, {
+  if (_supabaseClient) {
+    return _supabaseClient;
+  }
+  
+  _supabaseClient = createSupabaseClient(supabaseUrl, supabaseAnonKey, {
     auth: {
       persistSession: true,
       autoRefreshToken: true,
-      detectSessionInUrl: true
+      detectSessionInUrl: true,
+      storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+      storageKey: 'supabase.auth.token'
     }
-  })
+  });
+  
+  return _supabaseClient;
 }

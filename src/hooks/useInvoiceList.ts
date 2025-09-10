@@ -429,7 +429,7 @@ export function useInvoiceList(yearFilter?: string | string[]) {
 
       let subtotal = origSubtotal != null
         ? Number(origSubtotal)
-        : (lineItems || []).reduce((s, li) => s + Number(li.amount || 0), 0)
+        : (lineItems || []).reduce((s: number, li: any) => s + Number(li.amount || 0), 0)
       let tax = origTax != null ? Number(origTax) : 0
       let total_amount = origTotal != null ? Number(origTotal) : subtotal + tax
 
@@ -462,7 +462,7 @@ export function useInvoiceList(yearFilter?: string | string[]) {
 
       // ライン項目の作成（金額・単価のみ反転、数量はそのまま）
       if (lineItems && lineItems.length > 0) {
-        const newLineItems = lineItems.map((li) => ({
+        const newLineItems = lineItems.map((li: any) => ({
           invoice_id: newInvoiceId,
           line_no: li.line_no,
           task_type: li.task_type,
