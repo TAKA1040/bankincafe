@@ -167,11 +167,42 @@ export function useInvoiceList(yearFilter?: string) {
           .lte('billing_date', endDate)
         console.log(`🗓️ 年度フィルター適用: ${year}年 (${startDate} ～ ${endDate})`)
       } else {
-        // 年度フィルター未選択時も全件取得に変更
-        console.log('📋 年度未選択 - 全件取得実行')
+        console.log('📋 年度未選択 - 全件取得実行（ページネーション方式）')
       }
 
-      const { data: joinedData, error: joinError } = await query
+      // 🔥 強制全件取得：ページネーション方式で制限を回避
+      let joinedData: any[] = []
+      let currentPage = 0
+      const pageSize = 1000
+      let hasMore = true
+
+      while (hasMore) {
+        const fromIndex = currentPage * pageSize
+        const toIndex = fromIndex + pageSize - 1
+        
+        console.log(`📄 ページ${currentPage + 1}: ${fromIndex}～${toIndex}件を取得中`)
+        
+        const { data: pageData, error: pageError } = await query
+          .range(fromIndex, toIndex)
+        
+        if (pageError) {
+          throw pageError
+        }
+        
+        if (pageData && pageData.length > 0) {
+          joinedData = [...joinedData, ...pageData]
+          console.log(`✅ ページ${currentPage + 1}取得完了: ${pageData.length}件（累計: ${joinedData.length}件）`)
+          
+          // 取得件数がページサイズ未満なら最後のページ
+          hasMore = pageData.length === pageSize
+          currentPage++
+        } else {
+          hasMore = false
+        }
+      }
+      
+      console.log(`🎯 全件取得完了: 合計${joinedData.length}件`)
+      const joinError = null // エラーは上記でハンドリング済み
 
       console.log(`全データ取得完了: ${performance.now() - startTime}ms`)
 
@@ -180,7 +211,7 @@ export function useInvoiceList(yearFilter?: string) {
       }
 
       // 請求書データを構築
-      const invoicesWithItems: InvoiceWithItems[] = (joinedData || []).map(invoice => {
+      const invoicesWithItems: InvoiceWithItems[] = (joinedData || []).map((invoice: any) => {
         const lineItems = invoice.invoice_line_items || []
         
         return {
@@ -188,7 +219,7 @@ export function useInvoiceList(yearFilter?: string) {
           invoice_number: invoice.invoice_number || invoice.invoice_id,
           customer_category: (invoice.customer_category as 'UD' | 'その他') || 'その他',
           subject: invoice.subject || invoice.subject_name,
-          line_items: lineItems.map(item => ({
+          line_items: lineItems.map((item: any) => ({
             id: item.id,
             line_no: item.line_no,
             task_type: item.task_type,
@@ -201,8 +232,8 @@ export function useInvoiceList(yearFilter?: string) {
             raw_label: item.raw_label,
             performed_at: item.performed_at
           })),
-          total_quantity: lineItems.reduce((sum, item) => sum + (item.quantity || 0), 0),
-          work_names: lineItems.map(item => 
+          total_quantity: lineItems.reduce((sum: number, item: any) => sum + (item.quantity || 0), 0),
+          work_names: lineItems.map((item: any) => 
             item.raw_label || [item.target, item.action, item.position].filter(Boolean).join(' ')
           ).join(', '),
           status: (invoice.status as 'draft' | 'finalized' | 'sent' | 'paid') || 'draft',
