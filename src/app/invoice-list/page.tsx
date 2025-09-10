@@ -376,6 +376,8 @@ export default function InvoiceListPage() {
               {paginatedInvoices.map((invoice) => {
                 // 品名明細を3件まで表示し、4件目以降は「その他N件あり」として表示
                 const lineItems = invoice.line_items || [];
+                // デバッグログ: 請求書ごとの明細数確認
+                console.log(`📄 請求書 ${invoice.invoice_id}: 明細${lineItems.length}件`, lineItems);
                 const displayItems = lineItems.slice(0, 3);
                 const remainingCount = Math.max(0, lineItems.length - 3);
 
@@ -419,7 +421,20 @@ export default function InvoiceListPage() {
 
                     {/* 4列目: 品名明細（3段構成） */}
                     <td className="px-4 py-4 align-top">
+                      {/* デバッグログ追加 */}
+                      {console.log('📋 displayItems長さ:', displayItems.length, '明細:', displayItems)}
                       {displayItems.map((item, index) => {
+                        // デバッグ用ログ
+                        if (index === 0) {
+                          console.log('🔍 明細表示デバッグ:', {
+                            raw_label: item.raw_label,
+                            target: item.target,
+                            action: item.action,
+                            position: item.position,
+                            task_type: item.task_type
+                          });
+                        }
+                        
                         const itemName = item.raw_label || [item.target, item.action, item.position].filter(Boolean).join(' ') || '-';
                         const prefix = getWorkTypePrefix(item.task_type);
                         const displayName = `${prefix}${itemName}`;

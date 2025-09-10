@@ -45,10 +45,10 @@ export default function AuthProviderSimple({ children }: AuthProviderProps) {
         const supabase = createClient()
         console.log('📡 [AuthProviderSimple] 標準Supabaseクライアント作成完了')
         
-        // タイムアウト付きでセッション取得
+        // タイムアウト付きでセッション取得（時間を延長）
         const sessionPromise = supabase.auth.getSession()
         const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Session timeout')), 5000)
+          setTimeout(() => reject(new Error('Session timeout')), 15000)
         )
         
         const { data: { session }, error } = await Promise.race([

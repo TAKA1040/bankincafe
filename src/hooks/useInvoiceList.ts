@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
+import { dataGuard } from '@/lib/data-guard'
 import type { Database } from '@/types/supabase'
 
 type InvoiceRow = Database['public']['Tables']['invoices']['Row']
@@ -105,8 +106,16 @@ export function useInvoiceList() {
       console.log('=== 請求書データ取得開始 ===')
       const startTime = performance.now()
 
-      // 基本データとライン項目を取得
-      const { data: invoiceData, error: invoiceError } = await supabase
+      // データ保護チェック実行
+      const dataStatus = await dataGuard.getDataStatus()
+      console.log('🛡️ データ保護状況:', dataStatus)
+      
+      if (dataStatus.invoices.status === 'DANGER') {
+        throw new Error(`🚨 データ不足: 請求書が${dataStatus.invoices.current}件しかありません（最低${dataStatus.invoices.minimum}件必要）`)
+      }
+
+      // データベースの全ての請求書を取得（制限なし - 大量データ対応）
+      const { data: joinedData, error: joinError } = await supabase
         .from('invoices')
         .select(`
           invoice_id,
@@ -128,25 +137,8 @@ export function useInvoiceList() {
           status,
           payment_status,
           created_at,
-          updated_at
-        `)
-        .order('created_at', { ascending: false })
-        .limit(200)
-
-      console.log(`データ取得完了: ${performance.now() - startTime}ms`)
-
-      if (invoiceError) {
-        throw invoiceError
-      }
-
-      // ライン項目も含めて請求書リストを構築
-      const invoicesWithItems: InvoiceWithItems[] = []
-      
-      for (const invoice of invoiceData || []) {
-        // 各請求書のライン項目を取得
-        const { data: lineItems, error: lineError } = await supabase
-          .from('invoice_line_items')
-          .select(`
+          updated_at,
+          invoice_line_items (
             id,
             line_no,
             task_type,
@@ -158,21 +150,27 @@ export function useInvoiceList() {
             amount,
             raw_label,
             performed_at
-          `)
-          .eq('invoice_id', invoice.invoice_id)
-          .order('line_no', { ascending: true })
+          )
+        `)
+        .order('created_at', { ascending: false })
+        .range(0, 999)  // 一時的に1000件に戻して動作確認
 
-        if (lineError) {
-          console.warn(`ライン項目取得エラー (${invoice.invoice_id}):`, lineError)
-        }
+      console.log(`全データ取得完了: ${performance.now() - startTime}ms`)
 
-        // 請求書データを構築
-        invoicesWithItems.push({
+      if (joinError) {
+        throw joinError
+      }
+
+      // 請求書データを構築
+      const invoicesWithItems: InvoiceWithItems[] = (joinedData || []).map(invoice => {
+        const lineItems = invoice.invoice_line_items || []
+        
+        return {
           ...invoice,
           invoice_number: invoice.invoice_number || invoice.invoice_id,
           customer_category: (invoice.customer_category as 'UD' | 'その他') || 'その他',
           subject: invoice.subject || invoice.subject_name,
-          line_items: (lineItems || []).map(item => ({
+          line_items: lineItems.map(item => ({
             id: item.id,
             line_no: item.line_no,
             task_type: item.task_type,
@@ -185,8 +183,8 @@ export function useInvoiceList() {
             raw_label: item.raw_label,
             performed_at: item.performed_at
           })),
-          total_quantity: (lineItems || []).reduce((sum, item) => sum + (item.quantity || 0), 0),
-          work_names: (lineItems || []).map(item => 
+          total_quantity: lineItems.reduce((sum, item) => sum + (item.quantity || 0), 0),
+          work_names: lineItems.map(item => 
             item.raw_label || [item.target, item.action, item.position].filter(Boolean).join(' ')
           ).join(', '),
           status: (invoice.status as 'draft' | 'finalized' | 'sent' | 'paid') || 'draft',
@@ -194,8 +192,8 @@ export function useInvoiceList() {
           subtotal: invoice.subtotal || 0,
           tax: invoice.tax || 0,
           total: invoice.total_amount || invoice.total || 0
-        })
-      }
+        }
+      })
 
       console.log(`処理完了: ${performance.now() - startTime}ms, 件数: ${invoicesWithItems.length}`)
       setInvoices(invoicesWithItems)
