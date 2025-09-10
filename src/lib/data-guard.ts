@@ -1,5 +1,5 @@
 // フロントエンド用データ保護ガード
-import { supabase } from './supabase';
+import { createClient } from './supabase/client';
 
 interface DataProtectionConfig {
   minInvoices: number;
@@ -50,6 +50,7 @@ class DataGuard {
   }
 
   private async getCurrentCount(tableName: string): Promise<number> {
+    const supabase = createClient()
     const { count, error } = await supabase
       .from(tableName)
       .select('*', { count: 'exact', head: true });
@@ -85,17 +86,20 @@ class ProtectedSupabaseClient {
   async from(tableName: string) {
     return {
       select: async (columns: string, options?: any) => {
+        const supabase = createClient()
         const query = supabase.from(tableName).select(columns, options);
         await this.guard.guardQuery(tableName, 'SELECT', query);
         return query;
       },
       
       insert: async (data: any) => {
+        const supabase = createClient()
         await this.guard.guardQuery(tableName, 'INSERT', null);
         return supabase.from(tableName).insert(data);
       },
       
       update: async (data: any) => {
+        const supabase = createClient()
         await this.guard.guardQuery(tableName, 'UPDATE', null);
         return supabase.from(tableName).update(data);
       },

@@ -1,13 +1,22 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Search, Filter, Plus, Eye, Edit, Download, Trash2, RotateCcw, ArrowLeft, Home } from 'lucide-react';
 import { useInvoiceList, type SearchFilters } from '@/hooks/useInvoiceList';
 
 export default function InvoiceListPage() {
   const router = useRouter();
-  const { invoices, loading, error, searchInvoices, updateInvoiceStatus, updatePaymentStatus, createRedInvoice, deleteInvoice } = useInvoiceList();
+  
+  // 年度フィルター状態（フックよりも前に定義）
+  const [selectedYear, setSelectedYear] = useState<string>('all');
+  const [selectedYears, setSelectedYears] = useState<string[]>([]);
+  const [isYearDropdownOpen, setIsYearDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  
+  const { invoices, loading, error, searchInvoices, updateInvoiceStatus, updatePaymentStatus, createRedInvoice, deleteInvoice } = useInvoiceList(selectedYear);
+  
+  console.log('📊 現在のselectedYear:', selectedYear);
 
   // 検索フィルター状態
   const [filters, setFilters] = useState<SearchFilters>({
@@ -47,6 +56,80 @@ export default function InvoiceListPage() {
       totalAmount: filteredInvoices.reduce((sum, inv) => sum + inv.total, 0)
     };
   }, [filteredInvoices]);
+
+  // 年度選択肢を動的生成
+  const yearOptions = useMemo(() => {
+    const years = new Set<number>();
+    invoices.forEach(invoice => {
+      if (invoice.billing_date) {
+        const year = new Date(invoice.billing_date).getFullYear();
+        years.add(year);
+      }
+    });
+    return Array.from(years).sort((a, b) => b - a); // 降順でソート
+  }, [invoices]);
+
+  // 年度フィルター更新
+  const updateYearFilter = (year: string) => {
+    console.log('📅 updateYearFilter呼び出し:', year);
+    setSelectedYear(year);
+    setCurrentPage(1);
+  };
+
+  // 複数年度選択の切り替え（即座適用版）
+  const toggleYearSelection = (year: string) => {
+    setSelectedYears(prev => {
+      const newSelection = prev.includes(year) 
+        ? prev.filter(y => y !== year)
+        : [...prev, year];
+      
+      // 選択変更後、即座にフィルターを適用
+      setTimeout(() => {
+        let newYear: string;
+        if (newSelection.length === 0) {
+          newYear = 'all';
+        } else if (newSelection.length === 1) {
+          newYear = newSelection[0];
+        } else {
+          // 複数年度選択時は最初の年度を使用
+          newYear = newSelection[0];
+        }
+        console.log('📅 toggleYearSelection即座適用:', newYear, 'selection:', newSelection);
+        setSelectedYear(newYear);
+        setCurrentPage(1);
+      }, 0);
+      
+      return newSelection;
+    });
+  };
+
+  // 複数年度フィルターの適用
+  const applyMultiYearFilter = () => {
+    if (selectedYears.length === 0) {
+      setSelectedYear('all');
+    } else if (selectedYears.length === 1) {
+      setSelectedYear(selectedYears[0]);
+    } else {
+      // 複数年度選択時は最初の年度を使用（または独自のロジック）
+      setSelectedYear(selectedYears[0]);
+    }
+    setIsYearDropdownOpen(false);
+    setCurrentPage(1);
+  };
+
+  // ドロップダウン外クリックで閉じる
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsYearDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   // フィルター更新
   const updateFilter = (key: keyof SearchFilters, value: string) => {
@@ -206,6 +289,83 @@ export default function InvoiceListPage() {
 
       {/* 検索・フィルター */}
       <div className="bg-white rounded-lg shadow-sm border mb-6 p-4">
+        <div className="flex items-center gap-4 mb-4">
+          {/* 決算期フィルター（チェックボックス付きドロップダウン） */}
+          <div className="flex items-center gap-2 relative">
+            <Filter className="w-4 h-4 text-gray-400" />
+            <span className="text-sm font-medium text-gray-700">決算期:</span>
+            <div className="relative" ref={dropdownRef}>
+              <button
+                onClick={() => setIsYearDropdownOpen(!isYearDropdownOpen)}
+                className="border border-gray-300 rounded-lg px-3 py-2 min-w-[200px] bg-blue-50 border-blue-200 text-left flex items-center justify-between"
+              >
+                <span>
+                  {selectedYears.length === 0 
+                    ? `全期間 (${invoices.length}件)`
+                    : selectedYears.length === 1
+                    ? `${selectedYears[0]}年`
+                    : `${selectedYears.length}年度選択中`
+                  }
+                </span>
+                <div className={`transform transition-transform ${isYearDropdownOpen ? 'rotate-180' : ''}`}>
+                  ▼
+                </div>
+              </button>
+              
+              {isYearDropdownOpen && (
+                <div className="absolute top-full left-0 mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto">
+                  <div className="p-2">
+                    {/* 全期間オプション */}
+                    <label className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={selectedYears.length === 0}
+                        onChange={() => {
+                          setSelectedYears([]);
+                          setSelectedYear('all');
+                          setCurrentPage(1);
+                          setIsYearDropdownOpen(false);
+                        }}
+                        className="rounded"
+                      />
+                      <span>全期間 ({invoices.length}件)</span>
+                    </label>
+                    
+                    {/* 年度別オプション */}
+                    {yearOptions.map(year => {
+                      const yearCount = invoices.filter(inv => 
+                        inv.billing_date && new Date(inv.billing_date).getFullYear() === year
+                      ).length;
+                      return (
+                        <label key={year} className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={selectedYears.includes(year.toString())}
+                            onChange={() => toggleYearSelection(year.toString())}
+                            className="rounded"
+                          />
+                          <span>{year}年 ({yearCount}件)</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                  
+                  {selectedYears.length > 0 && (
+                    <div className="border-t border-gray-200 p-2">
+                      <button
+                        onClick={applyMultiYearFilter}
+                        className="w-full px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
+                      >
+                        フィルター適用
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+        
         <div className="flex items-center gap-4">
           <div className="flex-1">
             <div className="relative">
@@ -255,6 +415,7 @@ export default function InvoiceListPage() {
                 startDate: '',
                 endDate: ''
               });
+              setSelectedYear('all');
               setCurrentPage(1);
             }}
             className="px-4 py-2 text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50 whitespace-nowrap"
@@ -421,8 +582,6 @@ export default function InvoiceListPage() {
 
                     {/* 4列目: 品名明細（3段構成） */}
                     <td className="px-4 py-4 align-top">
-                      {/* デバッグログ追加 */}
-                      {console.log('📋 displayItems長さ:', displayItems.length, '明細:', displayItems)}
                       {displayItems.map((item, index) => {
                         // デバッグ用ログ
                         if (index === 0) {

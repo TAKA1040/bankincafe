@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { supabase } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase/client'
 import { dataGuard } from '@/lib/data-guard'
 import type { Database } from '@/types/supabase'
 
@@ -93,10 +93,12 @@ const normalizeSearchText = (text: string): string => {
     .trim()
 }
 
-export function useInvoiceList() {
+export function useInvoiceList(yearFilter?: string) {
   const [invoices, setInvoices] = useState<InvoiceWithItems[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  
+  console.log('🔍 useInvoiceList呼び出し yearFilter:', yearFilter)
 
   const fetchInvoices = useCallback(async () => {
     try {
@@ -114,8 +116,9 @@ export function useInvoiceList() {
         throw new Error(`🚨 データ不足: 請求書が${dataStatus.invoices.current}件しかありません（最低${dataStatus.invoices.minimum}件必要）`)
       }
 
-      // データベースの全ての請求書を取得（制限なし - 大量データ対応）
-      const { data: joinedData, error: joinError } = await supabase
+      // データベースの請求書を取得（年度フィルター対応）
+      const supabase = createClient()
+      let query = supabase
         .from('invoices')
         .select(`
           invoice_id,
@@ -152,8 +155,24 @@ export function useInvoiceList() {
             performed_at
           )
         `)
-        .order('created_at', { ascending: false })
-        .range(0, 999)  // 一時的に1000件に戻して動作確認
+        .order('billing_date', { ascending: false })
+
+      // 年度フィルターが指定されている場合は条件を追加
+      if (yearFilter && yearFilter !== 'all') {
+        const year = parseInt(yearFilter)
+        const startDate = `${year}-01-01`
+        const endDate = `${year}-12-31`
+        query = query
+          .gte('billing_date', startDate)
+          .lte('billing_date', endDate)
+        console.log(`🗓️ 年度フィルター適用: ${year}年 (${startDate} ～ ${endDate})`)
+      } else {
+        // 年度フィルター未選択時のみ1000件制限を適用
+        query = query.range(0, 999)
+        console.log('📋 年度未選択 - 1000件制限適用')
+      }
+
+      const { data: joinedData, error: joinError } = await query
 
       console.log(`全データ取得完了: ${performance.now() - startTime}ms`)
 
@@ -203,7 +222,7 @@ export function useInvoiceList() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [yearFilter])
 
   const searchInvoices = useCallback((filters: SearchFilters): InvoiceWithItems[] => {
     return invoices.filter(invoice => {
@@ -258,6 +277,7 @@ export function useInvoiceList() {
   // ステータス更新機能
   const updateInvoiceStatus = useCallback(async (invoiceId: string, newStatus: 'draft' | 'finalized' | 'sent' | 'paid') => {
     try {
+      const supabase = createClient()
       const { error } = await supabase
         .from('invoices')
         .update({ 
@@ -281,6 +301,7 @@ export function useInvoiceList() {
   // 支払いステータス更新機能
   const updatePaymentStatus = useCallback(async (invoiceId: string, newPaymentStatus: 'unpaid' | 'paid' | 'partial') => {
     try {
+      const supabase = createClient()
       const { error } = await supabase
         .from('invoices')
         .update({ 
@@ -307,6 +328,7 @@ export function useInvoiceList() {
       setError(null)
 
       // 元請求書の取得
+      const supabase = createClient()
       const { data: originalInvoice, error: invoiceErr } = await supabase
         .from('invoices')
         .select('*')
@@ -450,6 +472,7 @@ export function useInvoiceList() {
   const deleteInvoice = useCallback(async (invoiceId: string) => {
     try {
       setError(null)
+      const supabase = createClient()
       const { error: delErr } = await supabase
         .from('invoices')
         .delete()

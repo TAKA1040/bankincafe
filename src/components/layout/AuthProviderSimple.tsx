@@ -7,7 +7,7 @@ import { Car } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
 // 認証不要なページのパス
-const PUBLIC_PATHS = ['/login', '/auth/pending', '/test-auth']
+const PUBLIC_PATHS = ['/login', '/auth/pending', '/auth/callback', '/test-auth', '/test-db']
 
 interface AuthProviderProps {
   children: React.ReactNode
@@ -17,6 +17,7 @@ export default function AuthProviderSimple({ children }: AuthProviderProps) {
   const pathname = usePathname()
   const router = useRouter()
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null)
+  const [isAdmin, setIsAdmin] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   
   console.log('🔄 AuthProviderSimple レンダリング:', { pathname })
@@ -45,6 +46,42 @@ export default function AuthProviderSimple({ children }: AuthProviderProps) {
         const supabase = createClient()
         console.log('📡 [AuthProviderSimple] 標準Supabaseクライアント作成完了')
         
+        // セッション永続化チェック（開発時ログインキープ対応）
+        const cachedSession = sessionStorage.getItem('supabase_session')
+        if (cachedSession) {
+          try {
+            const parsedSession = JSON.parse(cachedSession)
+            if (parsedSession.expires_at > Date.now() / 1000) {
+              console.log('🔄 [AuthProviderSimple] キャッシュされたセッションを使用')
+              
+              // キャッシュされたユーザーの管理者権限を再確認
+              const userEmail = parsedSession.user_email
+              const isDash206 = userEmail === 'dash201206@gmail.com'
+              const rawAllowedEmails = process.env.NEXT_PUBLIC_ALLOWED_EMAILS
+              const allowedEmailsList = rawAllowedEmails?.split(',').map(e => e.trim()) || []
+              const isInAllowedList = allowedEmailsList.includes(userEmail)
+              const isAdminUser = isDash206 || isInAllowedList
+              
+              if (isAdminUser) {
+                console.log('✅ [AuthProviderSimple] キャッシュセッション管理者確認完了')
+                setIsAuthenticated(true)
+                setIsAdmin(true)
+                setIsLoading(false)
+                return
+              } else {
+                console.log('❌ [AuthProviderSimple] キャッシュユーザーは管理者ではありません')
+                sessionStorage.removeItem('supabase_session')
+                setIsAuthenticated(false)
+                router.push('/auth/pending')
+                return
+              }
+            }
+          } catch (e) {
+            console.warn('⚠️ キャッシュセッション解析エラー:', e)
+            sessionStorage.removeItem('supabase_session')
+          }
+        }
+
         // タイムアウト付きでセッション取得（時間を延長）
         const sessionPromise = supabase.auth.getSession()
         const timeoutPromise = new Promise((_, reject) => 
@@ -153,6 +190,20 @@ export default function AuthProviderSimple({ children }: AuthProviderProps) {
         
         console.log('✅ 認証・認可完了 - メインコンテンツ表示')
         
+        // セッションをキャッシュ（ログインキープ用）
+        try {
+          const sessionData = {
+            expires_at: session.expires_at,
+            is_admin: isAdmin,
+            user_email: userEmail,
+            cached_at: Date.now() / 1000
+          }
+          sessionStorage.setItem('supabase_session', JSON.stringify(sessionData))
+          console.log('💾 [AuthProviderSimple] セッションをキャッシュに保存')
+        } catch (e) {
+          console.warn('⚠️ セッションキャッシュ保存エラー:', e)
+        }
+        
         // 承認済みユーザーのログイン履歴も記録
         try {
           const { error: insertError } = await supabase
@@ -184,6 +235,7 @@ export default function AuthProviderSimple({ children }: AuthProviderProps) {
         }
         
         setIsAuthenticated(true)
+        setIsAdmin(isAdmin)
         
       } catch (error) {
         console.error('❌ 認証チェックエラー:', error)
