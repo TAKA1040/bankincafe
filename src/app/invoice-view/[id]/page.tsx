@@ -197,7 +197,7 @@ export default function InvoiceViewPage({ params }: PageProps) {
               <p className="mt-2 text-red-700">{error}</p>
               <div className="mt-4">
                 <button
-                  onClick={() => router.back()}
+                  onClick={() => router.push('/invoice-list')}
                   className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700"
                 >
                   戻る
@@ -236,7 +236,7 @@ export default function InvoiceViewPage({ params }: PageProps) {
       <div className="flex justify-between items-start mb-8">
         <div className="flex items-center gap-4">
           <button
-            onClick={() => router.back()}
+            onClick={() => router.push('/invoice-list')}
             className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -374,11 +374,17 @@ export default function InvoiceViewPage({ params }: PageProps) {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {invoice.line_items.map((item, index) => {
-                // 分割項目がある場合とない場合を判別
+                // S作業（セット）の場合を判別 - task_typeベースで判断
+                const isSetWork = item.task_type === 'S' || item.task_type === 'set';
                 const hasSplitItems = item.split_items && item.split_items.length > 0;
                 
-                if (hasSplitItems) {
-                  // セット内容：セットの作業名＋作業の内訳を表示
+                if (isSetWork) {
+                  // S作業：セット名（target）＋内訳（raw_labelを分割表示）を表示
+                  const setName = item.target || 'セット作業';
+                  // 内訳をカンマ、中点、全角中点で分割
+                  const breakdownItems = item.raw_label ? 
+                    item.raw_label.split(/[,、，・･]/).map(s => s.trim()).filter(s => s.length > 0) : [];
+                  
                   return (
                     <tr key={item.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -386,18 +392,19 @@ export default function InvoiceViewPage({ params }: PageProps) {
                       </td>
                       <td className="px-6 py-4">
                         <div className="text-sm text-gray-900 font-medium">
-                          {item.raw_label || 'セット作業'}
+                          {setName}
                         </div>
                         <div className="text-xs text-gray-500 mt-1">
-                          {item.split_items?.map((split: any, idx: number) => (
-                            <div key={idx}>
-                              • {split.raw_label_part} ({split.quantity})
+                          <span className="text-gray-600">内訳</span>
+                          {breakdownItems.map((breakdown, idx) => (
+                            <div key={idx} className="ml-2">
+                              • {breakdown}
                             </div>
                           ))}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                        {item.split_items?.reduce((sum: number, split: any) => sum + split.quantity, 0) || 0}
+                        {item.quantity || 0}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
                         {item.unit_price ? formatAmount(item.unit_price) : '-'}
@@ -411,7 +418,7 @@ export default function InvoiceViewPage({ params }: PageProps) {
                     </tr>
                   );
                 } else {
-                  // 個別情報：作業内容をそのまま表示
+                  // T作業（個別）：作業内容をそのまま表示
                   return (
                     <tr key={item.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">

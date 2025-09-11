@@ -1219,6 +1219,101 @@ export type Database = {
         }
         Relationships: []
       }
+      company_info: {
+        Row: {
+          id: string
+          user_id: string | null
+          company_name: string | null
+          company_name_kana: string | null
+          representative_name: string | null
+          postal_code: string | null
+          prefecture: string | null
+          city: string | null
+          address: string | null
+          building_name: string | null
+          phone_number: string | null
+          fax_number: string | null
+          mobile_number: string | null
+          email: string | null
+          website: string | null
+          fiscal_year_end_month: string | null
+          tax_registration_number: string | null
+          invoice_registration_number: string | null
+          bank_name: string | null
+          bank_branch: string | null
+          account_type: string | null
+          account_number: string | null
+          account_holder: string | null
+          remarks: string | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id?: string | null
+          company_name?: string | null
+          company_name_kana?: string | null
+          representative_name?: string | null
+          postal_code?: string | null
+          prefecture?: string | null
+          city?: string | null
+          address?: string | null
+          building_name?: string | null
+          phone_number?: string | null
+          fax_number?: string | null
+          mobile_number?: string | null
+          email?: string | null
+          website?: string | null
+          fiscal_year_end_month?: string | null
+          tax_registration_number?: string | null
+          invoice_registration_number?: string | null
+          bank_name?: string | null
+          bank_branch?: string | null
+          account_type?: string | null
+          account_number?: string | null
+          account_holder?: string | null
+          remarks?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string | null
+          company_name?: string | null
+          company_name_kana?: string | null
+          representative_name?: string | null
+          postal_code?: string | null
+          prefecture?: string | null
+          city?: string | null
+          address?: string | null
+          building_name?: string | null
+          phone_number?: string | null
+          fax_number?: string | null
+          mobile_number?: string | null
+          email?: string | null
+          website?: string | null
+          fiscal_year_end_month?: string | null
+          tax_registration_number?: string | null
+          invoice_registration_number?: string | null
+          bank_name?: string | null
+          bank_branch?: string | null
+          account_type?: string | null
+          account_number?: string | null
+          account_holder?: string | null
+          remarks?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_info_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       admin_settings: {
         Row: {
           id: string

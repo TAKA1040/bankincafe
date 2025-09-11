@@ -36,7 +36,9 @@ export default function SubjectMasterPage() {
         .select('*', { count: 'exact' })
       
       if (searchTerm) {
-        query = query.or(`subject_name.ilike.%${searchTerm}%,subject_name_kana.ilike.%${searchTerm}%`)
+        // 入力値をサニタイズして安全な検索を実行
+        const sanitizedTerm = searchTerm.replace(/[%_]/g, '\\$&')
+        query = query.or(`subject_name.ilike.%${sanitizedTerm}%,subject_name_kana.ilike.%${sanitizedTerm}%`)
       }
       
       // ページネーション

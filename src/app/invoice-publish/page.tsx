@@ -36,9 +36,23 @@ export default function InvoicePublishPage() {
   // 選択された請求書IDのセット
   const [selectedInvoices, setSelectedInvoices] = useState<Set<string>>(new Set());
 
+  // 表示タイプ切り替え（請求書 or 見積書）
+  const [displayType, setDisplayType] = useState<'invoice' | 'estimate'>('invoice');
+
   // 検索結果（期間フィルター適用）
   const filteredInvoices = useMemo(() => {
     let result = searchInvoices(filters);
+    
+    // 表示タイプによるフィルター（請求書 or 見積書）
+    result = result.filter(invoice => {
+      if (displayType === 'invoice') {
+        // 請求書: invoice_idにMが含まれていないもの（例: 25090001-1）
+        return !invoice.invoice_id.includes('M');
+      } else {
+        // 見積書: invoice_idにMが含まれているもの（例: 2509M001-1）
+        return invoice.invoice_id.includes('M');
+      }
+    });
     
     // 期間フィルター適用
     if (periodFilter === '10days') {
@@ -73,7 +87,7 @@ export default function InvoicePublishPage() {
     }
 
     return result;
-  }, [searchInvoices, filters, periodFilter, selectedCustomer]);
+  }, [searchInvoices, filters, periodFilter, selectedCustomer, displayType]);
 
   // ユニークな請求先一覧（顧客カテゴリー設定から取得）
   const customerList = useMemo(() => {
@@ -109,7 +123,7 @@ export default function InvoicePublishPage() {
   // 操作実行（印刷、メール、PDF作成）
   const executeOperation = () => {
     if (selectedInvoices.size === 0) {
-      alert('請求書を選択してください');
+      alert(`${displayType === 'invoice' ? '請求書' : '見積書'}を選択してください`);
       return;
     }
 
@@ -120,15 +134,17 @@ export default function InvoicePublishPage() {
       pdf: 'PDF作成'
     }[selectedOperation];
 
+    const documentType = displayType === 'invoice' ? '請求書' : '見積書';
     // 実際の操作はここで実装
-    alert(`${selectedCount}件の請求書を${operationName}します。\n\n実装予定の機能です。`);
+    alert(`${selectedCount}件の${documentType}を${operationName}します。\n\n実装予定の機能です。`);
   };
 
   // 修正ボタンの動作（ステータスチェック付き）
   const handleEditClick = (invoice: typeof filteredInvoices[0]) => {
     // ステータスが確定の場合はポップアップのみ表示
     if (invoice.status === 'finalized' || invoice.status === 'sent' || invoice.status === 'paid') {
-      alert('下書きの請求書のみ編集できます');
+      const documentType = displayType === 'invoice' ? '請求書' : '見積書';
+      alert(`下書きの${documentType}のみ編集できます`);
       return; // ページ移動せずにそのまま作業継続
     }
     
@@ -176,13 +192,26 @@ export default function InvoicePublishPage() {
   // 作業タイプのプレフィックス取得
   const getWorkTypePrefix = (taskType: string) => {
     switch (taskType) {
+      case 'S':
       case 'set':
         return 'S:';
+      case 'T':
       case 'individual':
       case 'structured':
       case 'fuzzy':
       default:
         return 'T:';
+    }
+  };
+
+  // 作業名の取得（S作業の場合はtargetまたはセット名を表示）
+  const getWorkDisplayName = (item: any) => {
+    if (item.task_type === 'S' || item.task_type === 'set') {
+      // S作業の場合はtargetフィールドまたはセット名を表示
+      return item.target || item.set_name || item.raw_label || '名称不明';
+    } else {
+      // T作業の場合は通常の表示
+      return item.raw_label || [item.target, item.action, item.position].filter(Boolean).join(' ') || '名称不明';
     }
   };
 
@@ -221,8 +250,15 @@ export default function InvoicePublishPage() {
       {/* ヘッダー */}
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">請求書発行</h1>
-          <p className="text-gray-600 mt-2">下書き請求書の完成と印刷・メール送信・PDF作成</p>
+          <h1 className="text-3xl font-bold text-gray-900">
+            {displayType === 'invoice' ? '請求書発行' : '見積書発行'}
+          </h1>
+          <p className="text-gray-600 mt-2">
+            {displayType === 'invoice' 
+              ? '下書き請求書の完成と印刷・メール送信・PDF作成' 
+              : '下書き見積書の完成と印刷・メール送信・PDF作成'
+            }
+          </p>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -232,6 +268,40 @@ export default function InvoicePublishPage() {
             <Home className="w-4 h-4" />
             メニューに戻る
           </button>
+        </div>
+      </div>
+
+      {/* 切り替えタブ */}
+      <div className="mb-6">
+        <div className="border-b border-gray-200">
+          <nav className="-mb-px flex space-x-8">
+            <button
+              onClick={() => {
+                setDisplayType('invoice');
+                setSelectedInvoices(new Set()); // 切り替え時に選択をクリア
+              }}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                displayType === 'invoice'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              請求書
+            </button>
+            <button
+              onClick={() => {
+                setDisplayType('estimate');
+                setSelectedInvoices(new Set()); // 切り替え時に選択をクリア
+              }}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                displayType === 'estimate'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              見積書
+            </button>
+          </nav>
         </div>
       </div>
 
@@ -253,7 +323,9 @@ export default function InvoicePublishPage() {
           </div>
 
           <div className="flex items-center gap-2">
-            <label className="text-sm font-medium text-gray-700">請求先:</label>
+            <label className="text-sm font-medium text-gray-700">
+              {displayType === 'invoice' ? '請求先:' : '見積先:'}
+            </label>
             <select
               value={selectedCustomer}
               onChange={(e) => setSelectedCustomer(e.target.value as string)}
@@ -303,7 +375,10 @@ export default function InvoicePublishPage() {
               <Search className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
               <input
                 type="text"
-                placeholder="請求書番号、顧客名、件名で曖昧検索（大小文字・ひらがなカタカナ区別なし）..."
+                placeholder={displayType === 'invoice' 
+                  ? "請求書番号、顧客名、件名で曖昧検索（大小文字・ひらがなカタカナ区別なし）..."
+                  : "見積書番号、顧客名、件名で曖昧検索（大小文字・ひらがなカタカナ区別なし）..."
+                }
                 value={filters.keyword}
                 onChange={(e) => updateFilter('keyword', e.target.value)}
                 className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -353,9 +428,10 @@ export default function InvoicePublishPage() {
                   </button>
                 </th>
 
-                {/* 2列目: 請求書番号 + 請求月 */}
+                {/* 2列目: 請求書番号/見積書番号 + 請求月 */}
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  請求書番号<br/>請求月
+                  {displayType === 'invoice' ? '請求書番号' : '見積書番号'}<br/>
+                  {displayType === 'invoice' ? '請求月' : '見積月'}
                 </th>
 
                 {/* 3列目: 件名 + 登録番号 */}
@@ -368,9 +444,9 @@ export default function InvoicePublishPage() {
                   作業明細
                 </th>
 
-                {/* 5列目: 請求金額 + ステータス */}
+                {/* 5列目: 請求金額/見積金額 + ステータス */}
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  請求金額<br/>ステータス
+                  {displayType === 'invoice' ? '請求金額' : '見積金額'}<br/>ステータス
                 </th>
 
                 {/* 6列目: 詳細・印刷・修正ボタン */}
@@ -426,7 +502,7 @@ export default function InvoicePublishPage() {
                     {/* 4列目: 作業明細（上から2段のみ表示） */}
                     <td className="px-4 py-4 align-top">
                       {displayItems.map((item, index) => {
-                        const itemName = item.raw_label || [item.target, item.action, item.position].filter(Boolean).join(' ') || '-';
+                        const itemName = getWorkDisplayName(item);
                         const prefix = getWorkTypePrefix(item.task_type);
                         const displayName = `${prefix}${itemName}`;
                         
@@ -488,7 +564,9 @@ export default function InvoicePublishPage() {
 
         {filteredInvoices.length === 0 && (
           <div className="text-center py-12">
-            <div className="text-gray-500 text-lg">条件に合う請求書が見つかりません</div>
+            <div className="text-gray-500 text-lg">
+              条件に合う{displayType === 'invoice' ? '請求書' : '見積書'}が見つかりません
+            </div>
             <div className="text-gray-400 text-sm mt-2">検索条件を変更してください</div>
           </div>
         )}
@@ -499,7 +577,7 @@ export default function InvoicePublishPage() {
         <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
           <div className="flex justify-between items-center">
             <div className="text-sm text-blue-800">
-              {selectedInvoices.size}件の請求書が選択されています
+              {selectedInvoices.size}件の{displayType === 'invoice' ? '請求書' : '見積書'}が選択されています
             </div>
             <button
               onClick={() => setSelectedInvoices(new Set())}

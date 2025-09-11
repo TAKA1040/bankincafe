@@ -288,8 +288,10 @@ export default function InvoiceListPage() {
   // 作業タイプのプレフィックス取得
   const getWorkTypePrefix = (taskType: string) => {
     switch (taskType) {
+      case 'S':
       case 'set':
         return 'S:';
+      case 'T':
       case 'individual':
       case 'structured':
       case 'fuzzy':
@@ -540,12 +542,12 @@ export default function InvoiceListPage() {
                 '0 件'
               )}
             </span>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 ml-4">
               <label className="text-sm text-gray-600">表示件数:</label>
               <select
                 value={itemsPerPage}
                 onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
-                className="border border-gray-300 rounded px-2 py-1 text-sm"
+                className="border border-gray-300 rounded px-3 py-1 text-sm bg-white min-w-20 relative z-10 shadow-sm"
               >
                 <option value={10}>10件</option>
                 <option value={30}>30件</option>
@@ -696,7 +698,10 @@ export default function InvoiceListPage() {
                           });
                         }
                         
-                        const itemName = item.raw_label || [item.target, item.action, item.position].filter(Boolean).join(' ') || '-';
+                        // S作業の場合はtarget（セット名）を表示、T作業の場合はraw_labelまたは構造化名称
+                        const itemName = (item.task_type === 'S') 
+                          ? (item.target || 'セット作業')
+                          : (item.raw_label || [item.target, item.action, item.position].filter(Boolean).join(' ') || '-');
                         const prefix = getWorkTypePrefix(item.task_type);
                         const displayName = `${prefix}${itemName}`;
                         const isLastItem = index === 2 && remainingCount > 0;

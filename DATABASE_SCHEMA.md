@@ -14,29 +14,29 @@
 | カラム名 | データ型 | NULL | デフォルト | 説明 | 例 |
 |----------|----------|------|----------|------|-----|
 | invoice_id | TEXT | NO | - | 請求書ID（主キー） | 25043371-1 |
-| subject_name | TEXT | YES | - | 件名（元フィールド） | エンジン修理 |
 | issue_date | DATE | YES | - | 発行日 | 2025-04-27 |
-| created_at | TIMESTAMPTZ | YES | now() | 作成日時 | 2025-08-30T10:00:00Z |
-| updated_at | TIMESTAMPTZ | YES | now() | 更新日時 | 2025-08-30T10:00:00Z |
-| invoice_number | TEXT | YES | - | 請求書番号（invoice_idと同値） | 25043371-1 |
-| billing_date | DATE | YES | - | 請求日 | 2025-04-27 |
-| customer_category | TEXT | YES | 'その他' | 顧客カテゴリ | UD |
+| subject_name | TEXT | YES | - | 件名（元フィールド） | エンジン修理 |
+| registration_number | TEXT | YES | - | 車両登録番号 | 品川500あ1234 |
 | customer_name | TEXT | YES | - | 顧客名 | UDトラックス株式会社 |
-| subject | TEXT | YES | - | 件名 | エンジン修理 |
-| subtotal | NUMERIC(12,0) | YES | 0 | 小計 | 13200 |
-| tax | NUMERIC(12,0) | YES | 0 | 消費税 | 1200 |
-| total | NUMERIC(12,0) | YES | 0 | 合計金額 | 14400 |
-| status | TEXT | YES | 'draft' | ステータス | finalized |
-| payment_status | TEXT | YES | 'unpaid' | 支払い状況 | unpaid |
-| order_number | TEXT | YES | - | オーダー番号 | 2501852-01 |
-| order_id | TEXT | YES | - | オーダーID | ord_123 |
-| invoice_type | TEXT | YES | 'standard' | 請求書種別 | standard |
-| original_invoice_id | TEXT | YES | - | 元請求書ID（赤伝用） | 25043371-1 |
 | billing_month | TEXT | YES | - | 請求月（YYMM形式）| 2504 |
 | purchase_order_number | TEXT | YES | - | 発注番号 | 1700414294 |
+| order_number | TEXT | YES | - | オーダー番号 | 2501852-01 |
 | remarks | TEXT | YES | - | 備考 | 特記事項 |
-| total_amount | NUMERIC(12,0) | YES | 0 | 請求総額（旧） | 14400 |
-| registration_number | TEXT | YES | - | 車両登録番号 | 品川500あ1234 |
+| subtotal | NUMERIC(12,0) | YES | 0 | 小計 | 13200 |
+| tax | NUMERIC(12,0) | YES | 0 | 消費税 | 1200 |
+| total_amount | NUMERIC(12,0) | YES | 0 | 請求総額 | 14400 |
+| status | TEXT | YES | 'draft' | ステータス | finalized |
+| payment_status | TEXT | YES | 'unpaid' | 支払い状況 | unpaid |
+| order_id | TEXT | YES | - | オーダーID | ord_123 |
+| invoice_number | TEXT | YES | - | 請求書番号 | 25043371-1 |
+| billing_date | DATE | YES | - | 請求日 | 2025-04-27 |
+| customer_category | TEXT | YES | 'その他' | 顧客カテゴリ | UD |
+| subject | TEXT | YES | - | 件名 | エンジン修理 |
+| total | NUMERIC(12,0) | YES | 0 | 合計金額 | 14400 |
+| invoice_type | TEXT | YES | 'standard' | 請求書種別 | standard |
+| original_invoice_id | TEXT | YES | - | 元請求書ID（赤伝用） | 25043371-1 |
+| created_at | TIMESTAMPTZ | YES | now() | 作成日時 | 2025-08-30T10:00:00Z |
+| updated_at | TIMESTAMPTZ | YES | now() | 更新日時 | 2025-08-30T10:00:00Z |
 
 #### **制約条件**
 
@@ -74,23 +74,27 @@
 | id | BIGSERIAL | NO | - | ID（主キー） | 1 |
 | invoice_id | TEXT | NO | - | 請求書ID（外部キー） | 25043371-1 |
 | line_no | INTEGER | NO | - | 明細行番号 | 1 |
-| task_type | TEXT | NO | - | 作業タイプ | fuzzy |
-| target | TEXT | YES | - | 対象物 | バンパー |
+| task_type | TEXT | NO | - | 作業タイプ | T |
 | action | TEXT | YES | - | 作業動作 | 脱着 |
+| target | TEXT | YES | - | 対象物 | バンパー |
 | position | TEXT | YES | - | 部位 | 右前 |
-| quantity | INTEGER | YES | - | 数量 | 1 |
-| unit_price | NUMERIC(12,0) | YES | - | 単価 | 8000 |
-| amount | NUMERIC(12,0) | YES | - | 金額 | 8000 |
 | raw_label | TEXT | YES | - | 原文ラベル | 右バンパー脱着・修理 |
+| unit_price | NUMERIC(12,0) | YES | - | 単価 | 8000 |
+| quantity | INTEGER | YES | - | 数量 | 1 |
 | performed_at | DATE | YES | - | 作業実施日 | 2025-04-27 |
+| amount | NUMERIC(12,0) | YES | - | 金額 | 8000 |
 | created_at | TIMESTAMPTZ | YES | now() | 作成日時 | 2025-08-30T10:00:00Z |
 | updated_at | TIMESTAMPTZ | YES | now() | 更新日時 | 2025-08-30T10:00:00Z |
 
 #### **task_type** の値
+- `T` - 個別作業（Individual Task）
+- `S` - セット作業（Set Task）
 - `fuzzy` - 非構造化データ（分割対象）
 - `structured` - 構造化データ（分解済み）
-- `set` - セット作業
-- `individual` - 個別作業
+
+#### **外部キー制約**
+- `invoice_id` REFERENCES `invoices(invoice_id)` ON DELETE CASCADE
+- UNIQUE制約: `(invoice_id, line_no)`
 
 ---
 
@@ -113,12 +117,21 @@
 | confidence_score | DECIMAL(3,2) | YES | - | 抽出信頼度 | 0.95 |
 | extraction_method | TEXT | YES | - | 抽出方法 | manual |
 | notes | TEXT | YES | - | 備考 | 特殊加工 |
+| record_type | TEXT | YES | - | レコード種別 | split |
+| raw_label_full | TEXT | YES | - | 完全な原文 | 元の完全ラベル |
+| set_name | TEXT | YES | - | セット名 | バンパー作業一式 |
+| other | TEXT | YES | - | その他情報 | - |
+| is_latest | BOOLEAN | NO | true | 最新フラグ | true |
 | created_at | TIMESTAMPTZ | YES | now() | 作成日時 | 2025-08-30T10:00:00Z |
 | updated_at | TIMESTAMPTZ | YES | now() | 更新日時 | 2025-08-30T10:00:00Z |
 
+#### **外部キー制約**
+- `(invoice_id, line_no)` REFERENCES `invoice_line_items(invoice_id, line_no)`
+- UNIQUE制約: `(invoice_id, line_no, sub_no)`
+
 ---
 
-### 4. **work_item_positions** - 作業項目位置情報
+### 4. **work_item_positions** - 作業項目位置情報 ⚠️空テーブル
 **目的**: 1つの作業項目が持つ複数の位置情報（例：「右」「前」）を正確に管理
 
 | カラム名 | データ型 | NULL | デフォルト | 説明 | 例 |
@@ -130,7 +143,7 @@
 
 ---
 
-### 5. **invoice_payments** - 請求書入金履歴
+### 5. **invoice_payments** - 請求書入金履歴 ⚠️空テーブル
 **目的**: 分割入金を含む、すべての入金履歴を正確に追跡管理
 
 | カラム名 | データ型 | NULL | デフォルト | 説明 | 例 |
@@ -145,7 +158,7 @@
 
 ---
 
-### 6. **legacy_line_item_raws** - 旧システム原文データ
+### 6. **legacy_line_item_raws** - 旧システム原文データ ⚠️空テーブル
 **目的**: 旧システムの曖昧な原文データを専用テーブルに隔離し、主要テーブルのデータ整合性を保つ
 
 | カラム名 | データ型 | NULL | デフォルト | 説明 | 例 |
@@ -154,10 +167,89 @@
 | line_item_id | BIGINT | NO | - | 明細項目ID（外部キー） | 1 |
 | raw_text | TEXT | NO | - | 原文テキスト | 右バンパー脱着・修理一式 |
 
-#### **分割処理のルール**
-- 原文ラベルを「・」「、」「/」で区切って分割
-- 金額は等分配分、端数は最後のサブ項目に寄せる
-- 親項目が amount=0 の場合、全サブ項目も amount=0 + is_cancelled=true
+---
+
+## 🗂️ マスターテーブル群
+
+### 7. **targets** - 作業対象マスタ
+**目的**: 作業対象（部品）の標準化管理
+
+| カラム名 | データ型 | NULL | デフォルト | 説明 | 例 |
+|----------|----------|------|----------|------|-----|
+| id | SERIAL | NO | - | ID（主キー） | 412 |
+| name | TEXT | NO | - | 対象名 | ドア |
+| sort_order | INTEGER | YES | - | ソート順 | 1 |
+| is_active | BOOLEAN | NO | true | 有効フラグ | true |
+| name_norm | TEXT | YES | - | 正規化名称 | ドア |
+| reading | TEXT | YES | - | 読み仮名 | どあ |
+| created_at | TIMESTAMPTZ | YES | now() | 作成日時 | 2025-09-06T12:32:53Z |
+| updated_at | TIMESTAMPTZ | YES | now() | 更新日時 | 2025-09-06T12:32:53Z |
+
+**データ件数**: 63件（ドア、サイドガード、ステー、ブラケット、パイプ等）
+
+---
+
+### 8. **actions** - 作業動作マスタ
+**目的**: 作業動作の標準化管理
+
+| カラム名 | データ型 | NULL | デフォルト | 説明 | 例 |
+|----------|----------|------|----------|------|-----|
+| id | SERIAL | NO | - | ID（主キー） | 281 |
+| name | TEXT | NO | - | 動作名 | 取替 |
+| sort_order | INTEGER | YES | - | ソート順 | 1 |
+| is_active | BOOLEAN | NO | true | 有効フラグ | true |
+| name_norm | TEXT | YES | - | 正規化名称 | 取替 |
+| created_at | TIMESTAMPTZ | YES | now() | 作成日時 | 2025-09-06T12:32:53Z |
+| updated_at | TIMESTAMPTZ | YES | now() | 更新日時 | 2025-09-06T12:32:53Z |
+
+**データ件数**: 36件（取替、脱着、溶接、加工、交換等）
+
+---
+
+### 9. **positions** - 部位マスタ
+**目的**: 作業部位の標準化管理
+
+| カラム名 | データ型 | NULL | デフォルト | 説明 | 例 |
+|----------|----------|------|----------|------|-----|
+| id | SERIAL | NO | - | ID（主キー） | 155 |
+| name | TEXT | NO | - | 部位名 | 左 |
+| sort_order | INTEGER | YES | - | ソート順 | 1 |
+| is_active | BOOLEAN | NO | true | 有効フラグ | true |
+| name_norm | TEXT | YES | - | 正規化名称 | 左 |
+| created_at | TIMESTAMPTZ | YES | now() | 作成日時 | 2025-09-06T12:32:53Z |
+| updated_at | TIMESTAMPTZ | YES | now() | 更新日時 | 2025-09-06T12:32:53Z |
+
+**データ件数**: 24件（左、右、前、後、1番、2番、3番等）
+
+---
+
+### 10. **subject_master** - 件名マスタ
+**目的**: 請求書件名の標準化管理
+
+| カラム名 | データ型 | NULL | デフォルト | 説明 | 例 |
+|----------|----------|------|----------|------|-----|
+| id | TEXT | NO | - | ID（UUID） | 331b4d88-9cdc-4f1b-922f-9b45ee327a62 |
+| subject_name | TEXT | NO | - | 件名 | KD物流株式会社 |
+| subject_name_kana | TEXT | YES | - | 件名カナ | けーでぃーぶつりゅう |
+| created_at | TIMESTAMPTZ | YES | now() | 作成日時 | 2025-09-07T01:24:41Z |
+| updated_at | TIMESTAMPTZ | YES | now() | 更新日時 | 2025-09-07T01:24:41Z |
+
+**データ件数**: 207件
+
+---
+
+### 11. **customers** - 顧客マスタ ⚠️空テーブル
+**目的**: 顧客情報管理（現在未使用）
+
+---
+
+### 12. **companies** - 会社マスタ ⚠️空テーブル
+**目的**: 会社情報管理（現在未使用）
+
+---
+
+### 13. **customer_categories** - 顧客カテゴリマスタ ⚠️空テーブル
+**目的**: 顧客分類管理（現在未使用）
 
 ---
 
@@ -167,29 +259,29 @@
 erDiagram
     invoices {
         text invoice_id PK
-        text subject_name
         date issue_date
-        timestamptz created_at
-        timestamptz updated_at
+        text subject_name
+        text registration_number
+        text customer_name
+        text billing_month
+        text purchase_order_number
+        text order_number
+        text remarks
+        decimal subtotal
+        decimal tax
+        decimal total_amount
+        text status
+        text payment_status
+        text order_id
         text invoice_number
         date billing_date
         text customer_category
-        text customer_name
         text subject
-        decimal subtotal
-        decimal tax
         decimal total
-        text status
-        text payment_status
-        text order_number
-        text order_id
         text invoice_type
         text original_invoice_id FK
-        text billing_month
-        text purchase_order_number
-        text remarks
-        decimal total_amount
-        text registration_number
+        timestamptz created_at
+        timestamptz updated_at
     }
     
     invoice_line_items {
@@ -197,13 +289,14 @@ erDiagram
         text invoice_id FK
         integer line_no
         text task_type
-        text target
         text action
-        integer quantity
-        decimal unit_price
-        decimal amount
+        text target
+        text position
         text raw_label
+        decimal unit_price
+        integer quantity
         date performed_at
+        decimal amount
         timestamptz created_at
         timestamptz updated_at
     }
@@ -223,6 +316,11 @@ erDiagram
         decimal confidence_score
         text extraction_method
         text notes
+        text record_type
+        text raw_label_full
+        text set_name
+        text other
+        boolean is_latest
         timestamptz created_at
         timestamptz updated_at
     }
@@ -249,6 +347,45 @@ erDiagram
         bigint line_item_id FK
         text raw_text
     }
+    
+    targets {
+        serial id PK
+        text name
+        integer sort_order
+        boolean is_active
+        text name_norm
+        text reading
+        timestamptz created_at
+        timestamptz updated_at
+    }
+    
+    actions {
+        serial id PK
+        text name
+        integer sort_order
+        boolean is_active
+        text name_norm
+        timestamptz created_at
+        timestamptz updated_at
+    }
+    
+    positions {
+        serial id PK
+        text name
+        integer sort_order
+        boolean is_active
+        text name_norm
+        timestamptz created_at
+        timestamptz updated_at
+    }
+    
+    subject_master {
+        text id PK
+        text subject_name
+        text subject_name_kana
+        timestamptz created_at
+        timestamptz updated_at
+    }
 
     invoices ||--o{ invoice_line_items : "1対多"
     invoices ||--o{ invoice_payments : "1対多"
@@ -256,41 +393,40 @@ erDiagram
     invoice_line_items ||--o{ invoice_line_items_split : "1対多"
     invoice_line_items ||--o| legacy_line_item_raws : "1対1"
     invoice_line_items_split ||--o{ work_item_positions : "1対多"
+    
+    targets ||--o{ invoice_line_items : "参照"
+    actions ||--o{ invoice_line_items : "参照"
+    positions ||--o{ invoice_line_items : "参照"
+    subject_master ||--o{ invoices : "参照"
 ```
 
 ---
 
-## 📊 データ関係性
+## 📊 データ統計（2025年9月11日現在）
 
-### **1対多の関係**
+### **メインテーブル**
+- **invoices**: 2,217件（請求書データ）
+- **invoice_line_items**: 79件（明細データ）⚠️ **異常に少ない**
+- **invoice_line_items_split**: 200件（分割データ）
 
-#### invoices → invoice_line_items
-- 1つの請求書に複数の明細項目
-- 関連キー: `invoice_id`
+### **マスターテーブル**
+- **targets**: 63件（作業対象）
+- **actions**: 36件（作業動作）
+- **positions**: 24件（作業部位）
+- **subject_master**: 207件（件名）
 
-#### invoices → invoice_payments
-- 1つの請求書に複数の入金履歴（分割払い対応）
-- 関連キー: `invoice_id`
+### **未使用テーブル**
+- **work_item_positions**: 0件
+- **invoice_payments**: 0件
+- **legacy_line_item_raws**: 0件
+- **customers**: 0件（NULL）
+- **companies**: 0件（NULL）
+- **customer_categories**: 0件（NULL）
 
-#### invoice_line_items → invoice_line_items_split
-- 1つの明細項目に複数の分割項目（任意）
-- 関連キー: `invoice_id` + `line_no`
-
-#### invoice_line_items_split → work_item_positions
-- 1つの分割項目に複数の位置情報
-- 関連キー: `split_item_id`
-
-### **1対1の関係**
-
-#### invoice_line_items ↔ legacy_line_item_raws
-- 明細項目と旧システム原文データの対応
-- 関連キー: `line_item_id`
-
-### **自己参照関係**
-
-#### invoices → invoices（赤伝関係）
-- 赤伝が元請求書を参照
-- 関連キー: `original_invoice_id`
+### **⚠️ データ品質上の問題**
+1. **請求書2,217件に対して明細79件** - 通常ありえない比率
+2. **明細データの作業辞書連携不完全** - action, target, positionが多数空
+3. **古いデータのみ** - 2023年9月以降のデータなし
 
 ---
 
@@ -303,12 +439,12 @@ PRIMARY KEY (invoice_id)
 INDEX idx_invoices_issue_date ON invoices(issue_date)
 INDEX idx_invoices_customer ON invoices(customer_name)
 INDEX idx_invoices_type ON invoices(invoice_type)
-INDEX idx_invoices_original ON invoices(original_invoice_id)
 
 -- 明細テーブル  
 PRIMARY KEY (id)
 UNIQUE (invoice_id, line_no)
 INDEX idx_line_items_invoice ON invoice_line_items(invoice_id)
+INDEX idx_line_items_performed_at ON invoice_line_items(performed_at)
 
 -- 分割テーブル
 PRIMARY KEY (id)
@@ -316,19 +452,10 @@ UNIQUE (invoice_id, line_no, sub_no)
 INDEX idx_split_invoice ON invoice_line_items_split(invoice_id)
 INDEX idx_split_line ON invoice_line_items_split(invoice_id, line_no)
 
--- 位置テーブル
-PRIMARY KEY (id)
-INDEX idx_positions_split_item ON work_item_positions(split_item_id)
-
--- 入金履歴テーブル
-PRIMARY KEY (id)
-INDEX idx_payments_invoice ON invoice_payments(invoice_id)
-INDEX idx_payments_date ON invoice_payments(payment_date)
-
--- 旧システム原文テーブル
-PRIMARY KEY (id)
-UNIQUE (line_item_id)
-INDEX idx_legacy_line_item ON legacy_line_item_raws(line_item_id)
+-- マスターテーブル
+INDEX idx_targets_active ON targets(is_active, sort_order)
+INDEX idx_actions_active ON actions(is_active, sort_order)
+INDEX idx_positions_active ON positions(is_active, sort_order)
 ```
 
 ---
@@ -363,7 +490,7 @@ SELECT
   COUNT(*) as count
 FROM invoices 
 WHERE issue_date IS NOT NULL 
-  AND invoice_type = 'standard' -- 通常請求書のみ
+  AND invoice_type = 'standard'
 GROUP BY month
 ORDER BY month;
 ```
@@ -376,32 +503,27 @@ SELECT
   COUNT(*) as invoice_count
 FROM invoices 
 WHERE customer_name IS NOT NULL 
-  AND invoice_type = 'standard' -- 通常請求書のみ
+  AND invoice_type = 'standard'
 GROUP BY customer_name
 ORDER BY total_amount DESC;
 ```
 
-#### 分割明細の表示（位置情報含む）
+#### 作業項目分析（作業辞書連携）
 ```sql
 SELECT 
-  i.invoice_id,
-  i.customer_name,
-  li.raw_label,
-  s.raw_label_part,
-  s.amount,
-  s.quantity,
-  s.is_cancelled,
-  -- 位置情報を集約
-  STRING_AGG(p.position, ',' ORDER BY p.position) as positions
-FROM invoices i
-JOIN invoice_line_items li ON i.invoice_id = li.invoice_id
-LEFT JOIN invoice_line_items_split s ON li.invoice_id = s.invoice_id 
-  AND li.line_no = s.line_no
-LEFT JOIN work_item_positions p ON s.id = p.split_item_id
-WHERE i.invoice_type = 'standard' -- 通常請求書のみ
-GROUP BY i.invoice_id, i.customer_name, li.raw_label, s.raw_label_part, 
-         s.amount, s.quantity, s.is_cancelled, li.line_no, s.sub_no
-ORDER BY i.invoice_id, li.line_no, s.sub_no;
+  li.target,
+  li.action,
+  li.position,
+  COUNT(*) as work_count,
+  AVG(li.unit_price) as avg_price,
+  SUM(li.amount) as total_amount
+FROM invoice_line_items li
+JOIN invoices i ON li.invoice_id = i.invoice_id
+WHERE li.target IS NOT NULL 
+  AND li.target != ''
+  AND i.invoice_type = 'standard'
+GROUP BY li.target, li.action, li.position
+ORDER BY total_amount DESC;
 ```
 
 ---
@@ -410,12 +532,17 @@ ORDER BY i.invoice_id, li.line_no, s.sub_no;
 
 ### **強み**
 - **柔軟な分割表示**: 複合作業を個別項目として詳細管理
+- **作業辞書システム**: targets/actions/positions による作業標準化
 - **正確な金額按分**: 端数処理を含む自動計算
-- **包括的な売上分析**: 月別・顧客別の多角的分析
-- **取消し伝票対応**: 修正・取消し処理の完全サポート
+- **包括的な売上分析**: 月別・顧客別・作業別の多角的分析
+
+### **現在の課題**
+- **データ品質問題**: 明細データの不足・不整合
+- **作業辞書連携未完成**: 明細データとマスターの関連不完全
+- **古いデータのみ**: 現在の業務に対応していない
 
 ### **拡張可能性**
-- 作業マスター連携（action/target/position の正規化）
+- 作業マスター連携の完全実装
 - 在庫管理システムとの連携
 - 電子帳簿保存法対応
 - API による外部システム連携
@@ -425,73 +552,48 @@ ORDER BY i.invoice_id, li.line_no, s.sub_no;
 ## 📝 運用ノート
 
 ### **データメンテナンス**
-- 分割処理は手動実行（今回は Python スクリプト）
-- 定期的なデータ整合性チェックを推奨
+- **緊急対応が必要**: データ品質の根本的改善
+- 分割処理の自動化実装
+- 定期的なデータ整合性チェック
 - バックアップは日次で実施
 
 ### **パフォーマンス考慮**
 - 大量データ時は日付範囲での分割クエリを推奨
-- 分割テーブルの件数が多い場合は追加インデックスを検討
+- 分割テーブルの件数増加時は追加インデックスを検討
+- 作業辞書検索の最適化
 
 ---
 
-## 📊 DB項目とツール項目の対比表
+## 📊 各ページとの連携仕様
 
-### **work-search ページとの連携**
-
-#### **データ取得クエリ構造**
+### **work-search ページ**
 ```sql
--- work-searchページで使用される基本クエリ
+-- 作業価格検索用クエリ
 SELECT 
   li.id as line_item_id,
   li.raw_label as work_name,
   li.unit_price,
-  li.quantity, 
+  li.quantity,
   li.amount,
-  li.task_type,
+  CASE WHEN li.task_type = 'S' THEN true ELSE false END as is_set,
   li.invoice_id,
   i.customer_name,
   i.subject,
   i.registration_number,
-  i.issue_date,
   TO_CHAR(i.issue_date, 'YYYY年MM月') as invoice_month
 FROM invoice_line_items li
 LEFT JOIN invoices i ON li.invoice_id = i.invoice_id
-WHERE li.unit_price > 0
+WHERE li.unit_price > 0;
 ```
 
-#### **DB項目 ↔ ツール項目 対応表**
+### **master-confirmation ページ**
+- 全テーブルのデータ件数確認
+- マスターデータ（targets/actions/positions）の表示
+- データ品質チェック機能
 
-| ツール表示項目 | DB項目 | 取得元テーブル | 変換ルール | 例 |
-|---------------|--------|-------------|-----------|-----|
-| **作業名** | `raw_label` | `invoice_line_items` | そのまま表示 | 右バンパー脱着・修理 |
-| **単価** | `unit_price` | `invoice_line_items` | ¥{数値}形式で表示 | ¥8,000 |
-| **数量** | `quantity` | `invoice_line_items` | 数値のみ表示 | 1 |
-| **金額** | `amount` | `invoice_line_items` | ¥{数値}形式で表示 | ¥8,000 |
-| **作業タイプ** | `task_type` | `invoice_line_items` | T:個別, S:セット変換 | T |
-| **顧客名** | `customer_name` | `invoices` | そのまま表示 | UDトラックス株式会社 |
-| **件名** | `subject` | `invoices` | そのまま表示 | エンジン修理 |
-| **請求月** | `issue_date` | `invoices` | `TO_CHAR(issue_date, 'YYYY年MM月')` | 2025年04月 |
-| **登録番号** | `registration_number` | `invoices` | そのまま表示 | 品川500あ1234 |
-
-#### **作業タイプ変換ルール**
-```typescript
-// task_type → 表示文字変換
-const taskTypeDisplay = (type: string) => {
-  return type === 'set' ? 'S' : 'T';
-};
-```
-
-#### **金額表示の問題**
-⚠️ **既知の課題**: 現在多くのレコードで `amount` が 0 または NULL で表示される問題があり、今後の改善課題として記録済み
-
----
-
-### **sales-management ページとの連携**
-
-#### **データ取得クエリ構造**
+### **sales-management ページ**
 ```sql
--- sales-managementページで使用される基本クエリ（新設計）
+-- 売上管理用クエリ
 SELECT 
   i.invoice_id,
   i.customer_name,
@@ -499,124 +601,13 @@ SELECT
   i.total,
   i.issue_date,
   i.payment_status,
-  i.invoice_type,
-  -- 入金合計の集計
-  COALESCE(SUM(p.payment_amount), 0) as total_paid,
-  -- 最新入金日
-  MAX(p.payment_date) as last_payment_date
+  COALESCE(SUM(p.payment_amount), 0) as total_paid
 FROM invoices i
 LEFT JOIN invoice_payments p ON i.invoice_id = p.invoice_id
-WHERE i.invoice_type = 'standard' -- 通常請求書のみ
-GROUP BY i.invoice_id, i.customer_name, i.subject, i.total, i.issue_date, i.payment_status, i.invoice_type
-ORDER BY i.issue_date DESC
-```
-
-#### **DB項目 ↔ ツール項目 対応表**
-
-| ツール表示項目 | DB項目 | 取得元テーブル | 変換ルール | 例 |
-|---------------|--------|-------------|-----------|-----|
-| **請求書番号** | `invoice_id` | `invoices` | そのまま表示 | 25043371-1 |
-| **顧客名** | `customer_name` | `invoices` | そのまま表示 | UDトラックス株式会社 |
-| **件名** | `subject` | `invoices` | そのまま表示 | エンジン修理 |
-| **請求金額** | `total` | `invoices` | ¥{数値}形式で表示 | ¥14,400 |
-| **入金合計** | `total_paid` | `invoice_payments`（集計） | ¥{数値}形式で表示 | ¥10,000 |
-| **残額** | 計算値 | `total - total_paid` | ¥{数値}形式で表示 | ¥4,400 |
-| **発行日** | `issue_date` | `invoices` | YYYY-MM-DD形式 | 2025-04-27 |
-| **支払状況** | `payment_status` | `invoices` | 日本語変換 | 一部入金 |
-| **最終入金日** | `last_payment_date` | `invoice_payments`（集計） | YYYY-MM-DD形式 | 2025-05-15 |
-
-#### **入金詳細モーダルの対応表**
-
-| ツール表示項目 | DB項目 | 取得元テーブル | 変換ルール | 例 |
-|---------------|--------|-------------|-----------|-----|
-| **入金日** | `payment_date` | `invoice_payments` | YYYY-MM-DD形式 | 2025-05-15 |
-| **入金額** | `payment_amount` | `invoice_payments` | ¥{数値}形式で表示 | ¥10,000 |
-| **入金方法** | `payment_method` | `invoice_payments` | そのまま表示 | 銀行振込 |
-| **備考** | `notes` | `invoice_payments` | そのまま表示 | 一部入金分 |
-
-#### **支払状況変換ルール**
-```typescript
-// payment_status → 日本語表示変換
-const paymentStatusDisplay = (status: string) => {
-  switch(status) {
-    case 'paid': return '支払済み';
-    case 'unpaid': return '未払い';
-    case 'partial': return '一部入金';
-    default: return status;
-  }
-};
+WHERE i.invoice_type = 'standard'
+GROUP BY i.invoice_id, i.customer_name, i.subject, i.total, i.issue_date, i.payment_status;
 ```
 
 ---
 
-### **invoice-create ページとの連携**
-
-#### **新規請求書作成時のフィールドマッピング**
-
-| フォーム項目 | DB項目 | 取得元テーブル | デフォルト値 | 必須 |
-|-------------|--------|-------------|-----------|-----|
-| **請求書ID** | `invoice_id` | `invoices` | 自動生成 | ✓ |
-| **顧客名** | `customer_name` | `invoices` | - | ✓ |
-| **件名** | `subject` | `invoices` | - | ✓ |
-| **発行日** | `issue_date` | `invoices` | 今日の日付 | ✓ |
-| **請求日** | `billing_date` | `invoices` | 発行日と同じ | - |
-| **登録番号** | `registration_number` | `invoices` | - | - |
-| **オーダー番号** | `order_number` | `invoices` | - | - |
-
-#### **明細項目のフィールドマッピング**
-
-| フォーム項目 | DB項目 | 取得元テーブル | 自動処理 |
-|-------------|--------|-------------|---------|
-| **作業内容** | `raw_label` | `invoice_line_items` | - |
-| **単価** | `unit_price` | `invoice_line_items` | - |
-| **数量** | `quantity` | `invoice_line_items` | デフォルト: 1 |
-| **金額** | `amount` | `invoice_line_items` | 単価×数量で自動計算 |
-| **作業タイプ** | `task_type` | `invoice_line_items` | デフォルト: 'individual' |
-
-**最終更新**: 2025年9月5日（Claude Code更新 - 実際のSupabaseスキーマに基づく完全更新）
-
----
-
-## 📊 作業価格検索ページ (work-search) との連携（詳細）
-
-### **使用テーブル**
-- `invoices` - 請求書ヘッダー情報
-- `invoice_line_items` - 作業明細情報
-
-### **データ結合ロジック**
-```sql
--- work-searchページで使用されるクエリ構造
-SELECT 
-  li.id as line_item_id,
-  li.raw_label as work_name,
-  li.unit_price,
-  li.quantity,
-  li.invoice_id,
-  i.customer_name,
-  i.subject,
-  i.registration_number,
-  i.issue_date,
-  CASE WHEN li.task_type = 'set' THEN true ELSE false END as is_set,
-  -- 請求月の生成（issue_dateから）
-  TO_CHAR(i.issue_date, 'YYYY年MM月') as invoice_month
-FROM invoice_line_items li
-LEFT JOIN invoices i ON li.invoice_id = i.invoice_id
-WHERE li.unit_price > 0;
-```
-
-### **検索対象フィールド**
-- `work_name` (作業名 - `raw_label`から取得)
-- `customer_name` (顧客名)  
-- `subject` (件名)
-- `registration_number` (登録番号)
-- `invoice_month` (請求月 - `issue_date`から生成)
-
-### **パフォーマンス最適化**
-```sql
--- 作業価格検索用の推奨インデックス
-CREATE INDEX IF NOT EXISTS idx_line_items_unit_price ON invoice_line_items(unit_price);
-CREATE INDEX IF NOT EXISTS idx_line_items_task_type ON invoice_line_items(task_type);
-CREATE INDEX IF NOT EXISTS idx_invoices_issue_date_customer ON invoices(issue_date, customer_name);
-```
-
-**最終更新**: 2025年9月5日（Claude Code更新 - 実際のSupabaseスキーマに基づく完全更新）
+**最終更新**: 2025年9月11日（実際のSupabaseスキーマに基づく完全更新 - データ品質問題含む）

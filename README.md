@@ -20,6 +20,7 @@ Next.js 15 + Supabase Auth を使用したGoogle OAuth認証システム
 - **[📖 全ページ機能マニュアル](./docs/全ページ機能マニュアル.md)** - 完全な機能仕様・セキュリティ設計
 - **[🎨 UI変更ガイド](./docs/UI_MODIFICATION_GUIDE.md)** - 全AIツール対応UI変更手順
 - **[📋 ドキュメント概要](./docs/README.md)** - ドキュメント構成・使用方法
+- **[🗂️ ファイル整理記録](./FILE_ORGANIZATION_LOG.md)** - プロジェクト内ファイルの整理履歴・archiveフォルダのルール説明
 
 ### 📝 機能説明書（ユーザーマニュアル作成用）
 - **[📄 請求書一覧ページ機能説明](./docs/invoice-list-features.md)** - ページネーション・曖昧検索・統計表示の詳細仕様

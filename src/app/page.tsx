@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { FileText, Users, Search, Clock, BarChart3, Plus, Calculator, TrendingUp, Settings, Hash, BookOpen, Building2, Tag, Shield, Send } from 'lucide-react'
+import { FileText, Users, Search, Clock, BarChart3, Plus, Calculator, TrendingUp, Settings, Hash, BookOpen, Building2, Tag, Shield, Send, Database } from 'lucide-react'
 
 export default function HomePage() {
   const router = useRouter()
@@ -112,6 +112,15 @@ export default function HomePage() {
       icon: BookOpen,
       path: '/work-dictionary',
       color: 'bg-purple-600 hover:bg-purple-700 shadow-lg',
+      textColor: 'text-white',
+      category: 'settings'
+    },
+    {
+      title: 'マスター確認',
+      description: 'マスターデータの登録状況と統計情報の確認',
+      icon: Database,
+      path: '/master-confirmation',
+      color: 'bg-blue-600 hover:bg-blue-700 shadow-lg',
       textColor: 'text-white',
       category: 'settings'
     },

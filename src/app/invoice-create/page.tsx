@@ -869,7 +869,7 @@ function InvoiceCreateContent() {
     initializeDocumentNumber()
   }, [])
 
-  // documentType変更時に新しい番号を生成
+  // documentType変更時に新しい番号を生成（新規作成モードのみ）
   useEffect(() => {
     const generateNewNumber = async () => {
       try {
@@ -879,10 +879,11 @@ function InvoiceCreateContent() {
         console.error('Error generating document number:', error)
       }
     }
-    if (!isEditMode) {
+    // 新規作成モードかつ編集中のデータ読み込み完了後のみ実行
+    if (!isEditMode && !editInvoiceId) {
       generateNewNumber()
     }
-  }, [documentType, isEditMode])
+  }, [documentType, isEditMode, editInvoiceId])
 
   // 編集モード時の初期データ読み込み
   useEffect(() => {
@@ -910,6 +911,10 @@ function InvoiceCreateContent() {
 
           // 基本情報をセット
           setInvoiceNumber(invoiceData.invoice_id)
+          
+          // 請求書IDから文書タイプを判定（Mがあれば見積書、なければ請求書）
+          const docType = invoiceData.invoice_id.includes('M') ? 'estimate' : 'invoice'
+          setDocumentType(docType)
           const billingDate = invoiceData.billing_date || invoiceData.issue_date
           if (billingDate) {
             setBillingDate(billingDate.split('T')[0])
@@ -937,18 +942,21 @@ function InvoiceCreateContent() {
 
           // 明細データを作業項目に変換
           if (lineItems && lineItems.length > 0) {
-            const items: WorkItem[] = lineItems.map((item, index) => ({
-              id: index + 1,
-              type: item.task_type === 'セット作業' ? 'set' : 'individual',
-              work_name: `${item.target || ''}${item.action || ''}${item.position ? ` (${item.position})` : ''}`,
-              position: item.position || '',
-              unit_price: Number(item.unit_price || 0),
-              quantity: Number(item.quantity || 1),
-              amount: Number(item.amount || 0),
-              memo: item.raw_label || '',
-              set_details: [],
-              detail_positions: []
-            }))
+            const items: WorkItem[] = lineItems.map((item, index) => {
+              const isSetWork = item.task_type === 'S' || item.task_type === 'set'
+              return {
+                id: index + 1,
+                type: isSetWork ? 'set' : 'individual',
+                work_name: isSetWork ? item.target || item.raw_label || '' : `${item.target || ''}${item.action || ''}${item.position ? ` (${item.position})` : ''}`,
+                position: item.position || '',
+                unit_price: Number(item.unit_price || 0),
+                quantity: Number(item.quantity || 1),
+                amount: Number(item.amount || 0),
+                memo: item.raw_label || '',
+                set_details: isSetWork && item.raw_label ? item.raw_label.split(/[,、，]/).map(s => s.trim()).filter(s => s.length > 0) : [],
+                detail_positions: []
+              }
+            })
             setWorkItems(items)
           }
 
@@ -1335,14 +1343,40 @@ function InvoiceCreateContent() {
         updated_at: new Date().toISOString()
       }
 
-      // 請求書基本情報を保存
-      const { data: invoiceData, error: invoiceError } = await supabase
-        .from('invoices')
-        .insert(invoiceRecord)
-        .select()
+      if (isEditMode) {
+        // 編集モード: 既存レコードを更新
+        const { data: invoiceData, error: invoiceError } = await supabase
+          .from('invoices')
+          .update({
+            ...invoiceRecord,
+            updated_at: new Date().toISOString()
+          })
+          .eq('invoice_id', invoiceNumber)
+          .select()
 
-      if (invoiceError) {
-        throw invoiceError
+        if (invoiceError) {
+          throw invoiceError
+        }
+
+        // 既存の明細を削除してから新しい明細を追加
+        const { error: deleteError } = await supabase
+          .from('invoice_line_items')
+          .delete()
+          .eq('invoice_id', invoiceNumber)
+
+        if (deleteError) {
+          throw deleteError
+        }
+      } else {
+        // 新規作成モード
+        const { data: invoiceData, error: invoiceError } = await supabase
+          .from('invoices')
+          .insert(invoiceRecord)
+          .select()
+
+        if (invoiceError) {
+          throw invoiceError
+        }
       }
 
       // 明細データを保存

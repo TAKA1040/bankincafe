@@ -1,0 +1,38 @@
+# Claude Code 指示書
+# 作業ディレクトリ: C:\Windsurf\bankincafe\invoices_import
+# このフォルダの外には絶対に出ないこと
+
+やること:
+
+1. Supabase に接続する（.env から SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY を読む）
+
+2. staging スキーマを作る
+   CREATE SCHEMA IF NOT EXISTS staging;
+
+3. staging.invoices_import テーブルを作る
+   カラム:
+     請求書番号 TEXT
+     請求月 TEXT
+     請求日 TEXT
+     請求先 TEXT
+     件名 TEXT
+     登録番号 TEXT
+     発注番号 TEXT
+     オーダー番号 TEXT
+     小計 TEXT
+     消費税 TEXT
+     請求金額 TEXT
+
+4. invoices_extract.csv を staging.invoices_import にインポートする
+   - psql の場合:
+     \copy staging.invoices_import
+       FROM 'invoices_extract.csv'
+       WITH (FORMAT csv, HEADER true, ENCODING 'UTF8');
+
+5. データ確認
+   SELECT COUNT(*) FROM staging.invoices_import;
+   SELECT * FROM staging.invoices_import LIMIT 10;
+
+ゴール:
+- invoices_extract.csv の内容が Supabase に取り込まれていること
+- 作業は C:\Windsurf\bankincafe\invoices_import 内だけで完結すること

@@ -236,7 +236,7 @@ export function useAuthNew() {
       isMounted = false
       subscription.unsubscribe()
     }
-  }, [supabase.auth])
+  }, [supabase.auth]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return {
     user: authState.user,

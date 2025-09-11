@@ -186,8 +186,13 @@ export default function InvoicePrintPage() {
   // 作業タイプのプレフィックス
   const getWorkTypePrefix = (taskType: string) => {
     switch (taskType) {
+      case 'S':
       case 'set':
         return 'S:';
+      case 'T':
+      case 'individual':
+      case 'structured':
+      case 'fuzzy':
       default:
         return 'T:';
     }
@@ -394,9 +399,20 @@ export default function InvoicePrintPage() {
               <tbody>
                 {invoice.line_items.length > 0 ? (
                   invoice.line_items.map((item, index) => {
-                    const itemName = item.raw_label || [item.target, item.action, item.position].filter(Boolean).join(' ') || '作業項目未設定';
+                    // S作業（セット）の場合を判別 - task_typeベースで判断
+                    const isSetWork = item.task_type === 'S' || item.task_type === 'set';
+                    
+                    // システムルールに従った作業名の決定
+                    const itemName = isSetWork 
+                      ? (item.target || 'セット作業')
+                      : (item.raw_label || [item.target, item.action, item.position].filter(Boolean).join(' ') || '作業項目未設定');
+                    
                     const prefix = getWorkTypePrefix(item.task_type);
                     const displayName = `${prefix}${itemName}`;
+                    
+                    // S作業の内訳を取得
+                    const breakdownItems = isSetWork && item.raw_label ? 
+                      item.raw_label.split(/[,、，・･]/).map(s => s.trim()).filter(s => s.length > 0) : [];
 
                     return (
                       <tr key={index} className="hover:bg-gray-50">
@@ -405,12 +421,27 @@ export default function InvoicePrintPage() {
                         </td>
                         <td className="border border-gray-300 px-3 py-2 text-sm">
                           <div className="font-medium">{displayName}</div>
+                          
+                          {/* S作業の内訳表示 */}
+                          {isSetWork && breakdownItems.length > 0 && (
+                            <div className="text-xs text-gray-600 mt-1">
+                              <span className="text-gray-500">内訳</span>
+                              {breakdownItems.map((breakdown, idx) => (
+                                <div key={idx} className="ml-2">
+                                  • {breakdown}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          
                           {item.performed_at && (
                             <div className="text-xs text-gray-500 mt-1">
                               実施日: {formatDate(item.performed_at)}
                             </div>
                           )}
-                          {(item.target || item.action || item.position) && !item.raw_label && (
+                          
+                          {/* T作業の詳細情報（従来の表示） */}
+                          {!isSetWork && (item.target || item.action || item.position) && !item.raw_label && (
                             <div className="text-xs text-gray-600 mt-1">
                               対象: {item.target || '-'} / 動作: {item.action || '-'} / 位置: {item.position || '-'}
                             </div>
