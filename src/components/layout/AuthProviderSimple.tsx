@@ -116,48 +116,39 @@ export default function AuthProviderSimple({ children }: AuthProviderProps) {
           // console.log('❌ 許可されていないアカウント - 承認待ちページへ')
           // console.log('📋 新規ユーザー登録開始:', { email: userEmail, full_name: session.user.user_metadata?.full_name, user_metadata: session.user.user_metadata })
           
-          // 未承認ユーザーをuser_managementテーブルに登録
+          // 未承認ユーザーをuser_managementテーブルにUPSERT（挿入または更新）
           try {
-            const newUserData = {
+            const userData = {
               google_email: userEmail,
               display_name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || '未設定',
               status: 'pending' as const,
-              requested_at: new Date().toISOString(),
               last_login_at: new Date().toISOString()
             }
             
-            // // // console.log('📝 データベース挿入データ:', newUserData)
-            
-            const { data: insertData, error: insertError } = await supabase
-              .from('user_management')
-              .insert(newUserData)
-              .select()
-            
-            if (insertError) {
-              if (insertError.code === '23505') {
-                // // // console.log('👤 既存ユーザー - ログイン履歴を更新')
-                const { data: updateData, error: updateError } = await supabase
-                  .from('user_management')
-                  .update({
-                    last_login_at: new Date().toISOString(),
-                    display_name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || '未設定'
-                  })
-                  .eq('google_email', userEmail)
-                  .select()
-                
-                if (updateError) {
-                  console.error('❌ 既存ユーザー更新エラー:', updateError)
-                } else {
-                  // // // console.log('✅ 既存ユーザー更新完了:', updateData)
-                }
-              } else {
-                console.error('❌ 新規ユーザー挿入エラー:', insertError)
-              }
-            } else {
-              // // // console.log('✅ 新規ユーザー登録完了:', insertData)
+            // 新規登録の場合のみ requested_at を設定
+            const userDataWithTimestamp = {
+              ...userData,
+              requested_at: new Date().toISOString()
             }
             
-            // // // console.log('📝 承認待ちユーザーをデータベースに登録/更新完了')
+            // console.log('📝 UPSERT実行データ:', userData)
+            
+            // UPSERTでConflictエラーを防ぐ
+            const { data: upsertData, error: upsertError } = await supabase
+              .from('user_management')
+              .upsert(userDataWithTimestamp, {
+                onConflict: 'google_email',
+                ignoreDuplicates: false
+              })
+              .select()
+            
+            if (upsertError) {
+              console.error('❌ ユーザー登録/更新エラー:', upsertError)
+            } else {
+              // console.log('✅ ユーザー登録/更新完了:', upsertData)
+            }
+            
+            // console.log('📝 承認待ちユーザーをデータベースに登録/更新完了')
           } catch (dbError) {
             console.error('❌ ユーザー登録処理で例外発生:', dbError)
           }
@@ -167,7 +158,7 @@ export default function AuthProviderSimple({ children }: AuthProviderProps) {
           return
         }
         
-        // // // console.log('✅ 認証・認可完了 - メインコンテンツ表示')
+        // console.log('✅ 認証・認可完了 - メインコンテンツ表示')
         
         // セッションをキャッシュ（ログインキープ用）
         try {
