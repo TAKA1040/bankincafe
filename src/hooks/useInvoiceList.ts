@@ -155,6 +155,8 @@ export function useInvoiceList(yearFilter?: string | string[]) {
             performed_at
           )
         `)
+        // ソフト削除された請求書を除外（経理データ保護）
+        .neq('status', 'deleted')
         .order('billing_date', { ascending: false })
 
       // 年度フィルターが指定されている場合は条件を追加
@@ -518,20 +520,27 @@ export function useInvoiceList(yearFilter?: string | string[]) {
     }
   }, [fetchInvoices])
 
-  // 請求書削除
+  // 請求書削除（ソフト削除で経理データ保護）
   const deleteInvoice = useCallback(async (invoiceId: string) => {
     try {
       setError(null)
       const supabase = createClient()
-      const { error: delErr } = await supabase
+      
+      // 物理削除禁止 - ソフト削除（論理削除）で経理データを保護
+      const { error: updateErr } = await supabase
         .from('invoices')
-        .delete()
+        .update({ 
+          status: 'deleted',
+          deleted_at: new Date().toISOString(),
+          deleted_by: (await supabase.auth.getUser()).data.user?.id
+        })
         .eq('invoice_id', invoiceId)
-      if (delErr) throw delErr
+      
+      if (updateErr) throw updateErr
       await fetchInvoices()
       return true
     } catch (e) {
-      console.error('Delete invoice error:', e)
+      console.error('Soft delete invoice error:', e)
       setError(e instanceof Error ? e.message : '削除に失敗しました')
       return false
     }

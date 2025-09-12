@@ -34,12 +34,7 @@ export function useAuthNew() {
 
   // 管理者権限チェック
   const checkAdminPermission = useCallback((email: string): boolean => {
-    // 固定管理者アカウント
-    if (email === 'dash201206@gmail.com') {
-      return true
-    }
-
-    // 環境変数から許可されたメールアドレスチェック
+    // 環境変数から許可されたメールアドレスチェック（セキュリティ向上）
     const allowedEmails = getAllowedEmails()
     return allowedEmails.includes(email)
   }, [getAllowedEmails])

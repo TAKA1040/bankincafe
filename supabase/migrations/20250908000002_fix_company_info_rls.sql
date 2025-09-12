@@ -7,24 +7,19 @@ DROP POLICY IF EXISTS "Users can insert own company info" ON company_info;
 DROP POLICY IF EXISTS "Users can update own company info" ON company_info;
 DROP POLICY IF EXISTS "Users can delete own company info" ON company_info;
 
--- 全てのユーザーがアクセス可能な一時ポリシー（開発用）
--- RLSを再度有効化
+-- セキュアなRLSポリシーを設定
 ALTER TABLE company_info ENABLE ROW LEVEL SECURITY;
 
--- 全ユーザーに対する一時的なポリシー
-CREATE POLICY "Allow all operations for development" ON company_info
-  FOR ALL USING (true)
-  WITH CHECK (true);
+-- 認証必須: ユーザーは自分の企業情報のみアクセス可能
+CREATE POLICY "Authenticated users can view own company info" ON company_info
+  FOR SELECT USING (auth.uid() IS NOT NULL AND auth.uid() = user_id);
 
--- または、匿名ユーザーも許可するポリシー
-CREATE POLICY "Allow anonymous access" ON company_info
-  FOR ALL USING (
-    auth.uid() IS NULL OR 
-    auth.uid() = user_id OR 
-    user_id = '00000000-0000-0000-0000-000000000000'::uuid
-  )
-  WITH CHECK (
-    auth.uid() IS NULL OR 
-    auth.uid() = user_id OR 
-    user_id = '00000000-0000-0000-0000-000000000000'::uuid
-  );
+CREATE POLICY "Authenticated users can insert own company info" ON company_info
+  FOR INSERT WITH CHECK (auth.uid() IS NOT NULL AND auth.uid() = user_id);
+
+CREATE POLICY "Authenticated users can update own company info" ON company_info
+  FOR UPDATE USING (auth.uid() IS NOT NULL AND auth.uid() = user_id)
+  WITH CHECK (auth.uid() IS NOT NULL AND auth.uid() = user_id);
+
+CREATE POLICY "Authenticated users can delete own company info" ON company_info
+  FOR DELETE USING (auth.uid() IS NOT NULL AND auth.uid() = user_id);
