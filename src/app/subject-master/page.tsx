@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Search, Plus, Edit2, FileText, ArrowLeft, Trash2 } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { Search, Plus, Edit2, FileText, ArrowLeft, Trash2, Home } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
 type Subject = {
@@ -14,6 +15,7 @@ type Subject = {
 }
 
 export default function SubjectMasterPage() {
+  const router = useRouter()
   const [subjects, setSubjects] = useState<Subject[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
@@ -166,11 +168,11 @@ export default function SubjectMasterPage() {
         <div className="mb-8">
           <div className="flex items-center gap-4 mb-4">
             <button
-              onClick={() => window.location.href = '/'}
-              className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+              onClick={() => router.push('/')}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2 font-medium"
             >
-              <ArrowLeft className="h-5 w-5" />
-              メニューへ戻る
+              <Home size={20} />
+              メニューへ
             </button>
             <button
               onClick={() => window.location.href = '/invoice-create'}

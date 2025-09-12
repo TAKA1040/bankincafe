@@ -263,10 +263,10 @@ export default function InvoicePublishPage() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => router.push('/')}
-            className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 flex items-center gap-2"
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2 font-medium"
           >
-            <Home className="w-4 h-4" />
-            メニューに戻る
+            <Home size={20} />
+            メニューへ
           </button>
         </div>
       </div>

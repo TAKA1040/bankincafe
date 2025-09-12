@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Search, Plus, ArrowLeft, Car } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { Search, Plus, ArrowLeft, Car, Home } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
 type RegistrationNumber = {
@@ -14,6 +15,7 @@ type RegistrationNumber = {
 }
 
 export default function RegistrationSettingsPage() {
+  const router = useRouter()
   const [registrations, setRegistrations] = useState<RegistrationNumber[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
@@ -116,11 +118,11 @@ export default function RegistrationSettingsPage() {
         <div className="mb-8">
           <div className="flex items-center gap-4 mb-4">
             <button
-              onClick={() => typeof window !== 'undefined' && (window.location.href = '/')}
-              className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+              onClick={() => router.push('/')}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2 font-medium"
             >
-              <ArrowLeft className="h-5 w-5" />
-              メニューへ戻る
+              <Home size={20} />
+              メニューへ
             </button>
           </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">登録番号マスタ管理</h1>
