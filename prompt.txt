@@ -1,38 +1,24 @@
-# Claude Code 指示書
-# 作業ディレクトリ: C:\Windsurf\bankincafe\invoices_import
-# このフォルダの外には絶対に出ないこと
-
-やること:
-
-1. Supabase に接続する（.env から SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY を読む）
-
-2. staging スキーマを作る
-   CREATE SCHEMA IF NOT EXISTS staging;
-
-3. staging.invoices_import テーブルを作る
-   カラム:
-     請求書番号 TEXT
-     請求月 TEXT
-     請求日 TEXT
-     請求先 TEXT
-     件名 TEXT
-     登録番号 TEXT
-     発注番号 TEXT
-     オーダー番号 TEXT
-     小計 TEXT
-     消費税 TEXT
-     請求金額 TEXT
-
-4. invoices_extract.csv を staging.invoices_import にインポートする
-   - psql の場合:
-     \copy staging.invoices_import
-       FROM 'invoices_extract.csv'
-       WITH (FORMAT csv, HEADER true, ENCODING 'UTF8');
-
-5. データ確認
-   SELECT COUNT(*) FROM staging.invoices_import;
-   SELECT * FROM staging.invoices_import LIMIT 10;
-
-ゴール:
-- invoices_extract.csv の内容が Supabase に取り込まれていること
-- 作業は C:\Windsurf\bankincafe\invoices_import 内だけで完結すること
+react-dom.development.js:29890 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+index.js:627 Uncaught Error: ENOENT: no such file or directory, open 'C:\Windsurf\bankincafe\.next\server\middleware-manifest.json'
+    at Object.readFileSync (node:fs:453:20)
+    at Module._extensions..json (node:internal/modules/cjs/loader:1444:22)
+    at Module.load (node:internal/modules/cjs/loader:1207:32)
+    at Module._load (node:internal/modules/cjs/loader:1023:12)
+    at Module.require (node:internal/modules/cjs/loader:1235:19)
+    at mod.require (file://C:\Windsurf\bankincafe\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:176:18)
+    at DevServer.getMiddlewareManifest (file://C:\Windsurf\bankincafe\node_modules\next\dist\server\next-server.js:938:26)
+    at DevServer.getEdgeFunctionInfo (file://C:\Windsurf\bankincafe\node_modules\next\dist\server\next-server.js:965:31)
+    at DevServer.runMiddleware (file://C:\Windsurf\bankincafe\node_modules\next\dist\server\next-server.js:1059:37)
+    at async DevServer.runMiddleware (file://C:\Windsurf\bankincafe\node_modules\next\dist\server\dev\next-dev-server.js:268:28)
+    at async NextNodeServer.handleCatchallMiddlewareRequest (file://C:\Windsurf\bankincafe\node_modules\next\dist\server\next-server.js:322:26)
+    at async DevServer.handleRequestImpl (file://C:\Windsurf\bankincafe\node_modules\next\dist\server\base-server.js:824:28)
+    at async (file://C:\Windsurf\bankincafe\node_modules\next\dist\server\dev\next-dev-server.js:339:20)
+    at async Span.traceAsyncFn (file://C:\Windsurf\bankincafe\node_modules\next\dist\trace\trace.js:154:20)
+    at async DevServer.handleRequest (file://C:\Windsurf\bankincafe\node_modules\next\dist\server\dev\next-dev-server.js:336:24)
+    at async handleRoute (file://C:\Windsurf\bankincafe\node_modules\next\dist\server\lib\router-utils\resolve-routes.js:313:33)
+    at async resolveRoutes (file://C:\Windsurf\bankincafe\node_modules\next\dist\server\lib\router-utils\resolve-routes.js:552:28)
+    at async handleRequest (file://C:\Windsurf\bankincafe\node_modules\next\dist\server\lib\router-server.js:219:96)
+    at async requestHandlerImpl (file://C:\Windsurf\bankincafe\node_modules\next\dist\server\lib\router-server.js:383:13)
+    at async Server.requestListener (file://C:\Windsurf\bankincafe\node_modules\next\dist\server\lib\start-server.js:141:13)
+websocket.js:39 [HMR] connected

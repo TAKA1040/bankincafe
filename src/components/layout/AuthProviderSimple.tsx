@@ -36,12 +36,12 @@ export default function AuthProviderSimple({ children }: AuthProviderProps) {
     
     const performAuthCheck = async () => {
       try {
-        // // // console.log('🔍 [AuthProviderSimple] 新しい認証システム開始:', { pathname, timestamp: new Date().toISOString() })
+        // console.log('🔍 [AuthProviderSimple] 新しい認証システム開始:', { pathname, timestamp: new Date().toISOString() })
         
         setIsLoading(true)
         
         const supabase = createClient()
-        // // // console.log('📡 [AuthProviderSimple] 標準Supabaseクライアント作成完了')
+        // console.log('📡 [AuthProviderSimple] 標準Supabaseクライアント作成完了')
         
         // セッション永続化チェック（開発時ログインキープ対応）
         const cachedSession = sessionStorage.getItem('supabase_session')
@@ -49,7 +49,7 @@ export default function AuthProviderSimple({ children }: AuthProviderProps) {
           try {
             const parsedSession = JSON.parse(cachedSession)
             if (parsedSession.expires_at > Date.now() / 1000) {
-              // // // console.log('🔄 [AuthProviderSimple] キャッシュされたセッションを使用')
+              // console.log('🔄 [AuthProviderSimple] キャッシュされたセッションを使用')
               
               // キャッシュされたユーザーの管理者権限を再確認（環境変数のみ）
               const userEmail = parsedSession.user_email
@@ -88,7 +88,7 @@ export default function AuthProviderSimple({ children }: AuthProviderProps) {
           timeoutPromise
         ]) as any
         
-        // // // console.log('📡 [AuthProviderSimple] セッション取得完了:', { hasSession: !!session, hasUser: !!session?.user, userEmail: session?.user?.email, error: error?.message })
+        // console.log('📡 [AuthProviderSimple] セッション取得完了:', { hasSession: !!session, hasUser: !!session?.user, userEmail: session?.user?.email, error: error?.message })
         
         if (error) {
           console.error('❌ セッション取得エラー:', error)
@@ -98,7 +98,7 @@ export default function AuthProviderSimple({ children }: AuthProviderProps) {
         }
         
         if (!session?.user?.email) {
-          // // // console.log('🔒 認証なし - ログインページへ')
+          // console.log('🔒 認証なし - ログインページへ')
           setIsAuthenticated(false)
           router.push('/login')
           return
@@ -110,11 +110,11 @@ export default function AuthProviderSimple({ children }: AuthProviderProps) {
         const allowedEmailsList = rawAllowedEmails?.split(',').map(e => e.trim()) || []
         const isAdmin = allowedEmailsList.includes(userEmail)
         
-        // // // console.log('🔐 管理者権限チェック:', { userEmail, isAdmin })
+        // console.log('🔐 管理者権限チェック:', { userEmail, isAdmin })
         
         if (!isAdmin) {
-          // // // console.log('❌ 許可されていないアカウント - 承認待ちページへ')
-          // // // console.log('📋 新規ユーザー登録開始:', { email: userEmail, full_name: session.user.user_metadata?.full_name, user_metadata: session.user.user_metadata })
+          // console.log('❌ 許可されていないアカウント - 承認待ちページへ')
+          // console.log('📋 新規ユーザー登録開始:', { email: userEmail, full_name: session.user.user_metadata?.full_name, user_metadata: session.user.user_metadata })
           
           // 未承認ユーザーをuser_managementテーブルに登録
           try {

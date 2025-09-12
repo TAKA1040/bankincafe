@@ -27,11 +27,7 @@ async function getTargets(): Promise<Target[]> {
     .eq('is_active', true)
     .order('name')
 
-  // // console.log('📊 Supabase response:', { 
-    dataCount: targets?.length || 0, 
-    error: error?.message || null,
-    firstFewTargets: targets?.slice(0, 3)
-  })
+  // console.log('📊 Supabase response:', { dataCount: targets?.length || 0, error: error?.message || null, firstFewTargets: targets?.slice(0, 3) })
 
   if (error) {
     console.error('❌ 対象マスタ取得エラー:', error)
