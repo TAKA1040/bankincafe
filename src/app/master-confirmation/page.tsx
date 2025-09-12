@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Database, CheckCircle, AlertCircle, Users, Briefcase, Target, Settings, FileText } from 'lucide-react'
+import { ArrowLeft, Database, CheckCircle, AlertCircle, Users, Briefcase, Target, Settings, FileText, Home } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
 interface MasterStats {
@@ -193,9 +193,10 @@ export default function MasterConfirmationPage() {
             <div className="flex items-center gap-4">
               <button
                 onClick={() => router.push('/')}
-                className="p-2 hover:bg-gray-100 rounded-lg"
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2 font-medium"
               >
-                <ArrowLeft className="w-5 h-5" />
+                <Home size={20} />
+                メニューへ
               </button>
               <div>
                 <h1 className="text-2xl font-bold text-gray-800">マスター確認</h1>
