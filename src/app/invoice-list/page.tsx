@@ -338,18 +338,18 @@ export default function InvoiceListPage() {
         </div>
         <div className="flex items-center gap-2">
           <button
-            onClick={() => router.push('/')}
-            className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 flex items-center gap-2"
-          >
-            <Home className="w-4 h-4" />
-            メニューに戻る
-          </button>
-          <button
             onClick={() => router.push('/invoice-create')}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2"
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2 font-medium"
           >
             <Plus className="w-4 h-4" />
             新規作成
+          </button>
+          <button
+            onClick={() => router.push('/')}
+            className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 flex items-center gap-2 font-medium"
+          >
+            <Home className="w-4 h-4" />
+            メニューに戻る
           </button>
         </div>
       </div>
@@ -764,7 +764,7 @@ export default function InvoiceListPage() {
             <div className="text-gray-400 text-sm mt-2">検索条件を変更するか、新しい請求書を作成してください</div>
             <button
               onClick={() => router.push('/invoice-create')}
-              className="mt-4 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 inline-flex items-center gap-2"
+              className="mt-4 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 inline-flex items-center gap-2 font-medium"
             >
               <Plus className="w-4 h-4" />
               新規作成
