@@ -2142,6 +2142,7 @@ function InvoiceCreateContent() {
                           </div>
                         )}
                       </div>
+                      
                       <div>
                         <SimpleLabel>動作</SimpleLabel>
                         <input
@@ -2163,6 +2164,60 @@ function InvoiceCreateContent() {
                         />
                       </div>
                     </div>
+                    
+                    {/* 対象・動作・位置の入力補助パネル（3列レイアウトの下に配置） */}
+                    {isTargetConfirmed && target && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+                        <div>
+                          <div className="text-sm font-medium text-gray-700 mb-2">動作（クリックで入力）:</div>
+                          <div className="flex flex-wrap gap-1">
+                            {(TARGET_ACTIONS && TARGET_ACTIONS[target] ? TARGET_ACTIONS[target] : ACTIONS || []).map((a) => {
+                              const price = priceBookMap?.[`${target}_${a}`]
+                              return (
+                                <button
+                                  key={a}
+                                  type="button"
+                                  onClick={() => handleActionSelect(a)}
+                                  className={`px-2 py-1 text-xs rounded border text-left transition-colors ${
+                                    action === a
+                                      ? "bg-blue-100 border-blue-300 text-blue-800"
+                                      : "bg-gray-100 hover:bg-blue-100 border-gray-300"
+                                  }`}
+                                >
+                                  <div>{a}</div>
+                                  {price && price > 0 && (
+                                    <div className="text-blue-600">¥{price.toLocaleString()}</div>
+                                  )}
+                                </button>
+                              )
+                            })}
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-sm font-medium text-gray-700 mb-2">位置（クリックで入力）:</div>
+                          <div className="flex flex-wrap gap-1">
+                            {action ? (
+                              (ACTION_POSITIONS && ACTION_POSITIONS[action] ? ACTION_POSITIONS[action] : POSITIONS || []).map((p) => (
+                                <button
+                                  key={p}
+                                  type="button"
+                                  onClick={() => handlePositionSelect(p)}
+                                  className={`px-2 py-1 text-xs rounded border transition-colors ${
+                                    selectedPositions.includes(p)
+                                      ? "bg-blue-500 text-white border-blue-600"
+                                      : "bg-gray-100 hover:bg-blue-100 border-gray-300"
+                                  }`}
+                                >
+                                  {p}
+                                </button>
+                              ))
+                            ) : (
+                              <div className="text-xs text-gray-500 py-1">まず動作を選択してください</div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
                     
                     {/* スマホ: 対象・動作を1行、位置・その他を1行 */}
                     <div className="md:hidden space-y-3 mb-4">
@@ -2378,58 +2433,6 @@ function InvoiceCreateContent() {
                       )}
                     </div>
                     
-                    {isTargetConfirmed && target && (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                          <div className="text-sm font-medium text-gray-700 mb-2">動作（クリックで入力）:</div>
-                          <div className="flex flex-wrap gap-1">
-                            {(TARGET_ACTIONS && TARGET_ACTIONS[target] ? TARGET_ACTIONS[target] : ACTIONS || []).map((a) => {
-                              const price = priceBookMap?.[`${target}_${a}`]
-                              return (
-                                <button
-                                  key={a}
-                                  type="button"
-                                  onClick={() => handleActionSelect(a)}
-                                  className={`px-2 py-1 text-xs rounded border text-left transition-colors ${
-                                    action === a
-                                      ? "bg-blue-100 border-blue-300 text-blue-800"
-                                      : "bg-gray-100 hover:bg-blue-100 border-gray-300"
-                                  }`}
-                                >
-                                  <div>{a}</div>
-                                  {price && price > 0 && (
-                                    <div className="text-blue-600">¥{price.toLocaleString()}</div>
-                                  )}
-                                </button>
-                              )
-                            })}
-                          </div>
-                        </div>
-                        <div>
-                          <div className="text-sm font-medium text-gray-700 mb-2">位置（クリックで入力）:</div>
-                          <div className="flex flex-wrap gap-1">
-                            {action ? (
-                              (ACTION_POSITIONS && ACTION_POSITIONS[action] ? ACTION_POSITIONS[action] : POSITIONS || []).map((p) => (
-                                <button
-                                  key={p}
-                                  type="button"
-                                  onClick={() => handlePositionSelect(p)}
-                                  className={`px-2 py-1 text-xs rounded border transition-colors ${
-                                    selectedPositions.includes(p)
-                                      ? "bg-blue-500 text-white border-blue-600"
-                                      : "bg-gray-100 hover:bg-blue-100 border-gray-300"
-                                  }`}
-                                >
-                                  {p}
-                                </button>
-                              ))
-                            ) : (
-                              <div className="text-xs text-gray-500 py-1">まず動作を選択してください</div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    )}
                       
                       {/* 作業名表示（自動生成） */}
                       {target && action && (
