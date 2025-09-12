@@ -190,20 +190,17 @@ export default function MasterConfirmationPage() {
         {/* ヘッダー */}
         <header className="bg-white rounded-lg shadow-sm p-6 mb-6">
           <div className="flex justify-between items-center">
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => router.push('/')}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2 font-medium"
-              >
-                <Home size={20} />
-                メニューへ
-              </button>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-800">マスター確認</h1>
-                <p className="text-gray-600">マスターデータの登録状況と統計情報</p>
-              </div>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-800">マスター確認</h1>
+              <p className="text-gray-600">マスターデータの登録状況と統計情報</p>
             </div>
-            <Database className="w-8 h-8 text-blue-600" />
+            <button
+              onClick={() => router.push('/')}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2 font-medium"
+            >
+              <Home size={20} />
+              メニューへ
+            </button>
           </div>
         </header>
 
