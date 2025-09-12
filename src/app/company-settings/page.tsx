@@ -68,12 +68,12 @@ export default function CompanySettingsPage() {
   const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
-    console.log('useEffect実行: loadCompanyInfo開始')
+    // // console.log('useEffect実行: loadCompanyInfo開始')
     loadCompanyInfo()
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
   
   useEffect(() => {
-    console.log('companyInfo state更新:', companyInfo)
+    // // console.log('companyInfo state更新:', companyInfo)
   }, [companyInfo])
 
   const loadCompanyInfo = async () => {
@@ -81,9 +81,9 @@ export default function CompanySettingsPage() {
       const { data: { user } } = await supabase.auth.getUser()
       const userId = user?.id || '00000000-0000-0000-0000-000000000000'
       
-      console.log('データ読み込み開始 - ユーザーID:', userId)
+      // // console.log('データ読み込み開始 - ユーザーID:', userId)
 
-      console.log('クエリ実行:', { userId })
+      // // console.log('クエリ実行:', { userId })
       
       // まず現在のユーザーIDでデータを取得
       const { data: initialData, error } = await supabase
@@ -95,7 +95,7 @@ export default function CompanySettingsPage() {
       let data = initialData
       // データが見つからない場合、デフォルトユーザーIDでも試す
       if (!data && !error && userId !== '00000000-0000-0000-0000-000000000000') {
-        console.log('現在ユーザーIDで見つからず、デフォルトユーザーIDで再試行')
+        // // console.log('現在ユーザーIDで見つからず、デフォルトユーザーIDで再試行')
         const { data: fallbackData, error: fallbackError } = await supabase
           .from('company_info')
           .select('*')
@@ -103,7 +103,7 @@ export default function CompanySettingsPage() {
           .maybeSingle()
         
         if (fallbackData && !fallbackError) {
-          console.log('デフォルトユーザーIDのデータを現在ユーザーIDに更新中...')
+          // // console.log('デフォルトユーザーIDのデータを現在ユーザーIDに更新中...')
           // データを現在のユーザーIDに移行
           await (supabase as any)
             .from('company_info')
@@ -114,7 +114,7 @@ export default function CompanySettingsPage() {
         }
       }
 
-      console.log('クエリ結果:', { data, error })
+      // // console.log('クエリ結果:', { data, error })
       
       if (error) {
         console.error('データ読み込みエラー:', error)
@@ -122,12 +122,12 @@ export default function CompanySettingsPage() {
       }
       
       if (!data) {
-        console.log('会社情報データが見つかりません')
+        // // console.log('会社情報データが見つかりません')
         return
       }
 
-      console.log('読み込み成功:', data)
-      console.log('設定前のcompanyInfo:', companyInfo)
+      // // console.log('読み込み成功:', data)
+      // // console.log('設定前のcompanyInfo:', companyInfo)
 
       const newCompanyInfo = {
         companyName: data.company_name || '',
@@ -154,7 +154,7 @@ export default function CompanySettingsPage() {
         remarks: data.remarks || ''
       }
       
-      console.log('設定するcompanyInfo:', newCompanyInfo)
+      // // console.log('設定するcompanyInfo:', newCompanyInfo)
       setCompanyInfo(newCompanyInfo)
     } catch (error) {
       console.error('会社情報読み込みエラー:', error)
@@ -171,12 +171,12 @@ export default function CompanySettingsPage() {
   const handleSave = async () => {
     setIsLoading(true)
     try {
-      console.log('保存開始...')
+      // // console.log('保存開始...')
       const { data: { user }, error: authError } = await supabase.auth.getUser()
-      console.log('認証情報:', { user: user?.id, authError })
+      // // console.log('認証情報:', { user: user?.id, authError })
       
       const userId = user?.id || '00000000-0000-0000-0000-000000000000'
-      console.log('使用するユーザーID:', userId)
+      // // console.log('使用するユーザーID:', userId)
 
       const dbData = {
         user_id: userId,
@@ -204,13 +204,13 @@ export default function CompanySettingsPage() {
         remarks: companyInfo.remarks
       }
       
-      console.log('データベースに送信するデータ:', dbData)
+      // // console.log('データベースに送信するデータ:', dbData)
 
       const { data: result, error } = await (supabase as any)
         .from('company_info')
         .upsert(dbData)
         
-      console.log('データベース応答:', { result, error })
+      // // console.log('データベース応答:', { result, error })
 
       if (error) {
         throw error

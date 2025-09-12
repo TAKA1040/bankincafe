@@ -28,7 +28,7 @@ export default function InvoiceListPage() {
 
   const { invoices, loading, error, searchInvoices, updateInvoiceStatus, updatePaymentStatus, createRedInvoice, deleteInvoice } = useInvoiceList(yearFilter);
   
-  console.log('📊 現在のselectedYear:', selectedYear);
+  // // console.log('📊 現在のselectedYear:', selectedYear);
 
   // 検索フィルター状態
   const [filters, setFilters] = useState<SearchFilters>({
@@ -94,14 +94,14 @@ export default function InvoiceListPage() {
       }
     });
     
-    console.log('📅 データがある決算期:', Array.from(years).sort((a, b) => b - a));
+    // // console.log('📅 データがある決算期:', Array.from(years).sort((a, b) => b - a));
     
     return Array.from(years).sort((a, b) => b - a); // 降順でソート
   }, [invoices, fiscalYearInfo]);
 
   // 年度フィルター更新
   const updateYearFilter = (year: string) => {
-    console.log('📅 updateYearFilter呼び出し:', year);
+    // // console.log('📅 updateYearFilter呼び出し:', year);
     setSelectedYear(year);
     setCurrentPage(1);
   };
@@ -113,7 +113,7 @@ export default function InvoiceListPage() {
         ? prev.filter(y => y !== year)
         : [...prev, year];
       
-      console.log('📅 年度選択変更:', newSelection);
+      // // console.log('📅 年度選択変更:', newSelection);
       return newSelection;
     });
   };
@@ -130,7 +130,7 @@ export default function InvoiceListPage() {
     }
     setIsYearDropdownOpen(false);
     setCurrentPage(1);
-    console.log('📅 フィルター適用:', selectedYears);
+    // // console.log('📅 フィルター適用:', selectedYears);
   };
 
   // 全期間選択
@@ -181,13 +181,7 @@ export default function InvoiceListPage() {
     setSelectedYears(defaultYears);
     setIsInitialized(true);
     
-    console.log('📅 決算期情報初期化完了:', {
-      決算月: fiscalYearInfo.fiscalYearEndMonth + '月',
-      今期: fiscalYearInfo.currentFiscalYear + '年度',
-      前期: fiscalYearInfo.previousFiscalYear + '年度',
-      利用可能な年度: Array.from(availableYears).sort((a, b) => b - a),
-      デフォルト選択: defaultYears
-    });
+    // // console.log('📅 決算期情報初期化完了:', { 決算月: fiscalYearInfo.fiscalYearEndMonth + '月', 今期: fiscalYearInfo.currentFiscalYear + '年度', 前期: fiscalYearInfo.previousFiscalYear + '年度', 利用可能な年度: Array.from(availableYears).sort((a, b) => b - a), デフォルト選択: defaultYears });
   }, [fiscalYearInfo, invoices, isInitialized]);
 
   // 決算期情報の初期化
@@ -212,9 +206,13 @@ export default function InvoiceListPage() {
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
+    if (typeof document !== 'undefined') {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      if (typeof document !== 'undefined') {
+        document.removeEventListener('mousedown', handleClickOutside);
+      }
     };
   }, []);
 
@@ -642,7 +640,7 @@ export default function InvoiceListPage() {
                 // 品名明細を3件まで表示し、4件目以降は「その他N件あり」として表示
                 const lineItems = invoice.line_items || [];
                 // デバッグログ: 請求書ごとの明細数確認
-                console.log(`📄 請求書 ${invoice.invoice_id}: 明細${lineItems.length}件`, lineItems);
+                // // console.log(`📄 請求書 ${invoice.invoice_id}: 明細${lineItems.length}件`, lineItems);
                 const displayItems = lineItems.slice(0, 3);
                 const remainingCount = Math.max(0, lineItems.length - 3);
 
@@ -689,13 +687,7 @@ export default function InvoiceListPage() {
                       {displayItems.map((item, index) => {
                         // デバッグ用ログ
                         if (index === 0) {
-                          console.log('🔍 明細表示デバッグ:', {
-                            raw_label: item.raw_label,
-                            target: item.target,
-                            action: item.action,
-                            position: item.position,
-                            task_type: item.task_type
-                          });
+                          // // console.log('🔍 明細表示デバッグ:', { raw_label: item.raw_label, target: item.target, action: item.action, position: item.position, task_type: item.task_type });
                         }
                         
                         // S作業の場合はtarget（セット名）を表示、T作業の場合はraw_labelまたは構造化名称

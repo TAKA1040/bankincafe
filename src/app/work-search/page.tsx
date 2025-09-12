@@ -124,14 +124,14 @@ export default function WorkSearchPage() {
         // 1. 分割データと請求書データを取得
         
         // 2. 分割データがある請求書IDを先に取得
-        console.log('📋 STEP 1: データを1000件で復元（抽出機能は動作確認済み）')
+        // // console.log('📋 STEP 1: データを1000件で復元（抽出機能は動作確認済み）')
         const { data: splitInvoiceIds } = await supabase
           .from('invoice_line_items_split')
           .select('invoice_id')
           .limit(1000)
         
         const uniqueInvoiceIds = [...new Set(splitInvoiceIds?.map(s => s.invoice_id) || [])]
-        console.log('🔍 分割データがある請求書数:', uniqueInvoiceIds.length)
+        // // console.log('🔍 分割データがある請求書数:', uniqueInvoiceIds.length)
 
         // 3. 元の請求書項目を取得
         const lineItemsRes = await supabase.from('invoice_line_items').select(`
@@ -155,7 +155,7 @@ export default function WorkSearchPage() {
         
         // 4. 実際に使用されているinvoice_idのベースIDを取得
         const uniqueBaseIds = [...new Set(lineItems.map(item => item.invoice_id.split('-')[0]))]
-        console.log('必要なbaseIds:', uniqueBaseIds.slice(0, 10), '(最初の10件)')
+        // // console.log('必要なbaseIds:', uniqueBaseIds.slice(0, 10), '(最初の10件)')
         
         // 5. 分割データと請求書データを並行取得
         const [splitItemsRes, invoicesRes] = await Promise.all([
@@ -197,11 +197,7 @@ export default function WorkSearchPage() {
         const splitItems = splitItemsRes.data || []
         const invoices = invoicesRes.data || []
 
-        console.log('📊 取得したデータ数:', {
-          lineItems: lineItems.length,
-          splitItems: splitItems.length, 
-          invoices: invoices.length
-        })
+        // // console.log('📊 取得したデータ数:', { lineItems: lineItems.length, splitItems: splitItems.length, invoices: invoices.length })
         
         // 作業タイプの分析
         const taskTypes = lineItems.reduce((acc, item) => {
@@ -209,29 +205,29 @@ export default function WorkSearchPage() {
           acc[type] = (acc[type] || 0) + 1
           return acc
         }, {} as Record<string, number>)
-        console.log('📈 作業タイプの分源:', taskTypes)
+        // // console.log('📈 作業タイプの分源:', taskTypes)
         
         // line_itemsのサンプル確認
         if (lineItems.length > 0) {
-          console.log('lineItemsサンプル（最初の3件）:')
+          // // console.log('lineItemsサンプル（最初の3件）:')
           lineItems.slice(0, 3).forEach((item, i) => {
-            console.log(`lineItem ${i + 1}:`)
-            console.log('- invoice_id:', item.invoice_id)
-            console.log('- raw_label:', item.raw_label)
-            console.log('- task_type:', item.task_type)
+            // // console.log(`lineItem ${i + 1}:`)
+            // // console.log('- invoice_id:', item.invoice_id)
+            // // console.log('- raw_label:', item.raw_label)
+            // // console.log('- task_type:', item.task_type)
           })
         }
         
         // 最初のinvoiceサンプルを確認
         if (invoices.length > 0) {
-          console.log('invoicesサンプル（最初の3件）:')
+          // // console.log('invoicesサンプル（最初の3件）:')
           invoices.slice(0, 3).forEach((inv, i) => {
-            console.log(`invoice ${i + 1}:`)
-            console.log('- invoice_id:', inv.invoice_id)
-            console.log('- customer_name:', inv.customer_name)
-            console.log('- subject:', inv.subject)
-            console.log('- registration_number:', inv.registration_number)
-            console.log('- billing_month:', inv.billing_month)
+            // // console.log(`invoice ${i + 1}:`)
+            // // console.log('- invoice_id:', inv.invoice_id)
+            // // console.log('- customer_name:', inv.customer_name)
+            // // console.log('- subject:', inv.subject)
+            // // console.log('- registration_number:', inv.registration_number)
+            // // console.log('- billing_month:', inv.billing_month)
           })
         }
 
@@ -275,18 +271,18 @@ export default function WorkSearchPage() {
           
           // 最初の5件でマッピング確認
           if (workSearchItems.length < 5) {
-            console.log(`マッピング確認 ${workSearchItems.length + 1}:`)
-            console.log('- invoice_id:', item.invoice_id)
-            console.log('- invoiceFound:', !!invoice)
+            // // console.log(`マッピング確認 ${workSearchItems.length + 1}:`)
+            // // console.log('- invoice_id:', item.invoice_id)
+            // // console.log('- invoiceFound:', !!invoice)
             if (invoice) {
-              console.log('- customer_name:', invoice.customer_name)
-              console.log('- subject:', invoice.subject)
-              console.log('- registration_number:', invoice.registration_number)
-              console.log('- billing_month:', invoice.billing_month)
+              // // console.log('- customer_name:', invoice.customer_name)
+              // // console.log('- subject:', invoice.subject)
+              // // console.log('- registration_number:', invoice.registration_number)
+              // // console.log('- billing_month:', invoice.billing_month)
             } else {
-              console.log('- ERROR: invoice not found!')
+              // // console.log('- ERROR: invoice not found!')
             }
-            console.log('---')
+            // // console.log('---')
           }
           
           // 請求月を取得（billing_monthがあればそれを使用、なければissue_dateから生成）
@@ -325,10 +321,10 @@ export default function WorkSearchPage() {
               ? item.raw_label.split(/[,、，・･]/).map(s => s.trim()).filter(s => s.length > 0)
               : ['セット作業明細不明']
             
-            console.log('🔄 Processing S work breakdown items:', breakdownItems.length)
+            // // console.log('🔄 Processing S work breakdown items:', breakdownItems.length)
             for (let index = 0; index < breakdownItems.length; index++) {
               const breakdownItem = breakdownItems[index]
-              console.log(`🎯 Processing S-work item ${index + 1}:`, breakdownItem)
+              // // console.log(`🎯 Processing S-work item ${index + 1}:`, breakdownItem)
               
               // データベースのtargetをそのまま使用（S作業の場合は分割しないので親のtargetを使用）
               const workItem = {
@@ -353,7 +349,7 @@ export default function WorkSearchPage() {
           } else {
             // T作業の場合：そのまま1行で表示
             const work_name = item.raw_label || '名称不明'
-            console.log('🎯 Processing T-work item:', work_name)
+            // // console.log('🎯 Processing T-work item:', work_name)
             
             const workItem = {
               line_item_id: item.id,
@@ -376,14 +372,14 @@ export default function WorkSearchPage() {
           }
         }
 
-        console.log('🏁 最終的な作業項目数:', workSearchItems.length)
+        // // console.log('🏁 最終的な作業項目数:', workSearchItems.length)
         
         // データベースのtargetデータをそのまま使用（対象抽出処理は不要）
         const withTarget = workSearchItems.filter(item => item.target)
-        console.log('📊 データベースからのtargetデータ統計:')
-        console.log(`  総項目数: ${workSearchItems.length}件`)
-        console.log(`  target有り: ${withTarget.length}件 (${workSearchItems.length > 0 ? Math.round((withTarget.length / workSearchItems.length) * 100) : 0}%)`)
-        console.log(`  target無し: ${workSearchItems.length - withTarget.length}件`)
+        // // console.log('📊 データベースからのtargetデータ統計:')
+        // // console.log(`  総項目数: ${workSearchItems.length}件`)
+        // // console.log(`  target有り: ${withTarget.length}件 (${workSearchItems.length > 0 ? Math.round((withTarget.length / workSearchItems.length) * 100) : 0}%)`)
+        // // console.log(`  target無し: ${workSearchItems.length - withTarget.length}件`)
         
         setAllItems(workSearchItems)
         setFilteredItems(workSearchItems)
@@ -647,12 +643,14 @@ export default function WorkSearchPage() {
     
     const csvContent = [headers.join(','), ...rows].join('\n')
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = `作業価格検索結果_${new Date().toISOString().split('T')[0]}.csv`
-    link.click()
-    URL.revokeObjectURL(url)
+    if (typeof URL !== 'undefined' && typeof document !== 'undefined') {
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `作業価格検索結果_${new Date().toISOString().split('T')[0]}.csv`
+      link.click()
+      URL.revokeObjectURL(url)
+    }
   }
 
   if (loading) {

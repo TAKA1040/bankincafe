@@ -16,28 +16,28 @@ export default function CustomerSettingsPage() {
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
 
   useEffect(() => {
-    console.log('=== CustomerSettings初期化 ===')
-    console.log('localStorage確認:', localStorage.getItem('bankin_customer_categories'))
+    // // console.log('=== CustomerSettings初期化 ===')
+    // // console.log('localStorage確認:', localStorage.getItem('bankin_customer_categories'))
     const initialCategories = db.getCategories()
-    console.log('初期カテゴリー一覧:', initialCategories)
+    // // console.log('初期カテゴリー一覧:', initialCategories)
     setCategories(initialCategories)
   }, [db])
 
   const handleSaveEdit = (id: string, name: string, companyName: string) => {
-    console.log('=== 編集保存実行 ===', { id, name, companyName })
+    // // console.log('=== 編集保存実行 ===', { id, name, companyName })
     
     if (name.trim() && companyName.trim()) {
-      console.log('編集前のカテゴリー一覧:', db.getCategories())
+      // // console.log('編集前のカテゴリー一覧:', db.getCategories())
       
       db.updateCategory(id, { name: name.trim(), companyName: companyName.trim() })
       
       const updatedCategories = db.getCategories()
-      console.log('編集後のカテゴリー一覧:', updatedCategories)
+      // // console.log('編集後のカテゴリー一覧:', updatedCategories)
       
       setCategories(updatedCategories)
       setEditingId(null)
     } else {
-      console.log('編集保存失敗: 必須項目が空です')
+      // // console.log('編集保存失敗: 必須項目が空です')
     }
   }
 
@@ -62,15 +62,15 @@ export default function CustomerSettingsPage() {
 
   const handleResetToDefaults = () => {
     if (confirm('顧客カテゴリーをデフォルト状態にリセットしますか？\n※カスタム追加したカテゴリーは削除されます')) {
-      console.log('=== リセット実行 ===')
-      console.log('リセット前localStorage:', localStorage.getItem('bankin_customer_categories'))
+      // // console.log('=== リセット実行 ===')
+      // // console.log('リセット前localStorage:', localStorage.getItem('bankin_customer_categories'))
       
       db.resetToDefaults()
       
-      console.log('リセット後localStorage:', localStorage.getItem('bankin_customer_categories'))
+      // // console.log('リセット後localStorage:', localStorage.getItem('bankin_customer_categories'))
       
       const resetCategories = db.getCategories()
-      console.log('リセット後カテゴリー:', resetCategories)
+      // // console.log('リセット後カテゴリー:', resetCategories)
       
       setCategories(resetCategories)
       setEditingId(null)
@@ -317,9 +317,9 @@ export default function CustomerSettingsPage() {
                         {editingId === category.id ? (
                           <button
                             onClick={() => {
-                              console.log('=== 保存ボタンクリック ===', category.id)
-                              const nameInput = document.querySelector(`input[data-name-for="${category.id}"]`) as HTMLInputElement
-                              const companyInput = document.querySelector(`input[data-company-for="${category.id}"]`) as HTMLInputElement
+                              // // console.log('=== 保存ボタンクリック ===', category.id)
+                              const nameInput = typeof document !== 'undefined' ? document.querySelector(`input[data-name-for="${category.id}"]`) as HTMLInputElement : null
+                              const companyInput = typeof document !== 'undefined' ? document.querySelector(`input[data-company-for="${category.id}"]`) as HTMLInputElement : null
                               if (nameInput && companyInput) {
                                 handleSaveEdit(category.id, nameInput.value, companyInput.value)
                               }
@@ -332,7 +332,7 @@ export default function CustomerSettingsPage() {
                         ) : (
                           <button
                             onClick={() => {
-                              console.log('=== 編集ボタンクリック ===', category.id)
+                              // // console.log('=== 編集ボタンクリック ===', category.id)
                               setEditingId(category.id)
                             }}
                             className="p-1 text-blue-600 hover:bg-blue-50 rounded"

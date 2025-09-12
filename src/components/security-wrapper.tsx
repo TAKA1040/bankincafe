@@ -28,7 +28,7 @@ export default function SecurityWrapper({
     try {
       const key = 'bankin_pin_log_once'
       if (!sessionStorage.getItem(key)) {
-        console.log('🔐 [SECURITY] PIN authentication will be required in future')
+        // // console.log('🔐 [SECURITY] PIN authentication will be required in future')
         sessionStorage.setItem(key, '1')
       }
     } catch {

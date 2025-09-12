@@ -48,7 +48,7 @@ export default function AdminSettingsPage() {
 
       if (usersError && usersError.code !== 'PGRST116') {
         // テーブルが存在しない場合は空配列を設定
-        console.log('user_management テーブルが存在しない、または空です')
+        // // console.log('user_management テーブルが存在しない、または空です')
         setUsers([])
       } else {
         setUsers(usersData || [])
@@ -61,7 +61,7 @@ export default function AdminSettingsPage() {
         .order('setting_key')
 
       if (settingsError && settingsError.code !== 'PGRST116') {
-        console.log('admin_settings テーブルが存在しない、または空です')
+        // // console.log('admin_settings テーブルが存在しない、または空です')
         setSettings([])
       } else {
         setSettings(settingsData || [])
@@ -74,46 +74,7 @@ export default function AdminSettingsPage() {
     }
   }
 
-  // 管理者ユーザー追加
-  const addAdminUser = async (email: string) => {
-    try {
-      const supabase = createClient()
-      const { error } = await supabase
-        .from('user_management')
-        .insert({
-          google_email: email,
-          display_name: '管理者',
-          status: 'approved',
-          requested_at: new Date().toISOString(),
-          approved_at: new Date().toISOString()
-        })
-
-      if (error) {
-        // 既存ユーザーの場合は更新
-        if (error.code === '23505') {
-          const { error: updateError } = await supabase
-            .from('user_management')
-            .update({
-              status: 'approved',
-              approved_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
-            })
-            .eq('google_email', email)
-
-          if (updateError) throw updateError
-        } else {
-          throw error
-        }
-      }
-
-      // データを再取得
-      await fetchData()
-      alert(`${email} を管理者として登録しました`)
-    } catch (err) {
-      console.error('Error adding admin user:', err)
-      alert('管理者ユーザーの追加に失敗しました: ' + (err as Error).message)
-    }
-  }
+  // 管理者追加機能は削除 - 環境変数NEXT_PUBLIC_ALLOWED_EMAILSで管理
 
   // テスト用承認待ちユーザー追加
   const addTestPendingUser = async () => {
@@ -274,13 +235,7 @@ export default function AdminSettingsPage() {
               <h2 className="text-xl font-semibold text-gray-800">ユーザー管理</h2>
             </div>
             <div className="flex gap-2">
-              <button
-                onClick={() => addAdminUser('dash201206@gmail.com')}
-                className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 flex items-center gap-2"
-              >
-                <Shield className="w-4 h-4" />
-                管理者を追加
-              </button>
+              {/* 管理者追加は環境変数NEXT_PUBLIC_ALLOWED_EMAILSで管理されるため、UIでの追加機能は削除 */}
               <button
                 onClick={() => addTestPendingUser()}
                 className="px-4 py-2 bg-yellow-600 text-white text-sm rounded-lg hover:bg-yellow-700 flex items-center gap-2"

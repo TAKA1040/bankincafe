@@ -16,7 +16,7 @@ export default function LoginPageSimple() {
       setIsLoggingIn(true)
       setLoginError(null)
       
-      console.log('🚀 Googleログイン開始')
+      // // console.log('🚀 Googleログイン開始')
       const supabase = createClient()
       
       const { error } = await supabase.auth.signInWithOAuth({
@@ -35,7 +35,7 @@ export default function LoginPageSimple() {
         setLoginError(error.message)
         setIsLoggingIn(false)
       } else {
-        console.log('🔄 Google認証画面にリダイレクト中...')
+        // // console.log('🔄 Google認証画面にリダイレクト中...')
       }
     } catch (error) {
       console.error('❌ 予期しないログインエラー:', error)

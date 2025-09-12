@@ -26,7 +26,7 @@ export async function getFiscalYearInfo(): Promise<FiscalYearInfo> {
     
     // 決算月（デフォルト: 3月）
     const fiscalYearEndMonth = parseInt(companyData?.fiscal_year_end_month || '3')
-    console.log('📅 決算月:', fiscalYearEndMonth + '月')
+    // // console.log('📅 決算月:', fiscalYearEndMonth + '月')
     
     // 現在日時
     const now = new Date()
@@ -45,12 +45,7 @@ export async function getFiscalYearInfo(): Promise<FiscalYearInfo> {
     
     const previousFiscalYear = currentFiscalYear - 1
     
-    console.log('📊 決算期情報:', {
-      決算月: fiscalYearEndMonth + '月',
-      今期: previousFiscalYear + '年度',
-      前期: (previousFiscalYear - 1) + '年度',
-      現在: currentYear + '年' + currentMonth + '月'
-    })
+    // // console.log('📊 決算期情報:', { 決算月: fiscalYearEndMonth + '月', 今期: previousFiscalYear + '年度', 前期: (previousFiscalYear - 1) + '年度', 現在: currentYear + '年' + currentMonth + '月' })
     
     return {
       fiscalYearEndMonth,

@@ -126,7 +126,7 @@ export default function PendingApprovalPage() {
           {/* 操作ボタン */}
           <div className="flex flex-col gap-3">
             <button
-              onClick={() => window.location.reload()}
+              onClick={() => typeof window !== 'undefined' && window.location.reload()}
               className="w-full px-4 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
             >
               承認状況を確認

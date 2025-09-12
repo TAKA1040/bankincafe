@@ -13,7 +13,7 @@ export default function AuthCallback() {
   useEffect(() => {
     const handleAuthCallback = async () => {
       try {
-        console.log('🔄 認証コールバック処理開始')
+        // // console.log('🔄 認証コールバック処理開始')
         const supabase = createClient()
         
         // URLからセッション情報を取得
@@ -28,7 +28,7 @@ export default function AuthCallback() {
         }
 
         if (data.session?.user) {
-          console.log('✅ 認証成功:', data.session.user.email)
+          // // console.log('✅ 認証成功:', data.session.user.email)
           setStatus('success')
           setMessage('ログインが完了しました。メインページにリダイレクトします...')
           
@@ -40,7 +40,7 @@ export default function AuthCallback() {
               cached_at: Date.now() / 1000
             }
             sessionStorage.setItem('supabase_session', JSON.stringify(sessionData))
-            console.log('💾 セッションをキャッシュに保存完了')
+            // // console.log('💾 セッションをキャッシュに保存完了')
           } catch (cacheError) {
             console.warn('⚠️ セッションキャッシュ保存エラー:', cacheError)
           }
@@ -48,7 +48,7 @@ export default function AuthCallback() {
           // メインページにリダイレクト
           setTimeout(() => router.push('/'), 1000)
         } else {
-          console.log('ℹ️ セッションが見つかりません')
+          // // console.log('ℹ️ セッションが見つかりません')
           setStatus('error')
           setMessage('認証情報が見つかりません。再度ログインしてください。')
           setTimeout(() => router.push('/login'), 3000)

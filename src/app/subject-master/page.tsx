@@ -28,7 +28,7 @@ export default function SubjectMasterPage() {
     try {
       setLoading(true)
       
-      console.log('Supabaseから件名マスタデータを読み込み中...')
+      // // console.log('Supabaseから件名マスタデータを読み込み中...')
       
       // 検索条件を構築
       let query = supabase
@@ -54,8 +54,8 @@ export default function SubjectMasterPage() {
         throw error
       }
       
-      console.log('取得データ:', data)
-      console.log('データ件数:', count)
+      // // console.log('取得データ:', data)
+      // // console.log('データ件数:', count)
       
       // 登録番号数を設定（仮の値）
       const subjectsWithCount = (data || []).map(subject => ({

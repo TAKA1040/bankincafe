@@ -47,7 +47,7 @@ export class ErrorBoundary extends Component<Props, State> {
               </p>
               <div className="space-y-3">
                 <button
-                  onClick={() => window.location.reload()}
+                  onClick={() => typeof window !== 'undefined' && window.location.reload()}
                   className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                 >
                   ページを再読み込み

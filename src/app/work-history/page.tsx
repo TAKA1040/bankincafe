@@ -271,7 +271,7 @@ class WorkHistoryDB {
     // BOM付きCSVコンテント
     const csvContent = '\uFEFF' + [headers.join(','), ...rows.map(row => row.join(','))].join('\n')
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-    const url = URL.createObjectURL(blob)
+    const url = typeof URL !== 'undefined' ? URL.createObjectURL(blob) : ''
     
     // ファイル名に期間やキーワードを含める
     let filename = '作業履歴'
@@ -280,15 +280,19 @@ class WorkHistoryDB {
     if (filters.endDate) filename += `_${filters.endDate}`
     filename += `_${new Date().toISOString().split('T')[0]}.csv`
     
-    const link = document.createElement('a')
-    link.href = url
-    link.download = filename
-    link.click()
+    if (typeof document !== 'undefined') {
+      const link = document.createElement('a')
+      link.href = url
+      link.download = filename
+      link.click()
+    }
     
     // メモリリーク防止
-    setTimeout(() => {
-      URL.revokeObjectURL(url)
-    }, 100)
+    if (typeof URL !== 'undefined' && url) {
+      setTimeout(() => {
+        URL.revokeObjectURL(url)
+      }, 100)
+    }
   }
 
   private sanitizeCSVValue(value: string): string {

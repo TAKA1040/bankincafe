@@ -42,7 +42,7 @@ export function useAuthNew() {
   // サインアウト処理（完全なクリア）
   const signOut = useCallback(async (): Promise<void> => {
     try {
-      console.log('🔒 サインアウト処理開始')
+      // // // console.log('🔒 サインアウト処理開始')
       
       // Supabaseサインアウト
       await supabase.auth.signOut()
@@ -66,7 +66,7 @@ export function useAuthNew() {
         error: null
       })
       
-      console.log('✅ サインアウト処理完了 - ローディング解除')
+      // // // console.log('✅ サインアウト処理完了 - ローディング解除')
     } catch (error) {
       console.error('❌ サインアウトエラー:', error)
       setAuthState(prev => ({
@@ -81,7 +81,7 @@ export function useAuthNew() {
   const forceRedirect = useCallback((path: string, delay = 100): void => {
     if (typeof window !== 'undefined') {
       setTimeout(() => {
-        console.log(`🔄 強制リダイレクト: ${path}`)
+        // // // console.log(`🔄 強制リダイレクト: ${path}`)
         window.location.href = path
       }, delay)
     }
@@ -89,7 +89,7 @@ export function useAuthNew() {
 
   // 認証状態チェック処理
   const processAuthState = useCallback(async (user: User | null): Promise<void> => {
-    console.log('🔍 認証状態チェック開始:', { 
+    // // // console.log('🔍 認証状態チェック開始:', { 
       hasUser: !!user, 
       userEmail: user?.email 
     })
@@ -97,7 +97,7 @@ export function useAuthNew() {
     try {
       // ユーザーが存在しない場合
       if (!user) {
-        console.log('🔒 未認証状態 - ローディング解除')
+        // // // console.log('🔒 未認証状態 - ローディング解除')
         setAuthState({
           user: null,
           loading: false,
@@ -110,7 +110,7 @@ export function useAuthNew() {
       // ユーザーのメールアドレスチェック
       const userEmail = user.email
       if (!userEmail) {
-        console.log('❌ メールアドレスが取得できません - ローディング解除してサインアウト')
+        // // // console.log('❌ メールアドレスが取得できません - ローディング解除してサインアウト')
         setAuthState({
           user: null,
           loading: false,
@@ -124,14 +124,14 @@ export function useAuthNew() {
 
       // 管理者権限チェック
       const isAdmin = checkAdminPermission(userEmail)
-      console.log('🔐 権限チェック:', { 
+      // // // console.log('🔐 権限チェック:', { 
         email: userEmail, 
         isAdmin,
         allowedEmails: getAllowedEmails()
       })
 
       if (!isAdmin) {
-        console.log('❌ 許可されていないアカウント - ローディング解除してサインアウト')
+        // // // console.log('❌ 許可されていないアカウント - ローディング解除してサインアウト')
         setAuthState({
           user: null,
           loading: false,
@@ -144,7 +144,7 @@ export function useAuthNew() {
       }
 
       // 認証成功
-      console.log('✅ 認証・認可成功 - ローディング解除:', userEmail)
+      // // // console.log('✅ 認証・認可成功 - ローディング解除:', userEmail)
       setAuthState({
         user: user as AuthUser,
         loading: false,
@@ -168,7 +168,7 @@ export function useAuthNew() {
 
     const initializeAuth = async () => {
       try {
-        console.log('🚀 認証システム初期化開始')
+        // // // console.log('🚀 認証システム初期化開始')
         
         // 現在のセッション取得
         const { data: { user }, error } = await supabase.auth.getUser()
@@ -186,7 +186,7 @@ export function useAuthNew() {
           return
         }
 
-        console.log('📋 取得したユーザー情報:', { hasUser: !!user, email: user?.email })
+        // // // console.log('📋 取得したユーザー情報:', { hasUser: !!user, email: user?.email })
 
         if (isMounted) {
           await processAuthState(user)
@@ -207,7 +207,7 @@ export function useAuthNew() {
     // 認証状態変更リスナー
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event: any, session: any) => {
-        console.log('🔄 認証状態変更:', { event, hasSession: !!session })
+        // // // console.log('🔄 認証状態変更:', { event, hasSession: !!session })
         
         if (isMounted) {
           if (event === 'SIGNED_OUT' || !session) {

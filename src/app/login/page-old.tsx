@@ -21,7 +21,7 @@ export default function LoginPage() {
 
   const handleGoogleLogin = async () => {
     try {
-      console.log('ログイン開始 - リダイレクト先:', window.location.origin)
+      // // console.log('ログイン開始 - リダイレクト先:', window.location.origin)
       const supabase = createClient()
       
       const { error } = await supabase.auth.signInWithOAuth({

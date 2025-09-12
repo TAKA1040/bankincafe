@@ -130,7 +130,7 @@ export default function RegistrationDetailPage() {
         <div className="mb-8">
           <div className="flex items-center gap-4 mb-4">
             <button
-              onClick={() => window.location.href = '/registration-settings'}
+              onClick={() => typeof window !== 'undefined' && (window.location.href = '/registration-settings')}
               className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
             >
               <ArrowLeft className="h-5 w-5" />

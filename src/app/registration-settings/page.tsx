@@ -87,7 +87,7 @@ export default function RegistrationSettingsPage() {
       console.error('登録番号マスタ取得エラー:', error)
       // エラーメッセージを詳細表示
       if (error && typeof error === 'object' && 'code' in error && error.code === '416') {
-        console.log('範囲エラー: ページネーション範囲が不正です')
+        // // console.log('範囲エラー: ページネーション範囲が不正です')
         setCurrentPage(1) // 最初のページに戻す
       } else {
         alert(`登録番号マスタの取得に失敗しました: ${error instanceof Error ? error.message : 'データの取得に失敗しました'}`)
@@ -116,7 +116,7 @@ export default function RegistrationSettingsPage() {
         <div className="mb-8">
           <div className="flex items-center gap-4 mb-4">
             <button
-              onClick={() => window.location.href = '/'}
+              onClick={() => typeof window !== 'undefined' && (window.location.href = '/')}
               className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
             >
               <ArrowLeft className="h-5 w-5" />
@@ -284,7 +284,7 @@ export default function RegistrationSettingsPage() {
                           編集
                         </button>
                         <button 
-                          onClick={() => window.location.href = `/registration-settings/${registration.id}`}
+                          onClick={() => typeof window !== 'undefined' && (window.location.href = `/registration-settings/${registration.id}`)}
                           className="text-green-600 hover:text-green-900"
                         >
                           関連件名

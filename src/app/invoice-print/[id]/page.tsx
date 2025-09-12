@@ -151,12 +151,16 @@ export default function InvoicePrintPage() {
 
   // 印刷機能
   const handlePrint = () => {
-    window.print();
+    if (typeof window !== 'undefined') {
+      window.print();
+    }
   };
 
   // PDF出力機能（ブラウザの印刷でPDF保存）
   const handlePDF = () => {
-    window.print();
+    if (typeof window !== 'undefined') {
+      window.print();
+    }
   };
 
   // 日付フォーマット

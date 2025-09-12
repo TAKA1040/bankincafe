@@ -107,7 +107,7 @@ export function useSalesData() {
 
       // フォールバック処理（新テーブルが未作成の場合）
       if (error && (error as any).code === '42P01') { // テーブル存在なしエラー
-        console.log('新テーブル未作成、フォールバック処理実行')
+        // // console.log('新テーブル未作成、フォールバック処理実行')
         const fallback = await supabase
           .from('invoices')
           .select(`
@@ -458,7 +458,7 @@ export function useSalesData() {
 
       if (paymentError) {
         // フォールバック: 古いテーブル構造での更新
-        console.log('新テーブル使用不可、フォールバック処理実行')
+        // // console.log('新テーブル使用不可、フォールバック処理実行')
         const { error: fallbackError } = await supabase
           .from('invoices')
           .update({ 
