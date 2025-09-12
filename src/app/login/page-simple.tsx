@@ -97,7 +97,7 @@ export default function LoginPageSimple() {
           <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded text-xs">
             <p className="font-medium text-yellow-800">テスト情報:</p>
             <p className="text-yellow-700">
-              許可アカウント: {process.env.NEXT_PUBLIC_ALLOWED_EMAILS || 'dash201206@gmail.com'}
+              許可アカウント: {process.env.NEXT_PUBLIC_ALLOWED_EMAILS || '環境変数未設定'}
             </p>
             <p className="text-yellow-700 mt-1">
               ログイン後は自動的にアクセス権限がチェックされます

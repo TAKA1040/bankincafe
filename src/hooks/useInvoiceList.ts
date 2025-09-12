@@ -439,33 +439,22 @@ export function useInvoiceList(yearFilter?: string | string[]) {
       tax = -tax
       total_amount = -total_amount
 
-      // 新しい請求書の作成
-      const { error: insertInvoiceError } = await supabase
-        .from('invoices')
-        .insert({
-          invoice_id: newInvoiceId,
-          issue_date: issueDate,
-          customer_name: (originalInvoice as any).customer_name ?? null,
-          subject_name: (originalInvoice as any).subject_name ?? null,
-          registration_number: (originalInvoice as any).registration_number ?? null,
-          billing_month: (originalInvoice as any).billing_month ?? null,
-          purchase_order_number: (originalInvoice as any).purchase_order_number ?? null,
-          order_number: (originalInvoice as any).order_number ?? null,
-          remarks: `赤伝（元: ${originalId}）` + ((originalInvoice as any).remarks ? `\n${(originalInvoice as any).remarks}` : ''),
-          subtotal,
-          tax,
-          total_amount,
-          status: 'draft',
-          payment_status: 'unpaid',
-          updated_at: now.toISOString()
-        } as any)
-
-      if (insertInvoiceError) throw insertInvoiceError
-
-      // ライン項目の作成（金額・単価のみ反転、数量はそのまま）
-      if (lineItems && lineItems.length > 0) {
-        const newLineItems = lineItems.map((li: any) => ({
-          invoice_id: newInvoiceId,
+      // トランザクションで複数テーブル操作の整合性を確保
+      const { error: transactionError } = await supabase.rpc('create_red_invoice_transaction', {
+        p_invoice_id: newInvoiceId,
+        p_issue_date: issueDate,
+        p_customer_name: (originalInvoice as any).customer_name ?? null,
+        p_subject_name: (originalInvoice as any).subject_name ?? null,
+        p_registration_number: (originalInvoice as any).registration_number ?? null,
+        p_billing_month: (originalInvoice as any).billing_month ?? null,
+        p_purchase_order_number: (originalInvoice as any).purchase_order_number ?? null,
+        p_order_number: (originalInvoice as any).order_number ?? null,
+        p_remarks: `赤伝（元: ${originalId}）` + ((originalInvoice as any).remarks ? `\n${(originalInvoice as any).remarks}` : ''),
+        p_subtotal: subtotal,
+        p_tax: tax,
+        p_total_amount: total_amount,
+        p_updated_at: now.toISOString(),
+        p_line_items: lineItems ? JSON.stringify(lineItems.map((li: any) => ({
           line_no: li.line_no,
           task_type: li.task_type,
           action: li.action,
@@ -476,39 +465,26 @@ export function useInvoiceList(yearFilter?: string | string[]) {
           quantity: li.quantity,
           performed_at: li.performed_at,
           amount: li.amount != null ? -Number(li.amount) : null
-        }))
-
-        const { error: insertLinesError } = await supabase
-          .from('invoice_line_items')
-          .insert(newLineItems as any)
-
-        if (insertLinesError) throw insertLinesError
-
-        // 分割項目の作成
-        for (const li of lineItems) {
-          const splits = splitMap[String(li.line_no)]
-          if (splits && splits.length > 0) {
-            const newSplits = splits.map((sp) => ({
-              invoice_id: newInvoiceId,
-              line_no: li.line_no,
-              sub_no: sp.sub_no,
-              raw_label_part: sp.raw_label_part,
-              action: sp.action,
-              target: sp.target,
-              position: sp.position,
-              unit_price: sp.unit_price != null ? -Number(sp.unit_price) : null,
-              quantity: sp.quantity,
-              amount: sp.amount != null ? -Number(sp.amount) : null,
-              is_cancelled: sp.is_cancelled
-            }))
-
-            const { error: insertSplitsError } = await supabase
-              .from('invoice_line_items_split')
-              .insert(newSplits as any)
-
-            if (insertSplitsError) throw insertSplitsError
-          }
-        }
+        }))) : '[]',
+        p_split_items: JSON.stringify(Object.entries(splitMap).flatMap(([lineNo, splits]) => 
+          splits.map((sp) => ({
+            line_no: parseInt(lineNo),
+            sub_no: sp.sub_no,
+            raw_label_part: sp.raw_label_part,
+            action: sp.action,
+            target: sp.target,
+            position: sp.position,
+            unit_price: sp.unit_price != null ? -Number(sp.unit_price) : null,
+            quantity: sp.quantity,
+            amount: sp.amount != null ? -Number(sp.amount) : null,
+            is_cancelled: sp.is_cancelled
+          }))
+        ))
+      })
+      
+      if (transactionError) {
+        // トランザクション失敗時は自動ロールバック済み
+        throw new Error(`Transaction failed: ${transactionError.message}`)
       }
 
       await fetchInvoices()
@@ -546,10 +522,10 @@ export function useInvoiceList(yearFilter?: string | string[]) {
     }
   }, [fetchInvoices])
 
-  // 初期データロード
+  // 初期データロード（無限ループ防止: yearFilterのみ依存）
   useEffect(() => {
     fetchInvoices()
-  }, [fetchInvoices])
+  }, [yearFilter])
 
   return {
     invoices,

@@ -54,13 +54,11 @@ export default function AuthProviderSimple({ children }: AuthProviderProps) {
             if (parsedSession.expires_at > Date.now() / 1000) {
               console.log('🔄 [AuthProviderSimple] キャッシュされたセッションを使用')
               
-              // キャッシュされたユーザーの管理者権限を再確認
+              // キャッシュされたユーザーの管理者権限を再確認（環境変数のみ）
               const userEmail = parsedSession.user_email
-              const isDash206 = userEmail === 'dash201206@gmail.com'
               const rawAllowedEmails = process.env.NEXT_PUBLIC_ALLOWED_EMAILS
               const allowedEmailsList = rawAllowedEmails?.split(',').map(e => e.trim()) || []
-              const isInAllowedList = allowedEmailsList.includes(userEmail)
-              const isAdminUser = isDash206 || isInAllowedList
+              const isAdminUser = allowedEmailsList.includes(userEmail)
               
               if (isAdminUser) {
                 console.log('✅ [AuthProviderSimple] キャッシュセッション管理者確認完了')
@@ -114,18 +112,14 @@ export default function AuthProviderSimple({ children }: AuthProviderProps) {
           return
         }
         
-        // 管理者チェック
+        // 管理者チェック（環境変数のみ）
         const userEmail = session.user.email
-        const isDash206 = userEmail === 'dash201206@gmail.com'
         const rawAllowedEmails = process.env.NEXT_PUBLIC_ALLOWED_EMAILS
         const allowedEmailsList = rawAllowedEmails?.split(',').map(e => e.trim()) || []
-        const isInAllowedList = allowedEmailsList.includes(userEmail)
-        const isAdmin = isDash206 || isInAllowedList
+        const isAdmin = allowedEmailsList.includes(userEmail)
         
         console.log('🔐 管理者権限チェック:', {
           userEmail,
-          isDash206,
-          isInAllowedList,
           isAdmin
         })
         
