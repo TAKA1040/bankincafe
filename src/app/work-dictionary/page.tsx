@@ -977,17 +977,26 @@ export default function WorkDictionaryPage() {
         <header className="bg-white rounded-lg shadow-sm p-6 mb-6">
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-4">
-              <button
-                onClick={() => router.push('/')}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
-              >
-                <Home size={20} />
-                メニューへ
-              </button>
               <div className="flex items-center gap-2">
                 <Settings size={24} className="text-blue-600" />
                 <h1 className="text-2xl font-bold text-gray-800">作業辞書マスタ管理</h1>
               </div>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => router.back()}
+                className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 flex items-center gap-2 font-medium"
+              >
+                <ArrowLeft size={20} />
+                戻る
+              </button>
+              <button
+                onClick={() => router.push('/')}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2 font-medium"
+              >
+                <Home size={20} />
+                メニューへ
+              </button>
             </div>
           </div>
         </header>

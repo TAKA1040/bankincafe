@@ -672,8 +672,9 @@ export default function WorkSearchPage() {
               <h1 className="text-2xl font-bold text-gray-800">作業価格履歴検索</h1>
             </div>
             <div className="flex gap-2">
-              <button onClick={handleExportCSV} className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2"><Download size={20} />CSV出力</button>
-              <button onClick={() => router.push('/')} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"><Home size={20} />メニューへ</button>
+              <button onClick={handleExportCSV} className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2 font-medium"><Download size={20} />CSV出力</button>
+              <button onClick={() => router.back()} className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 flex items-center gap-2 font-medium"><ArrowLeft size={20} />戻る</button>
+              <button onClick={() => router.push('/')} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2 font-medium"><Home size={20} />メニューへ</button>
             </div>
           </div>
         </header>

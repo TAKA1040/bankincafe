@@ -260,15 +260,23 @@ export default function SalesManagementPage() {
               <button
                 aria-label="CSV出力"
                 onClick={handleExportCSV}
-                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2"
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2 font-medium"
               >
                 <Download size={20} />
                 CSV出力
               </button>
               <button
+                aria-label="戻る"
+                onClick={() => router.back()}
+                className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 flex items-center gap-2 font-medium"
+              >
+                <ArrowLeft size={20} />
+                戻る
+              </button>
+              <button
                 aria-label="メニューへ"
                 onClick={handleBack}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2 font-medium"
               >
                 <Home size={20} />
                 メニューへ
@@ -284,6 +292,14 @@ export default function SalesManagementPage() {
               >
                 <Download size={18} />
                 CSV
+              </button>
+              <button
+                aria-label="戻る"
+                onClick={() => router.back()}
+                className="px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 flex items-center gap-1 text-sm font-medium"
+              >
+                <ArrowLeft size={18} />
+                戻る
               </button>
               <button
                 aria-label="メニューへ"
