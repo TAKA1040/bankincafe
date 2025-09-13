@@ -90,7 +90,6 @@ export class CustomerCategoryDB {
       this.saveCategories(categories)
     }
   }
-  }
 
   deleteCategory(id: string): void {
     const categories = this.getCategories()
