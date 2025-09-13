@@ -53,6 +53,7 @@ interface CompanyInfo {
   accountType: string;
   accountNumber: string;
   accountHolder: string;
+  taxRegistrationNumber?: string;
 }
 
 export default function InvoicePrintPage() {
