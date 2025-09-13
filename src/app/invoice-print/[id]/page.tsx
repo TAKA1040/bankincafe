@@ -566,12 +566,12 @@ export default function InvoicePrintPage() {
               <h1 className="text-4xl font-thin text-gray-900 mb-2">INVOICE</h1>
               <div className="w-16 h-0.5 bg-gray-900 mb-6"></div>
               <div className="space-y-1 text-sm text-gray-600">
-                <div><strong>Invoice #:</strong> {invoice.invoice_number}</div>
-                <div><strong>Date:</strong> {formatDate(invoice.issue_date)}</div>
+                <div><strong>Invoice #:</strong> {invoice?.invoice_number}</div>
+                <div><strong>Date:</strong> {formatDate(invoice?.issue_date || '')}</div>
               </div>
             </div>
             <div className="w-1/3 text-right">
-              <div className="text-3xl font-light text-gray-900 mb-2">¥{formatAmount(invoice.total_amount)}</div>
+              <div className="text-3xl font-light text-gray-900 mb-2">¥{formatAmount(invoice?.total_amount || 0)}</div>
               <div className="text-sm text-gray-500">Total Amount</div>
             </div>
           </div>
@@ -585,8 +585,8 @@ export default function InvoicePrintPage() {
               <div className="text-xl font-medium text-gray-900">{customerInfo.name}</div>
               {customerInfo.company && <div className="text-gray-600">{customerInfo.company}</div>}
               <div className="text-sm text-gray-500 mt-4">
-                <div><strong>Subject:</strong> {invoice.subject_name || invoice.subject || 'Service'}</div>
-                {invoice.registration_number && <div><strong>Reg. No:</strong> {invoice.registration_number}</div>}
+                <div><strong>Subject:</strong> {invoice?.subject_name || invoice?.subject || 'Service'}</div>
+                {invoice?.registration_number && <div><strong>Reg. No:</strong> {invoice?.registration_number}</div>}
               </div>
             </div>
           </div>
