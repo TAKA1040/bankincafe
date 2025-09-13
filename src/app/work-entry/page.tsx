@@ -276,7 +276,7 @@ export default function WorkEntryPage() {
               {filteredTargets.map((target, index) => (
                 <button
                   key={target.id}
-                  ref={(el) => (targetRefs.current[index] = el)}
+                  ref={(el) => { targetRefs.current[index] = el }}
                   onClick={() => {
                     handleTargetSelect(target)
                     setTargetSearch('')
@@ -325,7 +325,7 @@ export default function WorkEntryPage() {
                     {filteredActions.map((actionData, index) => (
                       <button
                         key={actionData.action_id}
-                        ref={(el) => (actionRefs.current[index] = el)}
+                        ref={(el) => { actionRefs.current[index] = el }}
                         onClick={() => {
                           handleActionSelect(actionData)
                           setActionSearch('')
@@ -379,7 +379,7 @@ export default function WorkEntryPage() {
                     {filteredPositions.map((positionData, index) => (
                       <button
                         key={`${positionData.target_id}-${positionData.action_id}-${positionData.position_id || 'null'}-${index}`}
-                        ref={(el) => (positionRefs.current[index] = el)}
+                        ref={(el) => { positionRefs.current[index] = el }}
                         onClick={() => {
                           handlePositionSelect(positionData)
                           setPositionSearch('')

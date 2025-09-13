@@ -588,11 +588,7 @@ function InvoiceCreateContent() {
       quantity: setQuantity || 0,
       amount: Math.round((Number(setPrice) || 0) * (setQuantity || 0)),
       memo: '',
-      set_details: setDetails.map(d => ({
-        label: d.label,
-        quantity: d.quantity,
-        unitPrice: d.unitPrice
-      })),
+      set_details: setDetails.map(d => d.label),
       detail_positions: setDetails.map(d => d.position || '')
     }
     
@@ -2235,7 +2231,7 @@ function InvoiceCreateContent() {
                             {targetSuggestions.map((suggestion, index) => (
                               <button
                                 key={index}
-                                ref={(el) => (targetRefs.current[index] = el)}
+                                ref={(el) => { targetRefs.current[index] = el }}
                                 type="button"
                                 onClick={() => {
                                   setTarget(suggestion)
@@ -2348,7 +2344,7 @@ function InvoiceCreateContent() {
                             {actionSuggestions.map((suggestion, index) => (
                               <button
                                 key={index}
-                                ref={(el) => (actionRefs.current[index] = el)}
+                                ref={(el) => { actionRefs.current[index] = el }}
                                 type="button"
                                 onClick={() => {
                                   setActions([suggestion])
@@ -2460,7 +2456,7 @@ function InvoiceCreateContent() {
                             {positionSuggestions.map((suggestion, index) => (
                               <button
                                 key={index}
-                                ref={(el) => (positionRefs.current[index] = el)}
+                                ref={(el) => { positionRefs.current[index] = el }}
                                 type="button"
                                 onClick={() => {
                                   setPositions([suggestion])
@@ -2960,7 +2956,7 @@ function InvoiceCreateContent() {
                                   {detailTargetSuggestions.map((suggestion, index) => (
                                     <button
                                       key={index}
-                                      ref={(el) => (detailTargetRefs.current[index] = el)}
+                                      ref={(el) => { detailTargetRefs.current[index] = el }}
                                       type="button"
                                       onClick={() => {
                                         setDetailTarget(suggestion)
@@ -3071,7 +3067,7 @@ function InvoiceCreateContent() {
                                   {detailActionSuggestions.map((suggestion, index) => (
                                     <button
                                       key={index}
-                                      ref={(el) => (detailActionRefs.current[index] = el)}
+                                      ref={(el) => { detailActionRefs.current[index] = el }}
                                       type="button"
                                       onClick={() => {
                                         setDetailActions([suggestion])
@@ -3182,7 +3178,7 @@ function InvoiceCreateContent() {
                                   {detailPositionSuggestions.map((suggestion, index) => (
                                     <button
                                       key={index}
-                                      ref={(el) => (detailPositionRefs.current[index] = el)}
+                                      ref={(el) => { detailPositionRefs.current[index] = el }}
                                       type="button"
                                       onClick={() => {
                                         setDetailPositions([suggestion])
@@ -3442,12 +3438,7 @@ function InvoiceCreateContent() {
                                 <ul className="text-sm text-gray-700 list-disc list-inside">
                                   {item.set_details.map((detail, detailIndex) => (
                                     <li key={detailIndex} className="flex items-center gap-2">
-                                      <span>{typeof detail === 'string' ? detail : detail.label}</span>
-                                      {typeof detail === 'object' && detail.quantity && detail.quantity >= 1 && (
-                                        <span className="text-xs text-gray-500 bg-gray-200 px-2 py-1 rounded">
-                                          数量: {detail.quantity}
-                                        </span>
-                                      )}
+                                      <span>{detail}</span>
                                     </li>
                                   ))}
                                 </ul>
