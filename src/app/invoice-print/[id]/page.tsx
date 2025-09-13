@@ -323,12 +323,12 @@ export default function InvoicePrintPage() {
   const getCustomerInfo = () => {
     if (!invoice) return { name: '', company: '' };
     
-    if (!customerCategoryDB) return { name: invoice.customer_name || '', company: '' };
+    if (!customerCategoryDB) return { name: invoice?.customer_name || '', company: '' };
     
     const categories = customerCategoryDB.getCategories();
-    const category = categories.find(cat => cat.name === invoice.customer_category);
+    const category = categories.find(cat => cat.name === invoice?.customer_category);
     
-    const customerName = invoice.customer_name || '';
+    const customerName = invoice?.customer_name || '';
     const categoryCompanyName = category?.companyName || '';
     
     // 顧客名とカテゴリーの会社名が同じ場合、または片方に他方が含まれる場合は重複を避ける
@@ -620,7 +620,7 @@ export default function InvoicePrintPage() {
               </tr>
             </thead>
             <tbody>
-              {invoice.line_items.map((item, index) => {
+              {invoice?.line_items?.map((item, index) => {
                 const itemName = (customerCategoryDB && customerCategoryDB.getItemName) ? 
                   customerCategoryDB.getItemName(item.target, item.action, item.position) : 
                   [item.target, item.action, item.position].filter(Boolean).join(' ');
@@ -662,15 +662,15 @@ export default function InvoicePrintPage() {
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Subtotal:</span>
-                <span className="text-gray-900">¥{formatAmount(invoice.subtotal)}</span>
+                <span className="text-gray-900">¥{formatAmount(invoice?.subtotal || 0)}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Tax (10%):</span>
-                <span className="text-gray-900">¥{formatAmount(invoice.tax)}</span>
+                <span className="text-gray-900">¥{formatAmount(invoice?.tax || 0)}</span>
               </div>
               <div className="flex justify-between text-lg font-medium border-t border-gray-300 pt-2">
                 <span className="text-gray-900">Total:</span>
-                <span className="text-gray-900">¥{formatAmount(invoice.total_amount)}</span>
+                <span className="text-gray-900">¥{formatAmount(invoice?.total_amount || 0)}</span>
               </div>
             </div>
           </div>
@@ -695,11 +695,11 @@ export default function InvoicePrintPage() {
           </div>
         )}
 
-        {invoice.remarks && (
+        {invoice?.remarks && (
           <div className="border-t border-gray-300 pt-8 mb-8">
             <h3 className="text-lg font-medium text-gray-900 mb-4">Notes</h3>
             <div className="text-sm text-gray-600 leading-relaxed">
-              {invoice.remarks}
+              {invoice?.remarks}
             </div>
           </div>
         )}
@@ -747,16 +747,16 @@ export default function InvoicePrintPage() {
                 <div className="border border-gray-300 p-4 bg-blue-50">
                   <div className="text-center mb-4">
                     <div className="text-xs text-gray-600">Document No.</div>
-                    <div className="text-xl font-bold">{invoice.invoice_number}</div>
+                    <div className="text-xl font-bold">{invoice?.invoice_number}</div>
                   </div>
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between border-b border-gray-300 pb-1">
                       <span>発行日：</span>
-                      <span className="font-semibold">{formatDate(invoice.issue_date)}</span>
+                      <span className="font-semibold">{formatDate(invoice?.issue_date || '')}</span>
                     </div>
                     <div className="flex justify-between border-b border-gray-300 pb-1">
                       <span>合計金額：</span>
-                      <span className="font-bold text-lg text-blue-600">¥{formatAmount(invoice.total_amount)}</span>
+                      <span className="font-bold text-lg text-blue-600">¥{formatAmount(invoice?.total_amount || 0)}</span>
                     </div>
                     <div className="text-xs text-gray-600 text-center mt-3">
                       （消費税込み）
@@ -782,13 +782,13 @@ export default function InvoicePrintPage() {
             )}
             
             <div className="grid grid-cols-2 gap-4 text-sm bg-gray-50 p-3 rounded">
-              <div><strong>件名：</strong> {invoice.subject_name || invoice.subject || '未設定'}</div>
-              <div><strong>登録番号：</strong> {invoice.registration_number || '未設定'}</div>
-              {invoice.order_number && (
-                <div><strong>注文番号：</strong> {invoice.order_number}</div>
+              <div><strong>件名：</strong> {invoice?.subject_name || invoice?.subject || '未設定'}</div>
+              <div><strong>登録番号：</strong> {invoice?.registration_number || '未設定'}</div>
+              {invoice?.order_number && (
+                <div><strong>注文番号：</strong> {invoice?.order_number}</div>
               )}
-              {invoice.purchase_order_number && (
-                <div><strong>発注番号：</strong> {invoice.purchase_order_number}</div>
+              {invoice?.purchase_order_number && (
+                <div><strong>発注番号：</strong> {invoice?.purchase_order_number}</div>
               )}
             </div>
           </div>
@@ -799,7 +799,7 @@ export default function InvoicePrintPage() {
             <div className="inline-block bg-blue-50 border-2 border-blue-200 rounded-lg p-4">
               <div className="text-sm text-gray-600 mb-1">ご請求金額</div>
               <div className="text-3xl font-bold text-blue-800">
-                ¥{formatAmount(invoice.total_amount)}
+                ¥{formatAmount(invoice?.total_amount || 0)}
               </div>
               <div className="text-xs text-gray-500 mt-1">（税込）</div>
             </div>
@@ -807,7 +807,7 @@ export default function InvoicePrintPage() {
 
           {/* 作業明細 */}
           <div className="mb-8 avoid-break">
-            <h3 className="text-lg font-semibold mb-4 pb-2 border-b">作業明細（全{invoice.line_items.length}項目）</h3>
+            <h3 className="text-lg font-semibold mb-4 pb-2 border-b">作業明細（全{invoice?.line_items?.length || 0}項目）</h3>
             <table className="w-full border-collapse border-2 border-gray-900 work-detail-table">
               <thead>
                 <tr className="bg-gray-900 text-white">
@@ -819,8 +819,8 @@ export default function InvoicePrintPage() {
                 </tr>
               </thead>
               <tbody>
-                {invoice.line_items.length > 0 ? (
-                  invoice.line_items.map((item, index) => {
+                {(invoice?.line_items?.length || 0) > 0 ? (
+                  invoice?.line_items?.map((item, index) => {
                     // S作業（セット）の場合を判別 - task_typeベースで判断
                     const isSetWork = item.task_type === 'S' || item.task_type === 'set';
                     
@@ -897,15 +897,15 @@ export default function InvoicePrintPage() {
                 <table className="w-full border-collapse border border-gray-400">
                   <tr className="bg-gray-100">
                     <td className="border border-gray-400 px-3 py-2 font-semibold">税抜金額</td>
-                    <td className="border border-gray-400 px-3 py-2 text-right font-bold">¥{formatAmount(invoice.subtotal)}</td>
+                    <td className="border border-gray-400 px-3 py-2 text-right font-bold">¥{formatAmount(invoice?.subtotal || 0)}</td>
                   </tr>
                   <tr className="bg-gray-100">
                     <td className="border border-gray-400 px-3 py-2 font-semibold">消費税（10%）</td>
-                    <td className="border border-gray-400 px-3 py-2 text-right font-bold">¥{formatAmount(invoice.tax)}</td>
+                    <td className="border border-gray-400 px-3 py-2 text-right font-bold">¥{formatAmount(invoice?.tax || 0)}</td>
                   </tr>
                   <tr className="bg-blue-100">
                     <td className="border border-gray-400 px-3 py-2 font-bold text-lg">税込合計金額</td>
-                    <td className="border border-gray-400 px-3 py-2 text-right font-bold text-xl text-blue-700">¥{formatAmount(invoice.total_amount)}</td>
+                    <td className="border border-gray-400 px-3 py-2 text-right font-bold text-xl text-blue-700">¥{formatAmount(invoice?.total_amount || 0)}</td>
                   </tr>
                 </table>
               </div>
@@ -953,14 +953,14 @@ export default function InvoicePrintPage() {
           )}
 
         {/* 特記事項・備考 */}
-        {invoice.remarks && (
+        {invoice?.remarks && (
           <div className="border border-gray-400 mb-6">
             <div className="bg-gray-200 px-4 py-2 border-b border-gray-400">
               <h3 className="font-bold text-gray-800">【特記事項・備考】</h3>
             </div>
             <div className="p-4 bg-gray-50">
               <div className="text-sm leading-relaxed">
-                {invoice.remarks}
+                {invoice?.remarks}
               </div>
             </div>
           </div>
@@ -993,15 +993,15 @@ export default function InvoicePrintPage() {
             <div>
               <h1 className="text-3xl font-light text-gray-800 mb-2">INVOICE</h1>
               <div className="text-sm text-gray-600">
-                請求書番号: <span className="font-semibold">{invoice.invoice_number}</span>
+                請求書番号: <span className="font-semibold">{invoice?.invoice_number}</span>
               </div>
               <div className="text-sm text-gray-600">
-                発行日: {formatDate(invoice.issue_date)}
+                発行日: {formatDate(invoice?.issue_date || '')}
               </div>
             </div>
             <div className="text-right">
               <div className="text-2xl font-bold text-blue-600">
-                ¥{formatAmount(invoice.total_amount)}
+                ¥{formatAmount(invoice?.total_amount || 0)}
               </div>
               <div className="text-sm text-gray-600">合計金額</div>
             </div>
@@ -1050,7 +1050,7 @@ export default function InvoicePrintPage() {
                 </tr>
               </thead>
               <tbody>
-                {invoice.line_items.map((item, index) => {
+                {invoice?.line_items?.map((item, index) => {
                   const itemName = (customerCategoryDB && customerCategoryDB.getItemName) ? 
                     customerCategoryDB.getItemName(item.target, item.action, item.position) : 
                     [item.target, item.action, item.position].filter(Boolean).join(' ');
@@ -1089,15 +1089,15 @@ export default function InvoicePrintPage() {
           <div className="w-72 bg-gray-50 p-4 rounded-lg">
             <div className="flex justify-between py-2">
               <span>小計:</span>
-              <span>¥{formatAmount(invoice.subtotal)}</span>
+              <span>¥{formatAmount(invoice?.subtotal || 0)}</span>
             </div>
             <div className="flex justify-between py-2">
               <span>消費税:</span>
-              <span>¥{formatAmount(invoice.tax)}</span>
+              <span>¥{formatAmount(invoice?.tax || 0)}</span>
             </div>
             <div className="flex justify-between py-3 text-xl font-bold border-t">
               <span>合計:</span>
-              <span className="text-blue-600">¥{formatAmount(invoice.total_amount)}</span>
+              <span className="text-blue-600">¥{formatAmount(invoice?.total_amount || 0)}</span>
             </div>
           </div>
         </div>
@@ -1123,11 +1123,11 @@ export default function InvoicePrintPage() {
       <>
         <div className="flex justify-between items-center mb-6 pb-4 border-b">
           <div>
-            <h1 className="text-xl font-bold">請求書 #{invoice.invoice_number}</h1>
-            <div className="text-sm text-gray-600">{formatDate(invoice.issue_date)}</div>
+            <h1 className="text-xl font-bold">請求書 #{invoice?.invoice_number}</h1>
+            <div className="text-sm text-gray-600">{formatDate(invoice?.issue_date || '')}</div>
           </div>
           <div className="text-right">
-            <div className="text-xl font-bold">¥{formatAmount(invoice.total_amount)}</div>
+            <div className="text-xl font-bold">¥{formatAmount(invoice?.total_amount || 0)}</div>
           </div>
         </div>
 
@@ -1160,7 +1160,7 @@ export default function InvoicePrintPage() {
             </tr>
           </thead>
           <tbody>
-            {invoice.line_items.map((item, index) => {
+            {invoice?.line_items?.map((item, index) => {
               const itemName = (customerCategoryDB && customerCategoryDB.getItemName) ? 
                 customerCategoryDB.getItemName(item.target, item.action, item.position) : 
                 [item.target, item.action, item.position].filter(Boolean).join(' ');
@@ -1178,8 +1178,8 @@ export default function InvoicePrintPage() {
 
         <div className="flex justify-end">
           <div className="text-sm">
-            <div>小計: ¥{formatAmount(invoice.subtotal)}</div>
-            <div>税込: ¥{formatAmount(invoice.total_amount)}</div>
+            <div>小計: ¥{formatAmount(invoice?.subtotal || 0)}</div>
+            <div>税込: ¥{formatAmount(invoice?.total_amount || 0)}</div>
           </div>
         </div>
       </>
@@ -1200,10 +1200,10 @@ export default function InvoicePrintPage() {
             <div>
               <h4 className="font-semibold border-b mb-2">請求書情報</h4>
               <div className="space-y-1 text-sm">
-                <div><strong>請求書番号:</strong> {invoice.invoice_number}</div>
-                <div><strong>発行日:</strong> {formatDate(invoice.issue_date)}</div>
-                {invoice.order_number && <div><strong>注文番号:</strong> {invoice.order_number}</div>}
-                {invoice.purchase_order_number && <div><strong>発注番号:</strong> {invoice.purchase_order_number}</div>}
+                <div><strong>請求書番号:</strong> {invoice?.invoice_number}</div>
+                <div><strong>発行日:</strong> {formatDate(invoice?.issue_date || '')}</div>
+                {invoice?.order_number && <div><strong>注文番号:</strong> {invoice?.order_number}</div>}
+                {invoice?.purchase_order_number && <div><strong>発注番号:</strong> {invoice?.purchase_order_number}</div>}
               </div>
             </div>
             
@@ -1212,15 +1212,15 @@ export default function InvoicePrintPage() {
               <div className="space-y-1 text-sm">
                 <div className="font-semibold">{customerInfo.name} 様</div>
                 {customerInfo.company && <div>{customerInfo.company}</div>}
-                <div>件名: {invoice.subject_name}</div>
-                {invoice.registration_number && <div>登録番号: {invoice.registration_number}</div>}
+                <div>件名: {invoice?.subject_name}</div>
+                {invoice?.registration_number && <div>登録番号: {invoice?.registration_number}</div>}
               </div>
             </div>
             
             <div>
               <h4 className="font-semibold border-b mb-2">合計金額</h4>
               <div className="text-2xl font-bold text-center py-4 bg-gray-100 rounded">
-                ¥{formatAmount(invoice.total_amount)}
+                ¥{formatAmount(invoice?.total_amount || 0)}
               </div>
             </div>
           </div>
@@ -1268,7 +1268,7 @@ export default function InvoicePrintPage() {
               </tr>
             </thead>
             <tbody>
-              {invoice.line_items.map((item, index) => {
+              {invoice?.line_items?.map((item, index) => {
                 const itemName = (customerCategoryDB && customerCategoryDB.getItemName) ? 
                   customerCategoryDB.getItemName(item.target, item.action, item.position) : 
                   [item.target, item.action, item.position].filter(Boolean).join(' ');
@@ -1309,16 +1309,16 @@ export default function InvoicePrintPage() {
             <div className="space-y-2">
               <div className="flex justify-between">
                 <span>作業小計:</span>
-                <span>¥{formatAmount(invoice.subtotal)}</span>
+                <span>¥{formatAmount(invoice?.subtotal || 0)}</span>
               </div>
               <div className="flex justify-between">
                 <span>消費税 (10%):</span>
-                <span>¥{formatAmount(invoice.tax)}</span>
+                <span>¥{formatAmount(invoice?.tax || 0)}</span>
               </div>
               <div className="border-t-2 border-gray-800 pt-2 mt-3">
                 <div className="flex justify-between text-lg font-bold">
                   <span>合計金額:</span>
-                  <span>¥{formatAmount(invoice.total_amount)}</span>
+                  <span>¥{formatAmount(invoice?.total_amount || 0)}</span>
                 </div>
               </div>
             </div>
@@ -1326,11 +1326,11 @@ export default function InvoicePrintPage() {
         </div>
 
         {/* 備考 */}
-        {invoice.remarks && (
+        {invoice?.remarks && (
           <div className="border border-gray-400 p-4 mb-6">
             <h4 className="font-semibold mb-2">備考・特記事項</h4>
             <div className="text-sm bg-gray-50 p-3 rounded">
-              {invoice.remarks}
+              {invoice?.remarks}
             </div>
           </div>
         )}
@@ -1363,17 +1363,17 @@ export default function InvoicePrintPage() {
               <div className="grid grid-cols-2 gap-8 text-sm">
                 <div>
                   <div className="opacity-90 mb-1">Invoice Number</div>
-                  <div className="text-lg font-semibold">{invoice.invoice_number}</div>
+                  <div className="text-lg font-semibold">{invoice?.invoice_number}</div>
                 </div>
                 <div>
                   <div className="opacity-90 mb-1">Issue Date</div>
-                  <div className="text-lg font-semibold">{formatDate(invoice.issue_date)}</div>
+                  <div className="text-lg font-semibold">{formatDate(invoice?.issue_date || '')}</div>
                 </div>
               </div>
             </div>
             <div className="text-right">
               <div className="opacity-90 text-sm mb-2">Total Amount</div>
-              <div className="text-4xl font-bold">¥{formatAmount(invoice.total_amount)}</div>
+              <div className="text-4xl font-bold">¥{formatAmount(invoice?.total_amount || 0)}</div>
             </div>
           </div>
         </div>
@@ -1389,9 +1389,9 @@ export default function InvoicePrintPage() {
               <div className="text-xl font-bold text-gray-900">{customerInfo.name}</div>
               {customerInfo.company && <div className="text-gray-600">{customerInfo.company}</div>}
               <div className="mt-4 space-y-1 text-sm">
-                <div><strong>Subject:</strong> {invoice.subject_name || invoice.subject || 'Service'}</div>
-                {invoice.registration_number && <div><strong>Registration:</strong> {invoice.registration_number}</div>}
-                {invoice.order_number && <div><strong>Order #:</strong> {invoice.order_number}</div>}
+                <div><strong>Subject:</strong> {invoice?.subject_name || invoice?.subject || 'Service'}</div>
+                {invoice?.registration_number && <div><strong>Registration:</strong> {invoice?.registration_number}</div>}
+                {invoice?.order_number && <div><strong>Order #:</strong> {invoice?.order_number}</div>}
               </div>
             </div>
           </div>
@@ -1428,7 +1428,7 @@ export default function InvoicePrintPage() {
               </div>
             </div>
             <div className="divide-y divide-gray-100">
-              {invoice.line_items.map((item, index) => {
+              {invoice?.line_items?.map((item, index) => {
                 const itemName = (customerCategoryDB && customerCategoryDB.getItemName) ? 
                   customerCategoryDB.getItemName(item.target, item.action, item.position) : 
                   [item.target, item.action, item.position].filter(Boolean).join(' ');
@@ -1470,16 +1470,16 @@ export default function InvoicePrintPage() {
             <div className="space-y-3">
               <div className="flex justify-between text-gray-700">
                 <span>Subtotal:</span>
-                <span>¥{formatAmount(invoice.subtotal)}</span>
+                <span>¥{formatAmount(invoice?.subtotal || 0)}</span>
               </div>
               <div className="flex justify-between text-gray-700">
                 <span>Tax (10%):</span>
-                <span>¥{formatAmount(invoice.tax)}</span>
+                <span>¥{formatAmount(invoice?.tax || 0)}</span>
               </div>
               <div className="gradient-accent h-0.5 rounded"></div>
               <div className="flex justify-between text-xl font-bold text-gray-900">
                 <span>Total:</span>
-                <span>¥{formatAmount(invoice.total_amount)}</span>
+                <span>¥{formatAmount(invoice?.total_amount || 0)}</span>
               </div>
             </div>
           </div>
@@ -1504,11 +1504,11 @@ export default function InvoicePrintPage() {
           </div>
         )}
 
-        {invoice.remarks && (
+        {invoice?.remarks && (
           <div className="bg-gradient-to-r from-purple-50 to-indigo-50 p-6 rounded-lg mb-8">
             <h3 className="text-lg font-bold text-gray-900 mb-3">Additional Notes</h3>
             <div className="text-sm text-gray-700 leading-relaxed">
-              {invoice.remarks}
+              {invoice?.remarks}
             </div>
           </div>
         )}
@@ -1568,18 +1568,18 @@ export default function InvoicePrintPage() {
                 <div className="grid grid-cols-2 gap-6 text-sm">
                   <div>
                     <div className="opacity-90 mb-1">Document #</div>
-                    <div className="text-lg font-semibold">{invoice.invoice_number}</div>
+                    <div className="text-lg font-semibold">{invoice?.invoice_number}</div>
                   </div>
                   <div>
                     <div className="opacity-90 mb-1">Issue Date</div>
-                    <div className="text-lg font-semibold">{formatDate(invoice.issue_date)}</div>
+                    <div className="text-lg font-semibold">{formatDate(invoice?.issue_date || '')}</div>
                   </div>
                 </div>
               </div>
               <div className="text-right">
                 <div className="geometric-border bg-white text-gray-900 p-4 rounded-lg">
                   <div className="text-sm font-medium mb-1">Total Amount</div>
-                  <div className="text-2xl font-bold">¥{formatAmount(invoice.total_amount)}</div>
+                  <div className="text-2xl font-bold">¥{formatAmount(invoice?.total_amount || 0)}</div>
                 </div>
               </div>
             </div>
@@ -1598,9 +1598,9 @@ export default function InvoicePrintPage() {
                 <div className="text-xl font-bold text-gray-900">{customerInfo.name}</div>
                 {customerInfo.company && <div className="text-gray-600 font-medium">{customerInfo.company}</div>}
                 <div className="mt-4 space-y-1 text-sm">
-                  <div className="flex"><span className="font-semibold w-20">Subject:</span> {invoice.subject_name || invoice.subject || 'Service'}</div>
-                  {invoice.registration_number && <div className="flex"><span className="font-semibold w-20">Reg. No:</span> {invoice.registration_number}</div>}
-                  {invoice.order_number && <div className="flex"><span className="font-semibold w-20">Order:</span> {invoice.order_number}</div>}
+                  <div className="flex"><span className="font-semibold w-20">Subject:</span> {invoice?.subject_name || invoice?.subject || 'Service'}</div>
+                  {invoice?.registration_number && <div className="flex"><span className="font-semibold w-20">Reg. No:</span> {invoice?.registration_number}</div>}
+                  {invoice?.order_number && <div className="flex"><span className="font-semibold w-20">Order:</span> {invoice?.order_number}</div>}
                 </div>
               </div>
             </div>
@@ -1643,7 +1643,7 @@ export default function InvoicePrintPage() {
               </div>
             </div>
             <div>
-              {invoice.line_items.map((item, index) => {
+              {invoice?.line_items?.map((item, index) => {
                 const itemName = (customerCategoryDB && customerCategoryDB.getItemName) ? 
                   customerCategoryDB.getItemName(item.target, item.action, item.position) : 
                   [item.target, item.action, item.position].filter(Boolean).join(' ');
@@ -1685,16 +1685,16 @@ export default function InvoicePrintPage() {
             <div className="space-y-3 text-lg">
               <div className="flex justify-between">
                 <span className="font-semibold">Subtotal:</span>
-                <span>¥{formatAmount(invoice.subtotal)}</span>
+                <span>¥{formatAmount(invoice?.subtotal || 0)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="font-semibold">Tax (10%):</span>
-                <span>¥{formatAmount(invoice.tax)}</span>
+                <span>¥{formatAmount(invoice?.tax || 0)}</span>
               </div>
               <div className="geometric-accent h-1 rounded transform -skew-x-12"></div>
               <div className="flex justify-between text-2xl font-bold text-gray-900">
                 <span>TOTAL:</span>
-                <span>¥{formatAmount(invoice.total_amount)}</span>
+                <span>¥{formatAmount(invoice?.total_amount || 0)}</span>
               </div>
             </div>
           </div>
@@ -1724,7 +1724,7 @@ export default function InvoicePrintPage() {
           </div>
         )}
 
-        {invoice.remarks && (
+        {invoice?.remarks && (
           <div className="geometric-pattern p-6 rounded-lg border-2 border-gray-300 mb-8">
             <div className="bg-white p-4 rounded">
               <h3 className="text-lg font-bold text-gray-900 mb-3 flex items-center">
@@ -1732,7 +1732,7 @@ export default function InvoicePrintPage() {
                 NOTES
               </h3>
               <div className="text-sm text-gray-700 leading-relaxed">
-                {invoice.remarks}
+                {invoice?.remarks}
               </div>
             </div>
           </div>
@@ -1770,11 +1770,11 @@ export default function InvoicePrintPage() {
                   <div className="grid grid-cols-2 gap-6 text-sm">
                     <div>
                       <div className="font-semibold text-gray-600">Invoice Number</div>
-                      <div className="text-lg font-bold">{invoice.invoice_number}</div>
+                      <div className="text-lg font-bold">{invoice?.invoice_number}</div>
                     </div>
                     <div>
                       <div className="font-semibold text-gray-600">Issue Date</div>
-                      <div className="text-lg font-bold">{formatDate(invoice.issue_date)}</div>
+                      <div className="text-lg font-bold">{formatDate(invoice?.issue_date || '')}</div>
                     </div>
                   </div>
                 </div>
@@ -1782,7 +1782,7 @@ export default function InvoicePrintPage() {
               <div className="text-right">
                 <div className="corporate-accent p-6 rounded-lg">
                   <div className="text-sm opacity-90 mb-2">TOTAL AMOUNT</div>
-                  <div className="text-4xl font-bold">¥{formatAmount(invoice.total_amount)}</div>
+                  <div className="text-4xl font-bold">¥{formatAmount(invoice?.total_amount || 0)}</div>
                 </div>
               </div>
             </div>
@@ -1803,18 +1803,18 @@ export default function InvoicePrintPage() {
                 <div className="space-y-2 text-sm border-t border-gray-300 pt-4">
                   <div className="flex">
                     <span className="font-bold corporate-primary text-white px-2 py-1 rounded text-xs mr-3">SUBJECT</span>
-                    <span>{invoice.subject_name || invoice.subject || 'Service'}</span>
+                    <span>{invoice?.subject_name || invoice?.subject || 'Service'}</span>
                   </div>
-                  {invoice.registration_number && (
+                  {invoice?.registration_number && (
                     <div className="flex">
                       <span className="font-bold corporate-primary text-white px-2 py-1 rounded text-xs mr-3">REG</span>
-                      <span>{invoice.registration_number}</span>
+                      <span>{invoice?.registration_number}</span>
                     </div>
                   )}
-                  {invoice.order_number && (
+                  {invoice?.order_number && (
                     <div className="flex">
                       <span className="font-bold corporate-primary text-white px-2 py-1 rounded text-xs mr-3">ORDER</span>
-                      <span>{invoice.order_number}</span>
+                      <span>{invoice?.order_number}</span>
                     </div>
                   )}
                 </div>
@@ -1855,7 +1855,7 @@ export default function InvoicePrintPage() {
               <div className="col-span-2 text-right">TOTAL</div>
             </div>
           </div>
-          {invoice.line_items.map((item, index) => {
+          {invoice?.line_items?.map((item, index) => {
             const itemName = (customerCategoryDB && customerCategoryDB.getItemName) ? 
               customerCategoryDB.getItemName(item.target, item.action, item.position) : 
               [item.target, item.action, item.position].filter(Boolean).join(' ');
@@ -1898,16 +1898,16 @@ export default function InvoicePrintPage() {
             <div className="bg-white p-6 space-y-4">
               <div className="flex justify-between text-lg">
                 <span className="font-semibold">Subtotal:</span>
-                <span>¥{formatAmount(invoice.subtotal)}</span>
+                <span>¥{formatAmount(invoice?.subtotal || 0)}</span>
               </div>
               <div className="flex justify-between text-lg">
                 <span className="font-semibold">Tax (10%):</span>
-                <span>¥{formatAmount(invoice.tax)}</span>
+                <span>¥{formatAmount(invoice?.tax || 0)}</span>
               </div>
               <div className="corporate-accent h-1"></div>
               <div className="flex justify-between text-2xl font-bold corporate-primary text-white p-3 rounded">
                 <span>TOTAL AMOUNT:</span>
-                <span>¥{formatAmount(invoice.total_amount)}</span>
+                <span>¥{formatAmount(invoice?.total_amount || 0)}</span>
               </div>
             </div>
           </div>
@@ -1953,14 +1953,14 @@ export default function InvoicePrintPage() {
           </div>
         )}
 
-        {invoice.remarks && (
+        {invoice?.remarks && (
           <div className="mb-8 border-2 border-gray-300 rounded-lg overflow-hidden">
             <div className="corporate-secondary text-white p-4">
               <h3 className="text-lg font-bold">ADDITIONAL NOTES</h3>
             </div>
             <div className="bg-white p-6">
               <div className="text-sm text-gray-700 leading-relaxed">
-                {invoice.remarks}
+                {invoice?.remarks}
               </div>
             </div>
           </div>
@@ -1983,7 +1983,7 @@ export default function InvoicePrintPage() {
         <div className="mb-8">
           <div className="text-center mb-6">
             <h1 className="text-2xl font-bold text-gray-900 mb-2">請求書</h1>
-            <div className="text-sm text-gray-600">No. {invoice.invoice_number}</div>
+            <div className="text-sm text-gray-600">No. {invoice?.invoice_number}</div>
           </div>
           
           <div className="flex justify-between items-start border-b border-gray-400 pb-4">
@@ -1992,15 +1992,15 @@ export default function InvoicePrintPage() {
               <div className="text-lg font-bold text-gray-900">{customerInfo.name} 様</div>
               {customerInfo.company && <div className="text-sm text-gray-600 mt-1">{customerInfo.company}</div>}
               <div className="text-sm text-gray-600 mt-3">
-                {invoice.subject_name || invoice.subject || 'Service'}
+                {invoice?.subject_name || invoice?.subject || 'Service'}
               </div>
             </div>
             
             <div className="w-1/2 text-right">
               <div className="text-sm text-gray-600 mb-1">発行日</div>
-              <div className="text-lg font-bold text-gray-900">{formatDate(invoice.issue_date)}</div>
+              <div className="text-lg font-bold text-gray-900">{formatDate(invoice?.issue_date || '')}</div>
               <div className="text-sm text-gray-600 mt-4 mb-1">合計金額</div>
-              <div className="text-3xl font-bold text-gray-900">¥{formatAmount(invoice.total_amount)}</div>
+              <div className="text-3xl font-bold text-gray-900">¥{formatAmount(invoice?.total_amount || 0)}</div>
             </div>
           </div>
         </div>
@@ -2017,7 +2017,7 @@ export default function InvoicePrintPage() {
               </tr>
             </thead>
             <tbody>
-              {invoice.line_items.map((item, index) => {
+              {invoice?.line_items?.map((item, index) => {
                 const itemName = (customerCategoryDB && customerCategoryDB.getItemName) ? 
                   customerCategoryDB.getItemName(item.target, item.action, item.position) : 
                   [item.target, item.action, item.position].filter(Boolean).join(' ');
@@ -2053,15 +2053,15 @@ export default function InvoicePrintPage() {
             <tfoot>
               <tr>
                 <td colSpan={3} className="border border-gray-400 px-3 py-2 text-right text-sm font-bold">小計</td>
-                <td className="border border-gray-400 px-3 py-2 text-right font-bold">¥{formatAmount(invoice.subtotal)}</td>
+                <td className="border border-gray-400 px-3 py-2 text-right font-bold">¥{formatAmount(invoice?.subtotal || 0)}</td>
               </tr>
               <tr>
                 <td colSpan={3} className="border border-gray-400 px-3 py-2 text-right text-sm font-bold">消費税(10%)</td>
-                <td className="border border-gray-400 px-3 py-2 text-right font-bold">¥{formatAmount(invoice.tax)}</td>
+                <td className="border border-gray-400 px-3 py-2 text-right font-bold">¥{formatAmount(invoice?.tax || 0)}</td>
               </tr>
               <tr className="bg-gray-100">
                 <td colSpan={3} className="border border-gray-400 px-3 py-2 text-right text-lg font-bold">合計</td>
-                <td className="border border-gray-400 px-3 py-2 text-right text-lg font-bold">¥{formatAmount(invoice.total_amount)}</td>
+                <td className="border border-gray-400 px-3 py-2 text-right text-lg font-bold">¥{formatAmount(invoice?.total_amount || 0)}</td>
               </tr>
             </tfoot>
           </table>
@@ -2101,10 +2101,10 @@ export default function InvoicePrintPage() {
           </div>
         </div>
 
-        {invoice.remarks && (
+        {invoice?.remarks && (
           <div className="border border-gray-400 p-4 mb-8">
             <h3 className="font-bold text-gray-900 mb-2">備考</h3>
-            <div className="text-sm text-gray-700">{invoice.remarks}</div>
+            <div className="text-sm text-gray-700">{invoice?.remarks}</div>
           </div>
         )}
 
@@ -2142,9 +2142,9 @@ export default function InvoicePrintPage() {
               <div className="text-right">
                 <div className="border border-gray-400 p-3">
                   <div className="text-sm mb-1">請求書番号</div>
-                  <div className="font-bold text-lg">{invoice.invoice_number}</div>
+                  <div className="font-bold text-lg">{invoice?.invoice_number}</div>
                   <div className="text-sm mt-3 mb-1">発行日</div>
-                  <div className="font-bold">{formatDate(invoice.issue_date)}</div>
+                  <div className="font-bold">{formatDate(invoice?.issue_date || '')}</div>
                 </div>
               </div>
             </div>
@@ -2158,7 +2158,7 @@ export default function InvoicePrintPage() {
             {customerInfo.company && <div className="text-sm text-gray-600 mt-1">{customerInfo.company}</div>}
           </div>
           <div className="mt-3 text-sm">
-            件名: {invoice.subject_name || invoice.subject || 'Service'}
+            件名: {invoice?.subject_name || invoice?.subject || 'Service'}
           </div>
         </div>
 
@@ -2166,7 +2166,7 @@ export default function InvoicePrintPage() {
         <div className="text-center mb-8">
           <div className="border-2 border-gray-900 p-4 inline-block">
             <div className="text-sm mb-1">ご請求金額</div>
-            <div className="text-4xl font-bold text-gray-900">¥{formatAmount(invoice.total_amount)}</div>
+            <div className="text-4xl font-bold text-gray-900">¥{formatAmount(invoice?.total_amount || 0)}</div>
           </div>
         </div>
 
@@ -2186,7 +2186,7 @@ export default function InvoicePrintPage() {
                 </tr>
               </thead>
               <tbody>
-                {invoice.line_items.map((item, index) => {
+                {invoice?.line_items?.map((item, index) => {
                   const itemName = (customerCategoryDB && customerCategoryDB.getItemName) ? 
                     customerCategoryDB.getItemName(item.target, item.action, item.position) : 
                     [item.target, item.action, item.position].filter(Boolean).join(' ');
@@ -2214,10 +2214,10 @@ export default function InvoicePrintPage() {
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div></div>
                 <div className="space-y-1">
-                  <div className="flex justify-between"><span>小計:</span><span>¥{formatAmount(invoice.subtotal)}</span></div>
-                  <div className="flex justify-between"><span>消費税(10%):</span><span>¥{formatAmount(invoice.tax)}</span></div>
+                  <div className="flex justify-between"><span>小計:</span><span>¥{formatAmount(invoice?.subtotal || 0)}</span></div>
+                  <div className="flex justify-between"><span>消費税(10%):</span><span>¥{formatAmount(invoice?.tax || 0)}</span></div>
                   <div className="flex justify-between font-bold text-lg border-t border-gray-400 pt-1">
-                    <span>合計:</span><span>¥{formatAmount(invoice.total_amount)}</span>
+                    <span>合計:</span><span>¥{formatAmount(invoice?.total_amount || 0)}</span>
                   </div>
                 </div>
               </div>
@@ -2249,10 +2249,10 @@ export default function InvoicePrintPage() {
           </div>
         )}
 
-        {invoice.remarks && (
+        {invoice?.remarks && (
           <div className="border border-gray-400 p-3 mb-6">
             <div className="font-bold text-sm mb-2">■ 備考</div>
-            <div className="text-sm">{invoice.remarks}</div>
+            <div className="text-sm">{invoice?.remarks}</div>
           </div>
         )}
 
@@ -2280,18 +2280,18 @@ export default function InvoicePrintPage() {
               <div className="font-bold text-lg text-gray-900">{customerInfo.name}</div>
               {customerInfo.company && <div className="text-sm text-gray-700">{customerInfo.company}</div>}
               <div className="text-sm text-gray-600 mt-2">
-                Subject: {invoice.subject_name || invoice.subject || 'Service'}
+                Subject: {invoice?.subject_name || invoice?.subject || 'Service'}
               </div>
             </div>
             
             <div className="w-1/2 text-right">
               <div className="border border-gray-800 p-3">
                 <div className="text-xs text-gray-600 mb-1">Invoice No.</div>
-                <div className="font-mono font-bold text-lg">{invoice.invoice_number}</div>
+                <div className="font-mono font-bold text-lg">{invoice?.invoice_number}</div>
                 <div className="text-xs text-gray-600 mt-3 mb-1">Issue Date</div>
-                <div className="font-mono">{formatDate(invoice.issue_date)}</div>
+                <div className="font-mono">{formatDate(invoice?.issue_date || '')}</div>
                 <div className="text-xs text-gray-600 mt-3 mb-1">Amount Due</div>
-                <div className="font-mono font-bold text-xl">¥{formatAmount(invoice.total_amount)}</div>
+                <div className="font-mono font-bold text-xl">¥{formatAmount(invoice?.total_amount || 0)}</div>
               </div>
             </div>
           </div>
@@ -2309,7 +2309,7 @@ export default function InvoicePrintPage() {
               </tr>
             </thead>
             <tbody>
-              {invoice.line_items.map((item, index) => {
+              {invoice?.line_items?.map((item, index) => {
                 const itemName = (customerCategoryDB && customerCategoryDB.getItemName) ? 
                   customerCategoryDB.getItemName(item.target, item.action, item.position) : 
                   [item.target, item.action, item.position].filter(Boolean).join(' ');
@@ -2350,15 +2350,15 @@ export default function InvoicePrintPage() {
               <table className="w-full border-collapse">
                 <tr>
                   <td className="border-b border-l-2 border-gray-400 px-3 py-2 text-right text-sm">Subtotal:</td>
-                  <td className="border-b border-r-2 border-gray-400 px-3 py-2 text-right font-mono">¥{formatAmount(invoice.subtotal)}</td>
+                  <td className="border-b border-r-2 border-gray-400 px-3 py-2 text-right font-mono">¥{formatAmount(invoice?.subtotal || 0)}</td>
                 </tr>
                 <tr>
                   <td className="border-b border-l-2 border-gray-400 px-3 py-2 text-right text-sm">Tax (10%):</td>
-                  <td className="border-b border-r-2 border-gray-400 px-3 py-2 text-right font-mono">¥{formatAmount(invoice.tax)}</td>
+                  <td className="border-b border-r-2 border-gray-400 px-3 py-2 text-right font-mono">¥{formatAmount(invoice?.tax || 0)}</td>
                 </tr>
                 <tr>
                   <td className="border-b-2 border-l-2 border-gray-800 px-3 py-3 text-right font-bold">TOTAL:</td>
-                  <td className="border-b-2 border-r-2 border-gray-800 px-3 py-3 text-right font-mono font-bold text-lg">¥{formatAmount(invoice.total_amount)}</td>
+                  <td className="border-b-2 border-r-2 border-gray-800 px-3 py-3 text-right font-mono font-bold text-lg">¥{formatAmount(invoice?.total_amount || 0)}</td>
                 </tr>
               </table>
             </div>
@@ -2396,10 +2396,10 @@ export default function InvoicePrintPage() {
           )}
         </div>
 
-        {invoice.remarks && (
+        {invoice?.remarks && (
           <div className="border border-gray-600 p-4 mb-8">
             <h3 className="font-bold text-sm tracking-wide mb-2 border-b border-gray-400 pb-1">NOTES</h3>
-            <div className="text-sm text-gray-700 italic">{invoice.remarks}</div>
+            <div className="text-sm text-gray-700 italic">{invoice?.remarks}</div>
           </div>
         )}
 
@@ -2420,11 +2420,11 @@ export default function InvoicePrintPage() {
           <div className="flex justify-between items-start">
             <div>
               <h1 className="text-2xl font-bold mb-1">請求書</h1>
-              <div className="text-sm text-gray-600">#{invoice.invoice_number}</div>
+              <div className="text-sm text-gray-600">#{invoice?.invoice_number}</div>
             </div>
             <div className="text-right">
-              <div className="text-2xl font-bold">¥{formatAmount(invoice.total_amount)}</div>
-              <div className="text-sm text-gray-600">{formatDate(invoice.issue_date)}</div>
+              <div className="text-2xl font-bold">¥{formatAmount(invoice?.total_amount || 0)}</div>
+              <div className="text-sm text-gray-600">{formatDate(invoice?.issue_date || '')}</div>
             </div>
           </div>
         </div>
@@ -2437,7 +2437,7 @@ export default function InvoicePrintPage() {
               <div className="font-medium">{customerInfo.name}</div>
               {customerInfo.company && <div className="text-sm text-gray-600">{customerInfo.company}</div>}
               <div className="text-sm text-gray-600 mt-2">
-                件名: {invoice.subject_name || invoice.subject || 'Service'}
+                件名: {invoice?.subject_name || invoice?.subject || 'Service'}
               </div>
             </div>
           </div>
@@ -2470,7 +2470,7 @@ export default function InvoicePrintPage() {
               </tr>
             </thead>
             <tbody>
-              {invoice.line_items.map((item, index) => {
+              {invoice?.line_items?.map((item, index) => {
                 const itemName = (customerCategoryDB && customerCategoryDB.getItemName) ? 
                   customerCategoryDB.getItemName(item.target, item.action, item.position) : 
                   [item.target, item.action, item.position].filter(Boolean).join(' ');
@@ -2507,10 +2507,10 @@ export default function InvoicePrintPage() {
           
           <div className="flex justify-end mt-4">
             <div className="w-64 space-y-1">
-              <div className="flex justify-between"><span>小計:</span><span>¥{formatAmount(invoice.subtotal)}</span></div>
-              <div className="flex justify-between"><span>税:</span><span>¥{formatAmount(invoice.tax)}</span></div>
+              <div className="flex justify-between"><span>小計:</span><span>¥{formatAmount(invoice?.subtotal || 0)}</span></div>
+              <div className="flex justify-between"><span>税:</span><span>¥{formatAmount(invoice?.tax || 0)}</span></div>
               <div className="flex justify-between font-bold text-lg border-t border-gray-800 pt-1">
-                <span>合計:</span><span>¥{formatAmount(invoice.total_amount)}</span>
+                <span>合計:</span><span>¥{formatAmount(invoice?.total_amount || 0)}</span>
               </div>
             </div>
           </div>
@@ -2528,10 +2528,10 @@ export default function InvoicePrintPage() {
           </div>
         )}
 
-        {invoice.remarks && (
+        {invoice?.remarks && (
           <div className="mb-8">
             <div className="font-bold mb-2">備考:</div>
-            <div className="ml-4 text-sm">{invoice.remarks}</div>
+            <div className="ml-4 text-sm">{invoice?.remarks}</div>
           </div>
         )}
 
