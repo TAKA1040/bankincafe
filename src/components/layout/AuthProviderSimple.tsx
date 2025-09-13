@@ -137,38 +137,40 @@ export default function AuthProviderSimple({ children }: AuthProviderProps) {
 
 
           
-          // 未承認ユーザーをuser_managementテーブルにUPSERT（挿入または更新）
+          // 未承認ユーザーをuser_managementテーブルに記録（既存ユーザーのステータスは変更しない）
           try {
-            const userData = {
-              google_email: userEmail,
-              display_name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || '未設定',
-              status: 'pending' as const,
-              last_login_at: new Date().toISOString()
-            }
-            
-            // 新規登録の場合のみ requested_at を設定
-            const userDataWithTimestamp = {
-              ...userData,
-              requested_at: new Date().toISOString()
-            }
-            
-
-            
-            // UPSERTでConflictエラーを防ぐ
-            const { data: upsertData, error: upsertError } = await supabase
+            // 既存ユーザーかどうか確認
+            const { data: existingUser } = await supabase
               .from('user_management')
-              .upsert(userDataWithTimestamp, {
-                onConflict: 'google_email',
-                ignoreDuplicates: false
-              })
-              .select()
+              .select('id, status')
+              .eq('google_email', userEmail)
+              .single()
             
-            if (upsertError) {
-              console.error('❌ ユーザー登録/更新エラー:', upsertError)
+            if (existingUser) {
+              // 既存ユーザーの場合は最終ログイン時刻のみ更新（ステータスは変更しない）
+              await supabase
+                .from('user_management')
+                .update({
+                  last_login_at: new Date().toISOString(),
+                  display_name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || '未設定'
+                })
+                .eq('google_email', userEmail)
             } else {
-
+              // 新規ユーザーの場合のみ pending で登録
+              const { error: insertError } = await supabase
+                .from('user_management')
+                .insert({
+                  google_email: userEmail,
+                  display_name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || '未設定',
+                  status: 'pending',
+                  requested_at: new Date().toISOString(),
+                  last_login_at: new Date().toISOString()
+                })
+              
+              if (insertError) {
+                console.error('❌ 新規ユーザー登録エラー:', insertError)
+              }
             }
-            
 
           } catch (dbError) {
             console.error('❌ ユーザー登録処理で例外発生:', dbError)
