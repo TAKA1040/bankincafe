@@ -621,9 +621,7 @@ export default function InvoicePrintPage() {
             </thead>
             <tbody>
               {invoice?.line_items?.map((item, index) => {
-                const itemName = (customerCategoryDB && customerCategoryDB.getItemName) ? 
-                  customerCategoryDB.getItemName(item.target, item.action, item.position) : 
-                  [item.target, item.action, item.position].filter(Boolean).join(' ');
+                const itemName = [item.target, item.action, item.position].filter(Boolean).join(' ');
                 const prefix = item.task_type === 'S' ? 'S ' : '';
                 return (
                   <tr key={index} className="border-b border-gray-100">
@@ -1269,9 +1267,7 @@ export default function InvoicePrintPage() {
             </thead>
             <tbody>
               {invoice?.line_items?.map((item, index) => {
-                const itemName = (customerCategoryDB && customerCategoryDB.getItemName) ? 
-                  customerCategoryDB.getItemName(item.target, item.action, item.position) : 
-                  [item.target, item.action, item.position].filter(Boolean).join(' ');
+                const itemName = [item.target, item.action, item.position].filter(Boolean).join(' ');
                 const isSetWork = item.task_type === 'S';
                 const prefix = item.task_type === 'S' ? 'Ｓ' : '';
                 const displayName = `${prefix}${itemName}`;
@@ -1429,9 +1425,7 @@ export default function InvoicePrintPage() {
             </div>
             <div className="divide-y divide-gray-100">
               {invoice?.line_items?.map((item, index) => {
-                const itemName = (customerCategoryDB && customerCategoryDB.getItemName) ? 
-                  customerCategoryDB.getItemName(item.target, item.action, item.position) : 
-                  [item.target, item.action, item.position].filter(Boolean).join(' ');
+                const itemName = [item.target, item.action, item.position].filter(Boolean).join(' ');
                 const prefix = item.task_type === 'S' ? 'S ' : '';
                 return (
                   <div key={index} className="grid grid-cols-12 gap-4 py-4 px-6 hover:bg-gradient-to-r hover:from-purple-50 hover:to-transparent">
@@ -1644,9 +1638,7 @@ export default function InvoicePrintPage() {
             </div>
             <div>
               {invoice?.line_items?.map((item, index) => {
-                const itemName = (customerCategoryDB && customerCategoryDB.getItemName) ? 
-                  customerCategoryDB.getItemName(item.target, item.action, item.position) : 
-                  [item.target, item.action, item.position].filter(Boolean).join(' ');
+                const itemName = [item.target, item.action, item.position].filter(Boolean).join(' ');
                 const prefix = item.task_type === 'S' ? 'S ' : '';
                 return (
                   <div key={index} className={`grid grid-cols-12 gap-4 py-4 px-6 border-b border-gray-200 ${index % 2 === 0 ? 'bg-white' : 'geometric-pattern'}`}>
@@ -2018,9 +2010,7 @@ export default function InvoicePrintPage() {
             </thead>
             <tbody>
               {invoice?.line_items?.map((item, index) => {
-                const itemName = (customerCategoryDB && customerCategoryDB.getItemName) ? 
-                  customerCategoryDB.getItemName(item.target, item.action, item.position) : 
-                  [item.target, item.action, item.position].filter(Boolean).join(' ');
+                const itemName = [item.target, item.action, item.position].filter(Boolean).join(' ');
                 const prefix = item.task_type === 'S' ? 'S ' : '';
                 return (
                   <tr key={index}>
@@ -2310,9 +2300,7 @@ export default function InvoicePrintPage() {
             </thead>
             <tbody>
               {invoice?.line_items?.map((item, index) => {
-                const itemName = (customerCategoryDB && customerCategoryDB.getItemName) ? 
-                  customerCategoryDB.getItemName(item.target, item.action, item.position) : 
-                  [item.target, item.action, item.position].filter(Boolean).join(' ');
+                const itemName = [item.target, item.action, item.position].filter(Boolean).join(' ');
                 const prefix = item.task_type === 'S' ? 'S ' : '';
                 return (
                   <tr key={index}>
@@ -2471,9 +2459,7 @@ export default function InvoicePrintPage() {
             </thead>
             <tbody>
               {invoice?.line_items?.map((item, index) => {
-                const itemName = (customerCategoryDB && customerCategoryDB.getItemName) ? 
-                  customerCategoryDB.getItemName(item.target, item.action, item.position) : 
-                  [item.target, item.action, item.position].filter(Boolean).join(' ');
+                const itemName = [item.target, item.action, item.position].filter(Boolean).join(' ');
                 const prefix = item.task_type === 'S' ? 'S ' : '';
                 return (
                   <tr key={index} className="border-b border-gray-200">
