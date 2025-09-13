@@ -513,9 +513,7 @@ function InvoiceCreateContent() {
   // prototype2準拠の個別作業入力状態
   const [target, setTarget] = useState('')
   const [action, setAction] = useState<string | undefined>()
-  const [actions, setActions] = useState<string[]>([]) // 複数動作選択用（最大3つ）
   const [position, setPosition] = useState<string | undefined>()
-  const [positions, setPositions] = useState<string[]>([]) // 複数位置選択用（最大5つ）
   const [workMemo, setWorkMemo] = useState('')
   const [unitPrice, setUnitPrice] = useState('')
   const [qty, setQty] = useState(1)
@@ -529,24 +527,20 @@ function InvoiceCreateContent() {
   // セット明細入力用状態
   const [detailTarget, setDetailTarget] = useState('')
   const [detailAction, setDetailAction] = useState('')
-  const [detailActions, setDetailActions] = useState<string[]>([]) // 複数動作選択用（最大3つ）
   const [detailPosition, setDetailPosition] = useState('')
-  const [detailPositions, setDetailPositions] = useState<string[]>([]) // 複数位置選択用（最大5つ）
   const [detailOther, setDetailOther] = useState('')
   const [detailQuantity, setDetailQuantity] = useState(1)
   
   // prototype2準拠のユーティリティ関数
-  const composedLabel = (t?: string, a?: string[], p?: string[], m?: string) => {
-    const position = p && p.length > 0 ? p.join('') : ''
-    const target = t ?? ''
-    const action = a && a.length > 0 ? a.join('・') : ''
+  const composedLabel = (t?: string, a?: string, p?: string, m?: string) => {
+    const pos = p ? ` ${p}` : ''
     const memoText = m && m.trim() ? ` ${m.trim()}` : ''
-    return `${position}${target}${action}${memoText}`.trim()
+    return `${t ?? ''}${a ?? ''}${pos}${memoText}`.trim()
   }
   
   const addStructured = () => {
     if (!target) return
-    const label = composedLabel(target, actions, positions, workMemo)
+    const label = composedLabel(target, action, position, workMemo)
     const amount = Math.round((Number(unitPrice) || 0) * (qty || 0))
     
     const newId = Date.now()
@@ -566,9 +560,7 @@ function InvoiceCreateContent() {
     // リセット
     setTarget('')
     setAction(undefined)
-    setActions([])
     setPosition(undefined)
-    setPositions([])
     setWorkMemo('')
     setUnitPrice('')
     setQty(1)
@@ -588,11 +580,7 @@ function InvoiceCreateContent() {
       quantity: setQuantity || 0,
       amount: Math.round((Number(setPrice) || 0) * (setQuantity || 0)),
       memo: '',
-      set_details: setDetails.map(d => ({
-        label: d.label,
-        quantity: d.quantity,
-        unitPrice: d.unitPrice
-      })),
+      set_details: setDetails.map(d => d.label),
       detail_positions: setDetails.map(d => d.position || '')
     }
     
@@ -645,103 +633,13 @@ function InvoiceCreateContent() {
   const [targetPage, setTargetPage] = useState(0)
   const [selectedTargetIndex, setSelectedTargetIndex] = useState(-1)
   
-  // 動作あいまい検索用状態
-  const [actionSuggestions, setActionSuggestions] = useState<string[]>([])
-  const [showActionSuggestions, setShowActionSuggestions] = useState(false)
-  const [selectedActionIndex, setSelectedActionIndex] = useState(-1)
-  const [actionSearch, setActionSearch] = useState('')
-  
-  // 位置あいまい検索用状態
-  const [positionSuggestions, setPositionSuggestions] = useState<string[]>([])
-  const [showPositionSuggestions, setShowPositionSuggestions] = useState(false)
-  const [selectedPositionIndex, setSelectedPositionIndex] = useState(-1)
-  const [positionSearch, setPositionSearch] = useState('')
-  
-  // スクロール用ref
-  const targetRefs = useRef<(HTMLButtonElement | null)[]>([])
-  const actionRefs = useRef<(HTMLButtonElement | null)[]>([])
-  const positionRefs = useRef<(HTMLButtonElement | null)[]>([])
-  
-  // セット作業用スクロールref
-  const detailTargetRefs = useRef<(HTMLButtonElement | null)[]>([])
-  const detailActionRefs = useRef<(HTMLButtonElement | null)[]>([])
-  const detailPositionRefs = useRef<(HTMLButtonElement | null)[]>([])
-  
-  // スムーズなオートスクロール機能
-  const scrollToElement = (element: HTMLElement | null) => {
-    if (!element) return
-    
-    // ドロップダウンコンテナを探す
-    let dropdown = element.parentElement
-    while (dropdown && !dropdown.classList.contains('overflow-y-auto')) {
-      dropdown = dropdown.parentElement
-    }
-    
-    if (dropdown && dropdown.classList.contains('overflow-y-auto')) {
-      const itemHeight = 44
-      const containerHeight = dropdown.clientHeight
-      const itemIndex = Array.from(dropdown.children).indexOf(element)
-      const visibleItems = Math.floor(containerHeight / itemHeight)
-      
-      if (itemIndex >= 0) {
-        // 現在の表示範囲を計算
-        const currentScrollTop = dropdown.scrollTop
-        const currentVisibleStart = Math.floor(currentScrollTop / itemHeight)
-        const currentVisibleEnd = currentVisibleStart + visibleItems - 1
-        
-        let targetScrollTop = currentScrollTop
-        
-        // 選択項目が表示範囲外の場合のみスクロール（より保守的に）
-        if (itemIndex < currentVisibleStart + 1) {
-          // 上に隠れている場合：選択項目を上から2番目に表示（枠内に確実に収める）
-          targetScrollTop = Math.max(0, Math.max(0, itemIndex - 1) * itemHeight)
-        } else if (itemIndex > currentVisibleEnd - 1) {
-          // 下に隠れている場合：選択項目を下から2番目に表示（枠内に確実に収める）
-          targetScrollTop = Math.max(0, (itemIndex - visibleItems + 2) * itemHeight)
-        }
-        
-        // 境界チェック：スクロール位置が適切な範囲内にあることを確認
-        const maxScrollTop = Math.max(0, (Array.from(dropdown.children).length - visibleItems) * itemHeight)
-        targetScrollTop = Math.min(targetScrollTop, maxScrollTop)
-        
-        // スムーズアニメーション付きスクロール
-        if (Math.abs(targetScrollTop - currentScrollTop) > 5) { // 小さな差異は無視
-          dropdown.style.scrollBehavior = 'smooth'
-          dropdown.scrollTop = targetScrollTop
-          
-          // アニメーション完了後に scroll-behavior をリセット
-          setTimeout(() => {
-            dropdown.style.scrollBehavior = 'auto'
-          }, 300)
-        }
-      }
-    } else {
-      // フォールバック：通常のスクロール
-      element.scrollIntoView({
-        behavior: 'smooth',
-        block: 'nearest'
-      })
-    }
-  }
-  
-  // スクロール用のuseEffectは削除（キーボードイベント内で直接実行するため）
-  
   // セット明細用サジェスト状態（個別作業と分離）
   const [detailTargetSuggestions, setDetailTargetSuggestions] = useState<string[]>([])
   const [showDetailTargetSuggestions, setShowDetailTargetSuggestions] = useState(false)
   const [selectedDetailTargetIndex, setSelectedDetailTargetIndex] = useState(-1)
-  const [isDetailTargetConfirmed, setIsDetailTargetConfirmed] = useState(false)
-  
-  // セット作業の動作・位置用あいまい検索状態
   const [detailActionSuggestions, setDetailActionSuggestions] = useState<string[]>([])
   const [showDetailActionSuggestions, setShowDetailActionSuggestions] = useState(false)
   const [selectedDetailActionIndex, setSelectedDetailActionIndex] = useState(-1)
-  const [detailActionSearch, setDetailActionSearch] = useState('')
-  
-  const [detailPositionSuggestions, setDetailPositionSuggestions] = useState<string[]>([])
-  const [showDetailPositionSuggestions, setShowDetailPositionSuggestions] = useState(false)
-  const [selectedDetailPositionIndex, setSelectedDetailPositionIndex] = useState(-1)
-  const [detailPositionSearch, setDetailPositionSearch] = useState('')
   const TARGETS_PER_PAGE = 200
   const totalTargetPages = useMemo(() => Math.max(1, Math.ceil((TARGETS?.length || 0) / TARGETS_PER_PAGE)), [TARGETS])
   
@@ -1093,18 +991,18 @@ function InvoiceCreateContent() {
     setBillingDate(new Date().toISOString().split('T')[0])
   }
   
-  // 計算結果（内税方式）
-  const totalAmount = useMemo(() => {
+  // 計算結果
+  const subtotal = useMemo(() => {
     return workItems.reduce((sum, item) => sum + item.amount, 0)
   }, [workItems])
   
   const taxAmount = useMemo(() => {
-    return Math.floor(totalAmount * 0.1 / 1.1)
-  }, [totalAmount])
+    return Math.floor(subtotal * 0.1)
+  }, [subtotal])
   
-  const subtotal = useMemo(() => {
-    return totalAmount - taxAmount
-  }, [totalAmount, taxAmount])
+  const totalAmount = useMemo(() => {
+    return subtotal + taxAmount
+  }, [subtotal, taxAmount])
 
   // 顧客カテゴリー変更処理
   const handleCustomerCategoryChange = (categoryId: string) => {
@@ -1259,16 +1157,16 @@ function InvoiceCreateContent() {
   const addSetDetail = () => {
     if (!detailTarget.trim()) return
     
-    const label = composedLabel(detailTarget, detailActions, detailPositions, detailOther)
+    const label = composedLabel(detailTarget, detailAction, detailPosition, detailOther)
     
     // 単価を取得
-    const priceKey = `${detailTarget}_${detailActions.length > 0 ? detailActions[0] : ''}`
+    const priceKey = `${detailTarget}_${detailAction}`
     const unitPrice = priceBookMap?.[priceKey] || 0
     
     const newDetail = {
       target: detailTarget,
-      action: detailActions.join('・'),
-      position: detailPositions.join(''),
+      action: detailAction,
+      position: detailPosition,
       memo: detailOther,
       label: label,
       quantity: detailQuantity,
@@ -1285,8 +1183,8 @@ function InvoiceCreateContent() {
     
     // リセット
     setDetailTarget('')
-    setDetailActions([])
-    setDetailPositions([])
+    setDetailAction('')
+    setDetailPosition('')
     setDetailOther('')
     setDetailQuantity(1)
   }
@@ -2193,24 +2091,14 @@ function InvoiceCreateContent() {
                           onKeyDown={(e) => {
                             if (e.key === 'ArrowDown') {
                               e.preventDefault()
-                              const newIndex = selectedTargetIndex === -1 ? 0 : Math.min(selectedTargetIndex + 1, targetSuggestions.length - 1)
-                              setSelectedTargetIndex(newIndex)
-                              // 少し遅延してスクロール実行（スムーズに）
-                              setTimeout(() => {
-                                if (targetRefs.current[newIndex]) {
-                                  scrollToElement(targetRefs.current[newIndex])
-                                }
-                              }, 50)
+                              setSelectedTargetIndex(prev => 
+                                prev < targetSuggestions.length - 1 ? prev + 1 : 0
+                              )
                             } else if (e.key === 'ArrowUp') {
                               e.preventDefault()
-                              const newIndex = selectedTargetIndex === -1 ? 0 : Math.max(selectedTargetIndex - 1, 0)
-                              setSelectedTargetIndex(newIndex)
-                              // 少し遅延してスクロール実行（スムーズに）
-                              setTimeout(() => {
-                                if (targetRefs.current[newIndex]) {
-                                  scrollToElement(targetRefs.current[newIndex])
-                                }
-                              }, 50)
+                              setSelectedTargetIndex(prev => 
+                                prev > 0 ? prev - 1 : targetSuggestions.length - 1
+                              )
                             } else if (e.key === 'Enter') {
                               e.preventDefault()
                               if (selectedTargetIndex >= 0 && targetSuggestions[selectedTargetIndex]) {
@@ -2235,7 +2123,6 @@ function InvoiceCreateContent() {
                             {targetSuggestions.map((suggestion, index) => (
                               <button
                                 key={index}
-                                ref={(el) => (targetRefs.current[index] = el)}
                                 type="button"
                                 onClick={() => {
                                   setTarget(suggestion)
@@ -2255,310 +2142,27 @@ function InvoiceCreateContent() {
                           </div>
                         )}
                       </div>
-                      
-                      <div className="relative">
+                      <div>
                         <SimpleLabel>動作</SimpleLabel>
                         <input
                           type="text"
-                          value={actionSearch || actions.join('・')}
-                          onChange={(e) => {
-                            const value = e.target.value
-                            setActionSearch(value)
-                            
-                            if (value.trim() && target && TARGET_ACTIONS && TARGET_ACTIONS[target]) {
-                              // 対象に紐づく動作からフィルタ
-                              const filtered = TARGET_ACTIONS[target].filter(a => 
-                                fuzzyMatch(a, value)
-                              ).slice(0, 50)
-                              setActionSuggestions(filtered)
-                              setShowActionSuggestions(filtered.length > 0)
-                              setSelectedActionIndex(-1)
-                            } else if (value.trim() && ACTIONS) {
-                              // 全動作からフィルタ
-                              const filtered = ACTIONS.filter(a => 
-                                fuzzyMatch(a, value)
-                              ).slice(0, 50)
-                              setActionSuggestions(filtered)
-                              setShowActionSuggestions(filtered.length > 0)
-                              setSelectedActionIndex(-1)
-                            } else {
-                              setShowActionSuggestions(false)
-                            }
-                            
-                            if (value === '') {
-                              setActions([])
-                            }
-                          }}
-                          onFocus={() => {
-                            if (!actionSearch && target && TARGET_ACTIONS && TARGET_ACTIONS[target]) {
-                              setActionSuggestions(TARGET_ACTIONS[target].slice(0, 50))
-                              setShowActionSuggestions(true)
-                            } else if (!actionSearch && ACTIONS) {
-                              setActionSuggestions(ACTIONS.slice(0, 50))
-                              setShowActionSuggestions(true)
-                            }
-                          }}
-                          onBlur={() => setTimeout(() => setShowActionSuggestions(false), 200)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'ArrowDown') {
-                              e.preventDefault()
-                              const newIndex = selectedActionIndex === -1 ? 0 : Math.min(selectedActionIndex + 1, actionSuggestions.length - 1)
-                              setSelectedActionIndex(newIndex)
-                              // 少し遅延してスクロール実行（スムーズに）
-                              setTimeout(() => {
-                                if (actionRefs.current[newIndex]) {
-                                  scrollToElement(actionRefs.current[newIndex])
-                                }
-                              }, 50)
-                            } else if (e.key === 'ArrowUp') {
-                              e.preventDefault()
-                              const newIndex = selectedActionIndex === -1 ? 0 : Math.max(selectedActionIndex - 1, 0)
-                              setSelectedActionIndex(newIndex)
-                              // 少し遅延してスクロール実行（スムーズに）
-                              setTimeout(() => {
-                                if (actionRefs.current[newIndex]) {
-                                  scrollToElement(actionRefs.current[newIndex])
-                                }
-                              }, 50)
-                            } else if (e.key === 'Enter') {
-                              e.preventDefault()
-                              if (selectedActionIndex >= 0 && actionSuggestions[selectedActionIndex]) {
-                                const selectedAction = actionSuggestions[selectedActionIndex]
-                                setActions([selectedAction])
-                                setActionSearch('')
-                                setShowActionSuggestions(false)
-                                setSelectedActionIndex(-1)
-                                handleActionSelect(selectedAction)
-                              } else if (actionSearch.trim()) {
-                                setActions([actionSearch])
-                                setActionSearch('')
-                                setShowActionSuggestions(false)
-                              }
-                            } else if (e.key === 'Escape') {
-                              setShowActionSuggestions(false)
-                              setSelectedActionIndex(-1)
-                              setActionSearch('')
-                            }
-                          }}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                          placeholder="動作を検索... （ひらがな・カタカナ・英数字で検索可能）"
+                          value={action || ''}
+                          readOnly
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50"
+                          placeholder="対象を選択後、下のボタンで選択"
                         />
-                        {showActionSuggestions && actionSuggestions.length > 0 && (
-                          <div className="absolute z-20 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-80 overflow-y-auto">
-                            {actionSuggestions.map((suggestion, index) => (
-                              <button
-                                key={index}
-                                ref={(el) => (actionRefs.current[index] = el)}
-                                type="button"
-                                onClick={() => {
-                                  setActions([suggestion])
-                                  setActionSearch('')
-                                  setShowActionSuggestions(false)
-                                  setSelectedActionIndex(-1)
-                                  handleActionSelect(suggestion)
-                                }}
-                                className={`w-full text-left px-3 py-2 hover:bg-blue-50 ${
-                                  index === selectedActionIndex
-                                    ? 'bg-blue-100 text-blue-900'
-                                    : 'text-gray-900'
-                                }`}
-                              >
-                                {suggestion}
-                              </button>
-                            ))}
-                          </div>
-                        )}
                       </div>
-                      <div className="relative">
+                      <div>
                         <SimpleLabel>位置</SimpleLabel>
                         <input
                           type="text"
-                          value={positionSearch || positions.join('')}
-                          onChange={(e) => {
-                            const value = e.target.value
-                            setPositionSearch(value)
-                            
-                            if (value.trim() && actions.length > 0 && ACTION_POSITIONS && ACTION_POSITIONS[actions[0]]) {
-                              // 動作に紐づく位置からフィルタ
-                              const filtered = ACTION_POSITIONS[actions[0]].filter(p => 
-                                fuzzyMatch(p, value)
-                              ).slice(0, 50)
-                              setPositionSuggestions(filtered)
-                              setShowPositionSuggestions(filtered.length > 0)
-                              setSelectedPositionIndex(-1)
-                            } else if (value.trim() && POSITIONS) {
-                              // 全位置からフィルタ
-                              const filtered = POSITIONS.filter(p => 
-                                fuzzyMatch(p, value)
-                              ).slice(0, 50)
-                              setPositionSuggestions(filtered)
-                              setShowPositionSuggestions(filtered.length > 0)
-                              setSelectedPositionIndex(-1)
-                            } else {
-                              setShowPositionSuggestions(false)
-                            }
-                            
-                            if (value === '') {
-                              setPositions([])
-                            }
-                          }}
-                          onFocus={() => {
-                            if (!positionSearch && actions.length > 0 && ACTION_POSITIONS && ACTION_POSITIONS[actions[0]]) {
-                              setPositionSuggestions(ACTION_POSITIONS[actions[0]].slice(0, 50))
-                              setShowPositionSuggestions(true)
-                            } else if (!positionSearch && POSITIONS) {
-                              setPositionSuggestions(POSITIONS.slice(0, 50))
-                              setShowPositionSuggestions(true)
-                            }
-                          }}
-                          onBlur={() => setTimeout(() => setShowPositionSuggestions(false), 200)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'ArrowDown') {
-                              e.preventDefault()
-                              const newIndex = selectedPositionIndex === -1 ? 0 : Math.min(selectedPositionIndex + 1, positionSuggestions.length - 1)
-                              setSelectedPositionIndex(newIndex)
-                              // 少し遅延してスクロール実行（スムーズに）
-                              setTimeout(() => {
-                                if (positionRefs.current[newIndex]) {
-                                  scrollToElement(positionRefs.current[newIndex])
-                                }
-                              }, 50)
-                            } else if (e.key === 'ArrowUp') {
-                              e.preventDefault()
-                              const newIndex = selectedPositionIndex === -1 ? 0 : Math.max(selectedPositionIndex - 1, 0)
-                              setSelectedPositionIndex(newIndex)
-                              // 少し遅延してスクロール実行（スムーズに）
-                              setTimeout(() => {
-                                if (positionRefs.current[newIndex]) {
-                                  scrollToElement(positionRefs.current[newIndex])
-                                }
-                              }, 50)
-                            } else if (e.key === 'Enter') {
-                              e.preventDefault()
-                              if (selectedPositionIndex >= 0 && positionSuggestions[selectedPositionIndex]) {
-                                const selectedPosition = positionSuggestions[selectedPositionIndex]
-                                setPositions([selectedPosition])
-                                setPositionSearch('')
-                                setShowPositionSuggestions(false)
-                                setSelectedPositionIndex(-1)
-                              } else if (positionSearch.trim()) {
-                                setPositions([positionSearch])
-                                setPositionSearch('')
-                                setShowPositionSuggestions(false)
-                              }
-                            } else if (e.key === 'Escape') {
-                              setShowPositionSuggestions(false)
-                              setSelectedPositionIndex(-1)
-                              setPositionSearch('')
-                            }
-                          }}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                          placeholder="位置を検索... （ひらがな・カタカナ・英数字で検索可能）"
+                          value={position || ''}
+                          readOnly
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50"
+                          placeholder="動作選択後、下のボタンで選択"
                         />
-                        {showPositionSuggestions && positionSuggestions.length > 0 && (
-                          <div className="absolute z-20 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-80 overflow-y-auto">
-                            {positionSuggestions.map((suggestion, index) => (
-                              <button
-                                key={index}
-                                ref={(el) => (positionRefs.current[index] = el)}
-                                type="button"
-                                onClick={() => {
-                                  setPositions([suggestion])
-                                  setPositionSearch('')
-                                  setShowPositionSuggestions(false)
-                                  setSelectedPositionIndex(-1)
-                                }}
-                                className={`w-full text-left px-3 py-2 hover:bg-blue-50 ${
-                                  index === selectedPositionIndex
-                                    ? 'bg-blue-100 text-blue-900'
-                                    : 'text-gray-900'
-                                }`}
-                              >
-                                {suggestion}
-                              </button>
-                            ))}
-                          </div>
-                        )}
                       </div>
                     </div>
-                    
-                    {/* 対象・動作・位置の入力補助パネル（3列レイアウトの下に配置） */}
-                    {isTargetConfirmed && target && (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
-                        <div>
-                          <div className="text-sm font-medium text-gray-700 mb-2">動作（クリックで入力）:</div>
-                          <div className="flex flex-wrap gap-1">
-                            {(TARGET_ACTIONS && TARGET_ACTIONS[target] ? TARGET_ACTIONS[target] : ACTIONS || []).map((a) => {
-                              const price = priceBookMap?.[`${target}_${a}`]
-                              return (
-                                <button
-                                  key={a}
-                                  type="button"
-                                  onClick={() => {
-                                    if (a === '（指定なし）') {
-                                      // 何もしない（動作未設定のまま進む）
-                                      return
-                                    } else {
-                                      if (actions.includes(a)) {
-                                        setActions(actions.filter(act => act !== a))
-                                      } else if (actions.length < 3) {
-                                        setActions([...actions, a])
-                                      }
-                                    }
-                                  }}
-                                  className={`px-2 py-1 text-xs rounded border text-left transition-colors ${
-                                    a === '（指定なし）' 
-                                      ? (actions.length === 0 
-                                        ? "bg-gray-200 border-gray-400 text-gray-700"
-                                        : "bg-gray-100 hover:bg-gray-200 border-gray-300")
-                                      : (actions.includes(a)
-                                        ? "bg-blue-100 border-blue-300 text-blue-800"
-                                        : "bg-gray-100 hover:bg-blue-100 border-gray-300")
-                                  }`}
-                                >
-                                  <div>{a}</div>
-                                  {price && price > 0 && (
-                                    <div className="text-blue-600">¥{price.toLocaleString()}</div>
-                                  )}
-                                </button>
-                              )
-                            })}
-                          </div>
-                        </div>
-                        <div>
-                          <div className="text-sm font-medium text-gray-700 mb-2">位置（クリックで入力）:</div>
-                          <div className="flex flex-wrap gap-1">
-                            {target.trim() ? (
-                              (actions.length > 0 && ACTION_POSITIONS && ACTION_POSITIONS[actions[0]] 
-                                ? ACTION_POSITIONS[actions[0]] 
-                                : POSITIONS || []
-                              ).map((p) => (
-                                <button
-                                  key={p}
-                                  type="button"
-                                  onClick={() => {
-                                    if (positions.includes(p)) {
-                                      setPositions(positions.filter(pos => pos !== p))
-                                    } else if (positions.length < 5) {
-                                      setPositions([...positions, p])
-                                    }
-                                  }}
-                                  className={`px-2 py-1 text-xs rounded border transition-colors ${
-                                    positions.includes(p)
-                                      ? "bg-blue-500 text-white border-blue-600"
-                                      : "bg-gray-100 hover:bg-blue-100 border-gray-300"
-                                  }`}
-                                >
-                                  {p}
-                                </button>
-                              ))
-                            ) : (
-                              <div className="text-xs text-gray-500 py-1">まず対象を入力してください</div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    )}
                     
                     {/* スマホ: 対象・動作を1行、位置・その他を1行 */}
                     <div className="md:hidden space-y-3 mb-4">
@@ -2627,17 +2231,10 @@ function InvoiceCreateContent() {
                           <SimpleLabel>動作</SimpleLabel>
                           <input
                             type="text"
-                            value={actions.join('・')}
-                            onChange={(e) => {
-                              const value = e.target.value
-                              if (value === '') {
-                                setActions([])
-                              } else {
-                                setActions(value.split('・').filter(v => v.trim()))
-                              }
-                            }}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            placeholder="直接入力またはボタンで選択（複数は「・」区切り）"
+                            value={action || ''}
+                            readOnly
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50"
+                            placeholder="対象を選択後、下のボタンで選択"
                           />
                         </div>
                       </div>
@@ -2648,13 +2245,10 @@ function InvoiceCreateContent() {
                           <SimpleLabel>位置</SimpleLabel>
                           <input
                             type="text"
-                            value={positions.join('')}
-                            onChange={(e) => {
-                              const value = e.target.value
-                              setPositions(value ? [value] : [])
-                            }}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            placeholder="直接入力またはボタンで選択"
+                            value={position || ''}
+                            readOnly
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50"
+                            placeholder="動作選択後、下のボタンで選択"
                           />
                         </div>
                         <div>
@@ -2707,27 +2301,11 @@ function InvoiceCreateContent() {
                           min="1"
                         />
                       </div>
-                      <div className="flex justify-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setTarget('')
-                            setActions([])
-                            setPositions([])
-                            setWorkMemo('')
-                            setUnitPrice('')
-                            setQty(1)
-                            setIsTargetConfirmed(false)
-                          }}
-                          className="h-10 w-10 bg-gray-500 text-white rounded-lg hover:bg-gray-600 flex items-center justify-center"
-                          title="入力をクリア"
-                        >
-                          ×
-                        </button>
+                      <div className="flex justify-center">
                         <button
                           type="button"
                           onClick={addStructured}
-                          className="h-10 px-4 bg-green-600 text-white rounded-lg hover:bg-green-700 whitespace-nowrap"
+                          className="h-10 px-4 bg-green-600 text-white rounded-lg hover:bg-green-700"
                         >
                           追加
                         </button>
@@ -2736,7 +2314,7 @@ function InvoiceCreateContent() {
                     
                     {/* スマホ: 単価・数量を横並び、追加ボタンを右側 */}
                     <div className="md:hidden mb-4">
-                      <div className="grid grid-cols-4 gap-2 items-end">
+                      <div className="grid grid-cols-3 gap-3 items-end">
                         <div>
                           <SimpleLabel>単価</SimpleLabel>
                           <input
@@ -2748,44 +2326,19 @@ function InvoiceCreateContent() {
                               const value = e.target.value.replace(/[^0-9]/g, '')
                               setUnitPrice(value || '0')
                             }}
-                            className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                            placeholder="金額"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="金額を入力してください"
                           />
                         </div>
-                        <div className="w-16">
+                        <div>
                           <SimpleLabel>数量</SimpleLabel>
                           <input
                             type="number"
                             value={qty}
                             onChange={(e) => setQty(Number(e.target.value))}
-                            className="w-full px-1 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                             min="1"
                           />
-                        </div>
-                        <div>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setTarget('')
-                              setActions([])
-                              setPositions([])
-                              setWorkMemo('')
-                              setUnitPrice('')
-                              setQty(1)
-                              setIsTargetConfirmed(false)
-                              // 検索状態もクリア
-                              setActionSearch('')
-                              setPositionSearch('')
-                              setShowActionSuggestions(false)
-                              setShowPositionSuggestions(false)
-                              setSelectedActionIndex(-1)
-                              setSelectedPositionIndex(-1)
-                            }}
-                            className="h-9 w-9 bg-gray-500 text-white rounded-lg hover:bg-gray-600 flex items-center justify-center text-sm"
-                            title="入力をクリア"
-                          >
-                            ×
-                          </button>
                         </div>
                         <div>
                           <button
@@ -2825,13 +2378,65 @@ function InvoiceCreateContent() {
                       )}
                     </div>
                     
+                    {isTargetConfirmed && target && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                          <div className="text-sm font-medium text-gray-700 mb-2">動作（クリックで入力）:</div>
+                          <div className="flex flex-wrap gap-1">
+                            {(TARGET_ACTIONS && TARGET_ACTIONS[target] ? TARGET_ACTIONS[target] : ACTIONS || []).map((a) => {
+                              const price = priceBookMap?.[`${target}_${a}`]
+                              return (
+                                <button
+                                  key={a}
+                                  type="button"
+                                  onClick={() => handleActionSelect(a)}
+                                  className={`px-2 py-1 text-xs rounded border text-left transition-colors ${
+                                    action === a
+                                      ? "bg-blue-100 border-blue-300 text-blue-800"
+                                      : "bg-gray-100 hover:bg-blue-100 border-gray-300"
+                                  }`}
+                                >
+                                  <div>{a}</div>
+                                  {price && price > 0 && (
+                                    <div className="text-blue-600">¥{price.toLocaleString()}</div>
+                                  )}
+                                </button>
+                              )
+                            })}
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-sm font-medium text-gray-700 mb-2">位置（クリックで入力）:</div>
+                          <div className="flex flex-wrap gap-1">
+                            {action ? (
+                              (ACTION_POSITIONS && ACTION_POSITIONS[action] ? ACTION_POSITIONS[action] : POSITIONS || []).map((p) => (
+                                <button
+                                  key={p}
+                                  type="button"
+                                  onClick={() => handlePositionSelect(p)}
+                                  className={`px-2 py-1 text-xs rounded border transition-colors ${
+                                    selectedPositions.includes(p)
+                                      ? "bg-blue-500 text-white border-blue-600"
+                                      : "bg-gray-100 hover:bg-blue-100 border-gray-300"
+                                  }`}
+                                >
+                                  {p}
+                                </button>
+                              ))
+                            ) : (
+                              <div className="text-xs text-gray-500 py-1">まず動作を選択してください</div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
                       
                       {/* 作業名表示（自動生成） */}
-                      {target && actions.length > 0 && (
+                      {target && action && (
                         <div className="mb-4">
                           <SimpleLabel>作業名プレビュー</SimpleLabel>
                           <div className="px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-700 font-medium">
-                            {composedLabel(target, actions, positions, workMemo)}
+                            {composedLabel(target, action, position, workMemo)}
                           </div>
                         </div>
                       )}
@@ -2898,7 +2503,6 @@ function InvoiceCreateContent() {
                                 onChange={(e) => {
                                   const value = e.target.value
                                   setDetailTarget(value)
-                                  setIsDetailTargetConfirmed(false)
                                   
                                   if (value.trim() && TARGETS) {
                                     const filtered = TARGETS.filter(t => 
@@ -2922,24 +2526,14 @@ function InvoiceCreateContent() {
                                 onKeyDown={(e) => {
                                   if (e.key === 'ArrowDown') {
                                     e.preventDefault()
-                                    const newIndex = selectedDetailTargetIndex === -1 ? 0 : Math.min(selectedDetailTargetIndex + 1, detailTargetSuggestions.length - 1)
-                                    setSelectedDetailTargetIndex(newIndex)
-                                    // スクロール実行
-                                    setTimeout(() => {
-                                      if (detailTargetRefs.current[newIndex]) {
-                                        scrollToElement(detailTargetRefs.current[newIndex])
-                                      }
-                                    }, 50)
+                                    setSelectedDetailTargetIndex(prev => 
+                                      prev < detailTargetSuggestions.length - 1 ? prev + 1 : 0
+                                    )
                                   } else if (e.key === 'ArrowUp') {
                                     e.preventDefault()
-                                    const newIndex = selectedDetailTargetIndex === -1 ? 0 : Math.max(selectedDetailTargetIndex - 1, 0)
-                                    setSelectedDetailTargetIndex(newIndex)
-                                    // スクロール実行
-                                    setTimeout(() => {
-                                      if (detailTargetRefs.current[newIndex]) {
-                                        scrollToElement(detailTargetRefs.current[newIndex])
-                                      }
-                                    }, 50)
+                                    setSelectedDetailTargetIndex(prev => 
+                                      prev > 0 ? prev - 1 : detailTargetSuggestions.length - 1
+                                    )
                                   } else if (e.key === 'Enter') {
                                     e.preventDefault()
                                     if (selectedDetailTargetIndex >= 0 && detailTargetSuggestions[selectedDetailTargetIndex]) {
@@ -2960,11 +2554,9 @@ function InvoiceCreateContent() {
                                   {detailTargetSuggestions.map((suggestion, index) => (
                                     <button
                                       key={index}
-                                      ref={(el) => (detailTargetRefs.current[index] = el)}
                                       type="button"
                                       onClick={() => {
                                         setDetailTarget(suggestion)
-                                        setIsDetailTargetConfirmed(true)
                                         setShowDetailTargetSuggestions(false)
                                         setSelectedDetailTargetIndex(-1)
                                       }}
@@ -2984,223 +2576,146 @@ function InvoiceCreateContent() {
                               <SimpleLabel>動作</SimpleLabel>
                               <input
                                 type="text"
-                                value={detailActionSearch || detailActions.join('・')}
+                                value={detailAction}
                                 onChange={(e) => {
                                   const value = e.target.value
-                                  setDetailActionSearch(value)
+                                  setDetailAction(value)
                                   
                                   if (value.trim() && detailTarget && TARGET_ACTIONS && TARGET_ACTIONS[detailTarget]) {
-                                    // 対象に紐づく動作からフィルタ
                                     const filtered = TARGET_ACTIONS[detailTarget].filter(a => 
                                       fuzzyMatch(a, value)
-                                    ).slice(0, 50)
+                                    ).slice(0, 80)
                                     setDetailActionSuggestions(filtered)
                                     setShowDetailActionSuggestions(filtered.length > 0)
-                                    setSelectedDetailActionIndex(-1)
                                   } else if (value.trim() && ACTIONS) {
-                                    // 全動作からフィルタ
                                     const filtered = ACTIONS.filter(a => 
                                       fuzzyMatch(a, value)
-                                    ).slice(0, 50)
+                                    ).slice(0, 80)
                                     setDetailActionSuggestions(filtered)
                                     setShowDetailActionSuggestions(filtered.length > 0)
-                                    setSelectedDetailActionIndex(-1)
                                   } else {
                                     setShowDetailActionSuggestions(false)
                                   }
-                                  
-                                  if (value === '') {
-                                    setDetailActions([])
-                                  }
                                 }}
                                 onFocus={() => {
-                                  if (!detailActionSearch && detailTarget && TARGET_ACTIONS && TARGET_ACTIONS[detailTarget]) {
-                                    setDetailActionSuggestions(TARGET_ACTIONS[detailTarget].slice(0, 50))
-                                    setShowDetailActionSuggestions(true)
-                                  } else if (!detailActionSearch && ACTIONS) {
-                                    setDetailActionSuggestions(ACTIONS.slice(0, 50))
+                                  const actions = detailTarget && TARGET_ACTIONS && TARGET_ACTIONS[detailTarget] 
+                                    ? TARGET_ACTIONS[detailTarget] 
+                                    : ACTIONS || []
+                                  if (actions.length > 0 && !detailAction.trim()) {
+                                    setDetailActionSuggestions(actions.slice(0, 80))
                                     setShowDetailActionSuggestions(true)
                                   }
                                 }}
                                 onBlur={() => setTimeout(() => setShowDetailActionSuggestions(false), 200)}
-                                onKeyDown={(e) => {
-                                  if (e.key === 'ArrowDown') {
-                                    e.preventDefault()
-                                    const newIndex = selectedDetailActionIndex === -1 ? 0 : Math.min(selectedDetailActionIndex + 1, detailActionSuggestions.length - 1)
-                                    setSelectedDetailActionIndex(newIndex)
-                                    // スクロール実行
-                                    setTimeout(() => {
-                                      if (detailActionRefs.current[newIndex]) {
-                                        scrollToElement(detailActionRefs.current[newIndex])
-                                      }
-                                    }, 50)
-                                  } else if (e.key === 'ArrowUp') {
-                                    e.preventDefault()
-                                    const newIndex = selectedDetailActionIndex === -1 ? 0 : Math.max(selectedDetailActionIndex - 1, 0)
-                                    setSelectedDetailActionIndex(newIndex)
-                                    // スクロール実行
-                                    setTimeout(() => {
-                                      if (detailActionRefs.current[newIndex]) {
-                                        scrollToElement(detailActionRefs.current[newIndex])
-                                      }
-                                    }, 50)
-                                  } else if (e.key === 'Enter') {
-                                    e.preventDefault()
-                                    if (selectedDetailActionIndex >= 0 && detailActionSuggestions[selectedDetailActionIndex]) {
-                                      const selectedAction = detailActionSuggestions[selectedDetailActionIndex]
-                                      setDetailActions([selectedAction])
-                                      setDetailActionSearch('')
-                                      setShowDetailActionSuggestions(false)
-                                      setSelectedDetailActionIndex(-1)
-                                    } else if (detailActionSearch.trim()) {
-                                      setDetailActions([detailActionSearch])
-                                      setDetailActionSearch('')
-                                      setShowDetailActionSuggestions(false)
-                                    }
-                                  } else if (e.key === 'Escape') {
-                                    setShowDetailActionSuggestions(false)
-                                    setSelectedDetailActionIndex(-1)
-                                    setDetailActionSearch('')
-                                  }
-                                }}
                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                                placeholder="動作を検索... （ひらがな・カタカナ・英数字で検索可能）"
+                                placeholder="動作"
                               />
                               {showDetailActionSuggestions && detailActionSuggestions.length > 0 && (
                                 <div className="absolute z-30 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-80 overflow-y-auto">
                                   {detailActionSuggestions.map((suggestion, index) => (
                                     <button
                                       key={index}
-                                      ref={(el) => (detailActionRefs.current[index] = el)}
                                       type="button"
                                       onClick={() => {
-                                        setDetailActions([suggestion])
-                                        setDetailActionSearch('')
+                                        setDetailAction(suggestion)
                                         setShowDetailActionSuggestions(false)
-                                        setSelectedDetailActionIndex(-1)
                                       }}
-                                      className={`w-full text-left px-3 py-2 hover:bg-blue-50 text-sm ${
-                                        index === selectedDetailActionIndex
-                                          ? 'bg-blue-100 text-blue-900'
-                                          : 'text-gray-900'
-                                      }`}
+                                      className="w-full px-3 py-2 text-left hover:bg-blue-50 first:rounded-t-lg last:rounded-b-lg text-sm"
                                     >
                                       {suggestion}
                                     </button>
                                   ))}
+                                </div>
+                              )}
+                              
+                              {/* 対象選択後の動作ボタン表示 */}
+                              {detailTarget && TARGET_ACTIONS && TARGET_ACTIONS[detailTarget] && (
+                                <div className="mt-2">
+                                  <div className="text-xs text-gray-600 mb-1">動作を選択（クリック）:</div>
+                                  <div className="flex flex-wrap gap-1">
+                                    {TARGET_ACTIONS[detailTarget].map((action) => (
+                                      <button
+                                        key={action}
+                                        type="button"
+                                        onClick={() => {
+                                          setDetailAction(action)
+                                          // 動作選択時に単価を自動取得
+                                          const priceKey = `${detailTarget}_${action}`
+                                          const price = priceBookMap?.[priceKey]
+                                          if (price && price > 0) {
+                                            // セット価格は個別価格の合計として計算される想定なので、
+                                            // 明細個別の単価は参考として表示のみ
+                                            // // console.log(`価格情報: ${priceKey} = ${price}円`)
+                                          }
+                                        }}
+                                        className={`px-2 py-1 text-xs rounded border transition-colors ${
+                                          detailAction === action
+                                            ? "bg-blue-100 border-blue-300 text-blue-800"
+                                            : "bg-gray-100 hover:bg-blue-100 border-gray-300"
+                                        }`}
+                                      >
+                                        {action}
+                                        {/* 価格表示 */}
+                                        {(() => {
+                                          const priceKey = `${detailTarget}_${action}`
+                                          const price = priceBookMap?.[priceKey]
+                                          return price ? (
+                                            <span className="ml-1 text-xs text-gray-500">
+                                              (¥{price.toLocaleString()})
+                                            </span>
+                                          ) : null
+                                        })()}
+                                      </button>
+                                    ))}
+                                  </div>
                                 </div>
                               )}
                             </div>
-                            <div className="relative">
+                            <div>
                               <SimpleLabel>位置</SimpleLabel>
                               <input
                                 type="text"
-                                value={detailPositionSearch || detailPositions.join('')}
-                                onChange={(e) => {
-                                  const value = e.target.value
-                                  setDetailPositionSearch(value)
-                                  
-                                  if (value.trim() && detailActions.length > 0 && ACTION_POSITIONS && ACTION_POSITIONS[detailActions[0]]) {
-                                    // 動作に紐づく位置からフィルタ
-                                    const filtered = ACTION_POSITIONS[detailActions[0]].filter(p => 
-                                      fuzzyMatch(p, value)
-                                    ).slice(0, 50)
-                                    setDetailPositionSuggestions(filtered)
-                                    setShowDetailPositionSuggestions(filtered.length > 0)
-                                    setSelectedDetailPositionIndex(-1)
-                                  } else if (value.trim() && POSITIONS) {
-                                    // 全位置からフィルタ
-                                    const filtered = POSITIONS.filter(p => 
-                                      fuzzyMatch(p, value)
-                                    ).slice(0, 50)
-                                    setDetailPositionSuggestions(filtered)
-                                    setShowDetailPositionSuggestions(filtered.length > 0)
-                                    setSelectedDetailPositionIndex(-1)
-                                  } else {
-                                    setShowDetailPositionSuggestions(false)
-                                  }
-                                  
-                                  if (value === '') {
-                                    setDetailPositions([])
-                                  }
-                                }}
-                                onFocus={() => {
-                                  if (!detailPositionSearch && detailActions.length > 0 && ACTION_POSITIONS && ACTION_POSITIONS[detailActions[0]]) {
-                                    setDetailPositionSuggestions(ACTION_POSITIONS[detailActions[0]].slice(0, 50))
-                                    setShowDetailPositionSuggestions(true)
-                                  } else if (!detailPositionSearch && POSITIONS) {
-                                    setDetailPositionSuggestions(POSITIONS.slice(0, 50))
-                                    setShowDetailPositionSuggestions(true)
-                                  }
-                                }}
-                                onBlur={() => setTimeout(() => setShowDetailPositionSuggestions(false), 200)}
-                                onKeyDown={(e) => {
-                                  if (e.key === 'ArrowDown') {
-                                    e.preventDefault()
-                                    const newIndex = selectedDetailPositionIndex === -1 ? 0 : Math.min(selectedDetailPositionIndex + 1, detailPositionSuggestions.length - 1)
-                                    setSelectedDetailPositionIndex(newIndex)
-                                    // スクロール実行
-                                    setTimeout(() => {
-                                      if (detailPositionRefs.current[newIndex]) {
-                                        scrollToElement(detailPositionRefs.current[newIndex])
-                                      }
-                                    }, 50)
-                                  } else if (e.key === 'ArrowUp') {
-                                    e.preventDefault()
-                                    const newIndex = selectedDetailPositionIndex === -1 ? 0 : Math.max(selectedDetailPositionIndex - 1, 0)
-                                    setSelectedDetailPositionIndex(newIndex)
-                                    // スクロール実行
-                                    setTimeout(() => {
-                                      if (detailPositionRefs.current[newIndex]) {
-                                        scrollToElement(detailPositionRefs.current[newIndex])
-                                      }
-                                    }, 50)
-                                  } else if (e.key === 'Enter') {
-                                    e.preventDefault()
-                                    if (selectedDetailPositionIndex >= 0 && detailPositionSuggestions[selectedDetailPositionIndex]) {
-                                      const selectedPosition = detailPositionSuggestions[selectedDetailPositionIndex]
-                                      setDetailPositions([selectedPosition])
-                                      setDetailPositionSearch('')
-                                      setShowDetailPositionSuggestions(false)
-                                      setSelectedDetailPositionIndex(-1)
-                                    } else if (detailPositionSearch.trim()) {
-                                      setDetailPositions([detailPositionSearch])
-                                      setDetailPositionSearch('')
-                                      setShowDetailPositionSuggestions(false)
-                                    }
-                                  } else if (e.key === 'Escape') {
-                                    setShowDetailPositionSuggestions(false)
-                                    setSelectedDetailPositionIndex(-1)
-                                    setDetailPositionSearch('')
-                                  }
-                                }}
+                                value={detailPosition}
+                                onChange={(e) => setDetailPosition(e.target.value)}
                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                                placeholder="位置を検索... （ひらがな・カタカナ・英数字で検索可能）"
+                                placeholder="位置"
                               />
-                              {showDetailPositionSuggestions && detailPositionSuggestions.length > 0 && (
-                                <div className="absolute z-30 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-80 overflow-y-auto">
-                                  {detailPositionSuggestions.map((suggestion, index) => (
-                                    <button
-                                      key={index}
-                                      ref={(el) => (detailPositionRefs.current[index] = el)}
-                                      type="button"
-                                      onClick={() => {
-                                        setDetailPositions([suggestion])
-                                        setDetailPositionSearch('')
-                                        setShowDetailPositionSuggestions(false)
-                                        setSelectedDetailPositionIndex(-1)
-                                      }}
-                                      className={`w-full text-left px-3 py-2 hover:bg-blue-50 text-sm ${
-                                        index === selectedDetailPositionIndex
-                                          ? 'bg-blue-100 text-blue-900'
-                                          : 'text-gray-900'
-                                      }`}
-                                    >
-                                      {suggestion}
-                                    </button>
-                                  ))}
-                                </div>
-                              )}
+                              
+                              {/* 位置複数選択ボタン（対象・動作の関連設定に基づいて表示） */}
+                              {detailTarget && detailAction && (() => {
+                                // 動作に基づく位置の絞り込み
+                                const applicablePositions = ACTION_POSITIONS && ACTION_POSITIONS[detailAction]
+                                  ? ACTION_POSITIONS[detailAction]
+                                  : POSITIONS || []
+                                
+                                return applicablePositions.length > 0 && (
+                                  <div className="mt-2">
+                                    <div className="text-xs text-gray-600 mb-1">位置を選択（クリック）:</div>
+                                    <div className="flex flex-wrap gap-1">
+                                      {applicablePositions.map((pos) => (
+                                        <button
+                                          key={pos}
+                                          type="button"
+                                          onClick={() => {
+                                            const currentPositions = detailPosition ? detailPosition.split(',').map(p => p.trim()) : []
+                                            const newPositions = currentPositions.includes(pos) 
+                                              ? currentPositions.filter(p => p !== pos)
+                                              : [...currentPositions, pos]
+                                            setDetailPosition(newPositions.join(', '))
+                                          }}
+                                          className={`px-2 py-1 text-xs rounded border transition-colors ${
+                                            detailPosition && detailPosition.split(',').map(p => p.trim()).includes(pos)
+                                              ? "bg-blue-100 border-blue-300 text-blue-800"
+                                              : "bg-gray-100 hover:bg-blue-100 border-gray-300"
+                                          }`}
+                                        >
+                                          {pos}
+                                        </button>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )
+                              })()}
                             </div>
                             <div>
                               <SimpleLabel>その他</SimpleLabel>
@@ -3212,144 +2727,29 @@ function InvoiceCreateContent() {
                                 placeholder="その他"
                               />
                             </div>
-                            <div className="w-20">
+                            <div>
                               <SimpleLabel>数量</SimpleLabel>
                               <input
                                 type="number"
                                 value={detailQuantity}
                                 onChange={(e) => setDetailQuantity(Number(e.target.value) || 1)}
-                                className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                                placeholder="1"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                                placeholder="数量"
                                 min="1"
                               />
                             </div>
-                            <div className="flex justify-center items-end gap-2">
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setDetailTarget('')
-                                  setDetailActions([])
-                                  setDetailPositions([])
-                                  setDetailOther('')
-                                  setDetailQuantity(1)
-                                  // 検索状態もクリア
-                                  setDetailActionSearch('')
-                                  setDetailPositionSearch('')
-                                  setShowDetailActionSuggestions(false)
-                                  setShowDetailPositionSuggestions(false)
-                                  setSelectedDetailActionIndex(-1)
-                                  setSelectedDetailPositionIndex(-1)
-                                  setShowDetailTargetSuggestions(false)
-                                  setSelectedDetailTargetIndex(-1)
-                                  setIsDetailTargetConfirmed(false)
-                                }}
-                                className="h-9 w-9 bg-gray-500 text-white rounded-lg hover:bg-gray-600 text-sm mt-6 flex items-center justify-center"
-                                title="入力をクリア"
-                              >
-                                ×
-                              </button>
+                            <div className="flex justify-center items-end">
                               <button
                                 type="button"
                                 onClick={addSetDetail}
                                 disabled={!detailTarget.trim()}
-                                className="h-9 px-4 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400 text-sm mt-6 whitespace-nowrap"
+                                className="h-9 px-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400 text-sm mt-6"
                               >
                                 明細追加
                               </button>
                             </div>
                           </div>
                         </div>
-
-                        {/* セット明細の入力補助ボタン */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                          <div>
-                            <div className="text-sm font-medium text-gray-700 mb-2">動作（クリックで入力）:</div>
-                            <div className="flex flex-wrap gap-1">
-                              {(detailTarget && TARGET_ACTIONS && TARGET_ACTIONS[detailTarget] ? TARGET_ACTIONS[detailTarget] : ACTIONS || []).map((a) => {
-                                const price = priceBookMap?.[`${detailTarget}_${a}`]
-                                return (
-                                  <button
-                                    key={a}
-                                    type="button"
-                                    onClick={() => {
-                                      if (a === '（指定なし）') {
-                                        // 何もしない（動作未設定のまま進む）
-                                        return
-                                      } else {
-                                        if (detailActions.includes(a)) {
-                                          setDetailActions(detailActions.filter(act => act !== a))
-                                        } else if (detailActions.length < 3) {
-                                          setDetailActions([...detailActions, a])
-                                        }
-                                      }
-                                    }}
-                                    className={`px-2 py-1 text-xs rounded border text-left transition-colors ${
-                                      a === '（指定なし）' 
-                                        ? (detailActions.length === 0 
-                                          ? "bg-gray-200 border-gray-400 text-gray-700"
-                                          : "bg-gray-100 hover:bg-gray-200 border-gray-300")
-                                        : (detailActions.includes(a)
-                                          ? "bg-blue-100 border-blue-300 text-blue-800"
-                                          : "bg-gray-100 hover:bg-blue-100 border-gray-300")
-                                    }`}
-                                  >
-                                    <div>{a}</div>
-                                    {price && price > 0 && (
-                                      <div className="text-blue-600">¥{price.toLocaleString()}</div>
-                                    )}
-                                  </button>
-                                )
-                              })}
-                            </div>
-                          </div>
-                          <div>
-                            <div className="text-sm font-medium text-gray-700 mb-2">位置（クリックで入力）:</div>
-                            <div className="flex flex-wrap gap-1 min-h-[2rem]">
-                              {detailTarget.trim() ? (
-                                (detailActions.length > 0 && ACTION_POSITIONS && ACTION_POSITIONS[detailActions[0]] 
-                                  ? ACTION_POSITIONS[detailActions[0]] 
-                                  : POSITIONS || []
-                                ).map((p) => (
-                                  <button
-                                    key={p}
-                                    type="button"
-                                    onClick={() => {
-                                      if (detailPositions.includes(p)) {
-                                        setDetailPositions(detailPositions.filter(pos => pos !== p))
-                                      } else if (detailPositions.length < 5) {
-                                        setDetailPositions([...detailPositions, p])
-                                      }
-                                    }}
-                                    className={`px-2 py-1 text-xs rounded border transition-colors ${
-                                      detailPositions.includes(p)
-                                        ? "bg-blue-500 text-white border-blue-600"
-                                        : "bg-gray-100 hover:bg-blue-100 border-gray-300"
-                                    }`}
-                                  >
-                                    {p}
-                                  </button>
-                                ))
-                              ) : (
-                                <div className="text-xs text-gray-500 py-1">まず対象を入力してください</div>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* セット明細プレビュー */}
-                        {detailTarget.trim() && (
-                          <div className="mb-4">
-                            <SimpleLabel>明細プレビュー</SimpleLabel>
-                            <div className="px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-700 font-medium">
-                              {composedLabel(detailTarget, detailActions, detailPositions, detailOther)}
-                              {detailQuantity > 1 && (
-                                <span className="bg-gray-300 px-1 rounded text-xs ml-2">
-                                  数量: {detailQuantity}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        )}
 
                         {/* セット追加ボタン */}
                         <div className="flex justify-center mb-4">
@@ -3371,17 +2771,10 @@ function InvoiceCreateContent() {
                           {setDetails.map((detail, index) => (
                             <div key={index} className="flex justify-between items-center p-2 bg-gray-50 rounded text-sm">
                               <div className="flex-1">
-                                <div className="flex items-center gap-2">
-                                  <span>{detail.label}</span>
-                                  {detail.quantity && detail.quantity >= 1 && (
-                                    <span className="text-xs text-gray-500 bg-gray-200 px-2 py-1 rounded">
-                                      数量: {detail.quantity}
-                                    </span>
-                                  )}
-                                </div>
-                                {detail.unitPrice != null && detail.unitPrice > 0 && (
+                                <div>{detail.label}</div>
+                                {detail.unitPrice && detail.unitPrice > 0 && (
                                   <div className="text-xs text-blue-600 mt-1">
-                                    ¥{detail.unitPrice.toLocaleString()}
+                                    ¥{(detail.unitPrice || 0).toLocaleString()}
                                   </div>
                                 )}
                               </div>
@@ -3441,14 +2834,7 @@ function InvoiceCreateContent() {
                                 <div className="text-sm text-gray-600 mb-1">セット詳細:</div>
                                 <ul className="text-sm text-gray-700 list-disc list-inside">
                                   {item.set_details.map((detail, detailIndex) => (
-                                    <li key={detailIndex} className="flex items-center gap-2">
-                                      <span>{typeof detail === 'string' ? detail : detail.label}</span>
-                                      {typeof detail === 'object' && detail.quantity && detail.quantity >= 1 && (
-                                        <span className="text-xs text-gray-500 bg-gray-200 px-2 py-1 rounded">
-                                          数量: {detail.quantity}
-                                        </span>
-                                      )}
-                                    </li>
+                                    <li key={detailIndex}>{detail}</li>
                                   ))}
                                 </ul>
                               </div>
@@ -3461,6 +2847,12 @@ function InvoiceCreateContent() {
                                 金額: ¥{(item.amount || 0).toLocaleString()}
                               </div>
                             </div>
+                            
+                            {item.memo && (
+                              <div className="mt-2 text-sm text-gray-600">
+                                メモ: {item.memo}
+                              </div>
+                            )}
                           </div>
                           
                           <button
@@ -3501,18 +2893,18 @@ function InvoiceCreateContent() {
               </h2>
               
               <div className="space-y-4">
-                <div className="flex justify-between items-center py-3">
-                  <span className="text-lg font-bold">合計（内税）:</span>
-                  <span className="text-xl font-bold text-blue-600">¥{totalAmount.toLocaleString()}</span>
+                <div className="flex justify-between items-center py-2">
+                  <span className="text-gray-600">小計:</span>
+                  <span className="font-semibold text-lg">¥{subtotal.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between items-center py-2">
+                  <span className="text-gray-600">消費税 (10%):</span>
+                  <span className="font-semibold text-lg">¥{taxAmount.toLocaleString()}</span>
                 </div>
                 <hr className="border-gray-300" />
-                <div className="flex justify-between items-center py-2 text-sm">
-                  <span className="text-gray-600">うち消費税 (10%):</span>
-                  <span className="font-medium">¥{taxAmount.toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between items-center py-2 text-sm">
-                  <span className="text-gray-600">本体価格:</span>
-                  <span className="font-medium">¥{subtotal.toLocaleString()}</span>
+                <div className="flex justify-between items-center py-3">
+                  <span className="text-lg font-bold">合計:</span>
+                  <span className="text-xl font-bold text-blue-600">¥{totalAmount.toLocaleString()}</span>
                 </div>
               </div>
               

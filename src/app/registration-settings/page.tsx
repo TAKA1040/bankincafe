@@ -113,21 +113,31 @@ export default function RegistrationSettingsPage() {
   const endItem = Math.min(currentPage * itemsPerPage, totalCount)
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="mb-8">
-          <div className="flex items-center gap-4 mb-4">
-            <button
-              onClick={() => router.push('/')}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2 font-medium"
-            >
-              <Home size={20} />
-              メニューへ
-            </button>
+        {/* ヘッダー */}
+        <header className="bg-white rounded-lg shadow-sm p-6 mb-6">
+          <div className="flex justify-between items-center">
+            <h1 className="text-2xl font-bold text-gray-800">登録番号マスタ管理</h1>
+            <div className="flex gap-2">
+              <button
+                onClick={() => router.back()}
+                className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 flex items-center gap-2 font-medium"
+              >
+                <ArrowLeft size={20} />
+                戻る
+              </button>
+              <button
+                onClick={() => router.push('/')}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2 font-medium"
+              >
+                <Home size={20} />
+                メニューへ
+              </button>
+            </div>
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">登録番号マスタ管理</h1>
-          <p className="text-gray-600">車両の登録番号と使用頻度を管理します</p>
-        </div>
+          <p className="text-gray-600 mt-2">車両の登録番号と使用頻度を管理します</p>
+        </header>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className="bg-white rounded-lg shadow p-6">
@@ -182,13 +192,14 @@ export default function RegistrationSettingsPage() {
             <div className="flex gap-2">
               <button
                 onClick={handleSearch}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2 font-medium"
               >
+                <Search size={20} />
                 検索
               </button>
               
-              <button className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors flex items-center gap-2">
-                <Plus className="h-4 w-4" />
+              <button className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2 font-medium">
+                <Plus size={20} />
                 新規追加
               </button>
             </div>
@@ -282,15 +293,17 @@ export default function RegistrationSettingsPage() {
                         {new Date(registration.created_at).toLocaleDateString('ja-JP')}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <button className="text-blue-600 hover:text-blue-900 mr-4">
-                          編集
-                        </button>
-                        <button 
-                          onClick={() => typeof window !== 'undefined' && (window.location.href = `/registration-settings/${registration.id}`)}
-                          className="text-green-600 hover:text-green-900"
-                        >
-                          関連件名
-                        </button>
+                        <div className="flex gap-1">
+                          <button className="px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm font-medium">
+                            編集
+                          </button>
+                          <button 
+                            onClick={() => typeof window !== 'undefined' && (window.location.href = `/registration-settings/${registration.id}`)}
+                            className="px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700 text-sm font-medium"
+                          >
+                            関連件名
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -305,7 +318,7 @@ export default function RegistrationSettingsPage() {
             <button
               onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
               disabled={currentPage === 1}
-              className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 font-medium disabled:bg-gray-400 disabled:cursor-not-allowed"
             >
               前へ
             </button>
@@ -330,7 +343,7 @@ export default function RegistrationSettingsPage() {
                       className={`px-3 py-2 text-sm font-medium rounded-lg ${
                         currentPage === page
                           ? 'bg-blue-600 text-white'
-                          : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                          : 'bg-gray-600 text-white hover:bg-gray-700'
                       }`}
                     >
                       {page}
@@ -344,7 +357,7 @@ export default function RegistrationSettingsPage() {
             <button
               onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
               disabled={currentPage === totalPages}
-              className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 font-medium disabled:bg-gray-400 disabled:cursor-not-allowed"
             >
               次へ
             </button>

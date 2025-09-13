@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Save, Building2, Home } from 'lucide-react'
-import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
@@ -242,40 +241,41 @@ export default function CompanySettingsPage() {
   }
 
   return (
-    <div className="container mx-auto max-w-4xl p-6 space-y-6">
-      {/* ヘッダー */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => router.back()}
-              className="gap-2"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              戻る
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => router.push('/')}
-              className="gap-2"
-            >
-              <Home className="h-4 w-4" />
-              メニューへ
-            </Button>
+    <div className="min-h-screen bg-gray-50">
+      <div className="container mx-auto max-w-4xl p-6 space-y-6">
+        {/* ヘッダー */}
+        <header className="bg-white rounded-lg shadow-sm p-6 mb-6">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-2">
+              <Building2 className="h-6 w-6" />
+              <h1 className="text-2xl font-bold text-gray-800">会社情報設定</h1>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={handleSave}
+                disabled={isLoading}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2 font-medium disabled:bg-gray-400 disabled:cursor-not-allowed"
+              >
+                <Save size={20} />
+                {isLoading ? '保存中...' : '保存'}
+              </button>
+              <button
+                onClick={() => router.back()}
+                className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 flex items-center gap-2 font-medium"
+              >
+                <ArrowLeft size={20} />
+                戻る
+              </button>
+              <button
+                onClick={() => router.push('/')}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2 font-medium"
+              >
+                <Home size={20} />
+                メニューへ
+              </button>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Building2 className="h-6 w-6" />
-            <h1 className="text-2xl font-bold">会社情報設定</h1>
-          </div>
-        </div>
-        <Button onClick={handleSave} disabled={isLoading} className="gap-2">
-          <Save className="h-4 w-4" />
-          {isLoading ? '保存中...' : '保存'}
-        </Button>
-      </div>
+        </header>
 
       {/* 基本情報 */}
       <Card>
@@ -585,12 +585,17 @@ export default function CompanySettingsPage() {
         </CardContent>
       </Card>
 
-      {/* 保存ボタン */}
-      <div className="flex justify-end pt-4">
-        <Button onClick={handleSave} disabled={isLoading} size="lg" className="gap-2">
-          <Save className="h-4 w-4" />
-          {isLoading ? '保存中...' : '設定を保存'}
-        </Button>
+        {/* 保存ボタン */}
+        <div className="flex justify-end pt-4">
+          <button
+            onClick={handleSave}
+            disabled={isLoading}
+            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2 font-medium disabled:bg-gray-400 disabled:cursor-not-allowed"
+          >
+            <Save size={20} />
+            {isLoading ? '保存中...' : '設定を保存'}
+          </button>
+        </div>
       </div>
     </div>
   )
