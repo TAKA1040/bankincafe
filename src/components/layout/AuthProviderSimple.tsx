@@ -20,7 +20,7 @@ export default function AuthProviderSimple({ children }: AuthProviderProps) {
   const [isAdmin, setIsAdmin] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   
-  // // // console.log('🔄 AuthProviderSimple レンダリング:', { pathname })
+
 
   // 認証不要なページかチェック
   const isPublicPath = pathname && PUBLIC_PATHS.some(path => pathname.startsWith(path))
@@ -29,19 +29,19 @@ export default function AuthProviderSimple({ children }: AuthProviderProps) {
   useEffect(() => {
     // 認証不要なページの場合は何もしない
     if (isPublicPath) {
-      // // // console.log('✅ パブリックページ表示:', pathname)
+
       setIsLoading(false)
       return
     }
     
     const performAuthCheck = async () => {
       try {
-        // console.log('🔍 [AuthProviderSimple] 新しい認証システム開始:', { pathname, timestamp: new Date().toISOString() })
+
         
         setIsLoading(true)
         
         const supabase = createClient()
-        // console.log('📡 [AuthProviderSimple] 標準Supabaseクライアント作成完了')
+
         
         // セッション永続化チェック（開発時ログインキープ対応）
         const cachedSession = sessionStorage.getItem('supabase_session')
@@ -49,7 +49,7 @@ export default function AuthProviderSimple({ children }: AuthProviderProps) {
           try {
             const parsedSession = JSON.parse(cachedSession)
             if (parsedSession.expires_at > Date.now() / 1000) {
-              // console.log('🔄 [AuthProviderSimple] キャッシュされたセッションを使用')
+
               
               // キャッシュされたユーザーの管理者権限を再確認（API経由）
               const userEmail = parsedSession.user_email
@@ -62,13 +62,13 @@ export default function AuthProviderSimple({ children }: AuthProviderProps) {
                 const { isAdmin: isAdminUser } = await response.json();
               
                 if (isAdminUser) {
-                  // // // console.log('✅ [AuthProviderSimple] キャッシュセッション管理者確認完了')
+
                   setIsAuthenticated(true)
                   setIsAdmin(true)
                   setIsLoading(false)
                   return
                 } else {
-                  // // // console.log('❌ [AuthProviderSimple] キャッシュユーザーは管理者ではありません')
+
                   sessionStorage.removeItem('supabase_session')
                   setIsAuthenticated(false)
                   router.push('/auth/pending')
@@ -99,7 +99,7 @@ export default function AuthProviderSimple({ children }: AuthProviderProps) {
           timeoutPromise
         ]) as any
         
-        // console.log('📡 [AuthProviderSimple] セッション取得完了:', { hasSession: !!session, hasUser: !!session?.user, userEmail: session?.user?.email, error: error?.message })
+
         
         if (error) {
           console.error('❌ セッション取得エラー:', error)
@@ -109,7 +109,7 @@ export default function AuthProviderSimple({ children }: AuthProviderProps) {
         }
         
         if (!session?.user?.email) {
-          // console.log('🔒 認証なし - ログインページへ')
+
           setIsAuthenticated(false)
           router.push('/login')
           return
@@ -131,11 +131,11 @@ export default function AuthProviderSimple({ children }: AuthProviderProps) {
           isAdmin = false;
         }
         
-        // console.log('🔐 管理者権限チェック:', { userEmail, isAdmin })
+
         
         if (!isAdmin) {
-          // console.log('❌ 許可されていないアカウント - 承認待ちページへ')
-          // console.log('📋 新規ユーザー登録開始:', { email: userEmail, full_name: session.user.user_metadata?.full_name, user_metadata: session.user.user_metadata })
+
+
           
           // 未承認ユーザーをuser_managementテーブルにUPSERT（挿入または更新）
           try {
@@ -152,7 +152,7 @@ export default function AuthProviderSimple({ children }: AuthProviderProps) {
               requested_at: new Date().toISOString()
             }
             
-            // console.log('📝 UPSERT実行データ:', userData)
+
             
             // UPSERTでConflictエラーを防ぐ
             const { data: upsertData, error: upsertError } = await supabase
@@ -166,10 +166,10 @@ export default function AuthProviderSimple({ children }: AuthProviderProps) {
             if (upsertError) {
               console.error('❌ ユーザー登録/更新エラー:', upsertError)
             } else {
-              // console.log('✅ ユーザー登録/更新完了:', upsertData)
+
             }
             
-            // console.log('📝 承認待ちユーザーをデータベースに登録/更新完了')
+
           } catch (dbError) {
             console.error('❌ ユーザー登録処理で例外発生:', dbError)
           }
@@ -179,7 +179,7 @@ export default function AuthProviderSimple({ children }: AuthProviderProps) {
           return
         }
         
-        // console.log('✅ 認証・認可完了 - メインコンテンツ表示')
+
         
         // セッションをキャッシュ（ログインキープ用）
         try {
@@ -190,7 +190,7 @@ export default function AuthProviderSimple({ children }: AuthProviderProps) {
             cached_at: Date.now() / 1000
           }
           sessionStorage.setItem('supabase_session', JSON.stringify(sessionData))
-          // // // console.log('💾 [AuthProviderSimple] セッションをキャッシュに保存')
+
         } catch (e) {
           console.warn('⚠️ セッションキャッシュ保存エラー:', e)
         }
@@ -220,7 +220,7 @@ export default function AuthProviderSimple({ children }: AuthProviderProps) {
               .eq('google_email', userEmail)
           }
           
-          // // // console.log('📝 管理者ログイン履歴を記録')
+
         } catch (dbError) {
           console.warn('⚠️ ログイン履歴記録でエラー:', dbError)
         }
@@ -247,7 +247,7 @@ export default function AuthProviderSimple({ children }: AuthProviderProps) {
 
   // 認証成功時はメインコンテンツ表示
   if (isAuthenticated === true && !isLoading) {
-    // // // console.log('🎉 メインコンテンツ表示')
+
     return <>{children}</>
   }
 

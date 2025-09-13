@@ -48,7 +48,6 @@ export default function AdminSettingsPage() {
 
       if (usersError && usersError.code !== 'PGRST116') {
         // テーブルが存在しない場合は空配列を設定
-        // // console.log('user_management テーブルが存在しない、または空です')
         setUsers([])
       } else {
         setUsers(usersData || [])
@@ -61,7 +60,6 @@ export default function AdminSettingsPage() {
         .order('setting_key')
 
       if (settingsError && settingsError.code !== 'PGRST116') {
-        // // console.log('admin_settings テーブルが存在しない、または空です')
         setSettings([])
       } else {
         setSettings(settingsData || [])

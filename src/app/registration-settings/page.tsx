@@ -89,7 +89,7 @@ export default function RegistrationSettingsPage() {
       console.error('登録番号マスタ取得エラー:', error)
       // エラーメッセージを詳細表示
       if (error && typeof error === 'object' && 'code' in error && error.code === '416') {
-        // // console.log('範囲エラー: ページネーション範囲が不正です')
+
         setCurrentPage(1) // 最初のページに戻す
       } else {
         alert(`登録番号マスタの取得に失敗しました: ${error instanceof Error ? error.message : 'データの取得に失敗しました'}`)

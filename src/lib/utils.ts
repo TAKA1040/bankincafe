@@ -83,10 +83,8 @@ export interface MasterRegistrationOptions {
 // 将来のSupabase保存時用のマスタ登録関数（予約）
 export async function registerToMasterIfNeeded(options: MasterRegistrationOptions): Promise<void> {
   if (!shouldRegisterToMaster(options.documentType) || options.skipRegistration) {
-    // // console.log(`${options.documentType === 'estimate' ? '見積書' : '請求書'}保存: マスタ登録をスキップ`)
     return
   }
   
   // TODO: 将来的にSupabaseでの件名マスタ・登録番号マスタへの登録処理を実装
-  // // console.log('請求書保存: 新規件名・登録番号のマスタ登録を実行（未実装）')
 }

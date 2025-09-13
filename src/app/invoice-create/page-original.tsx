@@ -727,7 +727,7 @@ function InvoiceCreateContent() {
         return
       }
       
-      // // console.log('件名マスタデータ取得成功:', data?.length, '件')
+
       setAllSubjects(data || [])
     } catch (error) {
       console.error('件名マスタ取得エラー:', error)
@@ -751,8 +751,8 @@ function InvoiceCreateContent() {
   // 件名選択時の登録番号絞り込み機能
   const handleSubjectSelection = async (selectedSubjectName: string) => {
     try {
-      // // console.log('=== 件名選択時の登録番号絞り込み開始 ===')
-      // // console.log('選択された件名:', selectedSubjectName)
+
+
       
       // まず件名マスタから件名IDを取得
       const { data: subjectData, error: subjectError } = await supabase
@@ -762,11 +762,11 @@ function InvoiceCreateContent() {
         .single()
       
       if (subjectError || !subjectData) {
-        // // console.log('件名マスタで該当件名が見つからない:', selectedSubjectName)
+
         return
       }
       
-      // // console.log('件名ID取得成功:', subjectData.id)
+
       
       // 件名IDに基づいて関連する登録番号を検索
       const { data: relations, error: relationsError } = await supabase
@@ -780,7 +780,7 @@ function InvoiceCreateContent() {
         .order('usage_count', { ascending: false })
         .limit(30)
       
-      // // console.log('関連登録番号クエリ結果:', relations)
+
       
       if (relationsError) {
         console.error('関連登録番号取得エラー:', relationsError)
@@ -794,7 +794,7 @@ function InvoiceCreateContent() {
           is_primary: rel.is_primary
         }))
         
-        // // console.log('登録番号データ変換結果:', relatedRegistrations)
+
         
         // プライマリの登録番号があれば最初に表示、なければ使用頻度順
         const sortedRegistrations = relatedRegistrations.sort((a, b) => {
@@ -803,15 +803,15 @@ function InvoiceCreateContent() {
           return b.usage_count - a.usage_count
         })
         
-        // // console.log('ソート後の登録番号リスト:', sortedRegistrations)
+
         
         // デフォルトでは登録番号を自動設定しない（誤入力防止のため）
         // ユーザーがクリックして選択する方式に変更
-        // // console.log('プライマリ登録番号:', sortedRegistrations[0]?.registrationNumber)
+
         // setRegistrationNumber(sortedRegistrations[0].registrationNumber) // 自動設定を無効化
         setRegistrationSuggestions(sortedRegistrations)
       } else {
-        // // console.log('該当する登録番号が見つからなかった')
+
         setRegistrationSuggestions([])
       }
     } catch (error) {
@@ -832,18 +832,18 @@ function InvoiceCreateContent() {
     const registrationDatabase = new RegistrationMasterDB()
     
     // デバッグ: 件名マスターDBの状態を確認
-    // // console.log('=== 件名マスターDB状態確認 ===')
-    // // console.log('件名マスター件数:', subjectDatabase.getSubjects().length)
-    // // console.log('件名マスターデータ:', subjectDatabase.getSubjects().slice(0, 10)) // 最初の10件を表示
-    // // console.log('LocalStorage件名キー:', 'bankin_subject_master')
+
+
+
+
     if (typeof window !== 'undefined') {
       const rawData = localStorage.getItem('bankin_subject_master')
-      // // console.log('LocalStorage生データ:', rawData ? rawData.substring(0, 200) + '...' : 'null')
+
     }
     
-    // // console.log('=== 登録番号マスターDB状態確認 ===')
-    // // console.log('登録番号マスター件数:', registrationDatabase.searchRegistrations('').length)
-    // // console.log('登録番号マスターデータ:', registrationDatabase.searchRegistrations('').slice(0, 5))
+
+
+
     
     setSubjectDb(subjectDatabase)
     setRegistrationDb(registrationDatabase)
@@ -890,7 +890,7 @@ function InvoiceCreateContent() {
     if (isEditMode && editInvoiceId) {
       const loadInvoiceForEdit = async () => {
         try {
-          // // console.log('Loading invoice for edit:', editInvoiceId)
+
           
           // 請求書基本データを取得
           const { data: invoiceData, error: invoiceError } = await supabase
@@ -960,7 +960,7 @@ function InvoiceCreateContent() {
             setWorkItems(items)
           }
 
-          // // console.log('Invoice loaded successfully for editing')
+
         } catch (error) {
           console.error('Error loading invoice for edit:', error)
           alert('請求書の読み込みに失敗しました: ' + (error as Error).message)
@@ -1678,8 +1678,8 @@ function InvoiceCreateContent() {
                     value={subject}
                     onFocus={() => {
                       // フォーカス時に件名候補を表示（空欄でも表示）
-                      // // console.log('=== 件名フィールドフォーカス ===')
-                      // // console.log('全件名数:', allSubjects.length)
+
+
                       
                       if (subject.trim()) {
                         // 既に入力がある場合は、その内容で検索
@@ -1689,7 +1689,7 @@ function InvoiceCreateContent() {
                       } else {
                         // 空欄の場合は、全ての件名から最近使用されたものを表示
                         const recentSubjects = allSubjects.slice(0, 20) // 最大20件
-                        // // console.log('最近の件名候補数:', recentSubjects.length)
+
                         setSubjectSuggestions(recentSubjects)
                         setShowSubjectSuggestions(recentSubjects.length > 0)
                       }
@@ -1702,11 +1702,11 @@ function InvoiceCreateContent() {
                         // Supabaseベースの曖昧検索
                         const filteredSuggestions = searchSubjects(e.target.value.trim())
                         
-                        // // console.log('=== 件名検索デバッグ ===')
-                        // // console.log('検索キーワード:', e.target.value)
-                        // // console.log('全件名数:', allSubjects.length)
-                        // // console.log('フィルター後件数:', filteredSuggestions.length)
-                        // // console.log('フィルター結果:', filteredSuggestions.slice(0, 5))
+
+
+
+
+
                         
                         setSubjectSuggestions(filteredSuggestions)
                         setShowSubjectSuggestions(filteredSuggestions.length > 0)
@@ -1808,11 +1808,11 @@ function InvoiceCreateContent() {
                     value={registrationNumber}
                     onFocus={() => {
                       // フォーカス時に件名関連の登録番号を表示（空欄でも表示）
-                      // // console.log('=== 登録番号フィールドフォーカス ===')
-                      // // console.log('現在の登録番号サジェスト数:', registrationSuggestions.length)
+
+
                       
                       const subjectRelatedOnly = registrationSuggestions.filter(reg => reg.usage_count > 0)
-                      // // console.log('件名関連の登録番号数:', subjectRelatedOnly.length)
+
                       
                       if (subjectRelatedOnly.length > 0) {
                         // 件名関連の登録番号があれば表示
@@ -1827,13 +1827,13 @@ function InvoiceCreateContent() {
                             usage_count: 0,
                             is_primary: false
                           })).slice(0, 10)
-                          // // console.log('全ての登録番号候補数:', allSuggestions.length)
+
                           setRegistrationSuggestions(allSuggestions)
                           setShowRegistrationSuggestions(allSuggestions.length > 0)
                         }
                       } else {
                         // 件名が入力されているが関連登録番号がない場合は候補を表示しない
-                        // // console.log('件名が入力されているが関連登録番号なし - 候補非表示')
+
                         setShowRegistrationSuggestions(false)
                       }
                     }}
@@ -2645,7 +2645,7 @@ function InvoiceCreateContent() {
                                           if (price && price > 0) {
                                             // セット価格は個別価格の合計として計算される想定なので、
                                             // 明細個別の単価は参考として表示のみ
-                                            // // console.log(`価格情報: ${priceKey} = ${price}円`)
+
                                           }
                                         }}
                                         className={`px-2 py-1 text-xs rounded border transition-colors ${

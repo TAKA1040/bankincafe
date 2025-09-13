@@ -98,19 +98,16 @@ export function useInvoiceList(yearFilter?: string | string[]) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   
-  // // // console.log('🔍 useInvoiceList呼び出し yearFilter:', yearFilter)
 
   const fetchInvoices = useCallback(async () => {
     try {
       setLoading(true)
       setError(null)
 
-      // // // console.log('=== 請求書データ取得開始 ===')
       const startTime = performance.now()
 
       // データ保護チェック実行
       const dataStatus = await dataGuard.getDataStatus()
-      // // // console.log('🛡️ データ保護状況:', dataStatus)
       
       if (dataStatus.invoices.status === 'DANGER') {
         throw new Error(`🚨 データ不足: 請求書が${dataStatus.invoices.current}件しかありません（最低${dataStatus.invoices.minimum}件必要）`)
@@ -169,7 +166,6 @@ export function useInvoiceList(yearFilter?: string | string[]) {
           query = query
             .gte('billing_date', startDate)
             .lte('billing_date', endDate)
-          // // // console.log(`🗓️ 単一年度フィルター適用: ${year}年 (${startDate} ～ ${endDate})`)
         }
       } else if (Array.isArray(yearFilter) && yearFilter.length > 0) {
         // 複数年度指定（決算期ベース）
@@ -186,10 +182,8 @@ export function useInvoiceList(yearFilter?: string | string[]) {
           query = query
             .gte('billing_date', startDate)
             .lte('billing_date', endDate)
-          // // // console.log(`🗓️ 複数決算期フィルター適用: ${fiscalYears.join(', ')}年度 (${startDate} ～ ${endDate})`)
         }
       } else {
-        // // // console.log('📋 年度未選択 - 全件取得実行（ページネーション方式）')
       }
 
       // 🔥 強制全件取得：ページネーション方式で制限を回避
@@ -202,7 +196,6 @@ export function useInvoiceList(yearFilter?: string | string[]) {
         const fromIndex = currentPage * pageSize
         const toIndex = fromIndex + pageSize - 1
         
-        // // // console.log(`📄 ページ${currentPage + 1}: ${fromIndex}～${toIndex}件を取得中`)
         
         const { data: pageData, error: pageError } = await query
           .range(fromIndex, toIndex)
@@ -213,7 +206,6 @@ export function useInvoiceList(yearFilter?: string | string[]) {
         
         if (pageData && pageData.length > 0) {
           joinedData = [...joinedData, ...pageData]
-          // // // console.log(`✅ ページ${currentPage + 1}取得完了: ${pageData.length}件（累計: ${joinedData.length}件）`)
           
           // 取得件数がページサイズ未満なら最後のページ
           hasMore = pageData.length === pageSize
@@ -223,10 +215,8 @@ export function useInvoiceList(yearFilter?: string | string[]) {
         }
       }
       
-      // // // console.log(`🎯 全件取得完了: 合計${joinedData.length}件`)
       const joinError = null // エラーは上記でハンドリング済み
 
-      // // // console.log(`全データ取得完了: ${performance.now() - startTime}ms`)
 
       if (joinError) {
         throw joinError
@@ -266,7 +256,6 @@ export function useInvoiceList(yearFilter?: string | string[]) {
         }
       })
 
-      // // // console.log(`処理完了: ${performance.now() - startTime}ms, 件数: ${invoicesWithItems.length}`)
       setInvoices(invoicesWithItems)
     } catch (err) {
       console.error('Failed to fetch invoices:', err)

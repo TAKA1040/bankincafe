@@ -780,7 +780,7 @@ const InvoiceCreateContent: React.FC = () => {
         return
       }
       
-      // // console.log('件名マスタデータ取得成功:', data?.length, '件')
+
       setAllSubjects(data || [])
     } catch (error) {
       console.error('件名マスタ取得エラー:', error)
@@ -815,7 +815,7 @@ const InvoiceCreateContent: React.FC = () => {
         .single()
       
       if (subjectError || !subjectData) {
-        // // console.log('件名マスタで該当件名が見つからない:', selectedSubjectName)
+
         return
       }
       
@@ -861,11 +861,11 @@ const InvoiceCreateContent: React.FC = () => {
         
         // デフォルトでは登録番号を自動設定しない（誤入力防止のため）
         // ユーザーがクリックして選択する方式に変更
-        // // console.log('プライマリ登録番号:', sortedRegistrations[0]?.registrationNumber)
+
         // setRegistrationNumber(sortedRegistrations[0].registrationNumber) // 自動設定を無効化
         setRegistrationSuggestions(sortedRegistrations)
       } else {
-        // // console.log('該当する登録番号が見つからなかった')
+
         setRegistrationSuggestions([])
       }
     } catch (error) {
@@ -886,18 +886,18 @@ const InvoiceCreateContent: React.FC = () => {
     const registrationDatabase = new RegistrationMasterDB()
     
     // デバッグ: 件名マスターDBの状態を確認
-    // // console.log('=== 件名マスターDB状態確認 ===')
-    // // console.log('件名マスター件数:', subjectDatabase.getSubjects().length)
-    // // console.log('件名マスターデータ:', subjectDatabase.getSubjects().slice(0, 10)) // 最初の10件を表示
-    // // console.log('LocalStorage件名キー:', 'bankin_subject_master')
+
+
+
+
     if (typeof window !== 'undefined') {
       const rawData = localStorage.getItem('bankin_subject_master')
-      // // console.log('LocalStorage生データ:', rawData ? rawData.substring(0, 200) + '...' : 'null')
+
     }
     
-    // // console.log('=== 登録番号マスターDB状態確認 ===')
-    // // console.log('登録番号マスター件数:', registrationDatabase.searchRegistrations('').length)
-    // // console.log('登録番号マスターデータ:', registrationDatabase.searchRegistrations('').slice(0, 5))
+
+
+
     
     setSubjectDb(subjectDatabase)
     setRegistrationDb(registrationDatabase)
@@ -944,7 +944,7 @@ const InvoiceCreateContent: React.FC = () => {
     if (isEditMode && editInvoiceId) {
       const loadInvoiceForEdit = async () => {
         try {
-          // // console.log('Loading invoice for edit:', editInvoiceId)
+
           
           // 請求書基本データを取得
           const { data: invoiceData, error: invoiceError } = await supabase
@@ -1014,7 +1014,7 @@ const InvoiceCreateContent: React.FC = () => {
             setWorkItems(items)
           }
 
-          // // console.log('Invoice loaded successfully for editing')
+
         } catch (error) {
           console.error('Error loading invoice for edit:', error)
           alert('請求書の読み込みに失敗しました: ' + (error as Error).message)

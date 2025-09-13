@@ -536,7 +536,7 @@ export default function WorkDictionaryPage() {
       const needsUpdate = items.some((item, index) => item.sort_order !== index + 1)
       
       if (needsUpdate) {
-        // // console.log(`${table}の順序を正規化中...`)
+
         
         // 一時的な大きな値を使用して重複を回避
         const tempOffset = 10000
@@ -557,7 +557,7 @@ export default function WorkDictionaryPage() {
             .eq('id', items[i].id)
         }
         
-        // // console.log(`✅ ${table}の順序正規化完了`)
+
       }
       
     } catch (error) {
@@ -634,7 +634,7 @@ export default function WorkDictionaryPage() {
     
     try {
       setSaving(true)
-      // // console.log('🔧 全マスタ順序整列開始...')
+
       
       // 全マスタの順序を正規化
       await normalizeSortOrder('targets')
@@ -647,7 +647,7 @@ export default function WorkDictionaryPage() {
       // 成功メッセージ
       const successMessage = '✅ 順序整列完了！\n全てのマスタが連番に整理されました。'
       alert(successMessage)
-      // // console.log('🎉 全マスタ順序整列完了')
+
       
     } catch (error) {
       console.error('❌ 整列エラー:', error)
@@ -664,12 +664,12 @@ export default function WorkDictionaryPage() {
     try {
       setSaving(true)
       
-      // // console.log(`削除処理開始: ${table} ID=${id}`)
-      // // console.log('Supabase接続状況:', 'URL設定済み', '✓Key設定済み')
+
+
       const startTime = Date.now()
       
       // 接続テスト
-      // // console.log('DB接続テスト開始...')
+
       const connectionTest = Date.now()
       
       // is_activeをfalseに更新（論理削除）
@@ -680,7 +680,7 @@ export default function WorkDictionaryPage() {
         .select()
         
       const connectionTime = Date.now() - connectionTest
-      // // console.log(`DB接続時間: ${connectionTime}ms`)
+
       
       if (error) {
         console.error('削除処理でエラー:', error)
@@ -694,36 +694,36 @@ export default function WorkDictionaryPage() {
       }
       
       const dbUpdateTime = Date.now() - startTime
-      // // console.log(`DB更新完了 (${dbUpdateTime}ms):`, data)
+
       
       // ローカル状態から即座に削除（高速化）
-      // // console.log('ローカル状態更新開始...')
+
       const uiUpdateStart = Date.now()
       
       if (table === 'targets') {
         setTargets(prev => {
           const filtered = prev.filter(item => item.id !== id)
-          // // console.log(`Targets: ${prev.length} → ${filtered.length}`)
+
           return filtered
         })
       } else if (table === 'actions') {
         setActions(prev => {
           const filtered = prev.filter(item => item.id !== id)
-          // // console.log(`Actions: ${prev.length} → ${filtered.length}`)
+
           return filtered
         })
       } else if (table === 'positions') {
         setPositions(prev => {
           const filtered = prev.filter(item => item.id !== id)
-          // // console.log(`Positions: ${prev.length} → ${filtered.length}`)
+
           return filtered
         })
       }
       
       const uiUpdateTime = Date.now() - uiUpdateStart
       const totalTime = Date.now() - startTime
-      // // console.log(`UI更新時間: ${uiUpdateTime}ms`)
-      // // console.log(`削除処理完了 (合計${totalTime}ms)`)
+
+
       
       // 成功メッセージ
       const itemName = table === 'targets' ? '対象' : table === 'actions' ? '動作' : '位置'
