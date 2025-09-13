@@ -513,7 +513,9 @@ function InvoiceCreateContent() {
   // prototype2準拠の個別作業入力状態
   const [target, setTarget] = useState('')
   const [action, setAction] = useState<string | undefined>()
+  const [actions, setActions] = useState<string[]>([]) // 複数動作選択用（最大3つ）
   const [position, setPosition] = useState<string | undefined>()
+  const [positions, setPositions] = useState<string[]>([]) // 複数位置選択用（最大5つ）
   const [workMemo, setWorkMemo] = useState('')
   const [unitPrice, setUnitPrice] = useState('')
   const [qty, setQty] = useState(1)
@@ -527,20 +529,24 @@ function InvoiceCreateContent() {
   // セット明細入力用状態
   const [detailTarget, setDetailTarget] = useState('')
   const [detailAction, setDetailAction] = useState('')
+  const [detailActions, setDetailActions] = useState<string[]>([]) // 複数動作選択用（最大3つ）
   const [detailPosition, setDetailPosition] = useState('')
+  const [detailPositions, setDetailPositions] = useState<string[]>([]) // 複数位置選択用（最大5つ）
   const [detailOther, setDetailOther] = useState('')
   const [detailQuantity, setDetailQuantity] = useState(1)
   
   // prototype2準拠のユーティリティ関数
-  const composedLabel = (t?: string, a?: string, p?: string, m?: string) => {
-    const pos = p ? ` ${p}` : ''
+  const composedLabel = (t?: string, a?: string[], p?: string[], m?: string) => {
+    const position = p && p.length > 0 ? p.join('') : ''
+    const target = t ?? ''
+    const action = a && a.length > 0 ? a.join('・') : ''
     const memoText = m && m.trim() ? ` ${m.trim()}` : ''
-    return `${t ?? ''}${a ?? ''}${pos}${memoText}`.trim()
+    return `${position}${target}${action}${memoText}`.trim()
   }
   
   const addStructured = () => {
     if (!target) return
-    const label = composedLabel(target, action, position, workMemo)
+    const label = composedLabel(target, actions, positions, workMemo)
     const amount = Math.round((Number(unitPrice) || 0) * (qty || 0))
     
     const newId = Date.now()
@@ -560,7 +566,9 @@ function InvoiceCreateContent() {
     // リセット
     setTarget('')
     setAction(undefined)
+    setActions([])
     setPosition(undefined)
+    setPositions([])
     setWorkMemo('')
     setUnitPrice('')
     setQty(1)
@@ -580,7 +588,11 @@ function InvoiceCreateContent() {
       quantity: setQuantity || 0,
       amount: Math.round((Number(setPrice) || 0) * (setQuantity || 0)),
       memo: '',
-      set_details: setDetails.map(d => d.label),
+      set_details: setDetails.map(d => ({
+        label: d.label,
+        quantity: d.quantity,
+        unitPrice: d.unitPrice
+      })),
       detail_positions: setDetails.map(d => d.position || '')
     }
     
@@ -637,6 +649,7 @@ function InvoiceCreateContent() {
   const [detailTargetSuggestions, setDetailTargetSuggestions] = useState<string[]>([])
   const [showDetailTargetSuggestions, setShowDetailTargetSuggestions] = useState(false)
   const [selectedDetailTargetIndex, setSelectedDetailTargetIndex] = useState(-1)
+  const [isDetailTargetConfirmed, setIsDetailTargetConfirmed] = useState(false)
   const [detailActionSuggestions, setDetailActionSuggestions] = useState<string[]>([])
   const [showDetailActionSuggestions, setShowDetailActionSuggestions] = useState(false)
   const [selectedDetailActionIndex, setSelectedDetailActionIndex] = useState(-1)
@@ -991,18 +1004,18 @@ function InvoiceCreateContent() {
     setBillingDate(new Date().toISOString().split('T')[0])
   }
   
-  // 計算結果
-  const subtotal = useMemo(() => {
+  // 計算結果（内税方式）
+  const totalAmount = useMemo(() => {
     return workItems.reduce((sum, item) => sum + item.amount, 0)
   }, [workItems])
   
   const taxAmount = useMemo(() => {
-    return Math.floor(subtotal * 0.1)
-  }, [subtotal])
+    return Math.floor(totalAmount * 0.1 / 1.1)
+  }, [totalAmount])
   
-  const totalAmount = useMemo(() => {
-    return subtotal + taxAmount
-  }, [subtotal, taxAmount])
+  const subtotal = useMemo(() => {
+    return totalAmount - taxAmount
+  }, [totalAmount, taxAmount])
 
   // 顧客カテゴリー変更処理
   const handleCustomerCategoryChange = (categoryId: string) => {
@@ -1157,16 +1170,16 @@ function InvoiceCreateContent() {
   const addSetDetail = () => {
     if (!detailTarget.trim()) return
     
-    const label = composedLabel(detailTarget, detailAction, detailPosition, detailOther)
+    const label = composedLabel(detailTarget, detailActions, detailPositions, detailOther)
     
     // 単価を取得
-    const priceKey = `${detailTarget}_${detailAction}`
+    const priceKey = `${detailTarget}_${detailActions.length > 0 ? detailActions[0] : ''}`
     const unitPrice = priceBookMap?.[priceKey] || 0
     
     const newDetail = {
       target: detailTarget,
-      action: detailAction,
-      position: detailPosition,
+      action: detailActions.join('・'),
+      position: detailPositions.join(''),
       memo: detailOther,
       label: label,
       quantity: detailQuantity,
@@ -1183,8 +1196,8 @@ function InvoiceCreateContent() {
     
     // リセット
     setDetailTarget('')
-    setDetailAction('')
-    setDetailPosition('')
+    setDetailActions([])
+    setDetailPositions([])
     setDetailOther('')
     setDetailQuantity(1)
   }
@@ -2147,20 +2160,30 @@ function InvoiceCreateContent() {
                         <SimpleLabel>動作</SimpleLabel>
                         <input
                           type="text"
-                          value={action || ''}
-                          readOnly
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50"
-                          placeholder="対象を選択後、下のボタンで選択"
+                          value={actions.join('・')}
+                          onChange={(e) => {
+                            const value = e.target.value
+                            if (value === '') {
+                              setActions([])
+                            } else {
+                              setActions(value.split('・').filter(v => v.trim()))
+                            }
+                          }}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          placeholder="直接入力またはボタンで選択（複数は「・」区切り）"
                         />
                       </div>
                       <div>
                         <SimpleLabel>位置</SimpleLabel>
                         <input
                           type="text"
-                          value={position || ''}
-                          readOnly
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50"
-                          placeholder="動作選択後、下のボタンで選択"
+                          value={positions.join('')}
+                          onChange={(e) => {
+                            const value = e.target.value
+                            setPositions(value ? [value] : [])
+                          }}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          placeholder="直接入力またはボタンで選択"
                         />
                       </div>
                     </div>
@@ -2177,11 +2200,26 @@ function InvoiceCreateContent() {
                                 <button
                                   key={a}
                                   type="button"
-                                  onClick={() => handleActionSelect(a)}
+                                  onClick={() => {
+                                    if (a === '（指定なし）') {
+                                      // 何もしない（動作未設定のまま進む）
+                                      return
+                                    } else {
+                                      if (actions.includes(a)) {
+                                        setActions(actions.filter(act => act !== a))
+                                      } else if (actions.length < 3) {
+                                        setActions([...actions, a])
+                                      }
+                                    }
+                                  }}
                                   className={`px-2 py-1 text-xs rounded border text-left transition-colors ${
-                                    action === a
-                                      ? "bg-blue-100 border-blue-300 text-blue-800"
-                                      : "bg-gray-100 hover:bg-blue-100 border-gray-300"
+                                    a === '（指定なし）' 
+                                      ? (actions.length === 0 
+                                        ? "bg-gray-200 border-gray-400 text-gray-700"
+                                        : "bg-gray-100 hover:bg-gray-200 border-gray-300")
+                                      : (actions.includes(a)
+                                        ? "bg-blue-100 border-blue-300 text-blue-800"
+                                        : "bg-gray-100 hover:bg-blue-100 border-gray-300")
                                   }`}
                                 >
                                   <div>{a}</div>
@@ -2196,14 +2234,23 @@ function InvoiceCreateContent() {
                         <div>
                           <div className="text-sm font-medium text-gray-700 mb-2">位置（クリックで入力）:</div>
                           <div className="flex flex-wrap gap-1">
-                            {action ? (
-                              (ACTION_POSITIONS && ACTION_POSITIONS[action] ? ACTION_POSITIONS[action] : POSITIONS || []).map((p) => (
+                            {target.trim() ? (
+                              (actions.length > 0 && ACTION_POSITIONS && ACTION_POSITIONS[actions[0]] 
+                                ? ACTION_POSITIONS[actions[0]] 
+                                : POSITIONS || []
+                              ).map((p) => (
                                 <button
                                   key={p}
                                   type="button"
-                                  onClick={() => handlePositionSelect(p)}
+                                  onClick={() => {
+                                    if (positions.includes(p)) {
+                                      setPositions(positions.filter(pos => pos !== p))
+                                    } else if (positions.length < 5) {
+                                      setPositions([...positions, p])
+                                    }
+                                  }}
                                   className={`px-2 py-1 text-xs rounded border transition-colors ${
-                                    selectedPositions.includes(p)
+                                    positions.includes(p)
                                       ? "bg-blue-500 text-white border-blue-600"
                                       : "bg-gray-100 hover:bg-blue-100 border-gray-300"
                                   }`}
@@ -2212,7 +2259,7 @@ function InvoiceCreateContent() {
                                 </button>
                               ))
                             ) : (
-                              <div className="text-xs text-gray-500 py-1">まず動作を選択してください</div>
+                              <div className="text-xs text-gray-500 py-1">まず対象を入力してください</div>
                             )}
                           </div>
                         </div>
@@ -2286,10 +2333,17 @@ function InvoiceCreateContent() {
                           <SimpleLabel>動作</SimpleLabel>
                           <input
                             type="text"
-                            value={action || ''}
-                            readOnly
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50"
-                            placeholder="対象を選択後、下のボタンで選択"
+                            value={actions.join('・')}
+                            onChange={(e) => {
+                              const value = e.target.value
+                              if (value === '') {
+                                setActions([])
+                              } else {
+                                setActions(value.split('・').filter(v => v.trim()))
+                              }
+                            }}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="直接入力またはボタンで選択（複数は「・」区切り）"
                           />
                         </div>
                       </div>
@@ -2300,10 +2354,13 @@ function InvoiceCreateContent() {
                           <SimpleLabel>位置</SimpleLabel>
                           <input
                             type="text"
-                            value={position || ''}
-                            readOnly
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50"
-                            placeholder="動作選択後、下のボタンで選択"
+                            value={positions.join('')}
+                            onChange={(e) => {
+                              const value = e.target.value
+                              setPositions(value ? [value] : [])
+                            }}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="直接入力またはボタンで選択"
                           />
                         </div>
                         <div>
@@ -2356,11 +2413,27 @@ function InvoiceCreateContent() {
                           min="1"
                         />
                       </div>
-                      <div className="flex justify-center">
+                      <div className="flex justify-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setTarget('')
+                            setActions([])
+                            setPositions([])
+                            setWorkMemo('')
+                            setUnitPrice('')
+                            setQty(1)
+                            setIsTargetConfirmed(false)
+                          }}
+                          className="h-10 w-10 bg-gray-500 text-white rounded-lg hover:bg-gray-600 flex items-center justify-center"
+                          title="入力をクリア"
+                        >
+                          ×
+                        </button>
                         <button
                           type="button"
                           onClick={addStructured}
-                          className="h-10 px-4 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                          className="h-10 px-4 bg-green-600 text-white rounded-lg hover:bg-green-700 whitespace-nowrap"
                         >
                           追加
                         </button>
@@ -2369,7 +2442,7 @@ function InvoiceCreateContent() {
                     
                     {/* スマホ: 単価・数量を横並び、追加ボタンを右側 */}
                     <div className="md:hidden mb-4">
-                      <div className="grid grid-cols-3 gap-3 items-end">
+                      <div className="grid grid-cols-4 gap-2 items-end">
                         <div>
                           <SimpleLabel>単価</SimpleLabel>
                           <input
@@ -2381,19 +2454,37 @@ function InvoiceCreateContent() {
                               const value = e.target.value.replace(/[^0-9]/g, '')
                               setUnitPrice(value || '0')
                             }}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            placeholder="金額を入力してください"
+                            className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                            placeholder="金額"
                           />
                         </div>
-                        <div>
+                        <div className="w-16">
                           <SimpleLabel>数量</SimpleLabel>
                           <input
                             type="number"
                             value={qty}
                             onChange={(e) => setQty(Number(e.target.value))}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full px-1 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
                             min="1"
                           />
+                        </div>
+                        <div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setTarget('')
+                              setActions([])
+                              setPositions([])
+                              setWorkMemo('')
+                              setUnitPrice('')
+                              setQty(1)
+                              setIsTargetConfirmed(false)
+                            }}
+                            className="h-9 w-9 bg-gray-500 text-white rounded-lg hover:bg-gray-600 flex items-center justify-center text-sm"
+                            title="入力をクリア"
+                          >
+                            ×
+                          </button>
                         </div>
                         <div>
                           <button
@@ -2435,11 +2526,11 @@ function InvoiceCreateContent() {
                     
                       
                       {/* 作業名表示（自動生成） */}
-                      {target && action && (
+                      {target && actions.length > 0 && (
                         <div className="mb-4">
                           <SimpleLabel>作業名プレビュー</SimpleLabel>
                           <div className="px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-700 font-medium">
-                            {composedLabel(target, action, position, workMemo)}
+                            {composedLabel(target, actions, positions, workMemo)}
                           </div>
                         </div>
                       )}
@@ -2506,6 +2597,7 @@ function InvoiceCreateContent() {
                                 onChange={(e) => {
                                   const value = e.target.value
                                   setDetailTarget(value)
+                                  setIsDetailTargetConfirmed(false)
                                   
                                   if (value.trim() && TARGETS) {
                                     const filtered = TARGETS.filter(t => 
@@ -2560,6 +2652,7 @@ function InvoiceCreateContent() {
                                       type="button"
                                       onClick={() => {
                                         setDetailTarget(suggestion)
+                                        setIsDetailTargetConfirmed(true)
                                         setShowDetailTargetSuggestions(false)
                                         setSelectedDetailTargetIndex(-1)
                                       }}
@@ -2579,146 +2672,31 @@ function InvoiceCreateContent() {
                               <SimpleLabel>動作</SimpleLabel>
                               <input
                                 type="text"
-                                value={detailAction}
+                                value={detailActions.join('・')}
                                 onChange={(e) => {
                                   const value = e.target.value
-                                  setDetailAction(value)
-                                  
-                                  if (value.trim() && detailTarget && TARGET_ACTIONS && TARGET_ACTIONS[detailTarget]) {
-                                    const filtered = TARGET_ACTIONS[detailTarget].filter(a => 
-                                      fuzzyMatch(a, value)
-                                    ).slice(0, 80)
-                                    setDetailActionSuggestions(filtered)
-                                    setShowDetailActionSuggestions(filtered.length > 0)
-                                  } else if (value.trim() && ACTIONS) {
-                                    const filtered = ACTIONS.filter(a => 
-                                      fuzzyMatch(a, value)
-                                    ).slice(0, 80)
-                                    setDetailActionSuggestions(filtered)
-                                    setShowDetailActionSuggestions(filtered.length > 0)
+                                  if (value === '') {
+                                    setDetailActions([])
                                   } else {
-                                    setShowDetailActionSuggestions(false)
+                                    setDetailActions(value.split('・').filter(v => v.trim()))
                                   }
                                 }}
-                                onFocus={() => {
-                                  const actions = detailTarget && TARGET_ACTIONS && TARGET_ACTIONS[detailTarget] 
-                                    ? TARGET_ACTIONS[detailTarget] 
-                                    : ACTIONS || []
-                                  if (actions.length > 0 && !detailAction.trim()) {
-                                    setDetailActionSuggestions(actions.slice(0, 80))
-                                    setShowDetailActionSuggestions(true)
-                                  }
-                                }}
-                                onBlur={() => setTimeout(() => setShowDetailActionSuggestions(false), 200)}
                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                                placeholder="動作"
+                                placeholder="直接入力またはボタンで選択（複数は「・」区切り）"
                               />
-                              {showDetailActionSuggestions && detailActionSuggestions.length > 0 && (
-                                <div className="absolute z-30 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-80 overflow-y-auto">
-                                  {detailActionSuggestions.map((suggestion, index) => (
-                                    <button
-                                      key={index}
-                                      type="button"
-                                      onClick={() => {
-                                        setDetailAction(suggestion)
-                                        setShowDetailActionSuggestions(false)
-                                      }}
-                                      className="w-full px-3 py-2 text-left hover:bg-blue-50 first:rounded-t-lg last:rounded-b-lg text-sm"
-                                    >
-                                      {suggestion}
-                                    </button>
-                                  ))}
-                                </div>
-                              )}
-                              
-                              {/* 対象選択後の動作ボタン表示 */}
-                              {detailTarget && TARGET_ACTIONS && TARGET_ACTIONS[detailTarget] && (
-                                <div className="mt-2">
-                                  <div className="text-xs text-gray-600 mb-1">動作を選択（クリック）:</div>
-                                  <div className="flex flex-wrap gap-1">
-                                    {TARGET_ACTIONS[detailTarget].map((action) => (
-                                      <button
-                                        key={action}
-                                        type="button"
-                                        onClick={() => {
-                                          setDetailAction(action)
-                                          // 動作選択時に単価を自動取得
-                                          const priceKey = `${detailTarget}_${action}`
-                                          const price = priceBookMap?.[priceKey]
-                                          if (price && price > 0) {
-                                            // セット価格は個別価格の合計として計算される想定なので、
-                                            // 明細個別の単価は参考として表示のみ
-                                            // // console.log(`価格情報: ${priceKey} = ${price}円`)
-                                          }
-                                        }}
-                                        className={`px-2 py-1 text-xs rounded border transition-colors ${
-                                          detailAction === action
-                                            ? "bg-blue-100 border-blue-300 text-blue-800"
-                                            : "bg-gray-100 hover:bg-blue-100 border-gray-300"
-                                        }`}
-                                      >
-                                        {action}
-                                        {/* 価格表示 */}
-                                        {(() => {
-                                          const priceKey = `${detailTarget}_${action}`
-                                          const price = priceBookMap?.[priceKey]
-                                          return price ? (
-                                            <span className="ml-1 text-xs text-gray-500">
-                                              (¥{price.toLocaleString()})
-                                            </span>
-                                          ) : null
-                                        })()}
-                                      </button>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
                             </div>
                             <div>
                               <SimpleLabel>位置</SimpleLabel>
                               <input
                                 type="text"
-                                value={detailPosition}
-                                onChange={(e) => setDetailPosition(e.target.value)}
+                                value={detailPositions.join('')}
+                                onChange={(e) => {
+                                  const value = e.target.value
+                                  setDetailPositions(value ? [value] : [])
+                                }}
                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                                placeholder="位置"
+                                placeholder="直接入力またはボタンで選択"
                               />
-                              
-                              {/* 位置複数選択ボタン（対象・動作の関連設定に基づいて表示） */}
-                              {detailTarget && detailAction && (() => {
-                                // 動作に基づく位置の絞り込み
-                                const applicablePositions = ACTION_POSITIONS && ACTION_POSITIONS[detailAction]
-                                  ? ACTION_POSITIONS[detailAction]
-                                  : POSITIONS || []
-                                
-                                return applicablePositions.length > 0 && (
-                                  <div className="mt-2">
-                                    <div className="text-xs text-gray-600 mb-1">位置を選択（クリック）:</div>
-                                    <div className="flex flex-wrap gap-1">
-                                      {applicablePositions.map((pos) => (
-                                        <button
-                                          key={pos}
-                                          type="button"
-                                          onClick={() => {
-                                            const currentPositions = detailPosition ? detailPosition.split(',').map(p => p.trim()) : []
-                                            const newPositions = currentPositions.includes(pos) 
-                                              ? currentPositions.filter(p => p !== pos)
-                                              : [...currentPositions, pos]
-                                            setDetailPosition(newPositions.join(', '))
-                                          }}
-                                          className={`px-2 py-1 text-xs rounded border transition-colors ${
-                                            detailPosition && detailPosition.split(',').map(p => p.trim()).includes(pos)
-                                              ? "bg-blue-100 border-blue-300 text-blue-800"
-                                              : "bg-gray-100 hover:bg-blue-100 border-gray-300"
-                                          }`}
-                                        >
-                                          {pos}
-                                        </button>
-                                      ))}
-                                    </div>
-                                  </div>
-                                )
-                              })()}
                             </div>
                             <div>
                               <SimpleLabel>その他</SimpleLabel>
@@ -2730,29 +2708,134 @@ function InvoiceCreateContent() {
                                 placeholder="その他"
                               />
                             </div>
-                            <div>
+                            <div className="w-20">
                               <SimpleLabel>数量</SimpleLabel>
                               <input
                                 type="number"
                                 value={detailQuantity}
                                 onChange={(e) => setDetailQuantity(Number(e.target.value) || 1)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                                placeholder="数量"
+                                className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                                placeholder="1"
                                 min="1"
                               />
                             </div>
-                            <div className="flex justify-center items-end">
+                            <div className="flex justify-center items-end gap-2">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setDetailTarget('')
+                                  setDetailActions([])
+                                  setDetailPositions([])
+                                  setDetailOther('')
+                                  setDetailQuantity(1)
+                                }}
+                                className="h-9 w-9 bg-gray-500 text-white rounded-lg hover:bg-gray-600 text-sm mt-6 flex items-center justify-center"
+                                title="入力をクリア"
+                              >
+                                ×
+                              </button>
                               <button
                                 type="button"
                                 onClick={addSetDetail}
                                 disabled={!detailTarget.trim()}
-                                className="h-9 px-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400 text-sm mt-6"
+                                className="h-9 px-4 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400 text-sm mt-6 whitespace-nowrap"
                               >
                                 明細追加
                               </button>
                             </div>
                           </div>
                         </div>
+
+                        {/* セット明細の入力補助ボタン */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                          <div>
+                            <div className="text-sm font-medium text-gray-700 mb-2">動作（クリックで入力）:</div>
+                            <div className="flex flex-wrap gap-1">
+                              {(detailTarget && TARGET_ACTIONS && TARGET_ACTIONS[detailTarget] ? TARGET_ACTIONS[detailTarget] : ACTIONS || []).map((a) => {
+                                const price = priceBookMap?.[`${detailTarget}_${a}`]
+                                return (
+                                  <button
+                                    key={a}
+                                    type="button"
+                                    onClick={() => {
+                                      if (a === '（指定なし）') {
+                                        // 何もしない（動作未設定のまま進む）
+                                        return
+                                      } else {
+                                        if (detailActions.includes(a)) {
+                                          setDetailActions(detailActions.filter(act => act !== a))
+                                        } else if (detailActions.length < 3) {
+                                          setDetailActions([...detailActions, a])
+                                        }
+                                      }
+                                    }}
+                                    className={`px-2 py-1 text-xs rounded border text-left transition-colors ${
+                                      a === '（指定なし）' 
+                                        ? (detailActions.length === 0 
+                                          ? "bg-gray-200 border-gray-400 text-gray-700"
+                                          : "bg-gray-100 hover:bg-gray-200 border-gray-300")
+                                        : (detailActions.includes(a)
+                                          ? "bg-blue-100 border-blue-300 text-blue-800"
+                                          : "bg-gray-100 hover:bg-blue-100 border-gray-300")
+                                    }`}
+                                  >
+                                    <div>{a}</div>
+                                    {price && price > 0 && (
+                                      <div className="text-blue-600">¥{price.toLocaleString()}</div>
+                                    )}
+                                  </button>
+                                )
+                              })}
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-sm font-medium text-gray-700 mb-2">位置（クリックで入力）:</div>
+                            <div className="flex flex-wrap gap-1 min-h-[2rem]">
+                              {detailTarget.trim() ? (
+                                (detailActions.length > 0 && ACTION_POSITIONS && ACTION_POSITIONS[detailActions[0]] 
+                                  ? ACTION_POSITIONS[detailActions[0]] 
+                                  : POSITIONS || []
+                                ).map((p) => (
+                                  <button
+                                    key={p}
+                                    type="button"
+                                    onClick={() => {
+                                      if (detailPositions.includes(p)) {
+                                        setDetailPositions(detailPositions.filter(pos => pos !== p))
+                                      } else if (detailPositions.length < 5) {
+                                        setDetailPositions([...detailPositions, p])
+                                      }
+                                    }}
+                                    className={`px-2 py-1 text-xs rounded border transition-colors ${
+                                      detailPositions.includes(p)
+                                        ? "bg-blue-500 text-white border-blue-600"
+                                        : "bg-gray-100 hover:bg-blue-100 border-gray-300"
+                                    }`}
+                                  >
+                                    {p}
+                                  </button>
+                                ))
+                              ) : (
+                                <div className="text-xs text-gray-500 py-1">まず対象を入力してください</div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* セット明細プレビュー */}
+                        {detailTarget.trim() && (
+                          <div className="mb-4">
+                            <SimpleLabel>明細プレビュー</SimpleLabel>
+                            <div className="px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-700 font-medium">
+                              {composedLabel(detailTarget, detailActions, detailPositions, detailOther)}
+                              {detailQuantity > 1 && (
+                                <span className="bg-gray-300 px-1 rounded text-xs ml-2">
+                                  数量: {detailQuantity}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        )}
 
                         {/* セット追加ボタン */}
                         <div className="flex justify-center mb-4">
@@ -2774,10 +2857,17 @@ function InvoiceCreateContent() {
                           {setDetails.map((detail, index) => (
                             <div key={index} className="flex justify-between items-center p-2 bg-gray-50 rounded text-sm">
                               <div className="flex-1">
-                                <div>{detail.label}</div>
-                                {detail.unitPrice && detail.unitPrice > 0 && (
+                                <div className="flex items-center gap-2">
+                                  <span>{detail.label}</span>
+                                  {detail.quantity && detail.quantity >= 1 && (
+                                    <span className="text-xs text-gray-500 bg-gray-200 px-2 py-1 rounded">
+                                      数量: {detail.quantity}
+                                    </span>
+                                  )}
+                                </div>
+                                {detail.unitPrice != null && detail.unitPrice > 0 && (
                                   <div className="text-xs text-blue-600 mt-1">
-                                    ¥{(detail.unitPrice || 0).toLocaleString()}
+                                    ¥{detail.unitPrice.toLocaleString()}
                                   </div>
                                 )}
                               </div>
@@ -2837,7 +2927,14 @@ function InvoiceCreateContent() {
                                 <div className="text-sm text-gray-600 mb-1">セット詳細:</div>
                                 <ul className="text-sm text-gray-700 list-disc list-inside">
                                   {item.set_details.map((detail, detailIndex) => (
-                                    <li key={detailIndex}>{detail}</li>
+                                    <li key={detailIndex} className="flex items-center gap-2">
+                                      <span>{typeof detail === 'string' ? detail : detail.label}</span>
+                                      {typeof detail === 'object' && detail.quantity && detail.quantity >= 1 && (
+                                        <span className="text-xs text-gray-500 bg-gray-200 px-2 py-1 rounded">
+                                          数量: {detail.quantity}
+                                        </span>
+                                      )}
+                                    </li>
                                   ))}
                                 </ul>
                               </div>
@@ -2850,12 +2947,6 @@ function InvoiceCreateContent() {
                                 金額: ¥{(item.amount || 0).toLocaleString()}
                               </div>
                             </div>
-                            
-                            {item.memo && (
-                              <div className="mt-2 text-sm text-gray-600">
-                                メモ: {item.memo}
-                              </div>
-                            )}
                           </div>
                           
                           <button
@@ -2896,18 +2987,18 @@ function InvoiceCreateContent() {
               </h2>
               
               <div className="space-y-4">
-                <div className="flex justify-between items-center py-2">
-                  <span className="text-gray-600">小計:</span>
-                  <span className="font-semibold text-lg">¥{subtotal.toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between items-center py-2">
-                  <span className="text-gray-600">消費税 (10%):</span>
-                  <span className="font-semibold text-lg">¥{taxAmount.toLocaleString()}</span>
+                <div className="flex justify-between items-center py-3">
+                  <span className="text-lg font-bold">合計（内税）:</span>
+                  <span className="text-xl font-bold text-blue-600">¥{totalAmount.toLocaleString()}</span>
                 </div>
                 <hr className="border-gray-300" />
-                <div className="flex justify-between items-center py-3">
-                  <span className="text-lg font-bold">合計:</span>
-                  <span className="text-xl font-bold text-blue-600">¥{totalAmount.toLocaleString()}</span>
+                <div className="flex justify-between items-center py-2 text-sm">
+                  <span className="text-gray-600">うち消費税 (10%):</span>
+                  <span className="font-medium">¥{taxAmount.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between items-center py-2 text-sm">
+                  <span className="text-gray-600">本体価格:</span>
+                  <span className="font-medium">¥{subtotal.toLocaleString()}</span>
                 </div>
               </div>
               
