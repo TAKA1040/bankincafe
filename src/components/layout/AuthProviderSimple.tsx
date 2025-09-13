@@ -51,20 +51,31 @@ export default function AuthProviderSimple({ children }: AuthProviderProps) {
             if (parsedSession.expires_at > Date.now() / 1000) {
               // console.log('🔄 [AuthProviderSimple] キャッシュされたセッションを使用')
               
-              // キャッシュされたユーザーの管理者権限を再確認（環境変数のみ）
+              // キャッシュされたユーザーの管理者権限を再確認（API経由）
               const userEmail = parsedSession.user_email
-              const rawAllowedEmails = process.env.NEXT_PUBLIC_ALLOWED_EMAILS
-              const allowedEmailsList = rawAllowedEmails?.split(',').map(e => e.trim()) || []
-              const isAdminUser = allowedEmailsList.includes(userEmail)
+              try {
+                const response = await fetch('/api/auth/check-admin', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ email: userEmail })
+                })
+                const { isAdmin: isAdminUser } = await response.json();
               
-              if (isAdminUser) {
-                // // // console.log('✅ [AuthProviderSimple] キャッシュセッション管理者確認完了')
-                setIsAuthenticated(true)
-                setIsAdmin(true)
-                setIsLoading(false)
-                return
-              } else {
-                // // // console.log('❌ [AuthProviderSimple] キャッシュユーザーは管理者ではありません')
+                if (isAdminUser) {
+                  // // // console.log('✅ [AuthProviderSimple] キャッシュセッション管理者確認完了')
+                  setIsAuthenticated(true)
+                  setIsAdmin(true)
+                  setIsLoading(false)
+                  return
+                } else {
+                  // // // console.log('❌ [AuthProviderSimple] キャッシュユーザーは管理者ではありません')
+                  sessionStorage.removeItem('supabase_session')
+                  setIsAuthenticated(false)
+                  router.push('/auth/pending')
+                  return
+                }
+              } catch (error) {
+                console.error('管理者権限チェックでエラー:', error)
                 sessionStorage.removeItem('supabase_session')
                 setIsAuthenticated(false)
                 router.push('/auth/pending')
@@ -104,11 +115,21 @@ export default function AuthProviderSimple({ children }: AuthProviderProps) {
           return
         }
         
-        // 管理者チェック（環境変数のみ）
+        // 管理者チェック（API経由）
         const userEmail = session.user.email
-        const rawAllowedEmails = process.env.NEXT_PUBLIC_ALLOWED_EMAILS
-        const allowedEmailsList = rawAllowedEmails?.split(',').map(e => e.trim()) || []
-        const isAdmin = allowedEmailsList.includes(userEmail)
+        let isAdmin = false;
+        try {
+          const response = await fetch('/api/auth/check-admin', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: userEmail })
+          })
+          const result = await response.json();
+          isAdmin = result.isAdmin;
+        } catch (error) {
+          console.error('管理者権限チェックでエラー:', error);
+          isAdmin = false;
+        }
         
         // console.log('🔐 管理者権限チェック:', { userEmail, isAdmin })
         
