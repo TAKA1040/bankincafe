@@ -8,8 +8,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ isAdmin: false, error: 'Email required' }, { status: 400 });
     }
 
-    // サーバーサイドで環境変数から管理者メールを取得（クライアントに露出されない）
-    const rawAllowedEmails = process.env.ALLOWED_EMAILS; // NEXT_PUBLIC_ プレフィックスを除去
+    // サーバーサイドで環境変数から管理者メールを取得（既存の環境変数を使用）
+    const rawAllowedEmails = process.env.NEXT_PUBLIC_ALLOWED_EMAILS || process.env.ALLOWED_EMAILS;
     
     if (!rawAllowedEmails) {
       console.warn('ALLOWED_EMAILS環境変数が設定されていません');
