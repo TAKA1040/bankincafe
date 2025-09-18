@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
-import { Settings, Plus, Trash2, Edit2, Save, X, ArrowLeft, ArrowUp, ArrowDown, Home } from 'lucide-react'
+import { Settings, Plus, Trash2, Edit2, Save, X, ArrowLeft, ArrowUp, ArrowDown, Home, Search } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import type { Target, Action, Position, ReadingMapping, TargetAction, ActionPosition, PriceSuggestion } from '@/hooks/useWorkDictionary'
 
@@ -12,6 +12,28 @@ type TabType = 'targets' | 'actions' | 'positions' | 'readings' | 'relations'
 const hasKanji = (text: string): boolean => {
   const kanjiRegex = /[\u4e00-\u9faf]/
   return kanjiRegex.test(text)
+}
+
+// 文字正規化関数（ひらがな/カタカナ、大文字小文字、全角半角を統一）
+const normalizeSearchText = (text: string): string => {
+  if (!text) return ''
+
+  return text
+    // 全角英数字を半角に変換
+    .replace(/[Ａ-Ｚａ-ｚ０-９]/g, (char) => {
+      return String.fromCharCode(char.charCodeAt(0) - 0xFEE0)
+    })
+    // 全角スペースを半角に変換
+    .replace(/　/g, ' ')
+    // カタカナをひらがなに変換
+    .replace(/[\u30A1-\u30F6]/g, (char) => {
+      return String.fromCharCode(char.charCodeAt(0) - 0x60)
+    })
+    // 小文字に統一
+    .toLowerCase()
+    // 連続する空白を単一にし、前後の空白を削除
+    .replace(/\s+/g, ' ')
+    .trim()
 }
 
 export default function WorkDictionaryPage() {
@@ -44,6 +66,9 @@ export default function WorkDictionaryPage() {
   // フィルタリング状態
   const [selectedTargetFilter, setSelectedTargetFilter] = useState<number | null>(null)
   const [selectedActionFilter, setSelectedActionFilter] = useState<number | null>(null)
+
+  // 検索状態
+  const [searchKeyword, setSearchKeyword] = useState('')
   
   // 一括登録状態
   const [bulkTargetId, setBulkTargetId] = useState<number | null>(null)
@@ -751,15 +776,55 @@ export default function WorkDictionaryPage() {
   }
 
   // フィルタリングされたデータ（パフォーマンス最適化）
-  const filteredTargetActions = useMemo(() => 
+  const filteredTargetActions = useMemo(() =>
     targetActions.filter(ta => !selectedTargetFilter || ta.target_id === selectedTargetFilter),
     [targetActions, selectedTargetFilter]
   )
 
-  const filteredActionPositions = useMemo(() => 
+  const filteredActionPositions = useMemo(() =>
     actionPositions.filter(ap => !selectedActionFilter || ap.action_id === selectedActionFilter),
     [actionPositions, selectedActionFilter]
   )
+
+  // 検索フィルタリングされたマスタデータ
+  const filteredTargets = useMemo(() => {
+    if (!searchKeyword.trim()) return targets
+
+    const normalizedKeyword = normalizeSearchText(searchKeyword)
+    return targets.filter(target =>
+      normalizeSearchText(target.name).includes(normalizedKeyword) ||
+      normalizeSearchText(target.reading || '').includes(normalizedKeyword)
+    )
+  }, [targets, searchKeyword])
+
+  const filteredActions = useMemo(() => {
+    if (!searchKeyword.trim()) return actions
+
+    const normalizedKeyword = normalizeSearchText(searchKeyword)
+    return actions.filter(action =>
+      normalizeSearchText(action.name).includes(normalizedKeyword)
+    )
+  }, [actions, searchKeyword])
+
+  const filteredPositions = useMemo(() => {
+    if (!searchKeyword.trim()) return positions
+
+    const normalizedKeyword = normalizeSearchText(searchKeyword)
+    return positions.filter(position =>
+      normalizeSearchText(position.name).includes(normalizedKeyword)
+    )
+  }, [positions, searchKeyword])
+
+  const filteredReadings = useMemo(() => {
+    if (!searchKeyword.trim()) return readingMappings
+
+    const normalizedKeyword = normalizeSearchText(searchKeyword)
+    return readingMappings.filter(reading =>
+      normalizeSearchText(reading.word).includes(normalizedKeyword) ||
+      normalizeSearchText(reading.reading_hiragana).includes(normalizedKeyword) ||
+      normalizeSearchText(reading.reading_katakana).includes(normalizedKeyword)
+    )
+  }, [readingMappings, searchKeyword])
 
   // エラー表示コンポーネント
   const ErrorMessage = () => {
@@ -1056,6 +1121,33 @@ export default function WorkDictionaryPage() {
             </button>
           </div>
 
+          {/* 検索バー */}
+          <div className="px-6 pt-4 pb-2 border-b border-gray-200">
+            <div className="flex items-center gap-2 max-w-md">
+              <Search size={20} className="text-gray-400" />
+              <input
+                type="text"
+                value={searchKeyword}
+                onChange={(e) => setSearchKeyword(e.target.value)}
+                placeholder="名前や読み仮名で検索..."
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+              {searchKeyword && (
+                <button
+                  onClick={() => setSearchKeyword('')}
+                  className="px-2 py-1 text-sm text-gray-500 hover:text-gray-700"
+                >
+                  クリア
+                </button>
+              )}
+            </div>
+            {searchKeyword && (
+              <div className="mt-2 text-sm text-gray-600">
+                検索結果: 対象{filteredTargets.length}件 / 動作{filteredActions.length}件 / 位置{filteredPositions.length}件 / 読み仮名{filteredReadings.length}件
+              </div>
+            )}
+          </div>
+
           {/* タブコンテンツ */}
           <div className="p-6">
             {/* 対象マスタ */}
@@ -1093,7 +1185,7 @@ export default function WorkDictionaryPage() {
                           onCancel={() => setIsAdding(false)}
                         />
                       )}
-                      {targets.map((target, index) => (
+                      {filteredTargets.map((target, index) => (
                         editingItem?.id === target.id ? (
                           <EditForm
                             key={target.id}
@@ -1122,7 +1214,7 @@ export default function WorkDictionaryPage() {
                                 </button>
                                 <button
                                   onClick={() => changeSortOrder('targets', target.id, 'down')}
-                                  disabled={saving || index === targets.length - 1}
+                                  disabled={saving || index === filteredTargets.length - 1}
                                   className="px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-30"
                                   title="下に移動"
                                 >
@@ -1191,7 +1283,7 @@ export default function WorkDictionaryPage() {
                           onCancel={() => setIsAdding(false)}
                         />
                       )}
-                      {actions.map((action, index) => (
+                      {filteredActions.map((action, index) => (
                         editingItem?.id === action.id ? (
                           <EditForm
                             key={action.id}
@@ -1217,7 +1309,7 @@ export default function WorkDictionaryPage() {
                                 </button>
                                 <button
                                   onClick={() => changeSortOrder('actions', action.id, 'down')}
-                                  disabled={saving || index === actions.length - 1}
+                                  disabled={saving || index === filteredActions.length - 1}
                                   className="px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-30"
                                   title="下に移動"
                                 >
@@ -1286,7 +1378,7 @@ export default function WorkDictionaryPage() {
                           onCancel={() => setIsAdding(false)}
                         />
                       )}
-                      {positions.map((position, index) => (
+                      {filteredPositions.map((position, index) => (
                         editingItem?.id === position.id ? (
                           <EditForm
                             key={position.id}
@@ -1312,7 +1404,7 @@ export default function WorkDictionaryPage() {
                                 </button>
                                 <button
                                   onClick={() => changeSortOrder('positions', position.id, 'down')}
-                                  disabled={saving || index === positions.length - 1}
+                                  disabled={saving || index === filteredPositions.length - 1}
                                   className="px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-30"
                                   title="下に移動"
                                 >
@@ -1380,7 +1472,7 @@ export default function WorkDictionaryPage() {
                           onCancel={() => setIsAdding(false)}
                         />
                       )}
-                      {readingMappings.map((reading, index) => (
+                      {filteredReadings.map((reading, index) => (
                         editingItem?.word === reading.word && editingItem?.word_type === reading.word_type ? (
                           <ReadingEditForm
                             key={`${reading.word}-${reading.word_type}`}
