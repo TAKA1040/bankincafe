@@ -44,6 +44,9 @@ export interface InvoiceWithItems {
   created_at: string | null
   updated_at: string | null
   remarks: string | null
+  closed_at?: string | null
+  invoice_type?: 'standard' | 'red' | 'black'
+  original_invoice_id?: string | null
   line_items: {
     id: number
     line_no: number

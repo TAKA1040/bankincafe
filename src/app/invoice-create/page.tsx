@@ -429,8 +429,15 @@ function InvoiceCreateContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const editInvoiceId = searchParams?.get('edit')
+  const deleteInvoiceId = searchParams?.get('delete')
+  const isRevisionMode = searchParams?.get('revision') === 'true'
+  const isRedInvoiceMode = searchParams?.get('red') === 'true'
   const isEditMode = !!editInvoiceId
-  
+  const isDeleteMode = !!deleteInvoiceId
+
+  // 元の請求書情報（修正・赤伝用）
+  const [originalInvoice, setOriginalInvoice] = useState<any>(null)
+
   const [db, setDb] = useState<WorkHistoryDB | null>(null)
   const [categoryDb, setCategoryDb] = useState<CustomerCategoryDB | null>(null)
   const [subjectDb, setSubjectDb] = useState<SubjectMasterDB | null>(null)
@@ -1000,12 +1007,15 @@ function InvoiceCreateContent() {
           if (invoiceError) throw invoiceError
           if (!invoiceData) throw new Error('請求書が見つかりません')
 
-          // 下書きのみ編集可能
-          if (invoiceData.status !== 'draft') {
-            alert('下書きの請求書のみ編集できます')
+          // 修正モードでない場合、下書きのみ編集可能
+          if (!isRevisionMode && invoiceData.status !== 'draft') {
+            alert('下書きの請求書のみ編集できます。確定済みの請求書は修正伝票を作成してください。')
             router.push('/invoice-list')
             return
           }
+
+          // 修正モード用に元の請求書情報を保存
+          setOriginalInvoice(invoiceData)
 
           // 基本情報をセット
           setInvoiceNumber(invoiceData.invoice_id)
@@ -1426,10 +1436,198 @@ function InvoiceCreateContent() {
     }
 
     try {
+      // 枝番を計算する関数
+      const getNextRevision = async (baseId: string): Promise<string> => {
+        const parentNumber = baseId.split('-')[0]
+        const { data: existingInvoices } = await supabase
+          .from('invoices')
+          .select('invoice_id')
+          .like('invoice_id', `${parentNumber}-%`)
+          .order('invoice_id', { ascending: false })
+
+        if (existingInvoices && existingInvoices.length > 0) {
+          const maxRevision = Math.max(
+            ...existingInvoices.map(inv => parseInt(inv.invoice_id.split('-')[1] || '1'))
+          )
+          return `${parentNumber}-${maxRevision + 1}`
+        }
+        return `${parentNumber}-2`
+      }
+
+      // 修正モード（月〆後）の場合、赤伝と黒伝を生成
+      if (isRevisionMode && originalInvoice) {
+        // 1. 元の請求書を「revised」ステータスに更新
+        await supabase
+          .from('invoices')
+          .update({ status: 'revised' })
+          .eq('invoice_id', editInvoiceId!)
+
+        // 2. 赤伝（マイナス伝票）を作成
+        const redInvoiceId = await getNextRevision(editInvoiceId!)
+        const redInvoiceRecord = {
+          invoice_id: redInvoiceId,
+          invoice_number: redInvoiceId,
+          issue_date: new Date().toISOString().split('T')[0],
+          billing_date: billingDate,
+          billing_month: `${invoiceYear}-${String(invoiceMonth).padStart(2, '0')}`,
+          customer_category: customerCategory === 'ud' ? 'UD' : 'その他',
+          customer_name: customerName,
+          subject_name: subject,
+          subject: subject,
+          registration_number: registrationNumber || null,
+          order_number: orderNumber || null,
+          purchase_order_number: internalOrderNumber || null,
+          subtotal: -(originalInvoice.subtotal || 0),
+          tax: -(originalInvoice.tax || 0),
+          total_amount: -(originalInvoice.total || 0),
+          total: -(originalInvoice.total || 0),
+          status: 'finalized',
+          payment_status: 'unpaid',
+          invoice_type: 'red',
+          original_invoice_id: editInvoiceId,
+          remarks: `${editInvoiceId}の赤伝`,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }
+
+        const { error: redError } = await supabase
+          .from('invoices')
+          .insert(redInvoiceRecord)
+
+        if (redError) throw redError
+
+        // 3. 黒伝（正しい金額の請求書）を作成
+        const blackInvoiceId = await getNextRevision(editInvoiceId!)
+        const blackInvoiceRecord = {
+          invoice_id: blackInvoiceId,
+          invoice_number: blackInvoiceId,
+          issue_date: new Date().toISOString().split('T')[0],
+          billing_date: billingDate,
+          billing_month: `${invoiceYear}-${String(invoiceMonth).padStart(2, '0')}`,
+          customer_category: customerCategory === 'ud' ? 'UD' : 'その他',
+          customer_name: customerName,
+          subject_name: subject,
+          subject: subject,
+          registration_number: registrationNumber || null,
+          order_number: orderNumber || null,
+          purchase_order_number: internalOrderNumber || null,
+          subtotal: subtotal,
+          tax: taxAmount,
+          total_amount: totalAmount,
+          total: totalAmount,
+          status: isDraft ? 'draft' : 'finalized',
+          payment_status: 'unpaid',
+          invoice_type: 'black',
+          original_invoice_id: editInvoiceId,
+          remarks: memo || `${editInvoiceId}の修正伝票`,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }
+
+        const { error: blackError } = await supabase
+          .from('invoices')
+          .insert(blackInvoiceRecord)
+
+        if (blackError) throw blackError
+
+        // 黒伝の明細を保存（後で処理）
+        // invoiceNumberを黒伝のIDに変更
+        const finalInvoiceId = blackInvoiceId
+
+        alert(`修正伝票を作成しました\n赤伝: ${redInvoiceId}\n黒伝: ${blackInvoiceId}`)
+        router.push(`/invoice-view/${blackInvoiceId}`)
+        return
+
+      } else if (isDeleteMode && isRedInvoiceMode) {
+        // 削除モード（赤伝のみ発行）
+        const targetId = deleteInvoiceId!
+        const redInvoiceId = await getNextRevision(targetId)
+
+        // 元の請求書データを取得
+        const { data: targetInvoice } = await supabase
+          .from('invoices')
+          .select('*')
+          .eq('invoice_id', targetId)
+          .single()
+
+        if (!targetInvoice) {
+          throw new Error('元の請求書が見つかりません')
+        }
+
+        // 元の請求書を「cancelled」ステータスに更新
+        await supabase
+          .from('invoices')
+          .update({ status: 'cancelled' })
+          .eq('invoice_id', targetId)
+
+        // 赤伝を作成
+        const redInvoiceRecord = {
+          invoice_id: redInvoiceId,
+          invoice_number: redInvoiceId,
+          issue_date: new Date().toISOString().split('T')[0],
+          billing_date: targetInvoice.billing_date,
+          billing_month: targetInvoice.billing_month,
+          customer_category: targetInvoice.customer_category,
+          customer_name: targetInvoice.customer_name,
+          subject_name: targetInvoice.subject_name,
+          subject: targetInvoice.subject,
+          registration_number: targetInvoice.registration_number,
+          order_number: targetInvoice.order_number,
+          purchase_order_number: targetInvoice.purchase_order_number,
+          subtotal: -(targetInvoice.subtotal || 0),
+          tax: -(targetInvoice.tax || 0),
+          total_amount: -(targetInvoice.total || targetInvoice.total_amount || 0),
+          total: -(targetInvoice.total || targetInvoice.total_amount || 0),
+          status: 'finalized',
+          payment_status: 'unpaid',
+          invoice_type: 'red',
+          original_invoice_id: targetId,
+          remarks: `${targetId}の取消（赤伝）`,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }
+
+        const { error: redError } = await supabase
+          .from('invoices')
+          .insert(redInvoiceRecord)
+
+        if (redError) throw redError
+
+        alert(`赤伝を発行しました: ${redInvoiceId}`)
+        router.push(`/invoice-view/${redInvoiceId}`)
+        return
+      }
+
+      // 通常の保存処理
+      let finalInvoiceId = invoiceNumber
+
+      // 月〆前の編集で枝番を+1する場合
+      if (isEditMode && !isRevisionMode) {
+        // 元の請求書のclosed_atを確認
+        const { data: existingInvoice } = await supabase
+          .from('invoices')
+          .select('*')
+          .eq('invoice_id', invoiceNumber)
+          .single()
+
+        // 月〆前なら枝番+1で新規作成、元は「revised」に
+        const closedAt = (existingInvoice as any)?.closed_at
+        if (!closedAt) {
+          const newInvoiceId = await getNextRevision(invoiceNumber)
+          finalInvoiceId = newInvoiceId
+
+          // 元の請求書を「revised」に
+          await supabase
+            .from('invoices')
+            .update({ status: 'revised' })
+            .eq('invoice_id', invoiceNumber)
+        }
+      }
+
       // Supabaseに保存
       const invoiceRecord = {
-        invoice_id: invoiceNumber,
-        invoice_number: invoiceNumber,
+        invoice_id: finalInvoiceId,
+        invoice_number: finalInvoiceId,
         issue_date: new Date().toISOString().split('T')[0],
         billing_date: billingDate,
         billing_month: `${invoiceYear}-${String(invoiceMonth).padStart(2, '0')}`,
@@ -1443,64 +1641,89 @@ function InvoiceCreateContent() {
         subtotal: subtotal,
         tax: taxAmount,
         total_amount: totalAmount,
+        total: totalAmount,
         status: isDraft ? 'draft' : 'finalized',
         payment_status: 'unpaid',
+        invoice_type: 'standard',
         remarks: memo || null,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       }
 
-      if (isEditMode) {
-        // 編集モード: 既存レコードを更新
-        const { data: invoiceData, error: invoiceError } = await supabase
-          .from('invoices')
-          .update({
-            ...invoiceRecord,
-            updated_at: new Date().toISOString()
-          })
-          .eq('invoice_id', invoiceNumber)
-          .select()
+      // 新規作成（枝番+1の場合も含む）
+      const { data: invoiceData, error: invoiceError } = await supabase
+        .from('invoices')
+        .insert(invoiceRecord)
+        .select()
 
-        if (invoiceError) {
-          throw invoiceError
-        }
-
-        // 既存の明細を削除してから新しい明細を追加
-        const { error: deleteError } = await supabase
-          .from('invoice_line_items')
-          .delete()
-          .eq('invoice_id', invoiceNumber)
-
-        if (deleteError) {
-          throw deleteError
-        }
-      } else {
-        // 新規作成モード
-        const { data: invoiceData, error: invoiceError } = await supabase
-          .from('invoices')
-          .insert(invoiceRecord)
-          .select()
-
-        if (invoiceError) {
-          throw invoiceError
-        }
+      if (invoiceError) {
+        throw invoiceError
       }
 
-      // 明細データを保存
+      // invoiceNumberを最終的なIDに更新（明細保存用）
+      const savedInvoiceId = finalInvoiceId
+
+      // 明細データを保存（prompt.txt仕様に準拠）
       if (workItems.length > 0) {
-        const lineItems = workItems.map((item, index) => ({
-          invoice_id: invoiceNumber,
-          line_no: index + 1,
-          task_type: item.type === 'set' ? 'S' : 'T',
-          target: item.work_name, // 作業名を target として保存
-          action: null,
-          position: null,
-          raw_label: item.type === 'set' ? item.set_details?.join(', ') || item.work_name : item.work_name,
-          unit_price: item.unit_price,
-          quantity: item.quantity,
-          amount: item.unit_price * item.quantity,
-          performed_at: billingDate
-        }))
+        const lineItems: any[] = []
+
+        workItems.forEach((item, index) => {
+          const lineNo = index + 1
+          const amount = item.unit_price * item.quantity
+
+          if (item.type === 'set' && item.set_details && item.set_details.length > 0) {
+            // セット作業（task_type='S'）
+            // 親行: sub_no=1, 金額を持つ
+            lineItems.push({
+              invoice_id: savedInvoiceId,
+              line_no: lineNo,
+              sub_no: 1,
+              task_type: 'S',
+              target: item.work_name,
+              set_name: item.work_name,
+              raw_label: item.set_details.join('、'),
+              raw_label_part: item.set_details[0], // 親行は最初の内訳
+              unit_price: item.unit_price,
+              quantity: item.quantity,
+              amount: amount,
+              performed_at: billingDate
+            })
+
+            // 子行: sub_no=2..n, 金額は親行と同じ（どの行からでもセットの金額がわかるように）
+            item.set_details!.slice(1).forEach((detail, detailIndex) => {
+              lineItems.push({
+                invoice_id: savedInvoiceId,
+                line_no: lineNo,
+                sub_no: detailIndex + 2,
+                task_type: 'S',
+                target: item.work_name,
+                set_name: item.work_name,
+                raw_label: item.set_details!.join('、'),
+                raw_label_part: detail,
+                unit_price: item.unit_price,
+                quantity: item.quantity,
+                amount: amount,
+                performed_at: billingDate
+              })
+            })
+          } else {
+            // 個別作業（task_type='T'）
+            // sub_no=1固定
+            lineItems.push({
+              invoice_id: savedInvoiceId,
+              line_no: lineNo,
+              sub_no: 1,
+              task_type: 'T',
+              target: item.work_name,
+              raw_label: item.work_name,
+              raw_label_part: item.work_name,
+              unit_price: item.unit_price,
+              quantity: item.quantity,
+              amount: amount,
+              performed_at: billingDate
+            })
+          }
+        })
 
         const { error: lineItemsError } = await supabase
           .from('invoice_line_items')

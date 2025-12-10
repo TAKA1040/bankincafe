@@ -17,6 +17,8 @@ export default function InvoiceViewPage({ params }: PageProps) {
   const [invoice, setInvoice] = useState<InvoiceWithItems | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showEditConfirm, setShowEditConfirm] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   // 請求書データを取得
   useEffect(() => {
@@ -121,7 +123,9 @@ export default function InvoiceViewPage({ params }: PageProps) {
           subtotal: invoiceData.subtotal || 0,
           tax: invoiceData.tax || 0,
           total: invoiceData.total || 0,
-          remarks: invoiceData.remarks || null
+          remarks: invoiceData.remarks || null,
+          closed_at: (invoiceData as any).closed_at || null,
+          invoice_type: (invoiceData as any).invoice_type || 'standard'
         };
 
         setInvoice(invoiceWithItems);
@@ -253,11 +257,24 @@ export default function InvoiceViewPage({ params }: PageProps) {
         </div>
         <div className="flex gap-2">
           <button
-            onClick={() => router.push(`/invoice-create?edit=${invoice.invoice_id}`)}
+            onClick={() => {
+              if ((invoice as any).closed_at) {
+                setShowEditConfirm(true);
+              } else {
+                router.push(`/invoice-create?edit=${invoice.invoice_id}`);
+              }
+            }}
             className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center gap-2"
           >
             <Edit className="w-4 h-4" />
-            編集
+            {(invoice as any).closed_at ? '修正' : '編集'}
+          </button>
+          <button
+            onClick={() => setShowDeleteConfirm(true)}
+            className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 flex items-center gap-2"
+          >
+            <Trash2 className="w-4 h-4" />
+            削除
           </button>
           <button
             onClick={() => router.push(`/invoice-print/${invoice.invoice_id}`)}
@@ -516,6 +533,121 @@ export default function InvoiceViewPage({ params }: PageProps) {
           );
         })()}
       </div>
+
+      {/* 修正確認モーダル（月〆後） */}
+      {showEditConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">修正伝票の作成</h3>
+            <p className="text-gray-600 mb-4">
+              この請求書は月〆処理済みのため、直接編集できません。
+            </p>
+            <p className="text-gray-600 mb-4">
+              修正を行うと、赤伝（マイナス伝票）と黒伝（正しい金額の伝票）が自動生成されます。
+            </p>
+            <div className="bg-yellow-50 border border-yellow-200 rounded p-3 mb-4">
+              <p className="text-sm text-yellow-800">
+                <strong>注意:</strong> 修正伝票は枝番が付与されます（例: {invoice.invoice_id} → {invoice.invoice_id.split('-')[0]}-{parseInt(invoice.invoice_id.split('-')[1] || '1') + 1}）
+              </p>
+            </div>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setShowEditConfirm(false)}
+                className="px-4 py-2 text-gray-600 hover:text-gray-800"
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={() => {
+                  setShowEditConfirm(false);
+                  router.push(`/invoice-create?edit=${invoice.invoice_id}&revision=true`);
+                }}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+              >
+                修正伝票を作成
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 削除確認モーダル */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold text-red-600 mb-4">請求書の削除</h3>
+            {(invoice as any).closed_at ? (
+              <>
+                <p className="text-gray-600 mb-4">
+                  この請求書は月〆処理済みのため、直接削除できません。
+                </p>
+                <p className="text-gray-600 mb-4">
+                  削除を行うと、赤伝（マイナス伝票）が発行され、この請求書は相殺されます。
+                </p>
+                <div className="bg-red-50 border border-red-200 rounded p-3 mb-4">
+                  <p className="text-sm text-red-800">
+                    <strong>発行される赤伝:</strong><br />
+                    請求書番号: {invoice.invoice_id.split('-')[0]}-{parseInt(invoice.invoice_id.split('-')[1] || '1') + 1}<br />
+                    金額: -{(invoice.total || 0).toLocaleString()}円
+                  </p>
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="text-gray-600 mb-4">
+                  この請求書を削除しますか？
+                </p>
+                <div className="bg-red-50 border border-red-200 rounded p-3 mb-4">
+                  <p className="text-sm text-red-800">
+                    <strong>注意:</strong> この操作は取り消せません。請求書番号 {invoice.invoice_id} が削除されます。
+                  </p>
+                </div>
+              </>
+            )}
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                className="px-4 py-2 text-gray-600 hover:text-gray-800"
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={async () => {
+                  setShowDeleteConfirm(false);
+                  if ((invoice as any).closed_at) {
+                    // 月〆後: 赤伝処理
+                    router.push(`/invoice-create?delete=${invoice.invoice_id}&red=true`);
+                  } else {
+                    // 月〆前: 直接削除
+                    if (confirm('本当に削除しますか？')) {
+                      const { error } = await supabase
+                        .from('invoices')
+                        .delete()
+                        .eq('invoice_id', invoice.invoice_id);
+
+                      if (error) {
+                        alert('削除に失敗しました: ' + error.message);
+                      } else {
+                        // 明細も削除
+                        await supabase
+                          .from('invoice_line_items')
+                          .delete()
+                          .eq('invoice_id', invoice.invoice_id);
+
+                        alert('請求書を削除しました');
+                        router.push('/invoice-list');
+                      }
+                    }
+                  }
+                }}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+              >
+                {(invoice as any).closed_at ? '赤伝を発行' : '削除する'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
