@@ -513,6 +513,52 @@ export default function InvoicePrintPage() {
 
   const groupedLineItems = getGroupedLineItems();
 
+  // 共通明細テーブルコンポーネント（全レイアウトで使用）
+  const LineItemsTable = ({
+    headerBg = 'bg-gray-100',
+    headerText = 'text-gray-900',
+    borderColor = 'border-gray-300',
+    compact = false
+  }: {
+    headerBg?: string;
+    headerText?: string;
+    borderColor?: string;
+    compact?: boolean;
+  }) => (
+    <table className="w-full text-sm">
+      <thead>
+        <tr className={headerBg}>
+          <th className={`px-2 py-2 text-left border ${borderColor} ${headerText} font-medium`}>作業内容</th>
+          <th className={`px-2 py-2 text-center border ${borderColor} ${headerText} font-medium w-14`}>数量</th>
+          <th className={`px-2 py-2 text-right border ${borderColor} ${headerText} font-medium w-20`}>単価</th>
+          <th className={`px-2 py-2 text-right border ${borderColor} ${headerText} font-medium w-20`}>金額</th>
+        </tr>
+      </thead>
+      <tbody>
+        {groupedLineItems.map((group) => (
+          group.items.map((item, itemIdx) => (
+            <tr key={`${group.lineNo}-${itemIdx}`} className={itemIdx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+              <td className={`px-2 ${compact ? 'py-1' : 'py-2'} border ${borderColor}`}>
+                <div className={!item.isFirstOfSet && group.isSet ? 'pl-4 text-gray-600' : 'font-medium'}>
+                  {!item.isFirstOfSet && group.isSet ? `・${item.label}` : item.label}
+                </div>
+              </td>
+              <td className={`px-2 ${compact ? 'py-1' : 'py-2'} text-center border ${borderColor}`}>
+                {item.quantity > 0 ? item.quantity : ''}
+              </td>
+              <td className={`px-2 ${compact ? 'py-1' : 'py-2'} text-right border ${borderColor}`}>
+                {item.unitPrice > 0 ? `¥${formatAmount(item.unitPrice)}` : ''}
+              </td>
+              <td className={`px-2 ${compact ? 'py-1' : 'py-2'} text-right font-medium border ${borderColor}`}>
+                {item.amount > 0 ? `¥${formatAmount(item.amount)}` : ''}
+              </td>
+            </tr>
+          ))
+        ))}
+      </tbody>
+    </table>
+  );
+
   // 顧客情報の取得
   const getCustomerInfo = () => {
     if (!invoice) return { name: '', company: '' };
@@ -1034,81 +1080,9 @@ export default function InvoicePrintPage() {
           </div>
 
           {/* 作業明細 */}
-          <div className="mb-8 avoid-break">
-            <h3 className="text-lg font-semibold mb-4 pb-2 border-b">作業明細（全{invoice?.line_items?.length || 0}項目）</h3>
-            <table className="w-full border-collapse border-2 border-gray-900 work-detail-table">
-              <thead>
-                <tr className="bg-gray-900 text-white">
-                  <th className="border border-gray-900 px-3 py-3 text-center font-bold">No.</th>
-                  <th className="border border-gray-900 px-4 py-3 text-left font-bold">品目・サービス内容</th>
-                  <th className="border border-gray-900 px-3 py-3 text-center font-bold w-20">数量</th>
-                  <th className="border border-gray-900 px-4 py-3 text-right font-bold w-24">単価</th>
-                  <th className="border border-gray-900 px-4 py-3 text-right font-bold w-24">金額</th>
-                </tr>
-              </thead>
-              <tbody>
-                {(invoice?.line_items?.length || 0) > 0 ? (
-                  invoice?.line_items?.map((item, index) => {
-                    // S作業（セット）の場合を判別 - task_typeベースで判断
-                    const isSetWork = item.task_type === 'S' || item.task_type === 'set';
-                    
-                    // システムルールに従った作業名の決定（S/Tプレフィックスは請求書には不要）
-                    const displayName = isSetWork
-                      ? (item.target || 'セット作業')
-                      : (item.raw_label || [item.target, item.action, item.position].filter(Boolean).join(' ') || '作業項目未設定');
-                    
-                    // S作業の内訳を取得
-                    const breakdownItems = isSetWork && item.raw_label ? 
-                      item.raw_label.split(/[,、，・･]/).map(s => s.trim()).filter(s => s.length > 0) : [];
-
-                    return (
-                      <tr key={index} className={`${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'} border-b border-gray-300`}>
-                        <td className="border border-gray-400 px-3 py-3 text-center font-semibold">
-                          {item.line_no || (index + 1)}
-                        </td>
-                        <td className="border border-gray-400 px-4 py-3">
-                          <div className="font-semibold text-gray-800">{displayName}</div>
-                          
-                          {/* S作業の内訳表示 */}
-                          {isSetWork && breakdownItems.length > 0 && (
-                            <div className="text-xs text-gray-600 mt-2 pl-3 border-l-2 border-gray-300">
-                              <div className="font-semibold text-gray-500 mb-1">【内訳詳細】</div>
-                              {breakdownItems.map((breakdown, idx) => (
-                                <div key={idx} className="mb-1">
-                                  ・{breakdown}
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                          
-                          {/* T作業の詳細情報（従来の表示） */}
-                          {!isSetWork && (item.target || item.action || item.position) && !item.raw_label && (
-                            <div className="text-xs text-gray-600 mt-1">
-                              対象: {item.target || '-'} / 動作: {item.action || '-'} / 位置: {item.position || '-'}
-                            </div>
-                          )}
-                        </td>
-                        <td className="border border-gray-400 px-3 py-3 text-center font-semibold">
-                          {item.quantity || 1}
-                        </td>
-                        <td className="border border-gray-400 px-4 py-3 text-right font-semibold">
-                          ¥{formatAmount(item.unit_price || 0)}
-                        </td>
-                        <td className="border border-gray-400 px-4 py-3 text-right font-bold text-lg text-blue-700">
-                          ¥{formatAmount(item.amount || 0)}
-                        </td>
-                      </tr>
-                    );
-                  })
-                ) : (
-                  <tr>
-                    <td colSpan={5} className="border border-gray-300 px-3 py-4 text-center text-gray-500">
-                      作業項目が登録されていません
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+          <div className="mb-6 avoid-break">
+            <h3 className="text-sm font-semibold mb-2 pb-1 border-b">作業明細</h3>
+            <LineItemsTable headerBg="bg-gray-800 text-white" borderColor="border-gray-400" />
           </div>
 
         {/* 税込金額計算（適格請求書対応） */}
@@ -1259,41 +1233,7 @@ export default function InvoicePrintPage() {
         {/* 明細テーブル */}
         <div className="mb-8">
           <h3 className="text-lg font-semibold mb-4 text-gray-700">明細</h3>
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse">
-              <thead>
-                <tr className="bg-blue-600 text-white">
-                  <th className="border border-blue-600 px-3 py-3 text-left">品目</th>
-                  <th className="border border-blue-600 px-3 py-3 text-center w-20">数量</th>
-                  <th className="border border-blue-600 px-3 py-3 text-right w-24">単価</th>
-                  <th className="border border-blue-600 px-3 py-3 text-right w-24">金額</th>
-                </tr>
-              </thead>
-              <tbody>
-                {invoice?.line_items?.map((item, index) => {
-                  // S/Tプレフィックスは請求書には不要
-                  const isSetWork = item.task_type === 'S';
-                  const displayName = [item.target, item.action, item.position].filter(Boolean).join(' ');
-                  
-                  return (
-                    <tr key={index} className={index % 2 === 0 ? "bg-white" : "bg-gray-50"}>
-                      <td className="border border-gray-300 px-3 py-3">
-                        <div className="font-medium">{displayName}</div>
-                        {isSetWork && item.raw_label && (
-                          <div className="text-xs text-gray-600 mt-1">
-                            {item.raw_label.split(/[,、，・･]/).map(s => s.trim()).filter(s => s.length > 0).join(', ')}
-                          </div>
-                        )}
-                      </td>
-                      <td className="border border-gray-300 px-3 py-3 text-center">{item.quantity}</td>
-                      <td className="border border-gray-300 px-3 py-3 text-right">¥{formatAmount(item.unit_price)}</td>
-                      <td className="border border-gray-300 px-3 py-3 text-right font-medium">¥{formatAmount(item.amount)}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+          <LineItemsTable headerBg="bg-blue-600 text-white" borderColor="border-gray-300" />
         </div>
 
         {/* 合計金額 */}
@@ -1363,28 +1303,7 @@ export default function InvoicePrintPage() {
         </div>
 
         {/* シンプルな明細テーブル */}
-        <table className="w-full border-collapse text-sm mb-4">
-          <thead>
-            <tr className="bg-gray-200">
-              <th className="border border-gray-400 px-2 py-1 text-left">品目</th>
-              <th className="border border-gray-400 px-2 py-1 text-center w-16">数量</th>
-              <th className="border border-gray-400 px-2 py-1 text-right w-20">金額</th>
-            </tr>
-          </thead>
-          <tbody>
-            {invoice?.line_items?.map((item, index) => {
-              const itemName = [item.target, item.action, item.position].filter(Boolean).join(' ');
-              // S/Tプレフィックスは請求書には不要
-              return (
-                <tr key={index}>
-                  <td className="border border-gray-400 px-2 py-1">{itemName}</td>
-                  <td className="border border-gray-400 px-2 py-1 text-center">{item.quantity}</td>
-                  <td className="border border-gray-400 px-2 py-1 text-right">¥{formatAmount(item.amount)}</td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+        <LineItemsTable headerBg="bg-gray-200" borderColor="border-gray-400" compact={true} />
 
         <div className="flex justify-end">
           <div className="text-sm">
@@ -1466,48 +1385,7 @@ export default function InvoicePrintPage() {
         {/* 詳細な明細テーブル */}
         <div className="mb-6">
           <h4 className="font-semibold border-b mb-3">作業明細</h4>
-          <table className="w-full border-collapse">
-            <thead>
-              <tr className="bg-gray-800 text-white">
-                <th className="border border-gray-800 px-2 py-2 text-center w-8">#</th>
-                <th className="border border-gray-800 px-3 py-2 text-left">作業内容</th>
-                <th className="border border-gray-800 px-2 py-2 text-center w-12">種別</th>
-                <th className="border border-gray-800 px-2 py-2 text-center w-16">数量</th>
-                <th className="border border-gray-800 px-3 py-2 text-right w-24">単価</th>
-                <th className="border border-gray-800 px-3 py-2 text-right w-24">金額</th>
-              </tr>
-            </thead>
-            <tbody>
-              {invoice?.line_items?.map((item, index) => {
-                const itemName = [item.target, item.action, item.position].filter(Boolean).join(' ');
-                const isSetWork = item.task_type === 'S';
-                // S/Tプレフィックスは請求書には不要
-                const displayName = itemName;
-                
-                return (
-                  <tr key={index} className="hover:bg-gray-50">
-                    <td className="border border-gray-300 px-2 py-2 text-center text-sm">
-                      {item.line_no || (index + 1)}
-                    </td>
-                    <td className="border border-gray-300 px-3 py-2 text-sm">
-                      <div className="font-medium">{displayName}</div>
-                      {isSetWork && item.raw_label && (
-                        <div className="text-xs text-gray-600 mt-1">
-                          詳細: {item.raw_label.split(/[,、，・･]/).map(s => s.trim()).filter(s => s.length > 0).join(', ')}
-                        </div>
-                      )}
-                    </td>
-                    <td className="border border-gray-300 px-2 py-2 text-center text-sm">
-                      {item.task_type === 'S' ? 'セット' : '個別'}
-                    </td>
-                    <td className="border border-gray-300 px-2 py-2 text-center text-sm">{item.quantity}</td>
-                    <td className="border border-gray-300 px-3 py-2 text-right text-sm">¥{formatAmount(item.unit_price)}</td>
-                    <td className="border border-gray-300 px-3 py-2 text-right text-sm font-medium">¥{formatAmount(item.amount)}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+          <LineItemsTable headerBg="bg-gray-800 text-white" borderColor="border-gray-300" />
         </div>
 
         {/* 詳細な合計計算 */}
@@ -1624,49 +1502,8 @@ export default function InvoicePrintPage() {
         </div>
 
         {/* グラデーションテーブル */}
-        <div className="mb-8">
-          <div className="bg-white shadow-lg rounded-lg overflow-hidden">
-            <div className="gradient-header text-white">
-              <div className="grid grid-cols-12 gap-4 py-4 px-6 font-semibold">
-                <div className="col-span-6">Description</div>
-                <div className="col-span-2 text-center">Quantity</div>
-                <div className="col-span-2 text-right">Unit Price</div>
-                <div className="col-span-2 text-right">Amount</div>
-              </div>
-            </div>
-            <div className="divide-y divide-gray-100">
-              {invoice?.line_items?.map((item, index) => {
-                const itemName = [item.target, item.action, item.position].filter(Boolean).join(' ');
-                // S/Tプレフィックスは請求書には不要
-                return (
-                  <div key={index} className="grid grid-cols-12 gap-4 py-4 px-6 hover:bg-gradient-to-r hover:from-purple-50 hover:to-transparent">
-                    <div className="col-span-6">
-                      <div className="font-semibold text-gray-900">{itemName}</div>
-                      {item.task_type === 'S' && item.raw_label && (
-                        <div className="bg-blue-50 border-l-4 border-blue-400 pl-3 pr-2 py-2 mt-2 rounded-r">
-                          <div className="text-xs font-semibold text-blue-800 mb-1">セット内容:</div>
-                          <div className="text-xs text-blue-700">
-                            {item.raw_label.split(/[,、，・･]/).map((s, i) => {
-                              const trimmed = s.trim();
-                              return trimmed.length > 0 ? (
-                                <div key={i} className="flex items-center mb-1">
-                                  <span className="w-2 h-2 bg-blue-400 rounded-full mr-2 flex-shrink-0"></span>
-                                  <span>{trimmed}</span>
-                                </div>
-                              ) : null;
-                            })}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                    <div className="col-span-2 text-center text-gray-700">{item.quantity}</div>
-                    <div className="col-span-2 text-right text-gray-700">¥{formatAmount(item.unit_price)}</div>
-                    <div className="col-span-2 text-right font-bold text-gray-900">¥{formatAmount(item.amount)}</div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+        <div className="mb-8 bg-white shadow-lg rounded-lg overflow-hidden">
+          <LineItemsTable headerBg="gradient-header text-white" borderColor="border-gray-200" />
         </div>
 
         {/* グラデーション合計セクション */}
@@ -1833,52 +1670,8 @@ export default function InvoicePrintPage() {
         </div>
 
         {/* ジオメトリックテーブル */}
-        <div className="mb-8">
-          <div className="border-2 border-gray-300 rounded-lg overflow-hidden">
-            <div className="geometric-accent text-white">
-              <div className="grid grid-cols-12 gap-4 py-4 px-6 font-bold">
-                <div className="col-span-6 flex items-center">
-                  <div className="w-2 h-2 bg-white mr-3 transform rotate-45"></div>
-                  DESCRIPTION
-                </div>
-                <div className="col-span-2 text-center">QTY</div>
-                <div className="col-span-2 text-right">RATE</div>
-                <div className="col-span-2 text-right">AMOUNT</div>
-              </div>
-            </div>
-            <div>
-              {invoice?.line_items?.map((item, index) => {
-                const itemName = [item.target, item.action, item.position].filter(Boolean).join(' ');
-                // S/Tプレフィックスは請求書には不要
-                return (
-                  <div key={index} className={`grid grid-cols-12 gap-4 py-4 px-6 border-b border-gray-200 ${index % 2 === 0 ? 'bg-white' : 'geometric-pattern'}`}>
-                    <div className="col-span-6">
-                      <div className="font-bold text-gray-900">{itemName}</div>
-                      {item.task_type === 'S' && item.raw_label && (
-                        <div className="bg-blue-50 border-l-4 border-blue-400 pl-3 pr-2 py-2 mt-2 rounded-r">
-                          <div className="text-xs font-semibold text-blue-800 mb-1">セット内容:</div>
-                          <div className="text-xs text-blue-700">
-                            {item.raw_label.split(/[,、，・･]/).map((s, i) => {
-                              const trimmed = s.trim();
-                              return trimmed.length > 0 ? (
-                                <div key={i} className="flex items-center mb-1">
-                                  <span className="w-2 h-2 bg-blue-400 rounded-full mr-2 flex-shrink-0"></span>
-                                  <span>{trimmed}</span>
-                                </div>
-                              ) : null;
-                            })}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                    <div className="col-span-2 text-center font-semibold text-gray-800">{item.quantity}</div>
-                    <div className="col-span-2 text-right font-semibold text-gray-800">¥{formatAmount(item.unit_price)}</div>
-                    <div className="col-span-2 text-right font-bold text-gray-900">¥{formatAmount(item.amount)}</div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+        <div className="mb-8 border-2 border-gray-300 rounded-lg overflow-hidden">
+          <LineItemsTable headerBg="geometric-accent text-white" borderColor="border-gray-200" />
         </div>
 
         {/* ジオメトリック合計 */}
@@ -2043,44 +1836,7 @@ export default function InvoicePrintPage() {
 
         {/* コーポレートテーブル */}
         <div className="mb-8 border-2 border-gray-300 rounded-lg overflow-hidden">
-          <div className="corporate-primary text-white">
-            <div className="grid grid-cols-12 gap-4 py-4 px-6 font-bold text-sm">
-              <div className="col-span-6">SERVICE DESCRIPTION</div>
-              <div className="col-span-2 text-center">QTY</div>
-              <div className="col-span-2 text-right">UNIT PRICE</div>
-              <div className="col-span-2 text-right">TOTAL</div>
-            </div>
-          </div>
-          {invoice?.line_items?.map((item, index) => {
-            const itemName = [item.target, item.action, item.position].filter(Boolean).join(' ');
-            // S/Tプレフィックスは請求書には不要
-            return (
-              <div key={index} className={`grid grid-cols-12 gap-4 py-4 px-6 border-b border-gray-200 ${index % 2 === 0 ? 'bg-white' : 'corporate-light'}`}>
-                <div className="col-span-6">
-                  <div className="font-bold text-gray-900 mb-1">{itemName}</div>
-                  {item.task_type === 'S' && item.raw_label && (
-                    <div className="bg-blue-50 border-l-4 border-blue-400 pl-3 pr-2 py-2 mt-2 rounded-r">
-                      <div className="text-xs font-semibold text-blue-800 mb-1">セット内容:</div>
-                      <div className="text-xs text-blue-700">
-                        {item.raw_label.split(/[,、，・･]/).map((s, i) => {
-                          const trimmed = s.trim();
-                          return trimmed.length > 0 ? (
-                            <div key={i} className="flex items-center mb-1">
-                              <span className="w-2 h-2 bg-blue-400 rounded-full mr-2 flex-shrink-0"></span>
-                              <span>{trimmed}</span>
-                            </div>
-                          ) : null;
-                        })}
-                      </div>
-                    </div>
-                  )}
-                </div>
-                <div className="col-span-2 text-center font-bold text-gray-800">{item.quantity}</div>
-                <div className="col-span-2 text-right font-bold text-gray-800">¥{formatAmount(item.unit_price)}</div>
-                <div className="col-span-2 text-right font-bold text-xl text-gray-900">¥{formatAmount(item.amount)}</div>
-              </div>
-            );
-          })}
+          <LineItemsTable headerBg="corporate-primary text-white" borderColor="border-gray-200" />
         </div>
 
         {/* コーポレート合計 */}
@@ -2196,62 +1952,22 @@ export default function InvoicePrintPage() {
 
         {/* 基本明細テーブル */}
         <div className="mb-8">
-          <table className="w-full border-collapse">
-            <thead>
-              <tr className="bg-gray-100">
-                <th className="border border-gray-400 px-3 py-2 text-left text-sm font-bold">項目</th>
-                <th className="border border-gray-400 px-3 py-2 text-center text-sm font-bold w-16">数量</th>
-                <th className="border border-gray-400 px-3 py-2 text-right text-sm font-bold w-24">単価</th>
-                <th className="border border-gray-400 px-3 py-2 text-right text-sm font-bold w-24">金額</th>
-              </tr>
-            </thead>
-            <tbody>
-              {invoice?.line_items?.map((item, index) => {
-                const itemName = [item.target, item.action, item.position].filter(Boolean).join(' ');
-                // S/Tプレフィックスは請求書には不要
-                return (
-                  <tr key={index}>
-                    <td className="border border-gray-400 px-3 py-2">
-                      <div className="font-medium text-gray-900">{itemName}</div>
-                      {item.task_type === 'S' && item.raw_label && (
-                        <div className="bg-blue-50 border-l-4 border-blue-400 pl-3 pr-2 py-2 mt-2 rounded-r">
-                          <div className="text-xs font-semibold text-blue-800 mb-1">セット内容:</div>
-                          <div className="text-xs text-blue-700">
-                            {item.raw_label.split(/[,、，・･]/).map((s, i) => {
-                              const trimmed = s.trim();
-                              return trimmed.length > 0 ? (
-                                <div key={i} className="flex items-center mb-1">
-                                  <span className="w-2 h-2 bg-blue-400 rounded-full mr-2 flex-shrink-0"></span>
-                                  <span>{trimmed}</span>
-                                </div>
-                              ) : null;
-                            })}
-                          </div>
-                        </div>
-                      )}
-                    </td>
-                    <td className="border border-gray-400 px-3 py-2 text-center text-sm">{item.quantity}</td>
-                    <td className="border border-gray-400 px-3 py-2 text-right text-sm">¥{formatAmount(item.unit_price)}</td>
-                    <td className="border border-gray-400 px-3 py-2 text-right font-medium">¥{formatAmount(item.amount)}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-            <tfoot>
-              <tr>
-                <td colSpan={3} className="border border-gray-400 px-3 py-2 text-right text-sm font-bold">小計</td>
-                <td className="border border-gray-400 px-3 py-2 text-right font-bold">¥{formatAmount(displayAmounts.subtotal)}</td>
-              </tr>
-              <tr>
-                <td colSpan={3} className="border border-gray-400 px-3 py-2 text-right text-sm font-bold">消費税(10%)</td>
-                <td className="border border-gray-400 px-3 py-2 text-right font-bold">¥{formatAmount(displayAmounts.tax)}</td>
-              </tr>
-              <tr className="bg-gray-100">
-                <td colSpan={3} className="border border-gray-400 px-3 py-2 text-right text-lg font-bold">合計</td>
-                <td className="border border-gray-400 px-3 py-2 text-right text-lg font-bold">¥{formatAmount(displayAmounts.total)}</td>
-              </tr>
-            </tfoot>
-          </table>
+          <LineItemsTable headerBg="bg-gray-100" borderColor="border-gray-400" />
+          {/* 合計欄 */}
+          <div className="border border-gray-400 border-t-0">
+            <div className="flex justify-end py-2 px-3 border-b border-gray-400">
+              <span className="text-sm font-bold mr-4">小計</span>
+              <span className="font-bold w-24 text-right">¥{formatAmount(displayAmounts.subtotal)}</span>
+            </div>
+            <div className="flex justify-end py-2 px-3 border-b border-gray-400">
+              <span className="text-sm font-bold mr-4">消費税(10%)</span>
+              <span className="font-bold w-24 text-right">¥{formatAmount(displayAmounts.tax)}</span>
+            </div>
+            <div className="flex justify-end py-2 px-3 bg-gray-100">
+              <span className="text-lg font-bold mr-4">合計</span>
+              <span className="text-lg font-bold w-24 text-right">¥{formatAmount(displayAmounts.total)}</span>
+            </div>
+          </div>
         </div>
 
         {/* 基本情報セクション */}
@@ -2364,38 +2080,7 @@ export default function InvoicePrintPage() {
             <div className="bg-gray-100 p-2 border-b border-gray-900">
               <h3 className="font-bold text-center">明細</h3>
             </div>
-            <table className="w-full">
-              <thead>
-                <tr className="bg-gray-50">
-                  <th className="border-b border-gray-400 px-3 py-2 text-left text-sm">品目・内容</th>
-                  <th className="border-b border-gray-400 px-3 py-2 text-center text-sm w-16">数量</th>
-                  <th className="border-b border-gray-400 px-3 py-2 text-right text-sm w-24">単価</th>
-                  <th className="border-b border-gray-400 px-3 py-2 text-right text-sm w-24">小計</th>
-                </tr>
-              </thead>
-              <tbody>
-                {invoice?.line_items?.map((item, index) => {
-                  const itemName = [item.target, item.action, item.position].filter(Boolean).join(' ');
-                  // S/Tプレフィックスは請求書には不要
-                  return (
-                    <tr key={index}>
-                      <td className="border-b border-gray-200 px-3 py-2">
-                        <div className="text-sm">{itemName}</div>
-                        {item.task_type === 'S' && item.raw_label && (
-                          <div className="text-xs text-gray-500 mt-1">
-                            {item.raw_label.split(/[,、，・･]/).map(s => s.trim()).filter(s => s.length > 0).join(', ')}
-                          </div>
-                        )}
-                      </td>
-                      <td className="border-b border-gray-200 px-3 py-2 text-center text-sm">{item.quantity}</td>
-                      <td className="border-b border-gray-200 px-3 py-2 text-right text-sm">¥{formatAmount(item.unit_price)}</td>
-                      <td className="border-b border-gray-200 px-3 py-2 text-right text-sm">¥{formatAmount(item.amount)}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-            
+            <LineItemsTable headerBg="bg-gray-50" borderColor="border-gray-200" compact={true} />
             <div className="p-3 bg-gray-50 border-t-2 border-gray-900">
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div></div>
@@ -2485,67 +2170,23 @@ export default function InvoicePrintPage() {
         </div>
 
         {/* クラシック明細テーブル */}
-        <div className="mb-8">
-          <table className="w-full border-collapse">
-            <thead>
-              <tr>
-                <th className="border-t-2 border-b border-l-2 border-gray-800 px-3 py-3 text-left text-sm font-bold tracking-wide">DESCRIPTION</th>
-                <th className="border-t-2 border-b border-gray-800 px-3 py-3 text-center text-sm font-bold tracking-wide w-20">QTY</th>
-                <th className="border-t-2 border-b border-gray-800 px-3 py-3 text-right text-sm font-bold tracking-wide w-24">RATE</th>
-                <th className="border-t-2 border-b border-r-2 border-gray-800 px-3 py-3 text-right text-sm font-bold tracking-wide w-24">AMOUNT</th>
-              </tr>
-            </thead>
-            <tbody>
-              {invoice?.line_items?.map((item, index) => {
-                const itemName = [item.target, item.action, item.position].filter(Boolean).join(' ');
-                // S/Tプレフィックスは請求書には不要
-                return (
-                  <tr key={index}>
-                    <td className="border-b border-l-2 border-gray-400 px-3 py-3">
-                      <div className="font-medium">{itemName}</div>
-                      {item.task_type === 'S' && item.raw_label && (
-                        <div className="bg-blue-50 border-l-4 border-blue-400 pl-3 pr-2 py-2 mt-2 rounded-r">
-                          <div className="text-xs font-semibold text-blue-800 mb-1">セット内容:</div>
-                          <div className="text-xs text-blue-700">
-                            {item.raw_label.split(/[,、，・･]/).map((s, i) => {
-                              const trimmed = s.trim();
-                              return trimmed.length > 0 ? (
-                                <div key={i} className="flex items-center mb-1">
-                                  <span className="w-2 h-2 bg-blue-400 rounded-full mr-2 flex-shrink-0"></span>
-                                  <span>{trimmed}</span>
-                                </div>
-                              ) : null;
-                            })}
-                          </div>
-                        </div>
-                      )}
-                    </td>
-                    <td className="border-b border-gray-400 px-3 py-3 text-center font-mono">{item.quantity}</td>
-                    <td className="border-b border-gray-400 px-3 py-3 text-right font-mono">¥{formatAmount(item.unit_price)}</td>
-                    <td className="border-b border-r-2 border-gray-400 px-3 py-3 text-right font-mono font-bold">¥{formatAmount(item.amount)}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-          
+        <div className="mb-8 border-2 border-gray-800">
+          <LineItemsTable headerBg="bg-white" borderColor="border-gray-400" />
           {/* 合計セクション */}
-          <div className="flex justify-end">
-            <div className="w-80">
-              <table className="w-full border-collapse">
-                <tr>
-                  <td className="border-b border-l-2 border-gray-400 px-3 py-2 text-right text-sm">Subtotal:</td>
-                  <td className="border-b border-r-2 border-gray-400 px-3 py-2 text-right font-mono">¥{formatAmount(displayAmounts.subtotal)}</td>
-                </tr>
-                <tr>
-                  <td className="border-b border-l-2 border-gray-400 px-3 py-2 text-right text-sm">Tax (10%):</td>
-                  <td className="border-b border-r-2 border-gray-400 px-3 py-2 text-right font-mono">¥{formatAmount(displayAmounts.tax)}</td>
-                </tr>
-                <tr>
-                  <td className="border-b-2 border-l-2 border-gray-800 px-3 py-3 text-right font-bold">TOTAL:</td>
-                  <td className="border-b-2 border-r-2 border-gray-800 px-3 py-3 text-right font-mono font-bold text-lg">¥{formatAmount(displayAmounts.total)}</td>
-                </tr>
-              </table>
+          <div className="flex justify-end border-t-2 border-gray-800">
+            <div className="w-80 space-y-1 p-3">
+              <div className="flex justify-between text-sm">
+                <span>Subtotal:</span>
+                <span className="font-mono">¥{formatAmount(displayAmounts.subtotal)}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span>Tax (10%):</span>
+                <span className="font-mono">¥{formatAmount(displayAmounts.tax)}</span>
+              </div>
+              <div className="flex justify-between font-bold text-lg border-t-2 border-gray-800 pt-2">
+                <span>TOTAL:</span>
+                <span className="font-mono">¥{formatAmount(displayAmounts.total)}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -2646,49 +2287,7 @@ export default function InvoicePrintPage() {
         {/* プレーン明細 */}
         <div className="mb-8">
           <div className="font-bold mb-2">明細:</div>
-          <table className="w-full">
-            <thead>
-              <tr className="border-b-2 border-gray-800">
-                <th className="px-2 py-2 text-left">項目</th>
-                <th className="px-2 py-2 text-center w-16">数量</th>
-                <th className="px-2 py-2 text-right w-24">単価</th>
-                <th className="px-2 py-2 text-right w-24">金額</th>
-              </tr>
-            </thead>
-            <tbody>
-              {invoice?.line_items?.map((item, index) => {
-                const itemName = [item.target, item.action, item.position].filter(Boolean).join(' ');
-                // S/Tプレフィックスは請求書には不要
-                return (
-                  <tr key={index} className="border-b border-gray-200">
-                    <td className="px-2 py-2">
-                      <div>{itemName}</div>
-                      {item.task_type === 'S' && item.raw_label && (
-                        <div className="bg-blue-50 border-l-4 border-blue-400 pl-3 pr-2 py-2 mt-2 rounded-r">
-                          <div className="text-xs font-semibold text-blue-800 mb-1">セット内容:</div>
-                          <div className="text-xs text-blue-700">
-                            {item.raw_label.split(/[,、，・･]/).map((s, i) => {
-                              const trimmed = s.trim();
-                              return trimmed.length > 0 ? (
-                                <div key={i} className="flex items-center mb-1">
-                                  <span className="w-2 h-2 bg-blue-400 rounded-full mr-2 flex-shrink-0"></span>
-                                  <span>{trimmed}</span>
-                                </div>
-                              ) : null;
-                            })}
-                          </div>
-                        </div>
-                      )}
-                    </td>
-                    <td className="px-2 py-2 text-center">{item.quantity}</td>
-                    <td className="px-2 py-2 text-right">¥{formatAmount(item.unit_price)}</td>
-                    <td className="px-2 py-2 text-right font-medium">¥{formatAmount(item.amount)}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-          
+          <LineItemsTable headerBg="border-b-2 border-gray-800" borderColor="border-gray-200" />
           <div className="flex justify-end mt-4">
             <div className="w-64 space-y-1">
               <div className="flex justify-between"><span>小計:</span><span>¥{formatAmount(displayAmounts.subtotal)}</span></div>
