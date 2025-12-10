@@ -888,11 +888,11 @@ export default function InvoicePrintPage() {
             <tbody>
               {invoice?.line_items?.map((item, index) => {
                 const itemName = [item.target, item.action, item.position].filter(Boolean).join(' ');
-                const prefix = item.task_type === 'S' ? 'S ' : '';
+                // S/Tプレフィックスは請求書には不要
                 return (
                   <tr key={index} className="border-b border-gray-100">
                     <td className="py-4">
-                      <div className="font-medium text-gray-900">{prefix}{itemName}</div>
+                      <div className="font-medium text-gray-900">{itemName}</div>
                       {item.task_type === 'S' && item.raw_label && (
                         <div className="bg-blue-50 border-l-4 border-blue-400 pl-3 pr-2 py-2 mt-2 rounded-r">
                           <div className="text-xs font-semibold text-blue-800 mb-1">セット内容:</div>
@@ -1415,10 +1415,10 @@ export default function InvoicePrintPage() {
           <tbody>
             {invoice?.line_items?.map((item, index) => {
               const itemName = [item.target, item.action, item.position].filter(Boolean).join(' ');
-              const prefix = item.task_type === 'S' ? 'Ｓ' : '';
+              // S/Tプレフィックスは請求書には不要
               return (
                 <tr key={index}>
-                  <td className="border border-gray-400 px-2 py-1">{prefix}{itemName}</td>
+                  <td className="border border-gray-400 px-2 py-1">{itemName}</td>
                   <td className="border border-gray-400 px-2 py-1 text-center">{item.quantity}</td>
                   <td className="border border-gray-400 px-2 py-1 text-right">¥{formatAmount(item.amount)}</td>
                 </tr>
@@ -1522,8 +1522,8 @@ export default function InvoicePrintPage() {
               {invoice?.line_items?.map((item, index) => {
                 const itemName = [item.target, item.action, item.position].filter(Boolean).join(' ');
                 const isSetWork = item.task_type === 'S';
-                const prefix = item.task_type === 'S' ? 'Ｓ' : '';
-                const displayName = `${prefix}${itemName}`;
+                // S/Tプレフィックスは請求書には不要
+                const displayName = itemName;
                 
                 return (
                   <tr key={index} className="hover:bg-gray-50">
@@ -1679,11 +1679,11 @@ export default function InvoicePrintPage() {
             <div className="divide-y divide-gray-100">
               {invoice?.line_items?.map((item, index) => {
                 const itemName = [item.target, item.action, item.position].filter(Boolean).join(' ');
-                const prefix = item.task_type === 'S' ? 'S ' : '';
+                // S/Tプレフィックスは請求書には不要
                 return (
                   <div key={index} className="grid grid-cols-12 gap-4 py-4 px-6 hover:bg-gradient-to-r hover:from-purple-50 hover:to-transparent">
                     <div className="col-span-6">
-                      <div className="font-semibold text-gray-900">{prefix}{itemName}</div>
+                      <div className="font-semibold text-gray-900">{itemName}</div>
                       {item.task_type === 'S' && item.raw_label && (
                         <div className="bg-blue-50 border-l-4 border-blue-400 pl-3 pr-2 py-2 mt-2 rounded-r">
                           <div className="text-xs font-semibold text-blue-800 mb-1">セット内容:</div>
@@ -1892,11 +1892,11 @@ export default function InvoicePrintPage() {
             <div>
               {invoice?.line_items?.map((item, index) => {
                 const itemName = [item.target, item.action, item.position].filter(Boolean).join(' ');
-                const prefix = item.task_type === 'S' ? 'S ' : '';
+                // S/Tプレフィックスは請求書には不要
                 return (
                   <div key={index} className={`grid grid-cols-12 gap-4 py-4 px-6 border-b border-gray-200 ${index % 2 === 0 ? 'bg-white' : 'geometric-pattern'}`}>
                     <div className="col-span-6">
-                      <div className="font-bold text-gray-900">{prefix}{itemName}</div>
+                      <div className="font-bold text-gray-900">{itemName}</div>
                       {item.task_type === 'S' && item.raw_label && (
                         <div className="bg-blue-50 border-l-4 border-blue-400 pl-3 pr-2 py-2 mt-2 rounded-r">
                           <div className="text-xs font-semibold text-blue-800 mb-1">セット内容:</div>
@@ -2102,11 +2102,11 @@ export default function InvoicePrintPage() {
           </div>
           {invoice?.line_items?.map((item, index) => {
             const itemName = [item.target, item.action, item.position].filter(Boolean).join(' ');
-            const prefix = item.task_type === 'S' ? 'S ' : '';
+            // S/Tプレフィックスは請求書には不要
             return (
               <div key={index} className={`grid grid-cols-12 gap-4 py-4 px-6 border-b border-gray-200 ${index % 2 === 0 ? 'bg-white' : 'corporate-light'}`}>
                 <div className="col-span-6">
-                  <div className="font-bold text-gray-900 mb-1">{prefix}{itemName}</div>
+                  <div className="font-bold text-gray-900 mb-1">{itemName}</div>
                   {item.task_type === 'S' && item.raw_label && (
                     <div className="bg-blue-50 border-l-4 border-blue-400 pl-3 pr-2 py-2 mt-2 rounded-r">
                       <div className="text-xs font-semibold text-blue-800 mb-1">セット内容:</div>
@@ -2262,11 +2262,11 @@ export default function InvoicePrintPage() {
             <tbody>
               {invoice?.line_items?.map((item, index) => {
                 const itemName = [item.target, item.action, item.position].filter(Boolean).join(' ');
-                const prefix = item.task_type === 'S' ? 'S ' : '';
+                // S/Tプレフィックスは請求書には不要
                 return (
                   <tr key={index}>
                     <td className="border border-gray-400 px-3 py-2">
-                      <div className="font-medium text-gray-900">{prefix}{itemName}</div>
+                      <div className="font-medium text-gray-900">{itemName}</div>
                       {item.task_type === 'S' && item.raw_label && (
                         <div className="bg-blue-50 border-l-4 border-blue-400 pl-3 pr-2 py-2 mt-2 rounded-r">
                           <div className="text-xs font-semibold text-blue-800 mb-1">セット内容:</div>
@@ -2429,11 +2429,11 @@ export default function InvoicePrintPage() {
               <tbody>
                 {invoice?.line_items?.map((item, index) => {
                   const itemName = [item.target, item.action, item.position].filter(Boolean).join(' ');
-                  const prefix = item.task_type === 'S' ? 'S ' : '';
+                  // S/Tプレフィックスは請求書には不要
                   return (
                     <tr key={index}>
                       <td className="border-b border-gray-200 px-3 py-2">
-                        <div className="text-sm">{prefix}{itemName}</div>
+                        <div className="text-sm">{itemName}</div>
                         {item.task_type === 'S' && item.raw_label && (
                           <div className="text-xs text-gray-500 mt-1">
                             {item.raw_label.split(/[,、，・･]/).map(s => s.trim()).filter(s => s.length > 0).join(', ')}
@@ -2550,11 +2550,11 @@ export default function InvoicePrintPage() {
             <tbody>
               {invoice?.line_items?.map((item, index) => {
                 const itemName = [item.target, item.action, item.position].filter(Boolean).join(' ');
-                const prefix = item.task_type === 'S' ? 'S ' : '';
+                // S/Tプレフィックスは請求書には不要
                 return (
                   <tr key={index}>
                     <td className="border-b border-l-2 border-gray-400 px-3 py-3">
-                      <div className="font-medium">{prefix}{itemName}</div>
+                      <div className="font-medium">{itemName}</div>
                       {item.task_type === 'S' && item.raw_label && (
                         <div className="bg-blue-50 border-l-4 border-blue-400 pl-3 pr-2 py-2 mt-2 rounded-r">
                           <div className="text-xs font-semibold text-blue-800 mb-1">セット内容:</div>
@@ -2709,11 +2709,11 @@ export default function InvoicePrintPage() {
             <tbody>
               {invoice?.line_items?.map((item, index) => {
                 const itemName = [item.target, item.action, item.position].filter(Boolean).join(' ');
-                const prefix = item.task_type === 'S' ? 'S ' : '';
+                // S/Tプレフィックスは請求書には不要
                 return (
                   <tr key={index} className="border-b border-gray-200">
                     <td className="px-2 py-2">
-                      <div>{prefix}{itemName}</div>
+                      <div>{itemName}</div>
                       {item.task_type === 'S' && item.raw_label && (
                         <div className="bg-blue-50 border-l-4 border-blue-400 pl-3 pr-2 py-2 mt-2 rounded-r">
                           <div className="text-xs font-semibold text-blue-800 mb-1">セット内容:</div>
