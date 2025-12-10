@@ -43,6 +43,7 @@ export interface InvoiceWithItems {
   payment_status: 'unpaid' | 'paid' | 'partial'
   created_at: string | null
   updated_at: string | null
+  remarks: string | null
   line_items: {
     id: number
     line_no: number
