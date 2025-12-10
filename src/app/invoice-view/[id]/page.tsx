@@ -84,6 +84,7 @@ export default function InvoiceViewPage({ params }: PageProps) {
               unit_price: item.unit_price,
               amount: item.amount,
               raw_label: item.raw_label,
+              raw_label_part: item.raw_label_part,
               performed_at: item.performed_at,
               split_items: (splitItems as any) || []
             };
@@ -370,6 +371,7 @@ export default function InvoiceViewPage({ params }: PageProps) {
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">単価</th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">金額</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">実施日</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">メモ</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -415,6 +417,14 @@ export default function InvoiceViewPage({ params }: PageProps) {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {formatDate(item.performed_at)}
                       </td>
+                      <td className="px-6 py-4 text-sm text-gray-900">
+                        {item.raw_label_part ? (
+                          <div className="max-w-xs">
+                            <div className="text-xs text-gray-500">旧システム明細内容</div>
+                            <div className="whitespace-pre-wrap">{item.raw_label_part}</div>
+                          </div>
+                        ) : '-'}
+                      </td>
                     </tr>
                   );
                 } else {
@@ -440,6 +450,14 @@ export default function InvoiceViewPage({ params }: PageProps) {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {formatDate(item.performed_at)}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-900">
+                        {item.raw_label_part ? (
+                          <div className="max-w-xs">
+                            <div className="text-xs text-gray-500">旧システム明細内容</div>
+                            <div className="whitespace-pre-wrap">{item.raw_label_part}</div>
+                          </div>
+                        ) : '-'}
                       </td>
                     </tr>
                   );

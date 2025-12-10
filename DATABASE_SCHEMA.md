@@ -1,42 +1,49 @@
-# データベース設計書 - 板金請求書システム
+# Database Schema Documentation - bankincafe
 
-## 📋 システム概要
+## 📋 概要
 
-板金・整備業務の請求書管理システムのデータベース構造です。請求書の作成、明細管理、作業項目の分割表示、売上分析機能を提供します。
+請求書管理システム（bankincafe）のデータベーススキーマ定義書
+
+**作成日:** 2025-09-17
+**対象CSV:** `C:\Windsurf\bankincafe\請求書システム画像\invoice_items_0917.csv`
+**DB構成:** Supabase PostgreSQL
+
+**🚨 重要:** このデータベースには経理データ保護システムが実装されており、DELETE/TRUNCATE操作は自動的にブロックされます。
 
 ---
 
 ## 🗂️ テーブル構造
 
-### 1. **invoices** - 請求書ヘッダー
-**目的**: 請求書の基本情報を管理
+### 1. invoices（請求書ヘッダー）
 
-| カラム名 | データ型 | NULL | デフォルト | 説明 | 例 |
-|----------|----------|------|----------|------|-----|
-| invoice_id | TEXT | NO | - | 請求書ID（主キー） | 25043371-1 |
-| issue_date | DATE | YES | - | 発行日 | 2025-04-27 |
-| subject_name | TEXT | YES | - | 件名（元フィールド） | エンジン修理 |
-| registration_number | TEXT | YES | - | 車両登録番号 | 品川500あ1234 |
-| customer_name | TEXT | YES | - | 顧客名 | UDトラックス株式会社 |
-| billing_month | TEXT | YES | - | 請求月（YYMM形式）| 2504 |
-| purchase_order_number | TEXT | YES | - | 発注番号 | 1700414294 |
-| order_number | TEXT | YES | - | オーダー番号 | 2501852-01 |
-| remarks | TEXT | YES | - | 備考 | 特記事項 |
-| subtotal | NUMERIC(12,0) | YES | 0 | 小計 | 13200 |
-| tax | NUMERIC(12,0) | YES | 0 | 消費税 | 1200 |
-| total_amount | NUMERIC(12,0) | YES | 0 | 請求総額 | 14400 |
-| status | TEXT | YES | 'draft' | ステータス | finalized |
-| payment_status | TEXT | YES | 'unpaid' | 支払い状況 | unpaid |
-| order_id | TEXT | YES | - | オーダーID | ord_123 |
-| invoice_number | TEXT | YES | - | 請求書番号 | 25043371-1 |
-| billing_date | DATE | YES | - | 請求日 | 2025-04-27 |
-| customer_category | TEXT | YES | 'その他' | 顧客カテゴリ | UD |
-| subject | TEXT | YES | - | 件名 | エンジン修理 |
-| total | NUMERIC(12,0) | YES | 0 | 合計金額 | 14400 |
-| invoice_type | TEXT | YES | 'standard' | 請求書種別 | standard |
-| original_invoice_id | TEXT | YES | - | 元請求書ID（赤伝用） | 25043371-1 |
-| created_at | TIMESTAMPTZ | YES | now() | 作成日時 | 2025-08-30T10:00:00Z |
-| updated_at | TIMESTAMPTZ | YES | now() | 更新日時 | 2025-08-30T10:00:00Z |
+**テーブル説明:** 請求書の基本情報を管理
+
+| カラム名 | データ型 | NULL許可 | デフォルト | 説明 | CSVマッピング |
+|---------|---------|---------|-----------|-----|-------------|
+| `invoice_id` | TEXT | NO | - | 請求書ID（主キー） | `invoice_id` |
+| `invoice_number` | TEXT | YES | - | 請求書番号（表示用） | `invoice_id`と同値 |
+| `issue_date` | DATE | YES | - | 発行日 | `invoice_date` |
+| `billing_date` | DATE | YES | - | 請求日 | `invoice_date` |
+| `customer_name` | TEXT | YES | - | 請求先顧客名 | `customer_name` |
+| `customer_category` | TEXT | YES | 'その他' | 顧客カテゴリ（UD/その他） | - |
+| `subject` | TEXT | YES | - | 件名 | `subject` |
+| `subject_name` | TEXT | YES | - | 旧件名フィールド | - |
+| `registration_number` | TEXT | YES | - | 登録番号 | `registration_number` |
+| `billing_month` | TEXT | YES | - | 請求月（YYMM形式） | `invoice_month` |
+| `purchase_order_number` | TEXT | YES | - | **発注番号** | **`purchase_order_number`** |
+| `order_number` | TEXT | YES | - | **オーダー番号** | **`order_number`** |
+| `order_id` | TEXT | YES | - | オーダーID | - |
+| `subtotal` | NUMERIC(12,0) | YES | 0 | 小計金額 | `subtotal` |
+| `tax` | NUMERIC(12,0) | YES | 0 | 税額 | `tax_amount` |
+| `total` | NUMERIC(12,0) | YES | 0 | 合計金額 | `total_amount` |
+| `total_amount` | NUMERIC(12,0) | YES | 0 | 請求総額 | `total_amount` |
+| `status` | TEXT | YES | 'draft' | ステータス（draft/finalized/sent/paid） | - |
+| `payment_status` | TEXT | YES | 'unpaid' | 支払状況（paid/unpaid/partial） | - |
+| `payment_date` | DATE | YES | - | 支払日 | - |
+| `partial_payment_amount` | NUMERIC(12,0) | YES | - | 一部支払額 | - |
+| `remarks` | TEXT | YES | - | 備考 | - |
+| `created_at` | TIMESTAMPTZ | YES | NOW() | 作成日時 | - |
+| `updated_at` | TIMESTAMPTZ | YES | NOW() | 更新日時 | - |
 
 #### **制約条件**
 
@@ -75,9 +82,15 @@
 | invoice_id | TEXT | NO | - | 請求書ID（外部キー） | 25043371-1 |
 | line_no | INTEGER | NO | - | 明細行番号 | 1 |
 | task_type | TEXT | NO | - | 作業タイプ | T |
-| action | TEXT | YES | - | 作業動作 | 脱着 |
+| action1 | TEXT | YES | - | 作業動作1 | 脱着 |
+| action2 | TEXT | YES | - | 作業動作2 | 曲がり直し |
+| action3 | TEXT | YES | - | 作業動作3 | 塗装 |
 | target | TEXT | YES | - | 対象物 | バンパー |
-| position | TEXT | YES | - | 部位 | 右前 |
+| position1 | TEXT | YES | - | 部位1 | 右 |
+| position2 | TEXT | YES | - | 部位2 | 前 |
+| position3 | TEXT | YES | - | 部位3 | - |
+| position4 | TEXT | YES | - | 部位4 | - |
+| position5 | TEXT | YES | - | 部位5 | - |
 | raw_label | TEXT | YES | - | 原文ラベル | 右バンパー脱着・修理 |
 | unit_price | NUMERIC(12,0) | YES | - | 単価 | 8000 |
 | quantity | INTEGER | YES | - | 数量 | 1 |
@@ -108,20 +121,25 @@
 | line_no | INTEGER | NO | - | 明細行番号 | 1 |
 | sub_no | INTEGER | NO | - | 分割連番 | 1 |
 | raw_label_part | TEXT | NO | - | 分割後の原文 | 左ファーストステップ |
-| action | TEXT | YES | - | 作業動作 | 脱着 |
+| action1 | TEXT | YES | - | 作業動作1 | 脱着 |
+| action2 | TEXT | YES | - | 作業動作2 | 曲がり直し |
+| action3 | TEXT | YES | - | 作業動作3 | 塗装 |
 | target | TEXT | YES | - | 対象物 | ステップ |
+| position1 | TEXT | YES | - | 部位1 | 右 |
+| position2 | TEXT | YES | - | 部位2 | 前 |
+| position3 | TEXT | YES | - | 部位3 | - |
+| position4 | TEXT | YES | - | 部位4 | - |
+| position5 | TEXT | YES | - | 部位5 | - |
+| raw_label | TEXT | YES | - | 元の完全な作業名 | 元の完全ラベル |
 | unit_price | DECIMAL(12,2) | NO | - | 単価 | 6000.00 |
 | quantity | INTEGER | NO | - | 数量 | 1 |
 | amount | DECIMAL(12,2) | NO | - | 金額 | 6000.00 |
+| other | TEXT | YES | - | その他情報 | - |
+| set_name | TEXT | YES | - | セット名 | バンパー作業一式 |
 | is_cancelled | BOOLEAN | NO | false | 取消しフラグ | false |
 | confidence_score | DECIMAL(3,2) | YES | - | 抽出信頼度 | 0.95 |
 | extraction_method | TEXT | YES | - | 抽出方法 | manual |
 | notes | TEXT | YES | - | 備考 | 特殊加工 |
-| record_type | TEXT | YES | - | レコード種別 | split |
-| raw_label_full | TEXT | YES | - | 完全な原文 | 元の完全ラベル |
-| set_name | TEXT | YES | - | セット名 | バンパー作業一式 |
-| other | TEXT | YES | - | その他情報 | - |
-| is_latest | BOOLEAN | NO | true | 最新フラグ | true |
 | created_at | TIMESTAMPTZ | YES | now() | 作成日時 | 2025-08-30T10:00:00Z |
 | updated_at | TIMESTAMPTZ | YES | now() | 更新日時 | 2025-08-30T10:00:00Z |
 
@@ -289,9 +307,15 @@ erDiagram
         text invoice_id FK
         integer line_no
         text task_type
-        text action
+        text action1
+        text action2
+        text action3
         text target
-        text position
+        text position1
+        text position2
+        text position3
+        text position4
+        text position5
         text raw_label
         decimal unit_price
         integer quantity
@@ -300,27 +324,32 @@ erDiagram
         timestamptz created_at
         timestamptz updated_at
     }
-    
+
     invoice_line_items_split {
         serial id PK
         text invoice_id FK
         integer line_no FK
         integer sub_no
         text raw_label_part
-        text action
+        text action1
+        text action2
+        text action3
         text target
+        text position1
+        text position2
+        text position3
+        text position4
+        text position5
+        text raw_label
         decimal unit_price
         integer quantity
         decimal amount
+        text other
+        text set_name
         boolean is_cancelled
         decimal confidence_score
         text extraction_method
         text notes
-        text record_type
-        text raw_label_full
-        text set_name
-        text other
-        boolean is_latest
         timestamptz created_at
         timestamptz updated_at
     }
@@ -610,4 +639,67 @@ GROUP BY i.invoice_id, i.customer_name, i.subject, i.total, i.issue_date, i.paym
 
 ---
 
-**最終更新**: 2025年9月11日（実際のSupabaseスキーマに基づく完全更新 - データ品質問題含む）
+---
+
+## 🔗 CSV to DB マッピング詳細
+
+### invoice_items_0917.csv → invoices テーブル
+
+| CSV列名 | DB列名 | データ型変換 | 備考 |
+|---------|-------|-------------|------|
+| `invoice_id` | `invoice_id` | TEXT | 主キー |
+| `invoice_month` | `billing_month` | TEXT | YYMM形式 |
+| `invoice_date` | `billing_date` | DATE | Excel日付→DATE変換 |
+| `customer_name` | `customer_name` | TEXT | 顧客名 |
+| `subject` | `subject` | TEXT | 件名 |
+| `registration_number` | `registration_number` | TEXT | 登録番号 |
+| **`purchase_order_number`** | **`purchase_order_number`** | **TEXT** | **発注番号** |
+| **`order_number`** | **`order_number`** | **TEXT** | **オーダー番号** |
+| `subtotal` | `subtotal` | NUMERIC(12,0) | 小計 |
+| `tax_amount` | `tax` | NUMERIC(12,0) | 税額 |
+| `total_amount` | `total` | NUMERIC(12,0) | 合計 |
+
+### 重要なマッピング確認
+
+⚠️ **経理データ:** CSVの`purchase_order_number`（発注番号）とDBの`purchase_order_number`（発注番号）は正確に対応しています。
+
+**CSVヘッダー確認:**
+```
+invoice_id,invoice_month,invoice_date,customer_name,subject,registration_number,purchase_order_number,order_number,subtotal,tax_amount,total_amount
+```
+
+**データ例:**
+```
+21111292-1,2111,44504,UDトラックス株式会社,新手運輸有限会社,北九州100か6063,1700405668,10075760,3300,300,3300
+```
+
+---
+
+## 🛡️ データ保護システム
+
+### 自動保護機能
+
+1. **data-protection.js** - サーバーサイド保護システム
+2. **data-guard.ts** - フロントエンド保護システム
+3. **pre-commit-data-check.js** - Git保護システム
+
+### 保護対象操作
+
+- `invoices` テーブルの DELETE操作
+- `invoice_line_items` テーブルの DELETE操作
+- 最小件数を下回る状態でのコミット
+
+### 監視基準値
+
+- **invoices:** 最低1000件
+- **invoice_line_items:** 最低500件
+
+### 緊急復旧
+
+```bash
+node emergency_restore.js
+```
+
+---
+
+**最終更新**: 2025年9月17日（invoice_items_0917.csvに基づく正確なマッピング含む）
