@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useRef, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { ArrowLeft, Plus, Trash2, Save, Search, Calculator, Home } from 'lucide-react'
+import { ArrowLeft, Plus, Trash2, Save, Search, Calculator, Home, AlertCircle } from 'lucide-react'
 import { useWorkDictionary } from '@/hooks/useWorkDictionary'
 import { supabase } from '@/lib/supabase'
 import { generateDocumentNumber, parseDocumentNumber } from '@/lib/utils'
@@ -504,6 +504,11 @@ function InvoiceCreateContent() {
   const [invoiceNumber, setInvoiceNumber] = useState('') // 請求書No
   const [invoiceYear, setInvoiceYear] = useState(new Date().getFullYear())
   const [invoiceMonth, setInvoiceMonth] = useState(new Date().getMonth() + 1)
+  const [dateWarningDialog, setDateWarningDialog] = useState<{
+    show: boolean
+    message: string
+    onConfirm: () => void
+  }>({ show: false, message: '', onConfirm: () => {} })
   const [billingDate, setBillingDate] = useState(new Date().toISOString().split('T')[0])
   const [customerCategories, setCustomerCategories] = useState<CustomerCategory[]>([])
   const [customerCategory, setCustomerCategory] = useState('ud')
@@ -1093,8 +1098,53 @@ function InvoiceCreateContent() {
   const adjustMonth = (delta: number) => {
     const currentDate = new Date(invoiceYear, invoiceMonth - 1)
     currentDate.setMonth(currentDate.getMonth() + delta)
-    setInvoiceYear(currentDate.getFullYear())
-    setInvoiceMonth(currentDate.getMonth() + 1)
+    const newYear = currentDate.getFullYear()
+    const newMonth = currentDate.getMonth() + 1
+    handleYearMonthChange(newYear, newMonth)
+  }
+
+  // 年月変更時の警告チェック
+  const handleYearMonthChange = (newYear: number, newMonth: number) => {
+    const now = new Date()
+    const currentYear = now.getFullYear()
+    const currentMonth = now.getMonth() + 1
+
+    // 選択した年月と現在月の差を計算
+    const selectedDate = new Date(newYear, newMonth - 1)
+    const currentDate = new Date(currentYear, currentMonth - 1)
+    const monthDiff = (newYear - currentYear) * 12 + (newMonth - currentMonth)
+
+    // 過去の月（前月以前）
+    if (monthDiff < 0) {
+      setDateWarningDialog({
+        show: true,
+        message: `${newYear}年${newMonth}月は過去の請求データです。\n\n修正データとして入力しますか？`,
+        onConfirm: () => {
+          setInvoiceYear(newYear)
+          setInvoiceMonth(newMonth)
+          setDateWarningDialog({ show: false, message: '', onConfirm: () => {} })
+        }
+      })
+      return
+    }
+
+    // 未来の月（翌月以降）
+    if (monthDiff > 0) {
+      setDateWarningDialog({
+        show: true,
+        message: `${newYear}年${newMonth}月分の請求データとなりますが、よろしいですか？`,
+        onConfirm: () => {
+          setInvoiceYear(newYear)
+          setInvoiceMonth(newMonth)
+          setDateWarningDialog({ show: false, message: '', onConfirm: () => {} })
+        }
+      })
+      return
+    }
+
+    // 当月なら警告なし
+    setInvoiceYear(newYear)
+    setInvoiceMonth(newMonth)
   }
 
   // 日付調整関数
@@ -1853,7 +1903,7 @@ function InvoiceCreateContent() {
                     <div className="flex gap-2 flex-1">
                       <select
                         value={invoiceYear}
-                        onChange={(e) => setInvoiceYear(Number(e.target.value))}
+                        onChange={(e) => handleYearMonthChange(Number(e.target.value), invoiceMonth)}
                         className="w-24 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-center"
                       >
                         {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i).map(year => (
@@ -1863,7 +1913,7 @@ function InvoiceCreateContent() {
                       <span className="py-2 text-gray-500 whitespace-nowrap">年</span>
                       <select
                         value={invoiceMonth}
-                        onChange={(e) => setInvoiceMonth(Number(e.target.value))}
+                        onChange={(e) => handleYearMonthChange(invoiceYear, Number(e.target.value))}
                         className="w-20 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-center"
                       >
                         {Array.from({ length: 12 }, (_, i) => i + 1).map(month => (
@@ -3780,6 +3830,37 @@ function InvoiceCreateContent() {
           </p>
         </div>
       </div>
+
+      {/* 年月変更確認ダイアログ */}
+      {dateWarningDialog.show && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl p-6 max-w-md mx-4">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center">
+                <AlertCircle className="w-6 h-6 text-yellow-600" />
+              </div>
+              <h3 className="text-lg font-bold text-gray-900">年月の確認</h3>
+            </div>
+            <p className="text-gray-700 whitespace-pre-line mb-6">
+              {dateWarningDialog.message}
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setDateWarningDialog({ show: false, message: '', onConfirm: () => {} })}
+                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={dateWarningDialog.onConfirm}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              >
+                はい、続ける
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
