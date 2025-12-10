@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Search, Clock, Download, Filter, X, BarChart3 } from 'lucide-react'
+import { supabase } from '@/lib/supabase'
 
 // 型定義
 interface WorkHistoryItem {
@@ -11,7 +12,7 @@ interface WorkHistoryItem {
   unit_price: number
   customer_name: string
   date: string
-  invoice_id?: number
+  invoice_id?: string
   memo: string
   quantity: number
   total_amount: number
@@ -32,113 +33,9 @@ interface WorkStatistics {
   topCustomer: string
 }
 
-// WorkHistoryDBクラス
-class WorkHistoryDB {
-  public data: WorkHistoryItem[]
-
-  constructor() {
-    this.data = this.loadData()
-  }
-
-  private loadData(): WorkHistoryItem[] {
-    try {
-      const stored = localStorage.getItem('bankin_work_history')
-      return stored ? JSON.parse(stored) : this.getDefaultData()
-    } catch {
-      return this.getDefaultData()
-    }
-  }
-
-  private getDefaultData(): WorkHistoryItem[] {
-    return [
-      {
-        id: 1,
-        work_name: 'Webサイト制作',
-        unit_price: 100000,
-        customer_name: 'テクノロジー株式会社',
-        date: '2024-01-15',
-        invoice_id: 1,
-        memo: 'レスポンシブ対応',
-        quantity: 1,
-        total_amount: 100000
-      },
-      {
-        id: 2,
-        work_name: 'システム保守',
-        unit_price: 50000,
-        customer_name: 'サンプル商事株式会社B',
-        date: '2024-02-10',
-        invoice_id: 2,
-        memo: '月次保守',
-        quantity: 1,
-        total_amount: 50000
-      },
-      {
-        id: 3,
-        work_name: 'データベース設計',
-        unit_price: 80000,
-        customer_name: '株式会社UDトラックス',
-        date: '2024-03-05',
-        invoice_id: 3,
-        memo: 'ER図作成含む',
-        quantity: 1,
-        total_amount: 80000
-      },
-      {
-        id: 4,
-        work_name: 'SEO対策',
-        unit_price: 30000,
-        customer_name: 'テクノロジー株式会社',
-        date: '2024-01-20',
-        memo: 'キーワード分析',
-        quantity: 1,
-        total_amount: 30000
-      },
-      {
-        id: 5,
-        work_name: 'サーバー構築',
-        unit_price: 120000,
-        customer_name: 'サンプル商事株式会社B',
-        date: '2024-02-25',
-        memo: 'AWS環境',
-        quantity: 1,
-        total_amount: 120000
-      },
-      {
-        id: 6,
-        work_name: 'モバイルアプリ開発',
-        unit_price: 150000,
-        customer_name: 'モバイル株式会社',
-        date: '2024-03-10',
-        memo: 'iOS/Android対応',
-        quantity: 1,
-        total_amount: 150000
-      },
-      {
-        id: 7,
-        work_name: 'セキュリティ監査',
-        unit_price: 90000,
-        customer_name: 'セキュリティ企業',
-        date: '2024-03-15',
-        memo: '脆弱性診断',
-        quantity: 1,
-        total_amount: 90000
-      },
-      {
-        id: 8,
-        work_name: 'API開発',
-        unit_price: 70000,
-        customer_name: 'テクノロジー株式会社',
-        date: '2024-03-20',
-        memo: 'REST API',
-        quantity: 1,
-        total_amount: 70000
-      }
-    ]
-  }
-
-  search(filters: SearchFilters): WorkHistoryItem[] {
-    return this.data.filter(item => {
+// 検索関数
+function searchItems(data: WorkHistoryItem[], filters: SearchFilters): WorkHistoryItem[] {
+  return data.filter(item => {
       // AND検索（空白区切りトークンでANDマッチ）
       if (filters.keyword.trim()) {
         const tokens = filters.keyword.toLowerCase().split(/\s+/).filter(Boolean)
@@ -215,9 +112,10 @@ class WorkHistoryDB {
 
       return true
     })
-  }
+}
 
-  getStatistics(items: WorkHistoryItem[]): WorkStatistics {
+// 統計計算関数
+function getStatistics(items: WorkHistoryItem[]): WorkStatistics {
     if (items.length === 0) {
       return {
         totalWorks: 0,
@@ -243,83 +141,83 @@ class WorkHistoryDB {
       averagePrice,
       topCustomer
     }
+}
+
+// CSVサニタイズ関数
+function sanitizeCSVValue(value: string): string {
+  // CSVインジェクション対策
+  if (/^[=+\-@]/.test(value)) {
+    value = "'" + value
   }
 
-
-  exportToCSV(items: WorkHistoryItem[], filters: SearchFilters): void {
-    if (items.length === 0) {
-      alert('エクスポートするデータがありません')
-      return
-    }
-
-    const headers = [
-      'ID', '作業名', '単価', '顧客名', '日付', '請求書ID', 'メモ', '数量', '合計金額'
-    ]
-    
-    const rows = items.map(item => [
-      this.sanitizeCSVValue(item.id.toString()),
-      this.sanitizeCSVValue(item.work_name),
-      this.sanitizeCSVValue(item.unit_price.toString()),
-      this.sanitizeCSVValue(item.customer_name),
-      this.sanitizeCSVValue(item.date),
-      this.sanitizeCSVValue(item.invoice_id?.toString() || ''),
-      this.sanitizeCSVValue(item.memo),
-      this.sanitizeCSVValue(item.quantity.toString()),
-      this.sanitizeCSVValue(item.total_amount.toString())
-    ])
-
-    // BOM付きCSVコンテント
-    const csvContent = '\uFEFF' + [headers.join(','), ...rows.map(row => row.join(','))].join('\n')
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-    const url = typeof URL !== 'undefined' ? URL.createObjectURL(blob) : ''
-    
-    // ファイル名に期間やキーワードを含める
-    let filename = '作業履歴'
-    if (filters.keyword) filename += `_${filters.keyword.replace(/[\s\/\\:*?"<>|]/g, '_')}`
-    if (filters.startDate) filename += `_${filters.startDate}`
-    if (filters.endDate) filename += `_${filters.endDate}`
-    filename += `_${new Date().toISOString().split('T')[0]}.csv`
-    
-    if (typeof document !== 'undefined') {
-      const link = document.createElement('a')
-      link.href = url
-      link.download = filename
-      link.click()
-    }
-    
-    // メモリリーク防止
-    if (typeof URL !== 'undefined' && url) {
-      setTimeout(() => {
-        URL.revokeObjectURL(url)
-      }, 100)
-    }
+  // カンマ、改行、ダブルクォートが含まれる場合はクォートで囲む
+  if (value.includes(',') || value.includes('\n') || value.includes('"')) {
+    value = value.replace(/"/g, '""')
+    value = `"${value}"`
   }
 
-  private sanitizeCSVValue(value: string): string {
-    // CSVインジェクション対策
-    if (/^[=+\-@]/.test(value)) {
-      value = "'" + value  // 先頭にシングルクォートを追加
-    }
-    
-    // カンマ、改行、ダブルクォートが含まれる場合はクォートで囲む
-    if (value.includes(',') || value.includes('\n') || value.includes('"')) {
-      // ダブルクォートのエスケープ
-      value = value.replace(/"/g, '""')
-      value = `"${value}"`
-    }
-    
-    return value
+  return value
+}
+
+// CSVエクスポート関数
+function exportToCSV(items: WorkHistoryItem[], filters: SearchFilters): void {
+  if (items.length === 0) {
+    alert('エクスポートするデータがありません')
+    return
+  }
+
+  const headers = [
+    'ID', '作業名', '単価', '顧客名', '日付', '請求書ID', 'メモ', '数量', '合計金額'
+  ]
+
+  const rows = items.map(item => [
+    sanitizeCSVValue(item.id.toString()),
+    sanitizeCSVValue(item.work_name),
+    sanitizeCSVValue(item.unit_price.toString()),
+    sanitizeCSVValue(item.customer_name),
+    sanitizeCSVValue(item.date),
+    sanitizeCSVValue(item.invoice_id?.toString() || ''),
+    sanitizeCSVValue(item.memo),
+    sanitizeCSVValue(item.quantity.toString()),
+    sanitizeCSVValue(item.total_amount.toString())
+  ])
+
+  // BOM付きCSVコンテント
+  const csvContent = '\uFEFF' + [headers.join(','), ...rows.map(row => row.join(','))].join('\n')
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+  const url = typeof URL !== 'undefined' ? URL.createObjectURL(blob) : ''
+
+  // ファイル名に期間やキーワードを含める
+  let filename = '作業履歴'
+  if (filters.keyword) filename += `_${filters.keyword.replace(/[\s\/\\:*?"<>|]/g, '_')}`
+  if (filters.startDate) filename += `_${filters.startDate}`
+  if (filters.endDate) filename += `_${filters.endDate}`
+  filename += `_${new Date().toISOString().split('T')[0]}.csv`
+
+  if (typeof document !== 'undefined') {
+    const link = document.createElement('a')
+    link.href = url
+    link.download = filename
+    link.click()
+  }
+
+  // メモリリーク防止
+  if (typeof URL !== 'undefined' && url) {
+    setTimeout(() => {
+      URL.revokeObjectURL(url)
+    }, 100)
   }
 }
 
 export default function WorkHistoryPage() {
   const router = useRouter()
-  const [db] = useState(() => new WorkHistoryDB())
+  const [allItems, setAllItems] = useState<WorkHistoryItem[]>([])
   const [workItems, setWorkItems] = useState<WorkHistoryItem[]>([])
+  const [isLoading, setIsLoading] = useState(true)
   const [isSearching, setIsSearching] = useState(false)
   const [sortBy, setSortBy] = useState<'date' | 'price' | 'customer' | 'work'>('date')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
-  
+
   const [filters, setFilters] = useState<SearchFilters>({
     keyword: '',
     minPrice: '',
@@ -328,28 +226,93 @@ export default function WorkHistoryPage() {
     endDate: ''
   })
 
-  // 検索処理
+  // Supabaseからデータを取得
   useEffect(() => {
-    const searchItems = async () => {
-      setIsSearching(true)
-      await new Promise(resolve => setTimeout(resolve, 200))
-      const filtered = db.search(filters)
+    const fetchData = async () => {
+      setIsLoading(true)
+      try {
+        // invoice_line_itemsとinvoicesをJOIN
+        const { data: lineItems, error } = await supabase
+          .from('invoice_line_items')
+          .select(`
+            id,
+            invoice_id,
+            line_no,
+            sub_no,
+            task_type,
+            target,
+            action1,
+            position1,
+            set_name,
+            raw_label,
+            raw_label_part,
+            unit_price,
+            quantity,
+            amount,
+            performed_at,
+            invoices!inner (
+              customer_name,
+              subject_name
+            )
+          `)
+          .order('performed_at', { ascending: false })
+          .limit(1000)
+
+        if (error) throw error
+
+        // データを変換
+        const items: WorkHistoryItem[] = (lineItems || []).map((item: any, index: number) => {
+          // 作業名の構築
+          let workName = ''
+          if (item.task_type === 'S' || item.task_type === 'set') {
+            workName = item.set_name || item.raw_label || item.target || 'セット作業'
+          } else {
+            workName = item.raw_label_part || item.raw_label ||
+              [item.target, item.action1, item.position1].filter(Boolean).join(' ') || '作業'
+          }
+
+          return {
+            id: item.id || index + 1,
+            work_name: workName,
+            unit_price: item.unit_price || 0,
+            customer_name: item.invoices?.customer_name || '',
+            date: item.performed_at || '',
+            invoice_id: item.invoice_id,
+            memo: item.invoices?.subject_name || '',
+            quantity: item.quantity || 1,
+            total_amount: item.amount || 0
+          }
+        })
+
+        setAllItems(items)
+        setWorkItems(items)
+      } catch (err) {
+        console.error('Failed to fetch work history:', err)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [])
+
+  // 検索処理（フィルター変更時）
+  useEffect(() => {
+    if (allItems.length === 0) return
+    setIsSearching(true)
+    const timer = setTimeout(() => {
+      const filtered = searchItems(allItems, filters)
       setWorkItems(filtered)
       setIsSearching(false)
-    }
-    searchItems()
-  }, [filters, db])
-
-  // 初期データロード
-  useEffect(() => {
-    setWorkItems(db.data)
-  }, [db])
+    }, 200)
+    return () => clearTimeout(timer)
+  }, [filters, allItems])
 
   // ソート処理
   const sortedItems = useMemo(() => {
     const sorted = [...workItems].sort((a, b) => {
       let comparison = 0
-      
+
       switch (sortBy) {
         case 'date':
           comparison = new Date(a.date).getTime() - new Date(b.date).getTime()
@@ -364,21 +327,21 @@ export default function WorkHistoryPage() {
           comparison = a.work_name.localeCompare(b.work_name)
           break
       }
-      
+
       return sortOrder === 'asc' ? comparison : -comparison
     })
-    
+
     return sorted
   }, [workItems, sortBy, sortOrder])
 
   const statistics = useMemo(() => {
-    return db.getStatistics(workItems)
-  }, [workItems, db])
+    return getStatistics(workItems)
+  }, [workItems])
 
   const handleBack = () => router.push('/')
 
   const handleExportCSV = () => {
-    db.exportToCSV(sortedItems, filters)
+    exportToCSV(sortedItems, filters)
   }
 
   const handleSort = (field: typeof sortBy) => {
@@ -408,8 +371,8 @@ export default function WorkHistoryPage() {
   }
 
   // 請求書表示への遷移
-  const handleViewInvoice = (invoiceId: number) => {
-    router.push(`/invoice-list?view=${invoiceId}`)
+  const handleViewInvoice = (invoiceId: string) => {
+    router.push(`/invoice-view/${invoiceId}`)
   }
 
   return (
@@ -603,7 +566,16 @@ export default function WorkHistoryPage() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {isSearching ? (
+              {isLoading ? (
+                <tr>
+                  <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
+                    <div className="flex justify-center items-center">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mr-3"></div>
+                      データを読み込み中...
+                    </div>
+                  </td>
+                </tr>
+              ) : isSearching ? (
                 <tr>
                   <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
                     検索中...
