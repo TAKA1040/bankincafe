@@ -2510,7 +2510,7 @@ function InvoiceCreateContent() {
                           placeholder="対象を入力"
                         />
                         {showTargetSuggestions && targetSuggestions.length > 0 && (
-                          <div className="absolute z-20 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-80 overflow-y-auto">
+                          <div className="absolute z-20 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-80 overflow-y-auto" style={{ width: 'calc(200% + 0.75rem)', minWidth: '400px' }}>
                             {targetSuggestions.map((suggestion, index) => (
                               <button
                                 key={index}
@@ -2523,8 +2523,8 @@ function InvoiceCreateContent() {
                                   setSelectedTargetIndex(-1)
                                 }}
                                 className={`w-full px-3 py-2 text-left first:rounded-t-lg last:rounded-b-lg text-sm ${
-                                  index === selectedTargetIndex 
-                                    ? 'bg-blue-100 text-blue-800' 
+                                  index === selectedTargetIndex
+                                    ? 'bg-blue-100 text-blue-800'
                                     : 'hover:bg-blue-50'
                                 }`}
                               >
@@ -2884,7 +2884,7 @@ function InvoiceCreateContent() {
                             placeholder="対象を入力"
                           />
                           {showTargetSuggestions && targetSuggestions.length > 0 && (
-                            <div className="absolute z-20 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-80 overflow-y-auto">
+                            <div className="absolute z-20 left-0 right-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-80 overflow-y-auto" style={{ minWidth: '300px' }}>
                               {targetSuggestions.map((suggestion, index) => (
                                 <button
                                   key={suggestion}
