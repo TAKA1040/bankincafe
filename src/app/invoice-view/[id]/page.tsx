@@ -336,26 +336,37 @@ export default function InvoiceViewPage({ params }: PageProps) {
       </div>
 
       {/* 金額情報 */}
-      <div className="bg-white rounded-lg shadow-sm border p-6 mb-8">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-          <Hash className="w-5 h-5" />
-          金額情報
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="text-center p-4 bg-gray-50 rounded-lg">
-            <label className="text-sm font-medium text-gray-500">小計</label>
-            <p className="text-xl font-bold text-gray-900">{formatAmount(invoice.subtotal)}</p>
+      {(() => {
+        // S作業はsub_no=1のみ、T作業は全て集計
+        const subtotal = invoice.line_items
+          .filter(item => !item.sub_no || item.sub_no === 1)
+          .reduce((sum, item) => sum + (item.amount || 0), 0);
+        const tax = Math.floor(subtotal * 0.1);
+        const total = subtotal + tax;
+
+        return (
+          <div className="bg-white rounded-lg shadow-sm border p-6 mb-8">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <Hash className="w-5 h-5" />
+              金額情報
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="text-center p-4 bg-gray-50 rounded-lg">
+                <label className="text-sm font-medium text-gray-500">小計</label>
+                <p className="text-xl font-bold text-gray-900">{formatAmount(subtotal)}</p>
+              </div>
+              <div className="text-center p-4 bg-gray-50 rounded-lg">
+                <label className="text-sm font-medium text-gray-500">税額</label>
+                <p className="text-xl font-bold text-gray-900">{formatAmount(tax)}</p>
+              </div>
+              <div className="text-center p-4 bg-blue-50 rounded-lg">
+                <label className="text-sm font-medium text-blue-600">合計金額</label>
+                <p className="text-2xl font-bold text-blue-600">{formatAmount(total)}</p>
+              </div>
+            </div>
           </div>
-          <div className="text-center p-4 bg-gray-50 rounded-lg">
-            <label className="text-sm font-medium text-gray-500">税額</label>
-            <p className="text-xl font-bold text-gray-900">{formatAmount(invoice.tax)}</p>
-          </div>
-          <div className="text-center p-4 bg-blue-50 rounded-lg">
-            <label className="text-sm font-medium text-blue-600">合計金額</label>
-            <p className="text-2xl font-bold text-blue-600">{formatAmount(invoice.total)}</p>
-          </div>
-        </div>
-      </div>
+        );
+      })()}
 
       {/* 明細情報 */}
       <div className="bg-white rounded-lg shadow-sm border">
