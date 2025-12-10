@@ -74,41 +74,17 @@ export function useSalesData() {
       setLoading(true)
       setError(null)
 
-      // 新スキーマ対応クエリ（入金履歴を含む）
-      let { data, error } = await supabase
-        .from('invoices')
-        .select(`
-          invoice_id,
-          issue_date,
-          billing_date,
-          customer_name,
-          subject_name,
-          subject,
-          total,
-          total_amount,
-          status,
-          payment_status,
-          registration_number,
-          order_number,
-          order_id,
-          invoice_type,
-          original_invoice_id,
-          created_at,
-          invoice_payments(
-            id,
-            payment_date,
-            payment_amount,
-            payment_method,
-            notes,
-            created_at
-          )
-        `)
-        .neq('status', 'deleted') // 削除済みを除外
-        .order('billing_date', { ascending: false })
+      // ページネーションで全件取得
+      let allData: any[] = []
+      let currentPage = 0
+      const pageSize = 1000
+      let hasMore = true
 
-      // フォールバック処理（新テーブルが未作成の場合）
-      if (error && (error as any).code === '42P01') { // テーブル存在なしエラー
-        const fallback = await supabase
+      while (hasMore) {
+        const fromIndex = currentPage * pageSize
+        const toIndex = fromIndex + pageSize - 1
+
+        const { data: pageData, error: pageError } = await supabase
           .from('invoices')
           .select(`
             invoice_id,
@@ -124,18 +100,68 @@ export function useSalesData() {
             registration_number,
             order_number,
             order_id,
-            created_at
+            invoice_type,
+            original_invoice_id,
+            created_at,
+            invoice_payments(
+              id,
+              payment_date,
+              payment_amount,
+              payment_method,
+              notes,
+              created_at
+            )
           `)
           .neq('status', 'deleted')
-          .order('billing_date', { ascending: false })
-        
-        data = fallback.data as any[]
-        error = fallback.error as any
+          .order('issue_date', { ascending: false })
+          .range(fromIndex, toIndex)
+
+        if (pageError) {
+          // フォールバック処理（invoice_paymentsテーブルがない場合）
+          if ((pageError as any).code === '42P01') {
+            const { data: fallbackData, error: fallbackError } = await supabase
+              .from('invoices')
+              .select(`
+                invoice_id,
+                issue_date,
+                billing_date,
+                customer_name,
+                subject_name,
+                subject,
+                total,
+                total_amount,
+                status,
+                payment_status,
+                registration_number,
+                order_number,
+                order_id,
+                created_at
+              `)
+              .neq('status', 'deleted')
+              .order('issue_date', { ascending: false })
+              .range(fromIndex, toIndex)
+
+            if (fallbackError) throw fallbackError
+            if (fallbackData && fallbackData.length > 0) {
+              allData = [...allData, ...fallbackData]
+              hasMore = fallbackData.length === pageSize
+              currentPage++
+            } else {
+              hasMore = false
+            }
+          } else {
+            throw pageError
+          }
+        } else if (pageData && pageData.length > 0) {
+          allData = [...allData, ...pageData]
+          hasMore = pageData.length === pageSize
+          currentPage++
+        } else {
+          hasMore = false
+        }
       }
 
-      if (error) throw error
-
-      const rows: any[] = (data as any[]) || []
+      const rows: any[] = allData
 
       const salesInvoices: SalesInvoice[] = rows.map((invoice: any) => {
         // 入金履歴の処理
