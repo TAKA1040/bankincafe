@@ -76,6 +76,7 @@ export default function InvoiceViewPage({ params }: PageProps) {
             return {
               id: item.id,
               line_no: item.line_no,
+              sub_no: item.sub_no,
               task_type: item.task_type,
               target: item.target,
               action: item.action1,
@@ -85,6 +86,7 @@ export default function InvoiceViewPage({ params }: PageProps) {
               amount: item.amount,
               raw_label: item.raw_label,
               raw_label_part: item.raw_label_part,
+              set_name: item.set_name,
               performed_at: item.performed_at,
               split_items: (splitItems as any) || []
             };
@@ -375,80 +377,107 @@ export default function InvoiceViewPage({ params }: PageProps) {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {invoice.line_items.map((item, index) => {
-                // S作業（セット）の場合を判別 - task_typeベースで判断
-                const isSetWork = item.task_type === 'S' || item.task_type === 'set';
-                
-                if (isSetWork) {
-                  // S作業：raw_labelをそのまま作業内容として表示
-                  return (
-                    <tr key={item.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {item.line_no}
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm text-gray-900">
-                          {item.raw_label || '-'}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                        {item.quantity || 0}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                        {item.unit_price ? formatAmount(item.unit_price) : '-'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right font-medium">
-                        {item.amount ? formatAmount(item.amount) : '-'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {formatDate(item.performed_at)}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-900">
-                        {item.raw_label_part ? (
-                          <div className="max-w-xs">
-                            <div className="text-xs text-gray-500">旧システム明細内容</div>
-                            <div className="whitespace-pre-wrap">{item.raw_label_part}</div>
+              {(() => {
+                // S作業をグループ化
+                const processedLineNos = new Set<number>();
+                const rows: JSX.Element[] = [];
+
+                invoice.line_items.forEach((item, index) => {
+                  const isSetWork = item.task_type === 'S' || item.task_type === 'set';
+
+                  if (isSetWork) {
+                    // S作業: 同じline_noは1回だけ表示
+                    if (processedLineNos.has(item.line_no)) {
+                      return; // 既に処理済み
+                    }
+                    processedLineNos.add(item.line_no);
+
+                    // 同じline_noのS作業をすべて取得（内訳用）
+                    const sameLineItems = invoice.line_items.filter(
+                      i => i.line_no === item.line_no && (i.task_type === 'S' || i.task_type === 'set')
+                    );
+
+                    // セット名（set_nameがあれば使用、なければraw_labelの先頭部分）
+                    const setName = item.set_name || item.raw_label || 'セット作業';
+
+                    rows.push(
+                      <tr key={item.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {item.line_no}
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="text-sm text-gray-900 font-medium">
+                            {setName}
                           </div>
-                        ) : '-'}
-                      </td>
-                    </tr>
-                  );
-                } else {
-                  // T作業（個別）：作業内容をそのまま表示
-                  return (
-                    <tr key={item.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {item.line_no}
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm text-gray-900">
-                          {item.raw_label || [item.target, item.action, item.position].filter(Boolean).join(' ') || '-'}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                        {item.quantity || 0}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                        {item.unit_price ? formatAmount(item.unit_price) : '-'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right font-medium">
-                        {item.amount ? formatAmount(item.amount) : '-'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {formatDate(item.performed_at)}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-900">
-                        {item.raw_label_part ? (
-                          <div className="max-w-xs">
-                            <div className="text-xs text-gray-500">旧システム明細内容</div>
-                            <div className="whitespace-pre-wrap">{item.raw_label_part}</div>
+                          {sameLineItems.length > 0 && (
+                            <div className="text-xs text-gray-500 mt-1">
+                              <span className="text-gray-600">内訳</span>
+                              {sameLineItems.map((subItem, idx) => (
+                                <div key={idx} className="ml-2">
+                                  • {subItem.raw_label_part || [subItem.target, subItem.action, subItem.position].filter(Boolean).join(' ') || '-'}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                          {item.quantity || 0}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                          {item.unit_price ? formatAmount(item.unit_price) : '-'}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right font-medium">
+                          {item.amount ? formatAmount(item.amount) : '-'}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {formatDate(item.performed_at)}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-900">
+                          -
+                        </td>
+                      </tr>
+                    );
+                  } else {
+                    // T作業（個別）：行番号をline_no-sub_noで表示
+                    const lineNoDisplay = item.sub_no ? `${item.line_no}-${item.sub_no}` : item.line_no;
+
+                    rows.push(
+                      <tr key={item.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {lineNoDisplay}
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="text-sm text-gray-900">
+                            {item.raw_label || [item.target, item.action, item.position].filter(Boolean).join(' ') || '-'}
                           </div>
-                        ) : '-'}
-                      </td>
-                    </tr>
-                  );
-                }
-              })}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                          {item.quantity || 0}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                          {item.unit_price ? formatAmount(item.unit_price) : '-'}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right font-medium">
+                          {item.amount ? formatAmount(item.amount) : '-'}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {formatDate(item.performed_at)}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-900">
+                          {item.raw_label_part ? (
+                            <div className="max-w-xs">
+                              <div className="text-xs text-gray-500">旧システム明細内容</div>
+                              <div className="whitespace-pre-wrap">{item.raw_label_part}</div>
+                            </div>
+                          ) : '-'}
+                        </td>
+                      </tr>
+                    );
+                  }
+                });
+
+                return rows;
+              })()}
             </tbody>
           </table>
         </div>

@@ -1,120 +1,29 @@
-﻿439-9efe6c9b4d85d050.js:21  GET https://auwmmosfteomieyexkeh.supabase.co/rest/v1/invoices?select=invoice_id%2Cinvoice_number%2Cissue_date%2Cbilling_date%2Cbilling_month%2Ccustomer_category%2Ccustomer_name%2Csubject_name%2Csubject%2Cregistration_number%2Corder_number%2Cpurchase_order_number%2Csubtotal%2Ctax%2Ctotal%2Ctotal_amount%2Cstatus%2Cpayment_status%2Ccreated_at%2Cupdated_at%2Cinvoice_line_items%28id%2Cline_no%2Ctask_type%2Ctarget%2Caction%2Cposition%2Cquantity%2Cunit_price%2Camount%2Craw_label%2Cperformed_at%29&status=neq.deleted&order=billing_date.desc&offset=0&limit=1000 400 (Bad Request)
-push.8439.eL @ 439-9efe6c9b4d85d050.js:21
-h @ 439-9efe6c9b4d85d050.js:21
-r @ 439-9efe6c9b4d85d050.js:21
-Promise.then
-i @ 439-9efe6c9b4d85d050.js:21
-（匿名） @ 439-9efe6c9b4d85d050.js:21
-push.8439.eN @ 439-9efe6c9b4d85d050.js:21
-then @ 439-9efe6c9b4d85d050.js:1
-117-baf0baeee314f75e.js:1 Failed to fetch invoices: {code: '42703', details: null, hint: null, message: 'column invoice_line_items_1.action does not exist'}
-push.92304.window.console.error @ 117-baf0baeee314f75e.js:1
-（匿名） @ 907-c4e79831ddb0b0e6.js:1
-await in （匿名）
-（匿名） @ 907-c4e79831ddb0b0e6.js:1
-aW @ fd9d1056-be6cb3b9718cb444.js:1
-oe @ fd9d1056-be6cb3b9718cb444.js:1
-ol @ fd9d1056-be6cb3b9718cb444.js:1
-or @ fd9d1056-be6cb3b9718cb444.js:1
-ol @ fd9d1056-be6cb3b9718cb444.js:1
-or @ fd9d1056-be6cb3b9718cb444.js:1
-ol @ fd9d1056-be6cb3b9718cb444.js:1
-or @ fd9d1056-be6cb3b9718cb444.js:1
-ol @ fd9d1056-be6cb3b9718cb444.js:1
-or @ fd9d1056-be6cb3b9718cb444.js:1
-ol @ fd9d1056-be6cb3b9718cb444.js:1
-or @ fd9d1056-be6cb3b9718cb444.js:1
-ol @ fd9d1056-be6cb3b9718cb444.js:1
-or @ fd9d1056-be6cb3b9718cb444.js:1
-ol @ fd9d1056-be6cb3b9718cb444.js:1
-or @ fd9d1056-be6cb3b9718cb444.js:1
-ol @ fd9d1056-be6cb3b9718cb444.js:1
-or @ fd9d1056-be6cb3b9718cb444.js:1
-ol @ fd9d1056-be6cb3b9718cb444.js:1
-or @ fd9d1056-be6cb3b9718cb444.js:1
-ol @ fd9d1056-be6cb3b9718cb444.js:1
-or @ fd9d1056-be6cb3b9718cb444.js:1
-ol @ fd9d1056-be6cb3b9718cb444.js:1
-or @ fd9d1056-be6cb3b9718cb444.js:1
-ol @ fd9d1056-be6cb3b9718cb444.js:1
-or @ fd9d1056-be6cb3b9718cb444.js:1
-ol @ fd9d1056-be6cb3b9718cb444.js:1
-or @ fd9d1056-be6cb3b9718cb444.js:1
-ol @ fd9d1056-be6cb3b9718cb444.js:1
-or @ fd9d1056-be6cb3b9718cb444.js:1
-ol @ fd9d1056-be6cb3b9718cb444.js:1
-or @ fd9d1056-be6cb3b9718cb444.js:1
-ol @ fd9d1056-be6cb3b9718cb444.js:1
-or @ fd9d1056-be6cb3b9718cb444.js:1
-ol @ fd9d1056-be6cb3b9718cb444.js:1
-or @ fd9d1056-be6cb3b9718cb444.js:1
-ol @ fd9d1056-be6cb3b9718cb444.js:1
-or @ fd9d1056-be6cb3b9718cb444.js:1
-ol @ fd9d1056-be6cb3b9718cb444.js:1
-or @ fd9d1056-be6cb3b9718cb444.js:1
-ol @ fd9d1056-be6cb3b9718cb444.js:1
-or @ fd9d1056-be6cb3b9718cb444.js:1
-ol @ fd9d1056-be6cb3b9718cb444.js:1
-or @ fd9d1056-be6cb3b9718cb444.js:1
-ol @ fd9d1056-be6cb3b9718cb444.js:1
-or @ fd9d1056-be6cb3b9718cb444.js:1
-ol @ fd9d1056-be6cb3b9718cb444.js:1
-or @ fd9d1056-be6cb3b9718cb444.js:1
-ol @ fd9d1056-be6cb3b9718cb444.js:1
-or @ fd9d1056-be6cb3b9718cb444.js:1
-ol @ fd9d1056-be6cb3b9718cb444.js:1
-or @ fd9d1056-be6cb3b9718cb444.js:1
-ol @ fd9d1056-be6cb3b9718cb444.js:1
-or @ fd9d1056-be6cb3b9718cb444.js:1
-ol @ fd9d1056-be6cb3b9718cb444.js:1
-or @ fd9d1056-be6cb3b9718cb444.js:1
-ol @ fd9d1056-be6cb3b9718cb444.js:1
-or @ fd9d1056-be6cb3b9718cb444.js:1
-ol @ fd9d1056-be6cb3b9718cb444.js:1
-or @ fd9d1056-be6cb3b9718cb444.js:1
-ol @ fd9d1056-be6cb3b9718cb444.js:1
-or @ fd9d1056-be6cb3b9718cb444.js:1
-ol @ fd9d1056-be6cb3b9718cb444.js:1
-or @ fd9d1056-be6cb3b9718cb444.js:1
-ol @ fd9d1056-be6cb3b9718cb444.js:1
-or @ fd9d1056-be6cb3b9718cb444.js:1
-ol @ fd9d1056-be6cb3b9718cb444.js:1
-or @ fd9d1056-be6cb3b9718cb444.js:1
-ol @ fd9d1056-be6cb3b9718cb444.js:1
-or @ fd9d1056-be6cb3b9718cb444.js:1
-ol @ fd9d1056-be6cb3b9718cb444.js:1
-or @ fd9d1056-be6cb3b9718cb444.js:1
-ol @ fd9d1056-be6cb3b9718cb444.js:1
-or @ fd9d1056-be6cb3b9718cb444.js:1
-ol @ fd9d1056-be6cb3b9718cb444.js:1
-or @ fd9d1056-be6cb3b9718cb444.js:1
-ol @ fd9d1056-be6cb3b9718cb444.js:1
-or @ fd9d1056-be6cb3b9718cb444.js:1
-ol @ fd9d1056-be6cb3b9718cb444.js:1
-or @ fd9d1056-be6cb3b9718cb444.js:1
-ol @ fd9d1056-be6cb3b9718cb444.js:1
-or @ fd9d1056-be6cb3b9718cb444.js:1
-ol @ fd9d1056-be6cb3b9718cb444.js:1
-or @ fd9d1056-be6cb3b9718cb444.js:1
-ol @ fd9d1056-be6cb3b9718cb444.js:1
-or @ fd9d1056-be6cb3b9718cb444.js:1
-ol @ fd9d1056-be6cb3b9718cb444.js:1
-or @ fd9d1056-be6cb3b9718cb444.js:1
-ol @ fd9d1056-be6cb3b9718cb444.js:1
-or @ fd9d1056-be6cb3b9718cb444.js:1
-ol @ fd9d1056-be6cb3b9718cb444.js:1
-or @ fd9d1056-be6cb3b9718cb444.js:1
-ol @ fd9d1056-be6cb3b9718cb444.js:1
-or @ fd9d1056-be6cb3b9718cb444.js:1
-ol @ fd9d1056-be6cb3b9718cb444.js:1
-or @ fd9d1056-be6cb3b9718cb444.js:1
-ol @ fd9d1056-be6cb3b9718cb444.js:1
-or @ fd9d1056-be6cb3b9718cb444.js:1
-ol @ fd9d1056-be6cb3b9718cb444.js:1
-or @ fd9d1056-be6cb3b9718cb444.js:1
-ol @ fd9d1056-be6cb3b9718cb444.js:1
-or @ fd9d1056-be6cb3b9718cb444.js:1
-ol @ fd9d1056-be6cb3b9718cb444.js:1
-id @ fd9d1056-be6cb3b9718cb444.js:1
-o @ fd9d1056-be6cb3b9718cb444.js:1
-T @ 117-baf0baeee314f75e.js:1
+﻿例えばこの項目
+https://bankincafe.apaf.me/invoice-view/22021407-1
+
+テールパイプ
+内訳
+• テールパイプ
+• タイコマフラー
+• マニュホルド脱着
+• ガスケット
+• ボルト取替
+• タイコマフラー前側腐食パイプ切断取替加工溶接
+
+
+set_name
+内訳
+・raw_label_part
+・raw_label_part
+・raw_label_part
+・raw_label_part
+・raw_label_part
+・raw_label_part
+
+という形になる
+
+あと、行番号については
+line_no
+sub_no
+がはいるのでは？
+
