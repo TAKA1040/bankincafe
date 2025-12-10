@@ -378,31 +378,17 @@ export default function InvoiceViewPage({ params }: PageProps) {
               {invoice.line_items.map((item, index) => {
                 // S作業（セット）の場合を判別 - task_typeベースで判断
                 const isSetWork = item.task_type === 'S' || item.task_type === 'set';
-                const hasSplitItems = item.split_items && item.split_items.length > 0;
                 
                 if (isSetWork) {
-                  // S作業：セット名（target）＋内訳（raw_labelを分割表示）を表示
-                  const setName = item.target || 'セット作業';
-                  // 内訳をカンマ、中点、全角中点で分割
-                  const breakdownItems = item.raw_label ? 
-                    item.raw_label.split(/[,、，・･]/).map(s => s.trim()).filter(s => s.length > 0) : [];
-                  
+                  // S作業：raw_labelをそのまま作業内容として表示
                   return (
                     <tr key={item.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {item.line_no}
                       </td>
                       <td className="px-6 py-4">
-                        <div className="text-sm text-gray-900 font-medium">
-                          {setName}
-                        </div>
-                        <div className="text-xs text-gray-500 mt-1">
-                          <span className="text-gray-600">内訳</span>
-                          {breakdownItems.map((breakdown, idx) => (
-                            <div key={idx} className="ml-2">
-                              • {breakdown}
-                            </div>
-                          ))}
+                        <div className="text-sm text-gray-900">
+                          {item.raw_label || '-'}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
