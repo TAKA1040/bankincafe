@@ -480,11 +480,10 @@ export default function InvoiceViewPage({ params }: PageProps) {
 
         {/* メモ欄 */}
         {(() => {
-          // line_noごとにユニークなraw_labelを取得
+          // sub_no === 1のレコードからraw_labelを取得
           const rawLabels = invoice.line_items
-            .filter(item => item.raw_label)
-            .map(item => item.raw_label)
-            .filter((label, index, self) => self.indexOf(label) === index);
+            .filter(item => item.raw_label && (!item.sub_no || item.sub_no === 1))
+            .map(item => item.raw_label);
 
           if (!invoice.remarks && rawLabels.length === 0) return null;
 
