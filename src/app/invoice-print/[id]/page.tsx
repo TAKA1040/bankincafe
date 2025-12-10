@@ -119,12 +119,12 @@ export default function InvoicePrintPage() {
       
       // タイムアウト付きでデータ取得を実行
       const fetchWithTimeout = async () => {
-        // 請求書基本データ取得（invoice_numberで検索）
-        console.log('📋 Querying invoices table with invoice_number:', invoiceId);
+        // 請求書基本データ取得（invoice_idで検索）
+        console.log('📋 Querying invoices table with invoice_id:', invoiceId);
         const invoicePromise = supabase
           .from('invoices')
           .select('*')
-          .eq('invoice_number', invoiceId)
+          .eq('invoice_id', invoiceId)
           .single();
 
         const { data: invoiceData, error: invoiceError } = await invoicePromise;
@@ -133,7 +133,7 @@ export default function InvoicePrintPage() {
         // データベース接続エラーの詳細判定
         if (invoiceError) {
           if (invoiceError.code === 'PGRST116') {
-            throw new Error(`請求書番号「${invoiceId}」は存在しません。正しい請求書番号を確認してください。`);
+            throw new Error(`請求書ID「${invoiceId}」は存在しません。正しい請求書IDを確認してください。`);
           }
           if (invoiceError.message?.includes('connect') || invoiceError.message?.includes('timeout')) {
             throw new Error('データベースサービスに接続できません。システム管理者にお問い合わせください。');
@@ -142,7 +142,7 @@ export default function InvoicePrintPage() {
         }
 
         if (!invoiceData) {
-          throw new Error(`請求書番号「${invoiceId}」のデータが見つかりません。`);
+          throw new Error(`請求書ID「${invoiceId}」のデータが見つかりません。`);
         }
 
         console.log('✅ Invoice data found:', invoiceData);
