@@ -417,20 +417,88 @@ export default function InvoicePrintPage() {
     return amount.toLocaleString('ja-JP');
   };
 
-  // 作業タイプのプレフィックス
-  const getWorkTypePrefix = (taskType: string) => {
-    switch (taskType) {
-      case 'S':
-      case 'set':
-        return 'S:';
-      case 'T':
-      case 'individual':
-      case 'structured':
-      case 'fuzzy':
-      default:
-        return 'T:';
-    }
+  // 明細をline_noでグループ化して印刷用に整形
+  interface PrintLineItem {
+    lineNo: number;
+    isSet: boolean;
+    setName?: string;
+    items: Array<{
+      label: string;
+      isFirstOfSet: boolean;
+      quantity: number;
+      unitPrice: number;
+      amount: number;
+    }>;
+    totalAmount: number;
+  }
+
+  const getGroupedLineItems = (): PrintLineItem[] => {
+    if (!invoice?.line_items?.length) return [];
+
+    // line_noでグループ化
+    const grouped = new Map<number, typeof invoice.line_items>();
+    invoice.line_items.forEach(item => {
+      const lineNo = item.line_no || 0;
+      if (!grouped.has(lineNo)) {
+        grouped.set(lineNo, []);
+      }
+      grouped.get(lineNo)!.push(item);
+    });
+
+    // グループを整形
+    const result: PrintLineItem[] = [];
+    grouped.forEach((items, lineNo) => {
+      // sub_noでソート
+      const sortedItems = [...items].sort((a, b) => ((a as any).sub_no || 0) - ((b as any).sub_no || 0));
+      const firstItem = sortedItems[0];
+      const isSet = firstItem.task_type === 'S';
+
+      if (isSet) {
+        // セット作業: sub_noごとに明細行、金額は最初の行のみ
+        const printItems = sortedItems.map((item, idx) => {
+          // 表示ラベル: raw_label_part があればそれを、なければ target + action で構成
+          const label = (item as any).raw_label_part ||
+            [item.target, (item as any).action1 || item.action, (item as any).position1 || item.position].filter(Boolean).join(' ') ||
+            item.raw_label || '-';
+          return {
+            label,
+            isFirstOfSet: idx === 0,
+            quantity: idx === 0 ? item.quantity : 0,
+            unitPrice: idx === 0 ? item.unit_price : 0,
+            amount: idx === 0 ? item.amount : 0
+          };
+        });
+        result.push({
+          lineNo,
+          isSet: true,
+          setName: (firstItem as any).set_name || undefined,
+          items: printItems,
+          totalAmount: firstItem.amount
+        });
+      } else {
+        // 個別作業: 1行で表示
+        const label = [firstItem.target, (firstItem as any).action1 || firstItem.action, (firstItem as any).position1 || firstItem.position].filter(Boolean).join(' ') ||
+          firstItem.raw_label || '-';
+        result.push({
+          lineNo,
+          isSet: false,
+          items: [{
+            label,
+            isFirstOfSet: false,
+            quantity: firstItem.quantity,
+            unitPrice: firstItem.unit_price,
+            amount: firstItem.amount
+          }],
+          totalAmount: firstItem.amount
+        });
+      }
+    });
+
+    // line_no順にソート
+    return result.sort((a, b) => a.lineNo - b.lineNo);
   };
+
+  const groupedLineItems = getGroupedLineItems();
 
   // 顧客情報の取得
   const getCustomerInfo = () => {
@@ -621,11 +689,11 @@ export default function InvoicePrintPage() {
         @media print {
           body { margin: 0; padding: 0; font-family: 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', sans-serif; }
           .no-print { display: none !important; }
-          .print-container { 
-            width: 210mm; 
-            min-height: 297mm; 
-            margin: 0 auto; 
-            padding: 15mm; 
+          .print-container {
+            width: 210mm;
+            min-height: 297mm;
+            margin: 0 auto;
+            padding: 15mm;
             box-sizing: border-box;
             font-size: 11pt;
             line-height: 1.3;
@@ -635,6 +703,26 @@ export default function InvoicePrintPage() {
           table { page-break-inside: auto; }
           tr { page-break-inside: avoid; page-break-after: auto; }
           .work-detail-table { font-size: 10pt; }
+
+          /* A4ページ分割用スタイル */
+          .a4-page {
+            width: 210mm;
+            min-height: 297mm;
+            padding: 15mm;
+            box-sizing: border-box;
+            page-break-after: always;
+            background: white;
+          }
+          .a4-page:last-child {
+            page-break-after: auto;
+          }
+          .multiline-print-container {
+            width: auto;
+            min-height: auto;
+            margin: 0;
+            padding: 0;
+            box-shadow: none;
+          }
         }
         @media screen {
           .print-container {
@@ -644,6 +732,26 @@ export default function InvoicePrintPage() {
             padding: 20mm;
             background: white;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
+          }
+
+          /* A4ページ分割用スタイル（画面表示） */
+          .a4-page {
+            width: 210mm;
+            min-height: 297mm;
+            padding: 15mm;
+            box-sizing: border-box;
+            background: white;
+            margin: 20px auto;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+            border: 1px solid #ddd;
+          }
+          .multiline-print-container {
+            max-width: none;
+            min-height: auto;
+            margin: 0;
+            padding: 20px;
+            background: #f0f0f0;
+            box-shadow: none;
           }
         }
       `}</style>
@@ -694,7 +802,7 @@ export default function InvoicePrintPage() {
         </div>
 
         {/* 請求書本体 - レイアウトパターンによって切り替え */}
-        <div className="print-container">
+        <div className={selectedLayout === 'multiline' ? 'multiline-print-container' : 'print-container'}>
           {selectedLayout === 'minimal' && <MinimalLayout />}
           {selectedLayout === 'gradient' && <GradientLayout />}
           {selectedLayout === 'geometric' && <GeometricLayout />}
@@ -2678,116 +2786,188 @@ export default function InvoicePrintPage() {
     );
   }
 
-  // 13. 多明細レイアウト - 明細行が多い場合向け・小フォント
+  // 13. 多明細レイアウト - A4ページ区切り対応
   function MultilineLayout() {
+    // 明細を全行に展開（セットの場合は複数行になる）
+    const flattenedItems: Array<{
+      lineNo: number;
+      label: string;
+      quantity: number;
+      unitPrice: number;
+      amount: number;
+      isSetHeader: boolean;
+      isSetItem: boolean;
+    }> = [];
+
+    groupedLineItems.forEach((group) => {
+      group.items.forEach((item, idx) => {
+        flattenedItems.push({
+          lineNo: group.lineNo,
+          label: item.label,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          amount: item.amount,
+          isSetHeader: group.isSet && idx === 0,
+          isSetItem: group.isSet && idx > 0
+        });
+      });
+    });
+
+    // 1ページに表示する行数（A4に収まる想定）
+    const LINES_PER_PAGE_FIRST = 25; // 1ページ目（ヘッダー情報あり）
+    const LINES_PER_PAGE_CONTINUE = 35; // 2ページ目以降
+
+    // ページ分割
+    const pages: Array<typeof flattenedItems> = [];
+    let remaining = [...flattenedItems];
+    let isFirstPage = true;
+
+    while (remaining.length > 0) {
+      const linesForThisPage = isFirstPage ? LINES_PER_PAGE_FIRST : LINES_PER_PAGE_CONTINUE;
+      pages.push(remaining.slice(0, linesForThisPage));
+      remaining = remaining.slice(linesForThisPage);
+      isFirstPage = false;
+    }
+
+    // ページが空なら1ページ追加
+    if (pages.length === 0) {
+      pages.push([]);
+    }
+
+    const totalPages = pages.length;
+
     return (
       <>
-        {/* コンパクトヘッダー */}
-        <div className="flex justify-between items-start mb-4 pb-2 border-b-2 border-gray-800">
-          <div>
-            <h1 className="text-xl font-bold">請求書</h1>
-            <div className="text-xs text-gray-600">No. {invoice?.invoice_number}</div>
-          </div>
-          <div className="text-right">
-            <div className="text-xs text-gray-600">発行日: {formatDate(invoice?.issue_date || '')}</div>
-            <div className="text-lg font-bold mt-1">¥{formatAmount(displayAmounts.total)}</div>
-          </div>
-        </div>
+        {pages.map((pageItems, pageIndex) => (
+          <div key={pageIndex} className="a4-page">
+            {/* 1ページ目のヘッダー */}
+            {pageIndex === 0 && (
+              <>
+                {/* ヘッダー */}
+                <div className="flex justify-between items-start mb-3 pb-2 border-b-2 border-gray-800">
+                  <div>
+                    <h1 className="text-xl font-bold">請求書</h1>
+                    <div className="text-xs text-gray-600">No. {invoice?.invoice_number}</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-xs text-gray-600">発行日: {formatDate(invoice?.issue_date || '')}</div>
+                    <div className="text-lg font-bold mt-1">¥{formatAmount(displayAmounts.total)}</div>
+                  </div>
+                </div>
 
-        {/* 2列情報（コンパクト） */}
-        <div className="grid grid-cols-2 gap-4 mb-4 text-xs">
-          <div className="border border-gray-300 p-2 rounded">
-            <div className="font-bold text-gray-600 mb-1">請求先</div>
-            <div className="font-medium">{customerInfo.name}</div>
-            {customerInfo.company && <div className="text-gray-600">{customerInfo.company}</div>}
-            <div className="text-gray-600 mt-1">件名: {invoice?.subject_name || invoice?.subject || '-'}</div>
-          </div>
+                {/* 2列情報 */}
+                <div className="grid grid-cols-2 gap-3 mb-3 text-xs">
+                  <div className="border border-gray-300 p-2 rounded">
+                    <div className="font-bold text-gray-600 mb-1">請求先</div>
+                    <div className="font-medium">{customerInfo.name}</div>
+                    {customerInfo.company && <div className="text-gray-600">{customerInfo.company}</div>}
+                    <div className="text-gray-600 mt-1">件名: {invoice?.subject_name || invoice?.subject || '-'}</div>
+                  </div>
 
-          <div className="border border-gray-300 p-2 rounded">
-            <div className="font-bold text-gray-600 mb-1">発行者</div>
-            <div className="font-medium">{companyInfo?.companyName}</div>
-            <div className="text-gray-600">〒{companyInfo?.postalCode}</div>
-            <div className="text-gray-600">{companyInfo?.prefecture}{companyInfo?.city}{companyInfo?.address}</div>
-            <div className="text-gray-600">Tel: {companyInfo?.phoneNumber}</div>
-            {companyInfo?.taxRegistrationNumber && (
-              <div className="text-gray-600">登録番号: {companyInfo.taxRegistrationNumber}</div>
+                  <div className="border border-gray-300 p-2 rounded">
+                    <div className="font-bold text-gray-600 mb-1">発行者</div>
+                    <div className="font-medium">{companyInfo?.companyName}</div>
+                    <div className="text-gray-600">〒{companyInfo?.postalCode}</div>
+                    <div className="text-gray-600">{companyInfo?.prefecture}{companyInfo?.city}{companyInfo?.address}</div>
+                    <div className="text-gray-600">Tel: {companyInfo?.phoneNumber}</div>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* 2ページ目以降のミニヘッダー */}
+            {pageIndex > 0 && (
+              <div className="flex justify-between items-center mb-2 pb-1 border-b border-gray-400 text-xs text-gray-600">
+                <div>請求書 No. {invoice?.invoice_number}（続き）</div>
+                <div>ページ {pageIndex + 1} / {totalPages}</div>
+              </div>
+            )}
+
+            {/* 明細テーブル */}
+            <table className="w-full text-xs mb-3">
+              <thead>
+                <tr className="bg-gray-100">
+                  <th className="px-1 py-1 text-left border border-gray-300 w-8">No</th>
+                  <th className="px-1 py-1 text-left border border-gray-300">作業内容</th>
+                  <th className="px-1 py-1 text-center border border-gray-300 w-10">数量</th>
+                  <th className="px-1 py-1 text-right border border-gray-300 w-16">単価</th>
+                  <th className="px-1 py-1 text-right border border-gray-300 w-18">金額</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pageItems.map((item, idx) => (
+                  <tr key={idx}>
+                    <td className="px-1 py-0.5 border border-gray-300 text-center text-gray-500">
+                      {!item.isSetItem ? item.lineNo : ''}
+                    </td>
+                    <td className="px-1 py-0.5 border border-gray-300">
+                      <div className={item.isSetItem ? 'pl-3' : ''}>
+                        {item.label}
+                      </div>
+                    </td>
+                    <td className="px-1 py-0.5 border border-gray-300 text-center">
+                      {item.quantity > 0 ? item.quantity : ''}
+                    </td>
+                    <td className="px-1 py-0.5 border border-gray-300 text-right">
+                      {item.unitPrice > 0 ? `¥${formatAmount(item.unitPrice)}` : ''}
+                    </td>
+                    <td className="px-1 py-0.5 border border-gray-300 text-right font-medium">
+                      {item.amount > 0 ? `¥${formatAmount(item.amount)}` : ''}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            {/* 最終ページのみ合計・振込先表示 */}
+            {pageIndex === totalPages - 1 && (
+              <>
+                <div className="grid grid-cols-2 gap-3 text-xs mt-auto">
+                  {/* 振込先 */}
+                  {companyInfo?.bankName && (
+                    <div className="border border-gray-300 p-2 rounded">
+                      <div className="font-bold text-gray-600 mb-1">お振込先</div>
+                      <div>{companyInfo.bankName} {companyInfo.bankBranch}</div>
+                      <div>{companyInfo.accountType} {companyInfo.accountNumber}</div>
+                      <div>名義: {companyInfo.accountHolder}</div>
+                    </div>
+                  )}
+
+                  {/* 金額集計 */}
+                  <div className="border border-gray-300 p-2 rounded">
+                    <div className="flex justify-between mb-1">
+                      <span>小計</span>
+                      <span>¥{formatAmount(displayAmounts.subtotal)}</span>
+                    </div>
+                    <div className="flex justify-between mb-1">
+                      <span>消費税 (10%)</span>
+                      <span>¥{formatAmount(displayAmounts.tax)}</span>
+                    </div>
+                    <div className="flex justify-between font-bold border-t border-gray-300 pt-1">
+                      <span>合計</span>
+                      <span>¥{formatAmount(displayAmounts.total)}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 備考 */}
+                {invoice?.remarks && (
+                  <div className="mt-2 text-xs">
+                    <div className="font-bold text-gray-600">備考:</div>
+                    <div className="text-gray-600">{invoice.remarks}</div>
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* ページ番号（1ページ目） */}
+            {pageIndex === 0 && totalPages > 1 && (
+              <div className="text-right text-xs text-gray-500 mt-auto pt-2">
+                ページ {pageIndex + 1} / {totalPages}
+              </div>
             )}
           </div>
-        </div>
-
-        {/* 明細テーブル（小フォント・行間詰め） */}
-        <div className="mb-4">
-          <table className="w-full text-xs">
-            <thead>
-              <tr className="bg-gray-100">
-                <th className="px-1 py-1 text-left border border-gray-300 w-8">No</th>
-                <th className="px-1 py-1 text-left border border-gray-300">作業内容</th>
-                <th className="px-1 py-1 text-center border border-gray-300 w-10">数量</th>
-                <th className="px-1 py-1 text-right border border-gray-300 w-16">単価</th>
-                <th className="px-1 py-1 text-right border border-gray-300 w-18">金額</th>
-              </tr>
-            </thead>
-            <tbody>
-              {invoice?.line_items?.map((item, index) => {
-                const itemName = [item.target, item.action, item.position].filter(Boolean).join(' ');
-                const prefix = item.task_type === 'S' ? '[S] ' : '';
-                return (
-                  <tr key={index} className="hover:bg-gray-50">
-                    <td className="px-1 py-0.5 border border-gray-300 text-center text-gray-500">{index + 1}</td>
-                    <td className="px-1 py-0.5 border border-gray-300">
-                      <div className="truncate" title={prefix + itemName}>{prefix}{itemName}</div>
-                      {item.task_type === 'S' && item.raw_label && (
-                        <div className="text-[10px] text-blue-600 truncate" title={item.raw_label}>
-                          ({item.raw_label})
-                        </div>
-                      )}
-                    </td>
-                    <td className="px-1 py-0.5 border border-gray-300 text-center">{item.quantity}</td>
-                    <td className="px-1 py-0.5 border border-gray-300 text-right">¥{formatAmount(item.unit_price)}</td>
-                    <td className="px-1 py-0.5 border border-gray-300 text-right font-medium">¥{formatAmount(item.amount)}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-
-        {/* 合計・振込先（横並び） */}
-        <div className="grid grid-cols-2 gap-4 text-xs">
-          {/* 振込先 */}
-          {companyInfo?.bankName && (
-            <div className="border border-gray-300 p-2 rounded">
-              <div className="font-bold text-gray-600 mb-1">お振込先</div>
-              <div>{companyInfo.bankName} {companyInfo.bankBranch}</div>
-              <div>{companyInfo.accountType} {companyInfo.accountNumber}</div>
-              <div>名義: {companyInfo.accountHolder}</div>
-            </div>
-          )}
-
-          {/* 金額集計 */}
-          <div className="border border-gray-300 p-2 rounded">
-            <div className="flex justify-between mb-1">
-              <span>小計</span>
-              <span>¥{formatAmount(displayAmounts.subtotal)}</span>
-            </div>
-            <div className="flex justify-between mb-1">
-              <span>消費税 (10%)</span>
-              <span>¥{formatAmount(displayAmounts.tax)}</span>
-            </div>
-            <div className="flex justify-between font-bold border-t border-gray-300 pt-1">
-              <span>合計</span>
-              <span>¥{formatAmount(displayAmounts.total)}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* 備考 */}
-        {invoice?.remarks && (
-          <div className="mt-3 text-xs">
-            <div className="font-bold text-gray-600">備考:</div>
-            <div className="text-gray-600">{invoice.remarks}</div>
-          </div>
-        )}
+        ))}
       </>
     );
   }
