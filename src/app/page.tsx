@@ -116,7 +116,7 @@ export default function HomePage() {
       category: 'settings'
     },
     {
-      title: 'マスター確認',
+      title: 'マスター確認（削除予定）',
       description: 'マスターデータの登録状況と統計情報の確認',
       icon: Database,
       path: '/master-confirmation',
