@@ -918,12 +918,10 @@ export default function InvoicePrintPage() {
         )}
 
         {/* 備考 */}
-        {invoice?.remarks && (
-          <div className="border border-gray-300 p-2">
-            <div className="text-[10px] font-bold mb-1">備考</div>
-            <div className="text-[10px] text-gray-600">{invoice.remarks}</div>
-          </div>
-        )}
+        <div className="border border-gray-300 p-2">
+          <div className="text-[10px] font-bold mb-1">備考</div>
+          <div className="text-[10px] text-gray-600 min-h-[20px]">{invoice?.remarks || ''}</div>
+        </div>
       </div>
     );
   }
@@ -998,12 +996,10 @@ export default function InvoicePrintPage() {
         )}
 
         {/* 備考 */}
-        {invoice?.remarks && (
-          <div className="border border-gray-300 p-2 mb-2">
-            <div className="text-[10px] font-bold mb-1">備考</div>
-            <div className="text-[10px] text-gray-600">{invoice.remarks}</div>
-          </div>
-        )}
+        <div className="border border-gray-300 p-2 mb-2">
+          <div className="text-[10px] font-bold mb-1">備考</div>
+          <div className="text-[10px] text-gray-600 min-h-[20px]">{invoice?.remarks || ''}</div>
+        </div>
 
         {/* フッター */}
         <div className="text-center text-[10px] text-gray-500 border-t border-gray-300 pt-2">
@@ -1079,12 +1075,10 @@ export default function InvoicePrintPage() {
         )}
 
         {/* 備考 */}
-        {invoice?.remarks && (
-          <div className="border border-gray-300 p-2 rounded">
-            <div className="text-[10px] font-bold mb-1">備考</div>
-            <div className="text-[10px] text-gray-600">{invoice.remarks}</div>
-          </div>
-        )}
+        <div className="border border-gray-300 p-2 rounded">
+          <div className="text-[10px] font-bold mb-1">備考</div>
+          <div className="text-[10px] text-gray-600 min-h-[20px]">{invoice?.remarks || ''}</div>
+        </div>
       </div>
     );
   }
@@ -1212,12 +1206,10 @@ export default function InvoicePrintPage() {
         </div>
 
         {/* 備考 */}
-        {invoice?.remarks && (
-          <div className="border border-gray-300 p-2">
-            <div className="text-[10px] font-bold mb-1">備考</div>
-            <div className="text-[10px] text-gray-600">{invoice.remarks}</div>
-          </div>
-        )}
+        <div className="border border-gray-300 p-2">
+          <div className="text-[10px] font-bold mb-1">備考</div>
+          <div className="text-[10px] text-gray-600 min-h-[20px]">{invoice?.remarks || ''}</div>
+        </div>
       </div>
     );
   }
@@ -1292,12 +1284,10 @@ export default function InvoicePrintPage() {
         )}
 
         {/* 備考 */}
-        {invoice?.remarks && (
-          <div className="border border-gray-300 p-2 rounded">
-            <div className="text-[10px] font-bold mb-1">備考</div>
-            <div className="text-[10px] text-gray-600">{invoice.remarks}</div>
-          </div>
-        )}
+        <div className="border border-gray-300 p-2 rounded">
+          <div className="text-[10px] font-bold mb-1">備考</div>
+          <div className="text-[10px] text-gray-600 min-h-[20px]">{invoice?.remarks || ''}</div>
+        </div>
       </div>
     );
   }
@@ -1372,12 +1362,10 @@ export default function InvoicePrintPage() {
         )}
 
         {/* 備考 */}
-        {invoice?.remarks && (
-          <div className="border border-gray-300 p-2">
-            <div className="text-[10px] font-bold mb-1">備考</div>
-            <div className="text-[10px] text-gray-600">{invoice.remarks}</div>
-          </div>
-        )}
+        <div className="border border-gray-300 p-2">
+          <div className="text-[10px] font-bold mb-1">備考</div>
+          <div className="text-[10px] text-gray-600 min-h-[20px]">{invoice?.remarks || ''}</div>
+        </div>
       </div>
     );
   }
@@ -1453,12 +1441,10 @@ export default function InvoicePrintPage() {
         )}
 
         {/* 備考 */}
-        {invoice?.remarks && (
-          <div className="border border-gray-300 p-2 rounded">
-            <div className="text-[10px] font-bold mb-1">備考</div>
-            <div className="text-[10px] text-gray-600">{invoice.remarks}</div>
-          </div>
-        )}
+        <div className="border border-gray-300 p-2 rounded">
+          <div className="text-[10px] font-bold mb-1">備考</div>
+          <div className="text-[10px] text-gray-600 min-h-[20px]">{invoice?.remarks || ''}</div>
+        </div>
       </div>
     );
   }
@@ -1522,12 +1508,10 @@ export default function InvoicePrintPage() {
         )}
 
         {/* 備考 */}
-        {invoice?.remarks && (
-          <div className="border border-gray-300 p-2">
-            <div className="text-[10px] font-bold mb-1">備考</div>
-            <div className="text-[10px] text-gray-600">{invoice.remarks}</div>
-          </div>
-        )}
+        <div className="border border-gray-300 p-2">
+          <div className="text-[10px] font-bold mb-1">備考</div>
+          <div className="text-[10px] text-gray-600 min-h-[20px]">{invoice?.remarks || ''}</div>
+        </div>
       </div>
     );
   }
@@ -1595,12 +1579,10 @@ export default function InvoicePrintPage() {
         )}
 
         {/* 備考 */}
-        {invoice?.remarks && (
-          <div className="border border-gray-300 p-2">
-            <div className="text-[10px] font-bold mb-1">備考</div>
-            <div className="text-[10px] text-gray-600">{invoice.remarks}</div>
-          </div>
-        )}
+        <div className="border border-gray-300 p-2">
+          <div className="text-[10px] font-bold mb-1">備考</div>
+          <div className="text-[10px] text-gray-600 min-h-[20px]">{invoice?.remarks || ''}</div>
+        </div>
       </div>
     );
   }
@@ -1671,12 +1653,10 @@ export default function InvoicePrintPage() {
         )}
 
         {/* 備考 */}
-        {invoice?.remarks && (
-          <div className="border border-gray-600 p-2">
-            <div className="text-[10px] font-bold mb-1">備考</div>
-            <div className="text-[10px] text-gray-600">{invoice.remarks}</div>
-          </div>
-        )}
+        <div className="border border-gray-600 p-2">
+          <div className="text-[10px] font-bold mb-1">備考</div>
+          <div className="text-[10px] text-gray-600 min-h-[20px]">{invoice?.remarks || ''}</div>
+        </div>
       </div>
     );
   }
@@ -1747,12 +1727,10 @@ export default function InvoicePrintPage() {
         )}
 
         {/* 備考 */}
-        {invoice?.remarks && (
-          <div className="border-t border-gray-200 pt-2">
-            <div className="text-[10px] font-bold mb-1">備考</div>
-            <div className="text-[10px] text-gray-600">{invoice.remarks}</div>
-          </div>
-        )}
+        <div className="border-t border-gray-200 pt-2">
+          <div className="text-[10px] font-bold mb-1">備考</div>
+          <div className="text-[10px] text-gray-600 min-h-[20px]">{invoice?.remarks || ''}</div>
+        </div>
       </div>
     );
   }
