@@ -150,7 +150,7 @@ export default function InvoiceViewPage({ params }: PageProps) {
       draft: { label: '下書き', className: 'bg-gray-100 text-gray-800' },
       finalized: { label: '確定', className: 'bg-blue-100 text-blue-800' },
       sent: { label: '送信済み', className: 'bg-green-100 text-green-800' },
-      paid: { label: '支払済み', className: 'bg-purple-100 text-purple-800' }
+      paid: { label: '入金済み', className: 'bg-purple-100 text-purple-800' }
     };
     const config = statusMap[status as keyof typeof statusMap] || { label: status, className: 'bg-gray-100 text-gray-800' };
     return (

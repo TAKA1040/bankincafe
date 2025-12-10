@@ -365,15 +365,15 @@ export function useSalesData() {
         draft: '下書き',
         finalized: '確定',
         sent: '送信済み',
-        paid: '支払済み'
+        paid: '入金済み'
       }
       return statusMap[status as keyof typeof statusMap] || status
     }
 
     const getPaymentStatusLabel = (status: string): string => {
       const statusMap = {
-        unpaid: '未払い',
-        paid: '支払済み',
+        unpaid: '未入金',
+        paid: '入金済み',
         partial: '一部入金'
       }
       return statusMap[status as keyof typeof statusMap] || status

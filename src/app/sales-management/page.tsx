@@ -505,11 +505,11 @@ export default function SalesManagementPage() {
             <h2 className="text-lg font-semibold mb-4">詳細情報</h2>
             <div className="space-y-4">
               <div className="flex justify-between items-center p-3 bg-blue-50 rounded">
-                <span className="text-sm font-medium text-gray-700">支払済み金額</span>
+                <span className="text-sm font-medium text-gray-700">入金済み金額</span>
                 <span className="text-lg font-bold text-blue-600">¥{statistics.paidAmount.toLocaleString()}</span>
               </div>
               <div className="flex justify-between items-center p-3 bg-orange-50 rounded">
-                <span className="text-sm font-medium text-gray-700">未払い金額</span>
+                <span className="text-sm font-medium text-gray-700">未入金金額</span>
                 <span className="text-lg font-bold text-orange-600">¥{statistics.unpaidAmount.toLocaleString()}</span>
               </div>
               <div className="flex justify-between items-center p-3 bg-green-50 rounded">
