@@ -128,48 +128,69 @@ export type Database = {
       }
       invoice_line_items: {
         Row: {
-          action: string | null
+          action1: string | null
+          action2: string | null
+          action3: string | null
           amount: number | null
           created_at: string | null
           id: number
           invoice_id: string
           line_no: number
           performed_at: string | null
-          position: string | null
+          position1: string | null
+          position2: string | null
+          position3: string | null
+          position4: string | null
+          position5: string | null
           quantity: number | null
           raw_label: string | null
+          sub_no: number
           target: string | null
           task_type: string
           unit_price: number | null
           updated_at: string | null
         }
         Insert: {
-          action?: string | null
+          action1?: string | null
+          action2?: string | null
+          action3?: string | null
           amount?: number | null
           created_at?: string | null
           id?: number
           invoice_id: string
           line_no: number
           performed_at?: string | null
-          position?: string | null
+          position1?: string | null
+          position2?: string | null
+          position3?: string | null
+          position4?: string | null
+          position5?: string | null
           quantity?: number | null
           raw_label?: string | null
+          sub_no?: number
           target?: string | null
           task_type: string
           unit_price?: number | null
           updated_at?: string | null
         }
         Update: {
-          action?: string | null
+          action1?: string | null
+          action2?: string | null
+          action3?: string | null
           amount?: number | null
           created_at?: string | null
           id?: number
           invoice_id?: string
           line_no?: number
           performed_at?: string | null
-          position?: string | null
+          position1?: string | null
+          position2?: string | null
+          position3?: string | null
+          position4?: string | null
+          position5?: string | null
           quantity?: number | null
           raw_label?: string | null
+          sub_no?: number
           target?: string | null
           task_type?: string
           unit_price?: number | null

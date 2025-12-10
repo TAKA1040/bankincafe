@@ -944,11 +944,13 @@ function InvoiceCreateContent() {
           if (lineItems && lineItems.length > 0) {
             const items: WorkItem[] = lineItems.map((item, index) => {
               const isSetWork = item.task_type === 'S' || item.task_type === 'set'
+              const action1 = item.action1 || ''
+              const position1 = item.position1 || ''
               return {
                 id: index + 1,
                 type: isSetWork ? 'set' : 'individual',
-                work_name: isSetWork ? item.target || item.raw_label || '' : `${item.target || ''}${item.action || ''}${item.position ? ` (${item.position})` : ''}`,
-                position: item.position || '',
+                work_name: isSetWork ? item.target || item.raw_label || '' : `${item.target || ''}${action1}${position1 ? ` (${position1})` : ''}`,
+                position: position1,
                 unit_price: Number(item.unit_price || 0),
                 quantity: Number(item.quantity || 1),
                 amount: Number(item.amount || 0),

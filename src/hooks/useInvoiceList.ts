@@ -143,8 +143,8 @@ export function useInvoiceList(yearFilter?: string | string[]) {
             line_no,
             task_type,
             target,
-            action,
-            position,
+            action1,
+            position1,
             quantity,
             unit_price,
             amount,
@@ -236,8 +236,8 @@ export function useInvoiceList(yearFilter?: string | string[]) {
             line_no: item.line_no,
             task_type: item.task_type,
             target: item.target,
-            action: item.action,
-            position: item.position,
+            action: item.action1,
+            position: item.position1,
             quantity: item.quantity,
             unit_price: item.unit_price,
             amount: item.amount,
@@ -245,8 +245,8 @@ export function useInvoiceList(yearFilter?: string | string[]) {
             performed_at: item.performed_at
           })),
           total_quantity: lineItems.reduce((sum: number, item: any) => sum + (item.quantity || 0), 0),
-          work_names: lineItems.map((item: any) => 
-            item.raw_label || [item.target, item.action, item.position].filter(Boolean).join(' ')
+          work_names: lineItems.map((item: any) =>
+            item.raw_label || [item.target, item.action1, item.position1].filter(Boolean).join(' ')
           ).join(', '),
           status: (invoice.status as 'draft' | 'finalized' | 'sent' | 'paid') || 'draft',
           payment_status: (invoice.payment_status as 'unpaid' | 'paid' | 'partial') || 'unpaid',
