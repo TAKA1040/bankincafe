@@ -410,6 +410,7 @@ export default function InvoiceViewPage({ params }: PageProps) {
                 // S作業をグループ化
                 const processedLineNos = new Set<number>();
                 const rows: JSX.Element[] = [];
+                let displayLineNo = 0; // 連続番号用カウンタ
 
                 invoice.line_items.forEach((item, index) => {
                   const isSetWork = item.task_type === 'S' || item.task_type === 'set';
@@ -420,6 +421,7 @@ export default function InvoiceViewPage({ params }: PageProps) {
                       return; // 既に処理済み
                     }
                     processedLineNos.add(item.line_no);
+                    displayLineNo++; // 連続番号をインクリメント
 
                     // 同じline_noのS作業をすべて取得（内訳用）
                     const sameLineItems = invoice.line_items.filter(
@@ -432,7 +434,7 @@ export default function InvoiceViewPage({ params }: PageProps) {
                     rows.push(
                       <tr key={item.id} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {item.line_no}
+                          {displayLineNo}
                         </td>
                         <td className="px-6 py-4">
                           <div className="text-sm text-gray-900 font-medium">
@@ -464,13 +466,13 @@ export default function InvoiceViewPage({ params }: PageProps) {
                       </tr>
                     );
                   } else {
-                    // T作業（個別）：行番号をline_no-sub_noで表示
-                    const lineNoDisplay = item.sub_no ? `${item.line_no}-${item.sub_no}` : item.line_no;
+                    // T作業（個別）
+                    displayLineNo++; // 連続番号をインクリメント
 
                     rows.push(
                       <tr key={item.id} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {lineNoDisplay}
+                          {displayLineNo}
                         </td>
                         <td className="px-6 py-4">
                           <div className="text-sm text-gray-900">
