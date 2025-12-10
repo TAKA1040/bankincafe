@@ -32,6 +32,9 @@ export default function MasterConfirmationPage() {
   const [activeTab, setActiveTab] = useState<string>('overview')
   const [invoicesData, setInvoicesData] = useState<any[]>([])
   const [lineItemsData, setLineItemsData] = useState<any[]>([])
+  const [targetsData, setTargetsData] = useState<any[]>([])
+  const [actionsData, setActionsData] = useState<any[]>([])
+  const [positionsData, setPositionsData] = useState<any[]>([])
   const [dataLoading, setDataLoading] = useState(false)
 
   useEffect(() => {
@@ -176,13 +179,43 @@ export default function MasterConfirmationPage() {
 
   const handleTabChange = async (tabName: string) => {
     setActiveTab(tabName)
-    
+
     if (tabName === 'invoices' && invoicesData.length === 0) {
       const data = await fetchTableData('invoices')
       setInvoicesData(data)
     } else if (tabName === 'invoice_line_items' && lineItemsData.length === 0) {
       const data = await fetchTableData('invoice_line_items')
       setLineItemsData(data)
+    } else if (tabName === 'targets' && targetsData.length === 0) {
+      setDataLoading(true)
+      const supabase = createClient()
+      const { data } = await supabase
+        .from('targets')
+        .select('*')
+        .eq('is_active', true)
+        .order('sort_order')
+      setTargetsData(data || [])
+      setDataLoading(false)
+    } else if (tabName === 'actions' && actionsData.length === 0) {
+      setDataLoading(true)
+      const supabase = createClient()
+      const { data } = await supabase
+        .from('actions')
+        .select('*')
+        .eq('is_active', true)
+        .order('sort_order')
+      setActionsData(data || [])
+      setDataLoading(false)
+    } else if (tabName === 'positions' && positionsData.length === 0) {
+      setDataLoading(true)
+      const supabase = createClient()
+      const { data } = await supabase
+        .from('positions')
+        .select('*')
+        .eq('is_active', true)
+        .order('sort_order')
+      setPositionsData(data || [])
+      setDataLoading(false)
     }
   }
 
@@ -532,11 +565,37 @@ export default function MasterConfirmationPage() {
               <div>
                 <div className="flex items-center gap-3 mb-6">
                   <Target className="w-6 h-6 text-blue-600" />
-                  <h2 className="text-xl font-semibold text-gray-800">対象マスタ詳細</h2>
+                  <h2 className="text-xl font-semibold text-gray-800">対象マスタ一覧（{targetsData.length}件）</h2>
                 </div>
-                <div className="text-center py-8 text-gray-500">
-                  対象マスタの詳細情報をここに表示します
-                </div>
+                {dataLoading ? (
+                  <div className="text-center py-8 text-gray-500">データを読み込み中...</div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-gray-200 bg-gray-50">
+                          <th className="text-left py-3 px-3 font-medium text-gray-600">ID</th>
+                          <th className="text-left py-3 px-3 font-medium text-gray-600">名前</th>
+                          <th className="text-left py-3 px-3 font-medium text-gray-600">読み仮名</th>
+                          <th className="text-center py-3 px-3 font-medium text-gray-600">順序</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {targetsData.map((item) => (
+                          <tr key={item.id} className="border-b border-gray-100 hover:bg-gray-50">
+                            <td className="py-3 px-3 font-mono text-xs">{item.id}</td>
+                            <td className="py-3 px-3 font-medium">{item.name}</td>
+                            <td className="py-3 px-3 text-gray-600">{item.reading || '-'}</td>
+                            <td className="py-3 px-3 text-center">{item.sort_order}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    {targetsData.length === 0 && (
+                      <div className="text-center py-8 text-gray-500">データがありません</div>
+                    )}
+                  </div>
+                )}
               </div>
             )}
 
@@ -544,11 +603,35 @@ export default function MasterConfirmationPage() {
               <div>
                 <div className="flex items-center gap-3 mb-6">
                   <Briefcase className="w-6 h-6 text-blue-600" />
-                  <h2 className="text-xl font-semibold text-gray-800">作業マスタ詳細</h2>
+                  <h2 className="text-xl font-semibold text-gray-800">作業マスタ一覧（{actionsData.length}件）</h2>
                 </div>
-                <div className="text-center py-8 text-gray-500">
-                  作業マスタの詳細情報をここに表示します
-                </div>
+                {dataLoading ? (
+                  <div className="text-center py-8 text-gray-500">データを読み込み中...</div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-gray-200 bg-gray-50">
+                          <th className="text-left py-3 px-3 font-medium text-gray-600">ID</th>
+                          <th className="text-left py-3 px-3 font-medium text-gray-600">名前</th>
+                          <th className="text-center py-3 px-3 font-medium text-gray-600">順序</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {actionsData.map((item) => (
+                          <tr key={item.id} className="border-b border-gray-100 hover:bg-gray-50">
+                            <td className="py-3 px-3 font-mono text-xs">{item.id}</td>
+                            <td className="py-3 px-3 font-medium">{item.name}</td>
+                            <td className="py-3 px-3 text-center">{item.sort_order}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    {actionsData.length === 0 && (
+                      <div className="text-center py-8 text-gray-500">データがありません</div>
+                    )}
+                  </div>
+                )}
               </div>
             )}
 
@@ -556,11 +639,35 @@ export default function MasterConfirmationPage() {
               <div>
                 <div className="flex items-center gap-3 mb-6">
                   <Settings className="w-6 h-6 text-blue-600" />
-                  <h2 className="text-xl font-semibold text-gray-800">部位マスタ詳細</h2>
+                  <h2 className="text-xl font-semibold text-gray-800">部位マスタ一覧（{positionsData.length}件）</h2>
                 </div>
-                <div className="text-center py-8 text-gray-500">
-                  部位マスタの詳細情報をここに表示します
-                </div>
+                {dataLoading ? (
+                  <div className="text-center py-8 text-gray-500">データを読み込み中...</div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-gray-200 bg-gray-50">
+                          <th className="text-left py-3 px-3 font-medium text-gray-600">ID</th>
+                          <th className="text-left py-3 px-3 font-medium text-gray-600">名前</th>
+                          <th className="text-center py-3 px-3 font-medium text-gray-600">順序</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {positionsData.map((item) => (
+                          <tr key={item.id} className="border-b border-gray-100 hover:bg-gray-50">
+                            <td className="py-3 px-3 font-mono text-xs">{item.id}</td>
+                            <td className="py-3 px-3 font-medium">{item.name}</td>
+                            <td className="py-3 px-3 text-center">{item.sort_order}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    {positionsData.length === 0 && (
+                      <div className="text-center py-8 text-gray-500">データがありません</div>
+                    )}
+                  </div>
+                )}
               </div>
             )}
           </div>
