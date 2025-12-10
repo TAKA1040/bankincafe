@@ -429,7 +429,7 @@ export default function MasterConfirmationPage() {
                             <td className="py-3 px-2">{invoice.customer_name}</td>
                             <td className="py-3 px-2">{invoice.subject_name}</td>
                             <td className="py-3 px-2 font-mono text-xs">{invoice.registration_number}</td>
-                            <td className="py-3 px-2 text-right font-semibold">¥{invoice.total_amount?.toLocaleString()}</td>
+                            <td className="py-3 px-2 text-right font-semibold">¥{(invoice.total || invoice.total_amount || 0)?.toLocaleString()}</td>
                             <td className="py-3 px-2">{invoice.issue_date}</td>
                             <td className="py-3 px-2">
                               <span className={`px-2 py-1 rounded text-xs ${
