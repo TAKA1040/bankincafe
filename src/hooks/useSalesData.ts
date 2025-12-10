@@ -176,13 +176,42 @@ export function useSalesData() {
           total_paid: totalPaid,
           remaining_amount: totalAmount - totalPaid,
           last_payment_date: lastPaymentDate,
-          payment_history: payments.sort((a, b) => 
+          payment_history: payments.sort((a, b) =>
             new Date(b.payment_date).getTime() - new Date(a.payment_date).getTime()
           )
         }
       })
 
-      setInvoices(salesInvoices)
+      // 枝番フィルタリング: 同じ基本番号の請求書は最大枝番のみを表示
+      // 請求書番号形式: YYMM連番-枝番 (例: 25053398-1, 25053398-2)
+      const getBaseNumber = (invoiceId: string): string => {
+        const match = invoiceId.match(/^(.+)-\d+$/)
+        return match ? match[1] : invoiceId
+      }
+      const getBranchNumber = (invoiceId: string): number => {
+        const match = invoiceId.match(/-(\d+)$/)
+        return match ? parseInt(match[1], 10) : 1
+      }
+
+      // 基本番号ごとに最大枝番を特定
+      const maxBranchMap = new Map<string, number>()
+      salesInvoices.forEach(invoice => {
+        const baseNum = getBaseNumber(invoice.invoice_id)
+        const branchNum = getBranchNumber(invoice.invoice_id)
+        const currentMax = maxBranchMap.get(baseNum) || 0
+        if (branchNum > currentMax) {
+          maxBranchMap.set(baseNum, branchNum)
+        }
+      })
+
+      // 最大枝番のみをフィルタリング
+      const filteredInvoices = salesInvoices.filter(invoice => {
+        const baseNum = getBaseNumber(invoice.invoice_id)
+        const branchNum = getBranchNumber(invoice.invoice_id)
+        return branchNum === maxBranchMap.get(baseNum)
+      })
+
+      setInvoices(filteredInvoices)
     } catch (err) {
       console.error('Failed to fetch sales data:', err)
       setError(err instanceof Error ? err.message : '売上データの取得に失敗しました')

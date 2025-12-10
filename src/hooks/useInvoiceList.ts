@@ -223,9 +223,9 @@ export function useInvoiceList(yearFilter?: string | string[]) {
       }
 
       // 請求書データを構築
-      const invoicesWithItems: InvoiceWithItems[] = (joinedData || []).map((invoice: any) => {
+      const allInvoices: InvoiceWithItems[] = (joinedData || []).map((invoice: any) => {
         const lineItems = invoice.invoice_line_items || []
-        
+
         return {
           ...invoice,
           invoice_number: invoice.invoice_number || invoice.invoice_id,
@@ -254,6 +254,35 @@ export function useInvoiceList(yearFilter?: string | string[]) {
           tax: invoice.tax || 0,
           total: invoice.total_amount || invoice.total || 0
         }
+      })
+
+      // 枝番フィルタリング: 同じ基本番号の請求書は最大枝番のみを表示
+      // 請求書番号形式: YYMM連番-枝番 (例: 25053398-1, 25053398-2)
+      const getBaseNumber = (invoiceId: string): string => {
+        const match = invoiceId.match(/^(.+)-\d+$/)
+        return match ? match[1] : invoiceId
+      }
+      const getBranchNumber = (invoiceId: string): number => {
+        const match = invoiceId.match(/-(\d+)$/)
+        return match ? parseInt(match[1], 10) : 1
+      }
+
+      // 基本番号ごとに最大枝番を特定
+      const maxBranchMap = new Map<string, number>()
+      allInvoices.forEach(invoice => {
+        const baseNum = getBaseNumber(invoice.invoice_id)
+        const branchNum = getBranchNumber(invoice.invoice_id)
+        const currentMax = maxBranchMap.get(baseNum) || 0
+        if (branchNum > currentMax) {
+          maxBranchMap.set(baseNum, branchNum)
+        }
+      })
+
+      // 最大枝番のみをフィルタリング
+      const invoicesWithItems = allInvoices.filter(invoice => {
+        const baseNum = getBaseNumber(invoice.invoice_id)
+        const branchNum = getBranchNumber(invoice.invoice_id)
+        return branchNum === maxBranchMap.get(baseNum)
       })
 
       setInvoices(invoicesWithItems)
