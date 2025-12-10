@@ -946,6 +946,13 @@ function InvoiceCreateContent() {
               const isSetWork = item.task_type === 'S' || item.task_type === 'set'
               const action1 = item.action1 || ''
               const position1 = item.position1 || ''
+              // raw_label_partがある場合は「旧システム明細内容」としてメモに表示
+              let memoText = ''
+              if (item.raw_label_part) {
+                memoText = `旧システム明細内容\n${item.raw_label_part}`
+              } else if (item.raw_label) {
+                memoText = item.raw_label
+              }
               return {
                 id: index + 1,
                 type: isSetWork ? 'set' : 'individual',
@@ -954,7 +961,7 @@ function InvoiceCreateContent() {
                 unit_price: Number(item.unit_price || 0),
                 quantity: Number(item.quantity || 1),
                 amount: Number(item.amount || 0),
-                memo: item.raw_label || '',
+                memo: memoText,
                 set_details: isSetWork && item.raw_label ? item.raw_label.split(/[,、，]/).map(s => s.trim()).filter(s => s.length > 0) : [],
                 detail_positions: []
               }
