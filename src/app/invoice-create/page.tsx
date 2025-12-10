@@ -1007,10 +1007,11 @@ function InvoiceCreateContent() {
           if (invoiceError) throw invoiceError
           if (!invoiceData) throw new Error('請求書が見つかりません')
 
-          // 修正モードでない場合、下書きのみ編集可能
-          if (!isRevisionMode && invoiceData.status !== 'draft') {
-            alert('下書きの請求書のみ編集できます。確定済みの請求書は修正伝票を作成してください。')
-            router.push('/invoice-list')
+          // 月〆後かつ修正モードでない場合はリダイレクト
+          // 月〆前であれば、ステータスに関係なく編集可能（枝番+1で新規作成）
+          if (!isRevisionMode && (invoiceData as any).closed_at) {
+            alert('この請求書は月〆処理済みです。修正を行う場合は、請求書詳細画面から「修正」ボタンを押してください。')
+            router.push(`/invoice-view/${editInvoiceId}`)
             return
           }
 
@@ -1602,25 +1603,25 @@ function InvoiceCreateContent() {
       let finalInvoiceId = invoiceNumber
 
       // 月〆前の編集で枝番を+1する場合
-      if (isEditMode && !isRevisionMode) {
+      if (isEditMode && !isRevisionMode && editInvoiceId) {
         // 元の請求書のclosed_atを確認
         const { data: existingInvoice } = await supabase
           .from('invoices')
           .select('*')
-          .eq('invoice_id', invoiceNumber)
+          .eq('invoice_id', editInvoiceId)
           .single()
 
         // 月〆前なら枝番+1で新規作成、元は「revised」に
         const closedAt = (existingInvoice as any)?.closed_at
-        if (!closedAt) {
-          const newInvoiceId = await getNextRevision(invoiceNumber)
+        if (!closedAt && existingInvoice) {
+          const newInvoiceId = await getNextRevision(editInvoiceId)
           finalInvoiceId = newInvoiceId
 
           // 元の請求書を「revised」に
           await supabase
             .from('invoices')
             .update({ status: 'revised' })
-            .eq('invoice_id', invoiceNumber)
+            .eq('invoice_id', editInvoiceId)
         }
       }
 
