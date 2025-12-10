@@ -74,16 +74,18 @@ export function useSalesData() {
       setLoading(true)
       setError(null)
 
-      // 新スキーマ対応クエリ（通常請求書のみ、入金履歴を含む）
+      // 新スキーマ対応クエリ（入金履歴を含む）
       let { data, error } = await supabase
         .from('invoices')
         .select(`
           invoice_id,
           issue_date,
+          billing_date,
           customer_name,
           subject_name,
           subject,
           total,
+          total_amount,
           status,
           payment_status,
           registration_number,
@@ -101,9 +103,8 @@ export function useSalesData() {
             created_at
           )
         `)
-        .eq('invoice_type', 'standard') // 通常請求書のみ
-        .not('total', 'is', null)
-        .order('issue_date', { ascending: false })
+        .neq('status', 'deleted') // 削除済みを除外
+        .order('billing_date', { ascending: false })
 
       // フォールバック処理（新テーブルが未作成の場合）
       if (error && (error as any).code === '42P01') { // テーブル存在なしエラー
@@ -112,10 +113,12 @@ export function useSalesData() {
           .select(`
             invoice_id,
             issue_date,
+            billing_date,
             customer_name,
             subject_name,
             subject,
             total,
+            total_amount,
             status,
             payment_status,
             registration_number,
@@ -123,8 +126,8 @@ export function useSalesData() {
             order_id,
             created_at
           `)
-          .not('total', 'is', null)
-          .order('issue_date', { ascending: false })
+          .neq('status', 'deleted')
+          .order('billing_date', { ascending: false })
         
         data = fallback.data as any[]
         error = fallback.error as any
@@ -153,11 +156,11 @@ export function useSalesData() {
           ? payments.sort((a, b) => new Date(b.payment_date).getTime() - new Date(a.payment_date).getTime())[0].payment_date
           : null
 
-        const totalAmount = invoice.total || 0
+        const totalAmount = invoice.total_amount || invoice.total || 0
 
         return {
           invoice_id: invoice.invoice_id,
-          issue_date: invoice.issue_date,
+          issue_date: invoice.issue_date || invoice.billing_date,
           customer_name: invoice.customer_name,
           subject_name: invoice.subject_name,
           subject: invoice.subject,
