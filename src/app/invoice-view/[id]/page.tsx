@@ -479,12 +479,32 @@ export default function InvoiceViewPage({ params }: PageProps) {
         )}
 
         {/* メモ欄 */}
-        {invoice.remarks && (
-          <div className="p-6 border-t border-gray-200 bg-yellow-50">
-            <h3 className="text-sm font-semibold text-gray-700 mb-2">メモ</h3>
-            <p className="text-gray-900 whitespace-pre-wrap">{invoice.remarks}</p>
-          </div>
-        )}
+        {(() => {
+          // line_noごとにユニークなraw_labelを取得
+          const rawLabels = invoice.line_items
+            .filter(item => item.raw_label)
+            .map(item => item.raw_label)
+            .filter((label, index, self) => self.indexOf(label) === index);
+
+          if (!invoice.remarks && rawLabels.length === 0) return null;
+
+          return (
+            <div className="p-6 border-t border-gray-200 bg-yellow-50">
+              <h3 className="text-sm font-semibold text-gray-700 mb-2">メモ</h3>
+              {invoice.remarks && (
+                <p className="text-gray-900 whitespace-pre-wrap mb-4">{invoice.remarks}</p>
+              )}
+              {rawLabels.length > 0 && (
+                <>
+                  <div className="text-xs text-gray-500 mt-2 mb-1">旧システム明細内容</div>
+                  {rawLabels.map((label, idx) => (
+                    <p key={idx} className="text-gray-700 text-sm">{label}</p>
+                  ))}
+                </>
+              )}
+            </div>
+          );
+        })()}
       </div>
     </div>
   );
