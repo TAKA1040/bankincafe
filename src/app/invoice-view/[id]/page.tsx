@@ -40,12 +40,13 @@ export default function InvoiceViewPage({ params }: PageProps) {
           throw new Error('請求書が見つかりません');
         }
 
-        // ライン項目を取得
+        // ライン項目を取得（line_no, sub_no順でソート）
         const { data: lineItems, error: lineError } = await supabase
           .from('invoice_line_items')
           .select('*')
           .eq('invoice_id', params.id)
-          .order('line_no', { ascending: true });
+          .order('line_no', { ascending: true })
+          .order('sub_no', { ascending: true });
 
         if (lineError) {
           throw lineError;
