@@ -144,6 +144,8 @@ export type Database = {
           position5: string | null
           quantity: number | null
           raw_label: string | null
+          raw_label_part: string | null
+          set_name: string | null
           sub_no: number
           target: string | null
           task_type: string
@@ -167,6 +169,8 @@ export type Database = {
           position5?: string | null
           quantity?: number | null
           raw_label?: string | null
+          raw_label_part?: string | null
+          set_name?: string | null
           sub_no?: number
           target?: string | null
           task_type: string
@@ -190,6 +194,8 @@ export type Database = {
           position5?: string | null
           quantity?: number | null
           raw_label?: string | null
+          raw_label_part?: string | null
+          set_name?: string | null
           sub_no?: number
           target?: string | null
           task_type?: string

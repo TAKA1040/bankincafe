@@ -46,6 +46,7 @@ export interface InvoiceWithItems {
   line_items: {
     id: number
     line_no: number
+    sub_no?: number
     task_type: string
     target: string | null
     action: string | null
@@ -54,6 +55,8 @@ export interface InvoiceWithItems {
     unit_price: number | null
     amount: number | null
     raw_label: string | null
+    raw_label_part?: string | null
+    set_name?: string | null
     performed_at: string | null
     split_items?: SplitItem[]
   }[]
