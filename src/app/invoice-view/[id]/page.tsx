@@ -434,7 +434,12 @@ export default function InvoiceViewPage({ params }: PageProps) {
                           {formatDate(item.performed_at)}
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-900">
-                          -
+                          {item.raw_label ? (
+                            <div className="max-w-xs">
+                              <div className="text-xs text-gray-500">旧システム明細内容</div>
+                              <div className="whitespace-pre-wrap">{item.raw_label}</div>
+                            </div>
+                          ) : '-'}
                         </td>
                       </tr>
                     );
