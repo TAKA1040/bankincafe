@@ -454,30 +454,43 @@ export default function InvoicePrintPage() {
       const isSet = firstItem.task_type === 'S';
 
       if (isSet) {
-        // セット作業: sub_noごとに明細行、金額は最初の行のみ
-        const printItems = sortedItems.map((item, idx) => {
-          // 表示ラベル: raw_label_part があればそれを、なければ target + action で構成
-          const label = (item as any).raw_label_part ||
-            [item.target, (item as any).action1 || item.action, (item as any).position1 || item.position].filter(Boolean).join(' ') ||
-            item.raw_label || '-';
-          return {
-            label,
-            isFirstOfSet: idx === 0,
-            quantity: idx === 0 ? item.quantity : 0,
-            unitPrice: idx === 0 ? item.unit_price : 0,
-            amount: idx === 0 ? item.amount : 0
-          };
+        // セット作業: set_nameを1行目に、その後にraw_label_partを複数行で表示
+        const setName = (firstItem as any).set_name || firstItem.target || 'セット作業';
+
+        // 最初の行はset_name（金額あり）
+        const printItems: PrintLineItem['items'] = [{
+          label: setName,
+          isFirstOfSet: true,
+          quantity: firstItem.quantity,
+          unitPrice: firstItem.unit_price,
+          amount: firstItem.amount
+        }];
+
+        // 明細行: 各アイテムのraw_label_partを追加
+        sortedItems.forEach((item) => {
+          const rawLabelPart = (item as any).raw_label_part;
+          if (rawLabelPart) {
+            printItems.push({
+              label: rawLabelPart,
+              isFirstOfSet: false,
+              quantity: 0,
+              unitPrice: 0,
+              amount: 0
+            });
+          }
         });
+
         result.push({
           lineNo,
           isSet: true,
-          setName: (firstItem as any).set_name || undefined,
+          setName,
           items: printItems,
           totalAmount: firstItem.amount
         });
       } else {
-        // 個別作業: 1行で表示
-        const label = [firstItem.target, (firstItem as any).action1 || firstItem.action, (firstItem as any).position1 || firstItem.position].filter(Boolean).join(' ') ||
+        // 個別作業: raw_label_partを表示
+        const label = (firstItem as any).raw_label_part ||
+          [firstItem.target, (firstItem as any).action1 || firstItem.action, (firstItem as any).position1 || firstItem.position].filter(Boolean).join(' ') ||
           firstItem.raw_label || '-';
         result.push({
           lineNo,
@@ -846,48 +859,32 @@ export default function InvoicePrintPage() {
           </div>
         </div>
 
-        {/* ミニマルテーブル */}
-        <div className="mb-12">
+        {/* ミニマルテーブル - groupedLineItems使用 */}
+        <div className="mb-8">
           <table className="w-full">
             <thead>
               <tr className="border-b border-gray-300">
-                <th className="text-left py-4 text-sm font-medium text-gray-900">Description</th>
-                <th className="text-center py-4 text-sm font-medium text-gray-900 w-20">Qty</th>
-                <th className="text-right py-4 text-sm font-medium text-gray-900 w-24">Rate</th>
-                <th className="text-right py-4 text-sm font-medium text-gray-900 w-24">Amount</th>
+                <th className="text-left py-3 text-sm font-medium text-gray-900">Description</th>
+                <th className="text-center py-3 text-sm font-medium text-gray-900 w-16">Qty</th>
+                <th className="text-right py-3 text-sm font-medium text-gray-900 w-20">Rate</th>
+                <th className="text-right py-3 text-sm font-medium text-gray-900 w-20">Amount</th>
               </tr>
             </thead>
             <tbody>
-              {invoice?.line_items?.map((item, index) => {
-                const itemName = [item.target, item.action, item.position].filter(Boolean).join(' ');
-                // S/Tプレフィックスは請求書には不要
-                return (
-                  <tr key={index} className="border-b border-gray-100">
-                    <td className="py-4">
-                      <div className="font-medium text-gray-900">{itemName}</div>
-                      {item.task_type === 'S' && item.raw_label && (
-                        <div className="bg-blue-50 border-l-4 border-blue-400 pl-3 pr-2 py-2 mt-2 rounded-r">
-                          <div className="text-xs font-semibold text-blue-800 mb-1">セット内容:</div>
-                          <div className="text-xs text-blue-700">
-                            {item.raw_label.split(/[,、，・･]/).map((s, i) => {
-                              const trimmed = s.trim();
-                              return trimmed.length > 0 ? (
-                                <div key={i} className="flex items-center mb-1">
-                                  <span className="w-2 h-2 bg-blue-400 rounded-full mr-2 flex-shrink-0"></span>
-                                  <span>{trimmed}</span>
-                                </div>
-                              ) : null;
-                            })}
-                          </div>
-                        </div>
-                      )}
+              {groupedLineItems.map((group) => (
+                group.items.map((item, itemIdx) => (
+                  <tr key={`${group.lineNo}-${itemIdx}`} className="border-b border-gray-100">
+                    <td className="py-2">
+                      <div className={`font-medium text-gray-900 ${!item.isFirstOfSet && group.isSet ? 'pl-4 text-sm text-gray-600' : ''}`}>
+                        {!item.isFirstOfSet && group.isSet ? `・${item.label}` : item.label}
+                      </div>
                     </td>
-                    <td className="py-4 text-center text-gray-600">{item.quantity}</td>
-                    <td className="py-4 text-right text-gray-600">¥{formatAmount(item.unit_price)}</td>
-                    <td className="py-4 text-right font-medium text-gray-900">¥{formatAmount(item.amount)}</td>
+                    <td className="py-2 text-center text-gray-600">{item.quantity > 0 ? item.quantity : ''}</td>
+                    <td className="py-2 text-right text-gray-600">{item.unitPrice > 0 ? `¥${formatAmount(item.unitPrice)}` : ''}</td>
+                    <td className="py-2 text-right font-medium text-gray-900">{item.amount > 0 ? `¥${formatAmount(item.amount)}` : ''}</td>
                   </tr>
-                );
-              })}
+                ))
+              ))}
             </tbody>
           </table>
         </div>
