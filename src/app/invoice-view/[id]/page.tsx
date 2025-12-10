@@ -478,7 +478,7 @@ export default function InvoiceViewPage({ params }: PageProps) {
           </div>
         )}
 
-        {/* メモ欄（請求書に1つ） */}
+        {/* メモ欄 */}
         {invoice.remarks && (
           <div className="p-6 border-t border-gray-200 bg-yellow-50">
             <h3 className="text-sm font-semibold text-gray-700 mb-2">メモ</h3>
