@@ -6,7 +6,8 @@ import { ArrowLeft, Database, CheckCircle, AlertCircle, Users, Briefcase, Target
 import { createClient } from '@/lib/supabase/client'
 
 interface MasterStats {
-  customers: number
+  invoices: number
+  uniqueCustomers: number
   targets: number
   actions: number
   positions: number
@@ -46,18 +47,23 @@ export default function MasterConfirmationPage() {
 
       // 各マスターテーブルのデータ件数を取得
       const [
-        customersResult,
-        targetsResult, 
+        invoicesResult,
+        targetsResult,
         actionsResult,
         positionsResult,
         invoiceItemsResult
       ] = await Promise.all([
-        supabase.from('customers').select('*', { count: 'exact', head: true }),
+        supabase.from('invoices').select('invoice_id, customer_name', { count: 'exact' }),
         supabase.from('targets').select('*', { count: 'exact', head: true }),
         supabase.from('actions').select('*', { count: 'exact', head: true }),
         supabase.from('positions').select('*', { count: 'exact', head: true }),
         supabase.from('invoice_line_items').select('target', { count: 'exact' })
       ])
+
+      // ユニークな顧客数を計算
+      const uniqueCustomers = new Set(
+        invoicesResult.data?.map((inv: { customer_name: string | null }) => inv.customer_name).filter(Boolean)
+      ).size
 
       // 対象データの取得率を計算
       const itemsWithTarget = invoiceItemsResult.data?.filter((item: { target: string | null }) => 
@@ -68,7 +74,8 @@ export default function MasterConfirmationPage() {
       const targetCoverage = totalItems > 0 ? Math.round((itemsWithTarget / totalItems) * 100) : 0
 
       const statsData: MasterStats = {
-        customers: customersResult.count || 0,
+        invoices: invoicesResult.count || 0,
+        uniqueCustomers: uniqueCustomers,
         targets: targetsResult.count || 0,
         actions: actionsResult.count || 0,
         positions: positionsResult.count || 0,
@@ -81,14 +88,21 @@ export default function MasterConfirmationPage() {
       // マスターデータ一覧を構成
       const masterList: MasterData[] = [
         {
-          tableName: 'customers',
-          displayName: '顧客マスタ',
-          count: statsData.customers,
-          icon: <Users className="w-8 h-8 text-blue-500" />,
-          description: '顧客情報の管理'
+          tableName: 'invoices',
+          displayName: '請求書',
+          count: statsData.invoices,
+          icon: <FileText className="w-8 h-8 text-blue-500" />,
+          description: '登録済み請求書'
         },
         {
-          tableName: 'targets', 
+          tableName: 'customers',
+          displayName: '顧客（ユニーク）',
+          count: statsData.uniqueCustomers,
+          icon: <Users className="w-8 h-8 text-cyan-500" />,
+          description: '請求書に登録された顧客'
+        },
+        {
+          tableName: 'targets',
           displayName: '対象マスタ',
           count: statsData.targets,
           icon: <Target className="w-8 h-8 text-green-500" />,
@@ -96,7 +110,7 @@ export default function MasterConfirmationPage() {
         },
         {
           tableName: 'actions',
-          displayName: '作業マスタ', 
+          displayName: '作業マスタ',
           count: statsData.actions,
           icon: <Briefcase className="w-8 h-8 text-orange-500" />,
           description: '作業内容の分類管理'
@@ -104,7 +118,7 @@ export default function MasterConfirmationPage() {
         {
           tableName: 'positions',
           displayName: '部位マスタ',
-          count: statsData.positions, 
+          count: statsData.positions,
           icon: <Settings className="w-8 h-8 text-purple-500" />,
           description: '作業部位の分類管理'
         }
