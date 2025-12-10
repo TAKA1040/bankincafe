@@ -538,7 +538,8 @@ export default function InvoicePrintPage() {
     { id: 'basic', name: '基本', icon: FileText, description: '最もシンプルな一般的フォーマット' },
     { id: 'traditional', name: '伝統的', icon: Layout, description: '日本の従来型請求書スタイル' },
     { id: 'classic', name: 'クラシック', icon: Grid, description: '白黒のオーソドックスデザイン' },
-    { id: 'plain', name: 'プレーン', icon: Briefcase, description: '装飾なし・実用重視' }
+    { id: 'plain', name: 'プレーン', icon: Briefcase, description: '装飾なし・実用重視' },
+    { id: 'multiline', name: '多明細', icon: FileText, description: '明細行が多い場合向け・小フォント' }
   ] as const;
 
   // 出力形式オプション
@@ -706,6 +707,7 @@ export default function InvoicePrintPage() {
           {selectedLayout === 'traditional' && <TraditionalLayout />}
           {selectedLayout === 'classic' && <ClassicLayout />}
           {selectedLayout === 'plain' && <PlainLayout />}
+          {selectedLayout === 'multiline' && <MultilineLayout />}
         </div>
       </div>
     </>
@@ -2672,6 +2674,120 @@ export default function InvoicePrintPage() {
         <div className="text-center text-sm text-gray-600 border-t border-gray-400 pt-4">
           {companyInfo?.companyName}
         </div>
+      </>
+    );
+  }
+
+  // 13. 多明細レイアウト - 明細行が多い場合向け・小フォント
+  function MultilineLayout() {
+    return (
+      <>
+        {/* コンパクトヘッダー */}
+        <div className="flex justify-between items-start mb-4 pb-2 border-b-2 border-gray-800">
+          <div>
+            <h1 className="text-xl font-bold">請求書</h1>
+            <div className="text-xs text-gray-600">No. {invoice?.invoice_number}</div>
+          </div>
+          <div className="text-right">
+            <div className="text-xs text-gray-600">発行日: {formatDate(invoice?.issue_date || '')}</div>
+            <div className="text-lg font-bold mt-1">¥{formatAmount(displayAmounts.total)}</div>
+          </div>
+        </div>
+
+        {/* 2列情報（コンパクト） */}
+        <div className="grid grid-cols-2 gap-4 mb-4 text-xs">
+          <div className="border border-gray-300 p-2 rounded">
+            <div className="font-bold text-gray-600 mb-1">請求先</div>
+            <div className="font-medium">{customerInfo.name}</div>
+            {customerInfo.company && <div className="text-gray-600">{customerInfo.company}</div>}
+            <div className="text-gray-600 mt-1">件名: {invoice?.subject_name || invoice?.subject || '-'}</div>
+          </div>
+
+          <div className="border border-gray-300 p-2 rounded">
+            <div className="font-bold text-gray-600 mb-1">発行者</div>
+            <div className="font-medium">{companyInfo?.companyName}</div>
+            <div className="text-gray-600">〒{companyInfo?.postalCode}</div>
+            <div className="text-gray-600">{companyInfo?.prefecture}{companyInfo?.city}{companyInfo?.address}</div>
+            <div className="text-gray-600">Tel: {companyInfo?.phoneNumber}</div>
+            {companyInfo?.taxRegistrationNumber && (
+              <div className="text-gray-600">登録番号: {companyInfo.taxRegistrationNumber}</div>
+            )}
+          </div>
+        </div>
+
+        {/* 明細テーブル（小フォント・行間詰め） */}
+        <div className="mb-4">
+          <table className="w-full text-xs">
+            <thead>
+              <tr className="bg-gray-100">
+                <th className="px-1 py-1 text-left border border-gray-300 w-8">No</th>
+                <th className="px-1 py-1 text-left border border-gray-300">作業内容</th>
+                <th className="px-1 py-1 text-center border border-gray-300 w-10">数量</th>
+                <th className="px-1 py-1 text-right border border-gray-300 w-16">単価</th>
+                <th className="px-1 py-1 text-right border border-gray-300 w-18">金額</th>
+              </tr>
+            </thead>
+            <tbody>
+              {invoice?.line_items?.map((item, index) => {
+                const itemName = [item.target, item.action, item.position].filter(Boolean).join(' ');
+                const prefix = item.task_type === 'S' ? '[S] ' : '';
+                return (
+                  <tr key={index} className="hover:bg-gray-50">
+                    <td className="px-1 py-0.5 border border-gray-300 text-center text-gray-500">{index + 1}</td>
+                    <td className="px-1 py-0.5 border border-gray-300">
+                      <div className="truncate" title={prefix + itemName}>{prefix}{itemName}</div>
+                      {item.task_type === 'S' && item.raw_label && (
+                        <div className="text-[10px] text-blue-600 truncate" title={item.raw_label}>
+                          ({item.raw_label})
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-1 py-0.5 border border-gray-300 text-center">{item.quantity}</td>
+                    <td className="px-1 py-0.5 border border-gray-300 text-right">¥{formatAmount(item.unit_price)}</td>
+                    <td className="px-1 py-0.5 border border-gray-300 text-right font-medium">¥{formatAmount(item.amount)}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+
+        {/* 合計・振込先（横並び） */}
+        <div className="grid grid-cols-2 gap-4 text-xs">
+          {/* 振込先 */}
+          {companyInfo?.bankName && (
+            <div className="border border-gray-300 p-2 rounded">
+              <div className="font-bold text-gray-600 mb-1">お振込先</div>
+              <div>{companyInfo.bankName} {companyInfo.bankBranch}</div>
+              <div>{companyInfo.accountType} {companyInfo.accountNumber}</div>
+              <div>名義: {companyInfo.accountHolder}</div>
+            </div>
+          )}
+
+          {/* 金額集計 */}
+          <div className="border border-gray-300 p-2 rounded">
+            <div className="flex justify-between mb-1">
+              <span>小計</span>
+              <span>¥{formatAmount(displayAmounts.subtotal)}</span>
+            </div>
+            <div className="flex justify-between mb-1">
+              <span>消費税 (10%)</span>
+              <span>¥{formatAmount(displayAmounts.tax)}</span>
+            </div>
+            <div className="flex justify-between font-bold border-t border-gray-300 pt-1">
+              <span>合計</span>
+              <span>¥{formatAmount(displayAmounts.total)}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* 備考 */}
+        {invoice?.remarks && (
+          <div className="mt-3 text-xs">
+            <div className="font-bold text-gray-600">備考:</div>
+            <div className="text-gray-600">{invoice.remarks}</div>
+          </div>
+        )}
       </>
     );
   }
