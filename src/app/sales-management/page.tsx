@@ -2,19 +2,20 @@
 
 import { useState, useMemo, useEffect, Fragment } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, BarChart3, Download, TrendingUp, Calendar, DollarSign, RefreshCw, Banknote, Home } from 'lucide-react'
+import { ArrowLeft, BarChart3, Download, TrendingUp, Calendar, JapaneseYen, RefreshCw, Banknote, Home } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 import { useSalesData } from '@/hooks/useSalesData'
 import { supabase } from '@/lib/supabase'
 
-const PaymentManagementTab = ({ invoices, summary, onUpdate, loading, categories, selectedCategory, onCategoryChange }: {
+const PaymentManagementTab = ({ invoices, summary, onUpdate, loading, categories, selectedCategory, onCategoryChange, router }: {
   invoices: any[],
   summary: any,
   onUpdate: (selectedIds: string[], paymentDate: string) => void,
   loading: boolean,
   categories: any[],
   selectedCategory: string,
-  onCategoryChange: (category: string) => void
+  onCategoryChange: (category: string) => void,
+  router: any
 }) => {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [paymentDate, setPaymentDate] = useState(new Date().toISOString().split('T')[0]);
@@ -155,7 +156,12 @@ const PaymentManagementTab = ({ invoices, summary, onUpdate, loading, categories
                   <td className="px-4 py-2 whitespace-nowrap text-gray-900 border-l">{invoice.order_number || 'N/A'}</td>
                   <td className="px-4 py-2 whitespace-nowrap text-right text-gray-900 border-l">¥{invoice.total_amount.toLocaleString()}</td>
                   <td className="px-4 py-2 whitespace-nowrap text-center border-l">
-                    <button className="text-blue-600 hover:underline text-xs">表示</button>
+                    <button
+                      onClick={() => router.push(`/invoice-view/${invoice.invoice_id}`)}
+                      className="text-blue-600 hover:underline text-xs"
+                    >
+                      表示
+                    </button>
                   </td>
                 </tr>
                 <tr className="hover:bg-gray-50 border-b">
@@ -379,7 +385,7 @@ export default function SalesManagementPage() {
                 <h3 className="text-sm font-medium text-gray-600">総売上</h3>
                 <p className="text-2xl font-bold text-blue-600">¥{statistics.totalSales.toLocaleString()}</p>
               </div>
-              <DollarSign className="text-blue-600" size={24} />
+              <JapaneseYen className="text-blue-600" size={24} />
             </div>
           </div>
           
@@ -490,6 +496,7 @@ export default function SalesManagementPage() {
               categories={categories}
               selectedCategory={selectedCategory}
               onCategoryChange={setSelectedCategory}
+              router={router}
             />
           )}
 
