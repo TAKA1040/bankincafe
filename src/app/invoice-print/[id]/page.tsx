@@ -83,7 +83,7 @@ export default function InvoicePrintPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [customerCategoryDB, setCustomerCategoryDB] = useState<CustomerCategoryDB | null>(null);
-  const [selectedLayout, setSelectedLayout] = useState<'minimal' | 'gradient' | 'geometric' | 'corporate' | 'standard' | 'modern' | 'compact' | 'detailed' | 'basic' | 'traditional' | 'classic' | 'plain'>('minimal');
+  const [selectedLayout, setSelectedLayout] = useState<'minimal' | 'gradient' | 'geometric' | 'corporate' | 'standard' | 'modern' | 'compact' | 'detailed' | 'basic' | 'traditional' | 'classic' | 'plain' | 'multiline'>('minimal');
   const [outputFormat, setOutputFormat] = useState<OutputFormat>('current');
   const [relatedInvoices, setRelatedInvoices] = useState<RelatedInvoice[]>([]);
 
@@ -1088,13 +1088,10 @@ export default function InvoicePrintPage() {
                     // S作業（セット）の場合を判別 - task_typeベースで判断
                     const isSetWork = item.task_type === 'S' || item.task_type === 'set';
                     
-                    // システムルールに従った作業名の決定
-                    const itemName = isSetWork 
+                    // システムルールに従った作業名の決定（S/Tプレフィックスは請求書には不要）
+                    const displayName = isSetWork
                       ? (item.target || 'セット作業')
                       : (item.raw_label || [item.target, item.action, item.position].filter(Boolean).join(' ') || '作業項目未設定');
-                    
-                    const prefix = getWorkTypePrefix(item.task_type);
-                    const displayName = `${prefix}${itemName}`;
                     
                     // S作業の内訳を取得
                     const breakdownItems = isSetWork && item.raw_label ? 
@@ -1315,15 +1312,9 @@ export default function InvoicePrintPage() {
               </thead>
               <tbody>
                 {invoice?.line_items?.map((item, index) => {
-                  const itemName = [item.target, item.action, item.position].filter(Boolean).join(' ');
-                  
-                  const getWorkTypePrefix = (taskType: string) => {
-                    return taskType === 'S' ? 'Ｓ' : taskType === 'T' ? '' : '';
-                  };
-                  
+                  // S/Tプレフィックスは請求書には不要
                   const isSetWork = item.task_type === 'S';
-                  const prefix = getWorkTypePrefix(item.task_type);
-                  const displayName = `${prefix}${itemName}`;
+                  const displayName = [item.target, item.action, item.position].filter(Boolean).join(' ');
                   
                   return (
                     <tr key={index} className={index % 2 === 0 ? "bg-white" : "bg-gray-50"}>
