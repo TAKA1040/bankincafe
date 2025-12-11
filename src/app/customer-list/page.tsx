@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Plus, Search, Edit, Trash2, Users, X, Save, Building2, UserCircle, RefreshCw } from 'lucide-react'
+import { ArrowLeft, Plus, Search, Edit, Trash2, Users, X, Save, Building2, UserCircle, RefreshCw, ArrowUpCircle } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { CustomerCategoryDB } from '@/lib/customer-categories'
 
@@ -371,6 +371,63 @@ export default function CustomerListPage() {
     alert('顧客を削除しました')
   }
 
+  // その他顧客をカテゴリに昇格
+  const handlePromote = async (customer: Customer) => {
+    const confirmMessage = `「${customer.company_name}」をカテゴリ顧客に昇格しますか？\n\n` +
+      `・請求書作成時にカテゴリとして選択できるようになります\n` +
+      `・既存の請求書データのカテゴリも更新されます\n` +
+      `・集計時もカテゴリとして集計されます`
+
+    if (!confirm(confirmMessage)) return
+
+    try {
+      // 1. CustomerCategoryDBに新しいカテゴリを追加
+      categoryDB.addCategory({
+        name: customer.company_name,
+        companyName: customer.company_name
+      })
+
+      // 2. 顧客リストのカテゴリタイプを変更
+      db.updateCustomer(customer.id, { category_type: 'category' })
+
+      // 3. 既存の請求書データを更新（その他 + この顧客名 → 新カテゴリ）
+      const { error: updateError } = await supabase
+        .from('invoices')
+        .update({ customer_category: customer.company_name })
+        .eq('customer_category', 'その他')
+        .eq('customer_name', customer.company_name)
+
+      if (updateError) {
+        console.error('請求書更新エラー:', updateError)
+      }
+
+      // 4. other_customersを無効化
+      await (supabase as any)
+        .from('other_customers')
+        .update({
+          is_active: false,
+          updated_at: new Date().toISOString()
+        })
+        .eq('customer_name', customer.company_name)
+
+      // 更新数を取得して通知
+      const { count } = await supabase
+        .from('invoices')
+        .select('*', { count: 'exact', head: true })
+        .eq('customer_category', customer.company_name)
+
+      alert(`「${customer.company_name}」をカテゴリに昇格しました！\n\n` +
+        `・カテゴリ顧客に移動しました\n` +
+        `・${count || 0}件の請求書データが更新されました`)
+
+      // データ再取得
+      setCustomers([...db.customers])
+    } catch (error) {
+      console.error('昇格処理エラー:', error)
+      alert('昇格処理中にエラーが発生しました')
+    }
+  }
+
   // 顧客テーブル行コンポーネント
   const CustomerRow = ({ customer }: { customer: Customer }) => (
     <tr key={customer.id} className="hover:bg-gray-50">
@@ -407,6 +464,15 @@ export default function CustomerListPage() {
           >
             <Edit size={18} />
           </button>
+          {customer.category_type === 'other' && (
+            <button
+              onClick={() => handlePromote(customer)}
+              className="p-2 text-purple-600 hover:bg-purple-50 rounded"
+              title="カテゴリに昇格"
+            >
+              <ArrowUpCircle size={18} />
+            </button>
+          )}
           <button
             onClick={() => handleDelete(customer)}
             className="p-2 text-red-600 hover:bg-red-50 rounded"
