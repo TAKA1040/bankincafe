@@ -876,6 +876,18 @@ export default function InvoicePrintPage() {
             margin: 0;
             padding: 0;
           }
+          /* 複数ページ対応 - invoice-page クラス */
+          .invoice-page {
+            width: 210mm;
+            min-height: 297mm;
+            padding: 15mm;
+            box-sizing: border-box;
+            background: white;
+            page-break-after: always;
+          }
+          .invoice-page:last-child {
+            page-break-after: auto;
+          }
           /* A4ページ: 余白 上下20mm/左右15mm（prompt.txt指示） */
           .a4-page, .print-container {
             width: 210mm;
@@ -914,6 +926,18 @@ export default function InvoicePrintPage() {
           .a4-print-container {
             padding: 20px;
             background: #e5e7eb;
+          }
+          /* 複数ページ対応 - invoice-page クラス（画面プレビュー） */
+          .invoice-page {
+            width: 210mm;
+            min-height: 297mm;
+            padding: 15mm;
+            box-sizing: border-box;
+            background: white;
+            margin: 20px auto;
+            box-shadow: 0 .5mm 2mm rgba(0,0,0,.3);
+            border: 1px solid #ccc;
+            font-family: 'Noto Sans JP', 'Noto Sans', sans-serif;
           }
           .a4-page, .print-container {
             width: 210mm;
