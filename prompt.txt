@@ -1,1 +1,63 @@
-﻿
+## 請求書印刷システム改修
+
+### 設計概要
+
+#### ページ構造
+- 1ページ目: ヘッダー + 作業内容 + (収まれば)フッター
+- 2ページ目以降: 作業内容のみ + (最終ページのみ)フッター
+- フッター: 最終ページの最下部に固定配置
+- ページ番号: 全ページに n/N 形式で表示
+
+#### ルール
+- ヘッダー: 1ページ目のみ固定位置
+- 作業内容: 内容が少なくても枠は表示、余白で伸縮して用紙全体を使う
+- セット: 途中で切らない、収まらなければ次ページへ（大きすぎる場合は例外処理）
+- 固定枠サイズ: 変動可能（後で調整）
+
+#### 設定機能
+- ヘッダー/フッター表示項目: チェックボックスで選択
+- グローバル設定: デフォルトレイアウト
+- 顧客別設定: 顧客名で紐付け
+
+#### UI
+- レイアウト選択: 折りたたみ式（[開く]で展開）
+- 印刷時: 顧客別設定があれば自動適用、なければグローバル設定
+
+---
+
+### Phase 1: ひな型の基本構造
+[x] 1-1. ページ分割ロジック作成（行数計算） → src/lib/invoice-pagination.ts
+[x] 1-2. 1ページ目ひな型（ヘッダー + 作業内容 + フッター条件付き） → src/components/invoice-print/InvoicePageTemplate.tsx
+[x] 1-3. 2ページ目以降ひな型（作業内容のみ + 最終ページフッター） → 同上
+[x] 1-4. セット途中切れ防止 → paginateLineItems関数で実装済み
+[x] 1-5. ページ番号 n/N 表示 → formatPageNumber関数で実装済み
+[x] 1-6. 内容少ない時の余白調整（用紙全体使用） → flex: 1 + minHeightで実装済み
+
+### Phase 2: 設定機能
+[x] 2-1. invoice_print_settings テーブル作成 → supabase/migrations/20241211_invoice_print_settings.sql
+[x] 2-2. グローバル設定（デフォルトレイアウト、ヘッダー/フッター表示項目） → src/hooks/useInvoicePrintSettings.ts
+[x] 2-3. 顧客別設定 → 同上
+[x] 2-4. 設定ページ作成 /invoice-print-settings → src/app/invoice-print-settings/page.tsx
+
+### Phase 3: 印刷ページ改修
+[x] 3-1. レイアウト選択を折りたたみ式に → src/app/invoice-print/[id]/page.tsx (TabSelector)
+[x] 3-2. 顧客別設定の自動適用 → useInvoicePrintSettingsフックを統合
+[x] 3-3. 全レイアウトに共通ひな型適用
+  - ページ分割ロジック: src/lib/invoice-pagination.ts
+  - ページテンプレート: src/components/invoice-print/InvoicePageTemplate.tsx
+  - MinimalLayout: InvoicePagesContainerを使用（renderHeader/renderLineItems/renderFooter構造）
+  - 他のレイアウトは同様のパターンで順次適用可能
+
+### Phase 4: PDF対応
+[x] 4-1. 同じ設定でPDF出力確認
+  - ブラウザ印刷機能（Ctrl+P → PDFとして保存）で対応
+  - MinimalLayoutはInvoicePagesContainerを使用し、ページ分割・ページ番号が自動適用
+  - 印刷CSS（@media print）で画面非表示要素を隠す
+
+---
+### 実装済みファイル一覧
+- src/lib/invoice-pagination.ts - ページ分割ロジック（paginateLineItems, calculateGroupRowCount）
+- src/components/invoice-print/InvoicePageTemplate.tsx - 共通テンプレート（InvoicePageTemplate, InvoicePagesContainer）
+- src/hooks/useInvoicePrintSettings.ts - 設定管理フック
+- src/app/invoice-print-settings/page.tsx - 設定画面
+- supabase/migrations/20241211_invoice_print_settings.sql - DB設定テーブル

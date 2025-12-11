@@ -1,10 +1,13 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { Printer, Download, ArrowLeft, Home, FileText, Layout, Grid, Briefcase } from 'lucide-react';
+import { Printer, Download, ArrowLeft, Home, FileText, Layout, Grid, Briefcase, ChevronDown, ChevronUp, Settings } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { CustomerCategoryDB } from '@/lib/customer-categories';
+import { useInvoicePrintSettings, LayoutId } from '@/hooks/useInvoicePrintSettings';
+import { InvoicePagesContainer } from '@/components/invoice-print/InvoicePageTemplate';
+import { paginateLineItems, GroupedLineItem, InvoicePage } from '@/lib/invoice-pagination';
 
 interface InvoiceData {
   invoice_id: string;
@@ -86,6 +89,13 @@ export default function InvoicePrintPage() {
   const [selectedLayout, setSelectedLayout] = useState<'minimal' | 'gradient' | 'geometric' | 'corporate' | 'standard' | 'modern' | 'compact' | 'detailed' | 'basic' | 'traditional' | 'classic' | 'plain' | 'multiline'>('minimal');
   const [outputFormat, setOutputFormat] = useState<OutputFormat>('current');
   const [relatedInvoices, setRelatedInvoices] = useState<RelatedInvoice[]>([]);
+  const [isLayoutSelectorOpen, setIsLayoutSelectorOpen] = useState(false);
+  const [settingsApplied, setSettingsApplied] = useState(false);
+  const [activeHeaderItems, setActiveHeaderItems] = useState<string[]>([]);
+  const [activeFooterItems, setActiveFooterItems] = useState<string[]>([]);
+
+  // 印刷設定フックを使用
+  const { getSettingsForCustomer, loading: settingsLoading } = useInvoicePrintSettings();
 
   // マウント後の初期化
   useEffect(() => {
@@ -95,18 +105,40 @@ export default function InvoicePrintPage() {
 
   useEffect(() => {
     if (!isMounted) return; // SSR時は処理しない
-    
+
     if (!invoiceId) {
       console.error('❌ No invoice ID provided');
       setError('請求書IDが指定されていません');
       setLoading(false);
       return;
     }
-    
+
     console.log('🚀 Starting data fetch for invoice:', invoiceId);
     fetchInvoiceData();
     fetchCompanyInfo();
   }, [invoiceId, isMounted]);
+
+  // 顧客別設定の自動適用（請求書データと設定がロードされた後）
+  useEffect(() => {
+    if (invoice && !settingsLoading && !settingsApplied) {
+      const customerSettings = getSettingsForCustomer(invoice.customer_name);
+      // レイアウトIDをselectedLayoutの型に変換
+      const layoutMapping: Record<LayoutId, typeof selectedLayout> = {
+        'minimal': 'minimal',
+        'standard': 'standard',
+        'modern': 'modern',
+        'compact': 'compact',
+        'detailed': 'detailed',
+      };
+      const mappedLayout = layoutMapping[customerSettings.layout] || 'minimal';
+      setSelectedLayout(mappedLayout);
+      // ヘッダー/フッター表示項目も適用
+      setActiveHeaderItems(customerSettings.headerItems);
+      setActiveFooterItems(customerSettings.footerItems);
+      setSettingsApplied(true);
+      console.log('✅ 顧客別設定を適用:', invoice.customer_name, '→', customerSettings.layout, 'header:', customerSettings.headerItems, 'footer:', customerSettings.footerItems);
+    }
+  }, [invoice, settingsLoading, settingsApplied, getSettingsForCustomer]);
 
   const fetchInvoiceData = async () => {
     try {
@@ -513,6 +545,25 @@ export default function InvoicePrintPage() {
 
   const groupedLineItems = getGroupedLineItems();
 
+  // PrintLineItemをGroupedLineItemに変換してページ分割
+  const convertToGroupedLineItems = (items: PrintLineItem[]): GroupedLineItem[] => {
+    return items.map(item => ({
+      lineNo: item.lineNo,
+      isSet: item.isSet,
+      setName: item.setName,
+      items: item.items.map(i => ({
+        label: i.label,
+        quantity: i.quantity,
+        unitPrice: i.unitPrice,
+        amount: i.amount,
+        isFirstOfSet: i.isFirstOfSet,
+      })),
+    }));
+  };
+
+  // ページ分割されたデータ
+  const paginatedPages = paginateLineItems(convertToGroupedLineItems(groupedLineItems));
+
   // 共通明細テーブルコンポーネント（全レイアウトで使用）
   // 列幅: 項目55-60%, 数量10%, 単価15%, 金額15% (prompt.txt指示)
   // 行高18px・フォント10px（A4 1ページ厳守）
@@ -697,32 +748,64 @@ export default function InvoicePrintPage() {
     { id: 'corrected' as OutputFormat, name: '訂正後合計', description: '全修正を反映した最終金額' }
   ];
 
-  // タブコンポーネント
-  const TabSelector = () => (
+  // タブコンポーネント（折りたたみ式）
+  const TabSelector = () => {
+    const currentLayout = layoutTabs.find(tab => tab.id === selectedLayout);
+
+    return (
     <div className="mb-6 print:hidden">
-      <h3 className="text-base font-semibold mb-2 text-gray-700">請求書レイアウト選択</h3>
-      <div className="flex flex-wrap gap-2">
-        {layoutTabs.map((tab) => {
-          const IconComponent = tab.icon;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => setSelectedLayout(tab.id)}
-              className={`flex items-center gap-2 px-4 py-1 rounded-lg border transition-all ${
-                selectedLayout === tab.id
-                  ? 'bg-blue-600 text-white border-blue-600 shadow-md'
-                  : 'bg-white text-gray-700 border-gray-300 hover:border-blue-400 hover:bg-blue-50'
-              }`}
-            >
-              <IconComponent size={16} />
-              <div className="text-left">
-                <div className="font-medium">{tab.name}</div>
-                <div className="text-xs opacity-75">{tab.description}</div>
-              </div>
-            </button>
-          );
-        })}
+      {/* 折りたたみヘッダー */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <span className="text-sm text-gray-600">レイアウト:</span>
+          <span className="font-medium text-gray-800">{currentLayout?.name || 'ミニマル'}</span>
+          <button
+            onClick={() => setIsLayoutSelectorOpen(!isLayoutSelectorOpen)}
+            className="flex items-center gap-1 px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+          >
+            {isLayoutSelectorOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+            {isLayoutSelectorOpen ? '閉じる' : '変更'}
+          </button>
+        </div>
+        <button
+          onClick={() => router.push('/invoice-print-settings')}
+          className="flex items-center gap-1 px-3 py-1 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
+        >
+          <Settings size={14} />
+          設定
+        </button>
       </div>
+
+      {/* 展開時のレイアウト選択 */}
+      {isLayoutSelectorOpen && (
+        <div className="mt-3 p-4 bg-gray-50 rounded-lg border">
+          <div className="flex flex-wrap gap-2">
+            {layoutTabs.map((tab) => {
+              const IconComponent = tab.icon;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => {
+                    setSelectedLayout(tab.id);
+                    setIsLayoutSelectorOpen(false);
+                  }}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-all ${
+                    selectedLayout === tab.id
+                      ? 'bg-blue-600 text-white border-blue-600 shadow-md'
+                      : 'bg-white text-gray-700 border-gray-300 hover:border-blue-400 hover:bg-blue-50'
+                  }`}
+                >
+                  <IconComponent size={16} />
+                  <div className="text-left">
+                    <div className="font-medium">{tab.name}</div>
+                    <div className="text-xs opacity-75">{tab.description}</div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* 出力形式選択（修正伝票がある場合のみ表示） */}
       {(invoice?.invoice_type === 'red' || invoice?.invoice_type === 'black' || relatedInvoices.length > 1) && (
@@ -760,6 +843,7 @@ export default function InvoicePrintPage() {
       )}
     </div>
   );
+  };
 
   return (
     <>
@@ -926,83 +1010,161 @@ export default function InvoicePrintPage() {
     </>
   );
 
-  // 1. ミニマル・クリーンデザイン
-  // 1. シンプルレイアウト - A4最適化・日本式
+  // 1. ミニマル・クリーンデザイン - 共通ひな型使用
   function MinimalLayout() {
-    return (
-      <div className="a4-page invoice-body avoid-break">
+    // ヘッダー項目の表示判定ヘルパー
+    const showHeaderItem = (id: string) => activeHeaderItems.length === 0 || activeHeaderItems.includes(id);
+
+    // ミニマル用ヘッダー
+    const renderMinimalHeader = () => (
+      <>
         {/* ヘッダー: 請求書番号・発行日を左、支払期限/合計を右で強調 */}
         <div className="flex justify-between items-start pb-2 border-b-2 border-gray-800" style={{ marginBottom: '10px' }}>
           <div>
             <h1 className="invoice-title" style={{ fontSize: '16px', fontWeight: 700 }}>請 求 書</h1>
-            <div className="invoice-body" style={{ fontSize: '12px', marginTop: '4px' }}>
-              No. {invoice?.invoice_number}
-            </div>
-            <div className="invoice-small" style={{ fontSize: '11px', color: '#666' }}>
-              発行日: {formatDate(invoice?.issue_date || '')}
-            </div>
+            {showHeaderItem('invoice_number') && (
+              <div className="invoice-body" style={{ fontSize: '12px', marginTop: '4px' }}>
+                No. {invoice?.invoice_number}
+              </div>
+            )}
+            {showHeaderItem('issue_date') && (
+              <div className="invoice-small" style={{ fontSize: '11px', color: '#666' }}>
+                発行日: {formatDate(invoice?.issue_date || '')}
+              </div>
+            )}
+            {showHeaderItem('due_date') && invoice?.billing_date && (
+              <div className="invoice-small" style={{ fontSize: '11px', color: '#666' }}>
+                支払期限: {formatDate(invoice.billing_date)}
+              </div>
+            )}
           </div>
-          <div className="text-right">
-            <div className="invoice-small" style={{ fontSize: '11px', color: '#666' }}>ご請求金額（税込）</div>
-            <div className="invoice-amount amount-cell" style={{ fontSize: '14px', fontWeight: 700 }}>
-              ¥{formatAmount(displayAmounts.total)}
+          {showHeaderItem('total_amount') && (
+            <div className="text-right">
+              <div className="invoice-small" style={{ fontSize: '11px', color: '#666' }}>ご請求金額（税込）</div>
+              <div className="invoice-amount amount-cell" style={{ fontSize: '14px', fontWeight: 700 }}>
+                ¥{formatAmount(displayAmounts.total)}
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* 請求先・請求元 - コンパクト */}
         <div className="grid grid-cols-2 gap-3" style={{ marginBottom: '10px' }}>
-          <div className="border border-gray-300 p-2">
-            <div className="invoice-small" style={{ fontSize: '11px', color: '#666' }}>請求先</div>
-            <div className="invoice-heading" style={{ fontSize: '14px', fontWeight: 500 }}>{customerInfo.name} 様</div>
-            <div className="invoice-body" style={{ fontSize: '12px', color: '#444' }}>{invoice?.subject_name || invoice?.subject}</div>
-          </div>
-          <div className="border border-gray-300 p-2">
-            <div className="invoice-small" style={{ fontSize: '11px', color: '#666' }}>請求元</div>
-            <div className="invoice-heading" style={{ fontSize: '14px', fontWeight: 500 }}>{companyInfo?.companyName}</div>
-            <div className="invoice-small" style={{ fontSize: '11px', color: '#444', lineHeight: '1.4' }}>
-              〒{companyInfo?.postalCode} {companyInfo?.prefecture}{companyInfo?.city}{companyInfo?.address}
+          {showHeaderItem('customer_name') && (
+            <div className="border border-gray-300 p-2">
+              <div className="invoice-small" style={{ fontSize: '11px', color: '#666' }}>請求先</div>
+              <div className="invoice-heading" style={{ fontSize: '14px', fontWeight: 500 }}>{customerInfo.name} 様</div>
+              {showHeaderItem('subject') && (
+                <div className="invoice-body" style={{ fontSize: '12px', color: '#444' }}>{invoice?.subject_name || invoice?.subject}</div>
+              )}
+              {showHeaderItem('registration_number') && invoice?.registration_number && (
+                <div className="invoice-small" style={{ fontSize: '11px', color: '#444' }}>登録番号: {invoice.registration_number}</div>
+              )}
             </div>
-            <div className="invoice-small" style={{ fontSize: '11px', color: '#444' }}>TEL: {companyInfo?.phoneNumber}</div>
-            {companyInfo?.taxRegistrationNumber && (
-              <div className="invoice-small" style={{ fontSize: '11px', color: '#444' }}>登録番号: {companyInfo.taxRegistrationNumber}</div>
-            )}
-          </div>
+          )}
+          {showHeaderItem('company_name') && (
+            <div className="border border-gray-300 p-2">
+              <div className="invoice-small" style={{ fontSize: '11px', color: '#666' }}>請求元</div>
+              <div className="invoice-heading" style={{ fontSize: '14px', fontWeight: 500 }}>{companyInfo?.companyName}</div>
+              {showHeaderItem('company_address') && (
+                <div className="invoice-small" style={{ fontSize: '11px', color: '#444', lineHeight: '1.4' }}>
+                  〒{companyInfo?.postalCode} {companyInfo?.prefecture}{companyInfo?.city}{companyInfo?.address}
+                </div>
+              )}
+              {showHeaderItem('company_phone') && (
+                <div className="invoice-small" style={{ fontSize: '11px', color: '#444' }}>TEL: {companyInfo?.phoneNumber}</div>
+              )}
+              {showHeaderItem('company_registration') && companyInfo?.taxRegistrationNumber && (
+                <div className="invoice-small" style={{ fontSize: '11px', color: '#444' }}>登録番号: {companyInfo.taxRegistrationNumber}</div>
+              )}
+            </div>
+          )}
         </div>
+      </>
+    );
 
-        {/* 明細テーブル */}
-        <div className="avoid-break" style={{ marginBottom: '10px' }}>
-          <LineItemsTable headerBg="bg-gray-100" borderColor="border-gray-300" compact={true} />
-        </div>
+    // ミニマル用明細テーブル（ページ内アイテム用）
+    const renderMinimalLineItems = (pageItems: GroupedLineItem[]) => (
+      <table className="w-full" style={{ tableLayout: 'fixed', fontSize: '12px' }}>
+        <colgroup>
+          <col style={{ width: '58%' }} />
+          <col style={{ width: '10%' }} />
+          <col style={{ width: '16%' }} />
+          <col style={{ width: '16%' }} />
+        </colgroup>
+        <thead>
+          <tr className="bg-gray-100">
+            <th className="p-2 text-left border border-gray-300">項目</th>
+            <th className="p-2 text-center border border-gray-300">数量</th>
+            <th className="p-2 text-right border border-gray-300">単価</th>
+            <th className="p-2 text-right border border-gray-300">金額</th>
+          </tr>
+        </thead>
+        <tbody>
+          {pageItems.map((group) =>
+            group.items.map((item, idx) => (
+              <tr key={`${group.lineNo}-${idx}`} className={item.isFirstOfSet ? 'font-medium' : ''}>
+                <td className={`p-2 border border-gray-300 ${!item.isFirstOfSet && group.isSet ? 'pl-6 text-gray-600' : ''}`}>
+                  {item.label}
+                </td>
+                <td className="p-2 text-center border border-gray-300">
+                  {item.isFirstOfSet || !group.isSet ? (item.quantity > 0 ? item.quantity : '') : ''}
+                </td>
+                <td className="p-2 text-right border border-gray-300 amount-cell">
+                  {item.isFirstOfSet || !group.isSet ? (item.unitPrice > 0 ? `¥${formatAmount(item.unitPrice)}` : '') : ''}
+                </td>
+                <td className="p-2 text-right border border-gray-300 amount-cell">
+                  {item.isFirstOfSet || !group.isSet ? (item.amount > 0 ? `¥${formatAmount(item.amount)}` : '') : ''}
+                </td>
+              </tr>
+            ))
+          )}
+        </tbody>
+      </table>
+    );
 
-        {/* 合計欄: 3行で境界線付き - summary-section クラス追加 */}
-        <div className="flex justify-end summary-section" style={{ marginBottom: '10px' }}>
-          <div style={{ width: '180px' }} className="border border-gray-400">
-            <div className="flex justify-between px-2 py-1 border-b border-gray-300 invoice-body" style={{ fontSize: '12px' }}>
-              <span>小計</span>
-              <span className="amount-cell">¥{formatAmount(displayAmounts.subtotal)}</span>
-            </div>
-            <div className="flex justify-between px-2 py-1 border-b border-gray-300 invoice-body" style={{ fontSize: '12px' }}>
-              <span>消費税(10%)</span>
-              <span className="amount-cell">¥{formatAmount(displayAmounts.tax)}</span>
-            </div>
-            <div className="flex justify-between px-2 py-1 bg-gray-100 invoice-amount" style={{ fontSize: '14px', fontWeight: 700 }}>
-              <span>合計</span>
-              <span className="amount-cell">¥{formatAmount(displayAmounts.total)}</span>
+    // フッター項目の表示判定ヘルパー
+    const showFooterItem = (id: string) => activeFooterItems.length === 0 || activeFooterItems.includes(id);
+
+    // ミニマル用フッター
+    const renderMinimalFooter = () => (
+      <>
+        {/* 合計欄 */}
+        {(showFooterItem('subtotal') || showFooterItem('tax') || showFooterItem('total')) && (
+          <div className="flex justify-end summary-section" style={{ marginBottom: '10px', marginTop: '10px' }}>
+            <div style={{ width: '180px' }} className="border border-gray-400">
+              {showFooterItem('subtotal') && (
+                <div className="flex justify-between px-2 py-1 border-b border-gray-300 invoice-body" style={{ fontSize: '12px' }}>
+                  <span>小計</span>
+                  <span className="amount-cell">¥{formatAmount(displayAmounts.subtotal)}</span>
+                </div>
+              )}
+              {showFooterItem('tax') && (
+                <div className="flex justify-between px-2 py-1 border-b border-gray-300 invoice-body" style={{ fontSize: '12px' }}>
+                  <span>消費税(10%)</span>
+                  <span className="amount-cell">¥{formatAmount(displayAmounts.tax)}</span>
+                </div>
+              )}
+              {showFooterItem('total') && (
+                <div className="flex justify-between px-2 py-1 bg-gray-100 invoice-amount" style={{ fontSize: '14px', fontWeight: 700 }}>
+                  <span>合計</span>
+                  <span className="amount-cell">¥{formatAmount(displayAmounts.total)}</span>
+                </div>
+              )}
             </div>
           </div>
-        </div>
+        )}
 
         {/* 振込先 */}
-        {companyInfo?.bankName && (
+        {showFooterItem('bank_info') && companyInfo?.bankName && (
           <div className="border border-gray-300 p-2 invoice-body" style={{ marginBottom: '8px', fontSize: '12px' }}>
             <span className="font-medium">お振込先: </span>
             {companyInfo.bankName} {companyInfo.bankBranch} {companyInfo.accountType} {companyInfo.accountNumber} {companyInfo.accountHolder}
           </div>
         )}
 
-        {/* 備考: 最大3行程度、空なら非表示 */}
-        {invoice?.remarks && (
+        {/* 備考 */}
+        {showFooterItem('remarks') && invoice?.remarks && (
           <div className="border border-gray-300 p-2">
             <div className="invoice-body font-medium" style={{ fontSize: '12px' }}>備考</div>
             <div className="invoice-small" style={{ fontSize: '11px', color: '#666', maxHeight: '48px', overflow: 'hidden', lineHeight: '1.4' }}>
@@ -1010,7 +1172,17 @@ export default function InvoicePrintPage() {
             </div>
           </div>
         )}
-      </div>
+      </>
+    );
+
+    return (
+      <InvoicePagesContainer
+        pages={paginatedPages}
+        renderHeader={renderMinimalHeader}
+        renderLineItems={renderMinimalLineItems}
+        renderFooter={renderMinimalFooter}
+        className="invoice-body"
+      />
     );
   }
 
