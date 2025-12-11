@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useRef, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { ArrowLeft, Plus, Trash2, Save, Search, Calculator, Home, AlertCircle } from 'lucide-react'
+import { Plus, Trash2, Save, Search, Calculator, Home, AlertCircle } from 'lucide-react'
 import { useWorkDictionary } from '@/hooks/useWorkDictionary'
 import { supabase } from '@/lib/supabase'
 import { generateDocumentNumber, parseDocumentNumber } from '@/lib/utils'
@@ -1818,15 +1818,8 @@ function InvoiceCreateContent() {
                 保存
               </button>
               <button
-                onClick={() => router.back()}
-                className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 flex items-center gap-2 font-medium"
-              >
-                <ArrowLeft size={20} />
-                戻る
-              </button>
-              <button
                 onClick={() => router.push('/')}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2 font-medium"
+                className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 flex items-center gap-2 font-medium"
               >
                 <Home size={20} />
                 メニューへ
