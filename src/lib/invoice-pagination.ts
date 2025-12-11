@@ -86,60 +86,87 @@ export function calculateGroupRowCount(group: GroupedLineItem): number {
 /**
  * グループリストをページに分割
  *
- * シンプルなルール:
- * - 1ページ目: 24行まで（フッターなし前提）
- * - 2ページ目以降: 36行まで（フッターなし前提）
- * - フッターの表示調整は表示側で行う
+ * ルール:
+ * - 1ページ目（フッターなし）: 24行まで
+ * - 1ページ目（フッターあり＝最終）: 18行まで
+ * - 2ページ目以降（フッターなし）: 36行まで
+ * - 2ページ目以降（フッターあり＝最終）: 30行まで
  */
 export function paginateLineItems(
   groups: GroupedLineItem[],
   config: PaginationConfig = DEFAULT_PAGINATION_CONFIG
 ): InvoicePage[] {
-  // フッターなしの最大行数（常にこれで分割）
-  const page1MaxRows = config.page1MaxRows + FOOTER_ROWS; // 24行
-  const pageNMaxRows = config.pageNMaxRows + FOOTER_ROWS; // 36行
+  // 行数設定
+  const page1WithFooter = config.page1MaxRows;              // 18行
+  const page1NoFooter = config.page1MaxRows + FOOTER_ROWS;  // 24行
+  const pageNWithFooter = config.pageNMaxRows;              // 30行
+  const pageNNoFooter = config.pageNMaxRows + FOOTER_ROWS;  // 36行
 
-  const pages: InvoicePage[] = [];
+  // まずフッターなしの最大行数で仮分割
+  const tempPages: GroupedLineItem[][] = [];
   let currentPageItems: GroupedLineItem[] = [];
   let currentRowCount = 0;
   let pageNumber = 1;
 
   for (const group of groups) {
     const groupRowCount = calculateGroupRowCount(group);
-    const maxRows = pageNumber === 1 ? page1MaxRows : pageNMaxRows;
+    const maxRows = pageNumber === 1 ? page1NoFooter : pageNNoFooter;
 
-    // このグループを追加すると溢れる場合
     if (currentRowCount + groupRowCount > maxRows && currentPageItems.length > 0) {
-      // 現在のページを確定
-      pages.push({
-        pageNumber,
-        isFirstPage: pageNumber === 1,
-        isLastPage: false,
-        items: currentPageItems,
-        showHeader: pageNumber === 1,
-        showFooter: false,
-      });
+      tempPages.push(currentPageItems);
       pageNumber++;
       currentPageItems = [];
       currentRowCount = 0;
     }
 
-    // グループを現在のページに追加
     currentPageItems.push(group);
     currentRowCount += groupRowCount;
   }
 
-  // 最後のページを追加
   if (currentPageItems.length > 0) {
-    pages.push({
-      pageNumber,
-      isFirstPage: pageNumber === 1,
-      isLastPage: true,
-      items: currentPageItems,
-      showHeader: pageNumber === 1,
-      showFooter: true,
-    });
+    tempPages.push(currentPageItems);
   }
+
+  // 最終ページがフッターありの行数を超えていたら再分割
+  if (tempPages.length > 0) {
+    const lastPageIndex = tempPages.length - 1;
+    const lastPageItems = tempPages[lastPageIndex];
+    const lastPageRowCount = lastPageItems.reduce((sum, g) => sum + calculateGroupRowCount(g), 0);
+    const lastPageMaxRows = lastPageIndex === 0 ? page1WithFooter : pageNWithFooter;
+
+    // 最終ページが溢れている場合
+    if (lastPageRowCount > lastPageMaxRows) {
+      // 最終ページを再分割
+      const newLastPage: GroupedLineItem[] = [];
+      const overflow: GroupedLineItem[] = [];
+      let count = 0;
+
+      for (const group of lastPageItems) {
+        const groupRowCount = calculateGroupRowCount(group);
+        if (count + groupRowCount <= lastPageMaxRows) {
+          newLastPage.push(group);
+          count += groupRowCount;
+        } else {
+          overflow.push(group);
+        }
+      }
+
+      tempPages[lastPageIndex] = newLastPage;
+      if (overflow.length > 0) {
+        tempPages.push(overflow);
+      }
+    }
+  }
+
+  // InvoicePage形式に変換
+  const pages: InvoicePage[] = tempPages.map((items, index) => ({
+    pageNumber: index + 1,
+    isFirstPage: index === 0,
+    isLastPage: index === tempPages.length - 1,
+    items,
+    showHeader: index === 0,
+    showFooter: index === tempPages.length - 1,
+  }));
 
   // ページがない場合は空のページを追加
   if (pages.length === 0) {
