@@ -212,10 +212,18 @@ export default function CustomerListPage() {
     searchCustomers()
   }, [searchKeyword, db])
 
-  // 初期データロード
+  // 初期データロード＆マスタ自動同期
   useEffect(() => {
-    setCustomers(db.customers)
-  }, [db])
+    const initializeData = async () => {
+      // 初回またはデータが空の場合、マスタから自動同期
+      if (db.customers.length === 0) {
+        db.syncFromCategoryMaster(categoryDB)
+        await db.syncFromOtherCustomersMaster()
+      }
+      setCustomers([...db.customers])
+    }
+    initializeData()
+  }, [db, categoryDB])
 
   const handleBack = () => router.push('/')
 
