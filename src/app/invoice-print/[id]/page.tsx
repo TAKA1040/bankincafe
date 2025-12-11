@@ -1105,35 +1105,35 @@ export default function InvoicePrintPage() {
     );
 
     // ミニマル用明細テーブル（ページ内アイテム用）
-    // 空白行で埋めて枠を統一する
-    const MIN_ROWS_PAGE1 = 15; // 1ページ目（ヘッダーあり）の行数
-    const MIN_ROWS_OTHER = 25; // 2ページ目以降の行数
-    const MIN_ROWS_WITH_FOOTER = 18; // フッターありページの行数
+    // ページの残りスペースを計算して空白行で埋める
+    // A4: 297mm - padding 30mm = 267mm使用可能
+    // 行の高さ: 約8mm（p-2 = 8px padding × 2 + font 12px = 約28px ≈ 7.4mm）
+    // ヘッダー部分: 約80mm、フッター部分: 約50mm
+    const ROW_HEIGHT_MM = 8;
+    const PAGE_CONTENT_HEIGHT_MM = 267; // A4 - 上下パディング
+    const HEADER_HEIGHT_MM = 85; // ヘッダー部分の高さ
+    const FOOTER_HEIGHT_MM = 55; // フッター部分の高さ
+    const TABLE_HEADER_HEIGHT_MM = 10; // テーブルヘッダー行
 
     const renderMinimalLineItems = (pageItems: GroupedLineItem[], pageInfo: PageRenderInfo) => {
       // 実際のデータ行数を計算
       const dataRowCount = pageItems.reduce((sum, group) => sum + group.items.length, 0);
 
-      // ページの種類に応じた最小行数を決定
-      // ヘッダーあり（1ページ目）とヘッダーなし（2ページ目以降）で行数が変わる
-      // フッターあり/なしでも変わる
-      let minRows = MIN_ROWS_OTHER;
-      if (pageInfo.showHeader && pageInfo.showFooter) {
-        // 1ページ目でフッターもある（1ページ完結）
-        minRows = MIN_ROWS_PAGE1;
-      } else if (pageInfo.showHeader && !pageInfo.showFooter) {
-        // 1ページ目でフッターなし（2ページ以上ある）
-        minRows = MIN_ROWS_PAGE1;
-      } else if (!pageInfo.showHeader && pageInfo.showFooter) {
-        // 2ページ目以降でフッターあり（最終ページ）
-        minRows = MIN_ROWS_WITH_FOOTER;
-      } else {
-        // 2ページ目以降でフッターなし（中間ページ）
-        minRows = MIN_ROWS_OTHER;
+      // ページの種類に応じた使用可能な高さを計算
+      let availableHeight = PAGE_CONTENT_HEIGHT_MM;
+      if (pageInfo.showHeader) {
+        availableHeight -= HEADER_HEIGHT_MM;
+      }
+      if (pageInfo.showFooter) {
+        availableHeight -= FOOTER_HEIGHT_MM;
       }
 
-      // 空白行の数
-      const emptyRowCount = Math.max(0, minRows - dataRowCount);
+      // テーブルヘッダーを除いた行数を計算
+      const tableBodyHeight = availableHeight - TABLE_HEADER_HEIGHT_MM;
+      const maxRows = Math.floor(tableBodyHeight / ROW_HEIGHT_MM);
+
+      // 空白行の数（データ行との差分）
+      const emptyRowCount = Math.max(0, maxRows - dataRowCount);
 
       return (
         <table className="w-full border-collapse" style={{ tableLayout: 'fixed', fontSize: '12px', borderCollapse: 'collapse' }}>
