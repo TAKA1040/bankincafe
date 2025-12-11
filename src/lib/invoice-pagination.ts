@@ -58,10 +58,11 @@ export interface PaginationConfig {
 }
 
 // デフォルト設定（後で調整可能）
-// ※ page.tsx の MAX_ROWS_PAGE1, MAX_ROWS_OTHER と同期させること
+// ページ分割用の設定（データをこの行数で分割）
+// ※ page.tsx の MAX_DISPLAY_* はこれより大きく設定して空白行を作る
 export const DEFAULT_PAGINATION_CONFIG: PaginationConfig = {
-  page1MaxRows: 18,    // 1ページ目はヘッダー・フッターがあるので少なめ
-  pageNMaxRows: 30,    // 2ページ目以降はヘッダーなしで多め
+  page1MaxRows: 12,    // 1ページ目のデータ行数（フッターありを想定）
+  pageNMaxRows: 24,    // 2ページ目以降のデータ行数（フッターありを想定）
   rowHeight: 24,
   childRowHeight: 18,
 };

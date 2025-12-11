@@ -1106,26 +1106,32 @@ export default function InvoicePrintPage() {
 
     // ミニマル用明細テーブル（ページ内アイテム用）
     // シンプルなルール:
-    // 1. 1ページ目（ヘッダーあり）の最大行数を基準にする
-    // 2. フッターがあるページは、フッター分だけ行数を減らす
-    const MAX_ROWS_PAGE1 = 18; // 1ページ目の最大行数（ヘッダーあり）
-    const MAX_ROWS_OTHER = 30; // 2ページ目以降の最大行数（ヘッダーなし）
+    // 1. 各ページで限界まで枠を作る
+    // 2. フッターがあるページは、フッター分だけ枠を減らす
+    //
+    // ページごとの最大表示行数（データ+空白行）
+    // - 1ページ目フッターなし: 18行（ヘッダー分のスペースを使う）
+    // - 1ページ目フッターあり: 12行（ヘッダー+フッター分を引く）
+    // - 2ページ目以降フッターなし: 30行
+    // - 2ページ目以降フッターあり: 24行
+    const MAX_DISPLAY_PAGE1 = 18; // 1ページ目の最大表示行数
+    const MAX_DISPLAY_OTHER = 30; // 2ページ目以降の最大表示行数
     const FOOTER_ROWS = 6; // フッターが占める行数分
 
     const renderMinimalLineItems = (pageItems: GroupedLineItem[], pageInfo: PageRenderInfo) => {
       // 実際のデータ行数を計算
       const dataRowCount = pageItems.reduce((sum, group) => sum + group.items.length, 0);
 
-      // ベースの行数を決定（ヘッダー有無で変わる）
-      let maxRows = pageInfo.showHeader ? MAX_ROWS_PAGE1 : MAX_ROWS_OTHER;
+      // 表示する最大行数を決定
+      let maxDisplayRows = pageInfo.showHeader ? MAX_DISPLAY_PAGE1 : MAX_DISPLAY_OTHER;
 
       // フッターがあるページは行数を減らす
       if (pageInfo.showFooter) {
-        maxRows -= FOOTER_ROWS;
+        maxDisplayRows -= FOOTER_ROWS;
       }
 
-      // 空白行の数（データ行との差分）
-      const emptyRowCount = Math.max(0, maxRows - dataRowCount);
+      // 空白行の数（最大表示行数 - データ行数）
+      const emptyRowCount = Math.max(0, maxDisplayRows - dataRowCount);
 
       return (
         <table className="w-full border-collapse" style={{ tableLayout: 'fixed', fontSize: '12px', borderCollapse: 'collapse' }}>
