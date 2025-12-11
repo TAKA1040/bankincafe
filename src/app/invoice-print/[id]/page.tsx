@@ -1105,32 +1105,24 @@ export default function InvoicePrintPage() {
     );
 
     // ミニマル用明細テーブル（ページ内アイテム用）
-    // ページの残りスペースを計算して空白行で埋める
-    // A4: 297mm - padding 30mm = 267mm使用可能
-    // 行の高さ: 約8mm（p-2 = 8px padding × 2 + font 12px = 約28px ≈ 7.4mm）
-    // ヘッダー部分: 約80mm、フッター部分: 約50mm
-    const ROW_HEIGHT_MM = 8;
-    const PAGE_CONTENT_HEIGHT_MM = 267; // A4 - 上下パディング
-    const HEADER_HEIGHT_MM = 85; // ヘッダー部分の高さ
-    const FOOTER_HEIGHT_MM = 55; // フッター部分の高さ
-    const TABLE_HEADER_HEIGHT_MM = 10; // テーブルヘッダー行
+    // シンプルなルール:
+    // 1. 1ページ目（ヘッダーあり）の最大行数を基準にする
+    // 2. フッターがあるページは、フッター分だけ行数を減らす
+    const MAX_ROWS_PAGE1 = 18; // 1ページ目の最大行数（ヘッダーあり）
+    const MAX_ROWS_OTHER = 30; // 2ページ目以降の最大行数（ヘッダーなし）
+    const FOOTER_ROWS = 6; // フッターが占める行数分
 
     const renderMinimalLineItems = (pageItems: GroupedLineItem[], pageInfo: PageRenderInfo) => {
       // 実際のデータ行数を計算
       const dataRowCount = pageItems.reduce((sum, group) => sum + group.items.length, 0);
 
-      // ページの種類に応じた使用可能な高さを計算
-      let availableHeight = PAGE_CONTENT_HEIGHT_MM;
-      if (pageInfo.showHeader) {
-        availableHeight -= HEADER_HEIGHT_MM;
-      }
-      if (pageInfo.showFooter) {
-        availableHeight -= FOOTER_HEIGHT_MM;
-      }
+      // ベースの行数を決定（ヘッダー有無で変わる）
+      let maxRows = pageInfo.showHeader ? MAX_ROWS_PAGE1 : MAX_ROWS_OTHER;
 
-      // テーブルヘッダーを除いた行数を計算
-      const tableBodyHeight = availableHeight - TABLE_HEADER_HEIGHT_MM;
-      const maxRows = Math.floor(tableBodyHeight / ROW_HEIGHT_MM);
+      // フッターがあるページは行数を減らす
+      if (pageInfo.showFooter) {
+        maxRows -= FOOTER_ROWS;
+      }
 
       // 空白行の数（データ行との差分）
       const emptyRowCount = Math.max(0, maxRows - dataRowCount);
