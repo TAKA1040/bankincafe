@@ -402,6 +402,57 @@ class RegistrationMasterDB {
   }
 }
 
+// その他顧客マスターDBクラス（件名・登録番号と同じ構造）
+class OtherCustomerMasterDB {
+  private readonly STORAGE_KEY = 'bankin_other_customer_master'
+
+  getCustomers() {
+    try {
+      if (typeof window === 'undefined') return []
+      const stored = localStorage.getItem(this.STORAGE_KEY)
+      return stored ? JSON.parse(stored) : []
+    } catch {
+      return []
+    }
+  }
+
+  searchCustomers(keyword: string) {
+    if (!keyword.trim()) return this.getCustomers()
+    const normalizedKeyword = keyword.toLowerCase()
+    return this.getCustomers()
+      .filter((customer: any) =>
+        customer.customerName.toLowerCase().includes(normalizedKeyword)
+      )
+      .sort((a: any, b: any) => b.usageCount - a.usageCount)
+      .slice(0, 8)
+  }
+
+  autoRegisterCustomer(customerName: string) {
+    const customers = this.getCustomers()
+    const existing = customers.find((cust: any) =>
+      cust.customerName.toLowerCase() === customerName.toLowerCase()
+    )
+
+    if (existing) {
+      const updated = customers.map((cust: any) =>
+        cust.id === existing.id
+          ? { ...cust, usageCount: cust.usageCount + 1, lastUsedAt: new Date().toISOString().split('T')[0] }
+          : cust
+      )
+      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(updated))
+    } else {
+      const newCustomer = {
+        id: Date.now().toString(),
+        customerName: customerName,
+        usageCount: 1,
+        lastUsedAt: new Date().toISOString().split('T')[0]
+      }
+      customers.push(newCustomer)
+      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(customers))
+    }
+  }
+}
+
 // 顧客カテゴリーDBクラス
 class CustomerCategoryDB {
   private readonly STORAGE_KEY = 'bankin_customer_categories'
@@ -455,6 +506,7 @@ function InvoiceCreateContent() {
   const [categoryDb, setCategoryDb] = useState<CustomerCategoryDB | null>(null)
   const [subjectDb, setSubjectDb] = useState<SubjectMasterDB | null>(null)
   const [registrationDb, setRegistrationDb] = useState<RegistrationMasterDB | null>(null)
+  const [otherCustomerDb, setOtherCustomerDb] = useState<OtherCustomerMasterDB | null>(null)
 
   // Supabaseから最大連番を取得する関数
   const getMaxSequence = async (year: string, month: string, type: 'invoice' | 'estimate'): Promise<number> => {
@@ -983,7 +1035,8 @@ function InvoiceCreateContent() {
     
     setSubjectDb(subjectDatabase)
     setRegistrationDb(registrationDatabase)
-    
+    setOtherCustomerDb(new OtherCustomerMasterDB())
+
     // Supabaseから件名マスタデータを取得
     fetchSubjectMasterData()
     
@@ -1843,6 +1896,56 @@ function InvoiceCreateContent() {
         }
       }
 
+      // 確定保存の場合のみ、Supabaseマスタに自動登録
+      if (!isDraft) {
+        // 件名マスタに登録
+        if (subject.trim()) {
+          const { error: subjectError } = await supabase
+            .from('subject_master')
+            .upsert(
+              { subject_name: subject.trim() },
+              { onConflict: 'subject_name', ignoreDuplicates: true }
+            )
+          if (subjectError) {
+            console.error('件名マスタ登録エラー:', subjectError)
+          }
+        }
+
+        // 登録番号マスタに登録
+        if (registrationNumber && registrationNumber.trim()) {
+          const { error: regError } = await supabase
+            .from('registration_number_master')
+            .upsert(
+              {
+                registration_number: registrationNumber.trim(),
+                usage_count: 1,
+                last_used_at: new Date().toISOString()
+              },
+              { onConflict: 'registration_number', ignoreDuplicates: true }
+            )
+          if (regError) {
+            console.error('登録番号マスタ登録エラー:', regError)
+          }
+        }
+
+        // その他顧客マスタに登録（「その他」カテゴリーの場合のみ）
+        if (customerCategory === 'other' && customerName.trim()) {
+          const { error: customerError } = await (supabase as any)
+            .from('other_customers')
+            .upsert(
+              {
+                customer_name: customerName.trim(),
+                usage_count: 1,
+                last_used_at: new Date().toISOString()
+              },
+              { onConflict: 'customer_name', ignoreDuplicates: true }
+            )
+          if (customerError) {
+            console.error('その他顧客マスタ登録エラー:', customerError)
+          }
+        }
+      }
+
       alert(isDraft ? `${docTypeName}を下書き保存しました` : `${docTypeName}を確定保存しました`)
       router.push('/invoice-list')
     } catch (error) {
@@ -2059,11 +2162,17 @@ function InvoiceCreateContent() {
                     type="text"
                     value={customerName}
                     onChange={(e) => handleCustomerNameChange(e.target.value)}
-                    onBlur={() => setTimeout(() => setShowCustomerSuggestions(false), 200)}
+                    onBlur={() => {
+                      // 「その他」カテゴリーの場合、顧客名をlocalStorageに自動登録
+                      if (customerCategory === 'other' && customerName.trim() && otherCustomerDb) {
+                        otherCustomerDb.autoRegisterCustomer(customerName.trim())
+                      }
+                      setTimeout(() => setShowCustomerSuggestions(false), 200)
+                    }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     placeholder={
-                      customerCategory === 'other' 
-                        ? '顧客名を入力してください' 
+                      customerCategory === 'other'
+                        ? '顧客名を入力してください'
                         : customerCategories.find(cat => cat.id === customerCategory)?.companyName || '顧客名を入力してください'
                     }
                     required
