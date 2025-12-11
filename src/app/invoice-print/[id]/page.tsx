@@ -1613,19 +1613,33 @@ export default function InvoicePrintPage() {
     };
 
     const renderFooter = () => (
-      <div className="flex justify-end" style={{ marginTop: '10px' }}>
-        <div className="text-[10px] border border-gray-400">
-          <div className="flex justify-between px-2 py-0.5 border-b border-gray-400">
-            <span>小計</span><span className="ml-4">¥{formatAmount(displayAmounts.subtotal)}</span>
-          </div>
-          <div className="flex justify-between px-2 py-0.5 border-b border-gray-400">
-            <span>消費税</span><span className="ml-4">¥{formatAmount(displayAmounts.tax)}</span>
-          </div>
-          <div className="flex justify-between px-2 py-0.5 bg-gray-100 font-bold">
-            <span>合計</span><span className="ml-4">¥{formatAmount(displayAmounts.total)}</span>
+      <>
+        <div className="flex justify-end mb-2" style={{ marginTop: '10px' }}>
+          <div className="text-[10px] border border-gray-400">
+            <div className="flex justify-between px-2 py-0.5 border-b border-gray-400">
+              <span>小計</span><span className="ml-4">¥{formatAmount(displayAmounts.subtotal)}</span>
+            </div>
+            <div className="flex justify-between px-2 py-0.5 border-b border-gray-400">
+              <span>消費税</span><span className="ml-4">¥{formatAmount(displayAmounts.tax)}</span>
+            </div>
+            <div className="flex justify-between px-2 py-0.5 bg-gray-100 font-bold">
+              <span>合計</span><span className="ml-4">¥{formatAmount(displayAmounts.total)}</span>
+            </div>
           </div>
         </div>
-      </div>
+        {companyInfo?.bankName && (
+          <div className="border border-gray-400 p-2 mb-2">
+            <div className="text-[10px] font-bold mb-1">お振込先</div>
+            <div className="text-[10px]">
+              {companyInfo.bankName} {companyInfo.bankBranch} {companyInfo.accountType} {companyInfo.accountNumber} {companyInfo.accountHolder}
+            </div>
+          </div>
+        )}
+        <div className="border border-gray-300 p-2">
+          <div className="text-[10px] font-bold mb-1">備考</div>
+          <div className="text-[10px] text-gray-600 min-h-[20px]">{invoice?.remarks || ''}</div>
+        </div>
+      </>
     );
 
     return (
