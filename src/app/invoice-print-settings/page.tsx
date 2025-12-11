@@ -18,6 +18,7 @@ export default function InvoicePrintSettingsPage() {
   const {
     globalSettings,
     customerSettings,
+    customerList,
     loading,
     error,
     updateGlobalSettings,
@@ -29,7 +30,12 @@ export default function InvoicePrintSettingsPage() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [expandedCustomer, setExpandedCustomer] = useState<string | null>(null);
-  const [newCustomerName, setNewCustomerName] = useState('');
+  const [selectedCustomerName, setSelectedCustomerName] = useState('');
+
+  // 設定済み顧客名を除外した選択可能な顧客一覧
+  const availableCustomers = customerList.filter(
+    name => !customerSettings.some(s => s.customer_name === name)
+  );
 
   // グローバル設定の一時状態
   const [tempGlobalLayout, setTempGlobalLayout] = useState<LayoutId | null>(null);
@@ -63,16 +69,16 @@ export default function InvoicePrintSettingsPage() {
 
   // 顧客別設定を追加
   const handleAddCustomer = async () => {
-    if (!newCustomerName.trim()) return;
+    if (!selectedCustomerName) return;
     setSaving(true);
     try {
       await upsertCustomerSettings({
-        customer_name: newCustomerName.trim(),
+        customer_name: selectedCustomerName,
         layout: null,
         header_items: null,
         footer_items: null,
       });
-      setNewCustomerName('');
+      setSelectedCustomerName('');
       setMessage({ type: 'success', text: '顧客設定を追加しました' });
     } catch {
       setMessage({ type: 'error', text: '追加に失敗しました' });
@@ -260,16 +266,21 @@ export default function InvoicePrintSettingsPage() {
 
           {/* 新規追加 */}
           <div className="flex gap-2 mb-4">
-            <input
-              type="text"
-              value={newCustomerName}
-              onChange={(e) => setNewCustomerName(e.target.value)}
-              placeholder="顧客名を入力"
+            <select
+              value={selectedCustomerName}
+              onChange={(e) => setSelectedCustomerName(e.target.value)}
               className="flex-1 border border-gray-300 rounded-lg px-3 py-2"
-            />
+            >
+              <option value="">顧客を選択してください</option>
+              {availableCustomers.map((name) => (
+                <option key={name} value={name}>
+                  {name}
+                </option>
+              ))}
+            </select>
             <button
               onClick={handleAddCustomer}
-              disabled={saving || !newCustomerName.trim()}
+              disabled={saving || !selectedCustomerName}
               className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 disabled:opacity-50"
             >
               <Plus size={16} />

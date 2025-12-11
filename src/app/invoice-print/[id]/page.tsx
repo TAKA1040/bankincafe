@@ -1110,10 +1110,10 @@ export default function InvoicePrintPage() {
     // 2. フッターがあるページは、フッター分だけ枠を減らす
     //
     // ページごとの最大表示行数（データ+空白行）
-    // - 1ページ目フッターなし: 18行（ヘッダー分のスペースを使う）
-    // - 1ページ目フッターあり: 12行（ヘッダー+フッター分を引く）
-    // - 2ページ目以降フッターなし: 30行
-    // - 2ページ目以降フッターあり: 24行
+    // - 1ページ目フッターなし: 24行（18 + 6、フッター分も枠で埋める）
+    // - 1ページ目フッターあり: 18行
+    // - 2ページ目以降フッターなし: 36行（30 + 6）
+    // - 2ページ目以降フッターあり: 30行
     const MAX_DISPLAY_PAGE1 = 18; // 1ページ目の最大表示行数
     const MAX_DISPLAY_OTHER = 30; // 2ページ目以降の最大表示行数
     const FOOTER_ROWS = 6; // フッターが占める行数分
@@ -1125,9 +1125,9 @@ export default function InvoicePrintPage() {
       // 表示する最大行数を決定
       let maxDisplayRows = pageInfo.showHeader ? MAX_DISPLAY_PAGE1 : MAX_DISPLAY_OTHER;
 
-      // フッターがあるページは行数を減らす
-      if (pageInfo.showFooter) {
-        maxDisplayRows -= FOOTER_ROWS;
+      // フッターがないページは、フッター分のスペースも枠で埋める
+      if (!pageInfo.showFooter) {
+        maxDisplayRows += FOOTER_ROWS;
       }
 
       // 空白行の数（最大表示行数 - データ行数）

@@ -63,6 +63,7 @@ export interface CustomerSettings {
 export function useInvoicePrintSettings() {
   const [globalSettings, setGlobalSettings] = useState<GlobalSettings | null>(null);
   const [customerSettings, setCustomerSettings] = useState<CustomerSettings[]>([]);
+  const [customerList, setCustomerList] = useState<string[]>([]); // マスタからの顧客一覧
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -100,15 +101,40 @@ export function useInvoicePrintSettings() {
     }
   }, []);
 
+  // invoicesから顧客一覧を取得（マスタ代わり）
+  const fetchCustomerList = useCallback(async () => {
+    try {
+      const { data, error: fetchError } = await (supabase as any)
+        .from('invoices')
+        .select('customer_name')
+        .not('customer_name', 'is', null)
+        .not('customer_name', 'eq', '')
+        .order('customer_name');
+
+      if (fetchError) throw fetchError;
+
+      // ユニークな顧客名のみ抽出
+      const uniqueNames = [...new Set(
+        (data as { customer_name: string }[])
+          .map(d => d.customer_name?.trim())
+          .filter(Boolean)
+      )].sort();
+
+      setCustomerList(uniqueNames);
+    } catch (err) {
+      console.error('顧客一覧の取得に失敗:', err);
+    }
+  }, []);
+
   // 初期読み込み
   useEffect(() => {
     const load = async () => {
       setLoading(true);
-      await Promise.all([fetchGlobalSettings(), fetchCustomerSettings()]);
+      await Promise.all([fetchGlobalSettings(), fetchCustomerSettings(), fetchCustomerList()]);
       setLoading(false);
     };
     load();
-  }, [fetchGlobalSettings, fetchCustomerSettings]);
+  }, [fetchGlobalSettings, fetchCustomerSettings, fetchCustomerList]);
 
   // グローバル設定を更新
   const updateGlobalSettings = useCallback(async (settings: Partial<GlobalSettings>) => {
@@ -193,12 +219,13 @@ export function useInvoicePrintSettings() {
   return {
     globalSettings,
     customerSettings,
+    customerList, // マスタからの顧客一覧
     loading,
     error,
     updateGlobalSettings,
     upsertCustomerSettings,
     deleteCustomerSettings,
     getSettingsForCustomer,
-    refetch: () => Promise.all([fetchGlobalSettings(), fetchCustomerSettings()]),
+    refetch: () => Promise.all([fetchGlobalSettings(), fetchCustomerSettings(), fetchCustomerList()]),
   };
 }
