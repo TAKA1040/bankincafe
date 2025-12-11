@@ -1247,11 +1247,14 @@ export default function InvoicePrintPage() {
     );
   }
 
-  // 2. 標準レイアウト（適格請求書対応）- A4最適化
+  // 2. 標準レイアウト（適格請求書対応）- A4最適化・ページ分割対応
   function StandardLayout() {
-    return (
-      <div className="a4-page text-xs">
-        {/* ヘッダー */}
+    const MAX_DISPLAY_PAGE1 = 18;
+    const MAX_DISPLAY_OTHER = 30;
+    const FOOTER_ROWS = 6;
+
+    const renderHeader = () => (
+      <>
         <div className="border-2 border-gray-800 mb-2">
           <div className="bg-gray-800 text-white px-2 py-1 text-center">
             <h1 className="text-base font-bold">適格請求書</h1>
@@ -1276,8 +1279,6 @@ export default function InvoicePrintPage() {
             </div>
           </div>
         </div>
-
-        {/* 請求先 */}
         <div className="border border-gray-400 mb-2 p-2">
           <div className="text-[10px] text-gray-500">【請求先】</div>
           <div className="font-bold">{customerInfo.name} 様</div>
@@ -1286,12 +1287,66 @@ export default function InvoicePrintPage() {
             {invoice?.registration_number && ` | 登録番号: ${invoice?.registration_number}`}
           </div>
         </div>
+      </>
+    );
 
-        {/* 明細テーブル */}
-        <LineItemsTable headerBg="bg-gray-800 text-white" borderColor="border-gray-400" compact={true} />
+    const renderLineItems = (pageItems: GroupedLineItem[], pageInfo: PageRenderInfo) => {
+      const dataRowCount = pageItems.reduce((sum, group) => sum + group.items.length, 0);
+      let maxDisplayRows = pageInfo.showHeader ? MAX_DISPLAY_PAGE1 : MAX_DISPLAY_OTHER;
+      if (!pageInfo.showFooter) maxDisplayRows += FOOTER_ROWS;
+      const emptyRowCount = Math.max(0, maxDisplayRows - dataRowCount);
 
-        {/* 合計 */}
-        <div className="flex justify-end mb-2">
+      return (
+        <table className="w-full border-collapse" style={{ tableLayout: 'fixed', fontSize: '12px' }}>
+          <colgroup>
+            <col style={{ width: '58%' }} />
+            <col style={{ width: '10%' }} />
+            <col style={{ width: '16%' }} />
+            <col style={{ width: '16%' }} />
+          </colgroup>
+          <thead>
+            <tr className="bg-gray-800 text-white">
+              <th className="p-2 text-left border border-gray-400">項目</th>
+              <th className="p-2 text-center border border-gray-400">数量</th>
+              <th className="p-2 text-right border border-gray-400">単価</th>
+              <th className="p-2 text-right border border-gray-400">金額</th>
+            </tr>
+          </thead>
+          <tbody>
+            {pageItems.map((group) =>
+              group.items.map((item, idx) => (
+                <tr key={`${group.lineNo}-${idx}`}>
+                  <td className={`p-2 border border-gray-400 ${!item.isFirstOfSet && group.isSet ? 'pl-6 text-gray-600' : ''}`}>
+                    {item.label}
+                  </td>
+                  <td className="p-2 text-center border border-gray-400">
+                    {item.isFirstOfSet || !group.isSet ? (item.quantity > 0 ? item.quantity : '') : ''}
+                  </td>
+                  <td className="p-2 text-right border border-gray-400">
+                    {item.isFirstOfSet || !group.isSet ? (item.unitPrice > 0 ? `¥${formatAmount(item.unitPrice)}` : '') : ''}
+                  </td>
+                  <td className="p-2 text-right border border-gray-400 font-medium">
+                    {item.isFirstOfSet || !group.isSet ? (item.amount > 0 ? `¥${formatAmount(item.amount)}` : '') : ''}
+                  </td>
+                </tr>
+              ))
+            )}
+            {Array.from({ length: emptyRowCount }).map((_, idx) => (
+              <tr key={`empty-${idx}`}>
+                <td className="p-2 border border-gray-400">&nbsp;</td>
+                <td className="p-2 border border-gray-400">&nbsp;</td>
+                <td className="p-2 border border-gray-400">&nbsp;</td>
+                <td className="p-2 border border-gray-400">&nbsp;</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      );
+    };
+
+    const renderFooter = () => (
+      <>
+        <div className="flex justify-end mb-2" style={{ marginTop: '10px' }}>
           <div className="w-52 border border-gray-400">
             <div className="flex justify-between px-2 py-1 border-b border-gray-400 bg-gray-100">
               <span>税抜金額</span><span>¥{formatAmount(displayAmounts.subtotal)}</span>
@@ -1304,37 +1359,41 @@ export default function InvoicePrintPage() {
             </div>
           </div>
         </div>
-
-        {/* 振込先 */}
         {companyInfo?.bankName && (
           <div className="border border-gray-400 mb-2 p-2 bg-yellow-50">
             <div className="text-[10px] font-bold mb-1">【お振込先】</div>
             <div className="text-[10px]">
               {companyInfo.bankName} {companyInfo.bankBranch} {companyInfo.accountType} {companyInfo.accountNumber} {companyInfo.accountHolder}
             </div>
-            <div className="text-[10px] text-gray-500 mt-1">※振込手数料はお客様負担でお願いいたします</div>
           </div>
         )}
+        {invoice?.remarks && (
+          <div className="border border-gray-300 p-2 mb-2">
+            <div className="text-[10px] font-bold mb-1">備考</div>
+            <div className="text-[10px] text-gray-600">{invoice.remarks}</div>
+          </div>
+        )}
+      </>
+    );
 
-        {/* 備考 */}
-        <div className="border border-gray-300 p-2 mb-2">
-          <div className="text-[10px] font-bold mb-1">備考</div>
-          <div className="text-[10px] text-gray-600 min-h-[20px]">{invoice?.remarks || ''}</div>
-        </div>
-
-        {/* フッター */}
-        <div className="text-center text-[10px] text-gray-500 border-t border-gray-300 pt-2">
-          本書面は適格請求書（インボイス）として発行されています
-        </div>
-      </div>
+    return (
+      <InvoicePagesContainer
+        pages={paginatedPages}
+        renderHeader={renderHeader}
+        renderLineItems={renderLineItems}
+        renderFooter={renderFooter}
+      />
     );
   }
 
-  // 3. モダンレイアウト - A4最適化・青基調
+  // 3. モダンレイアウト - A4最適化・青基調・ページ分割対応
   function ModernLayout() {
-    return (
-      <div className="a4-page text-xs">
-        {/* ヘッダー */}
+    const MAX_DISPLAY_PAGE1 = 18;
+    const MAX_DISPLAY_OTHER = 30;
+    const FOOTER_ROWS = 6;
+
+    const renderHeader = () => (
+      <>
         <div className="border-b-2 border-blue-600 pb-2 mb-2">
           <div className="flex justify-between items-start">
             <div>
@@ -1349,8 +1408,6 @@ export default function InvoicePrintPage() {
             </div>
           </div>
         </div>
-
-        {/* 請求先・請求元 */}
         <div className="grid grid-cols-2 gap-2 mb-2">
           <div className="bg-gray-50 p-2 rounded">
             <div className="text-[10px] text-gray-500 mb-1">請求先</div>
@@ -1366,12 +1423,66 @@ export default function InvoicePrintPage() {
             <div className="text-[10px] text-gray-600">TEL: {companyInfo?.phoneNumber}</div>
           </div>
         </div>
+      </>
+    );
 
-        {/* 明細テーブル */}
-        <LineItemsTable headerBg="bg-blue-600 text-white" borderColor="border-gray-300" compact={true} />
+    const renderLineItems = (pageItems: GroupedLineItem[], pageInfo: PageRenderInfo) => {
+      const dataRowCount = pageItems.reduce((sum, group) => sum + group.items.length, 0);
+      let maxDisplayRows = pageInfo.showHeader ? MAX_DISPLAY_PAGE1 : MAX_DISPLAY_OTHER;
+      if (!pageInfo.showFooter) maxDisplayRows += FOOTER_ROWS;
+      const emptyRowCount = Math.max(0, maxDisplayRows - dataRowCount);
 
-        {/* 合計 */}
-        <div className="flex justify-end mb-2">
+      return (
+        <table className="w-full border-collapse" style={{ tableLayout: 'fixed', fontSize: '12px' }}>
+          <colgroup>
+            <col style={{ width: '58%' }} />
+            <col style={{ width: '10%' }} />
+            <col style={{ width: '16%' }} />
+            <col style={{ width: '16%' }} />
+          </colgroup>
+          <thead>
+            <tr className="bg-blue-600 text-white">
+              <th className="p-2 text-left border border-gray-300">項目</th>
+              <th className="p-2 text-center border border-gray-300">数量</th>
+              <th className="p-2 text-right border border-gray-300">単価</th>
+              <th className="p-2 text-right border border-gray-300">金額</th>
+            </tr>
+          </thead>
+          <tbody>
+            {pageItems.map((group) =>
+              group.items.map((item, idx) => (
+                <tr key={`${group.lineNo}-${idx}`}>
+                  <td className={`p-2 border border-gray-300 ${!item.isFirstOfSet && group.isSet ? 'pl-6 text-gray-600' : ''}`}>
+                    {item.label}
+                  </td>
+                  <td className="p-2 text-center border border-gray-300">
+                    {item.isFirstOfSet || !group.isSet ? (item.quantity > 0 ? item.quantity : '') : ''}
+                  </td>
+                  <td className="p-2 text-right border border-gray-300">
+                    {item.isFirstOfSet || !group.isSet ? (item.unitPrice > 0 ? `¥${formatAmount(item.unitPrice)}` : '') : ''}
+                  </td>
+                  <td className="p-2 text-right border border-gray-300 font-medium">
+                    {item.isFirstOfSet || !group.isSet ? (item.amount > 0 ? `¥${formatAmount(item.amount)}` : '') : ''}
+                  </td>
+                </tr>
+              ))
+            )}
+            {Array.from({ length: emptyRowCount }).map((_, idx) => (
+              <tr key={`empty-${idx}`}>
+                <td className="p-2 border border-gray-300">&nbsp;</td>
+                <td className="p-2 border border-gray-300">&nbsp;</td>
+                <td className="p-2 border border-gray-300">&nbsp;</td>
+                <td className="p-2 border border-gray-300">&nbsp;</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      );
+    };
+
+    const renderFooter = () => (
+      <>
+        <div className="flex justify-end mb-2" style={{ marginTop: '10px' }}>
           <div className="w-48 bg-gray-50 rounded">
             <div className="flex justify-between px-2 py-1 border-b border-gray-200">
               <span>小計</span><span>¥{formatAmount(displayAmounts.subtotal)}</span>
@@ -1384,8 +1495,6 @@ export default function InvoicePrintPage() {
             </div>
           </div>
         </div>
-
-        {/* 振込先 */}
         {companyInfo?.bankName && (
           <div className="bg-blue-50 p-2 rounded mb-2">
             <div className="text-[10px] font-bold mb-1">お振込先</div>
@@ -1394,21 +1503,33 @@ export default function InvoicePrintPage() {
             </div>
           </div>
         )}
+        {invoice?.remarks && (
+          <div className="border border-gray-300 p-2 rounded">
+            <div className="text-[10px] font-bold mb-1">備考</div>
+            <div className="text-[10px] text-gray-600">{invoice.remarks}</div>
+          </div>
+        )}
+      </>
+    );
 
-        {/* 備考 */}
-        <div className="border border-gray-300 p-2 rounded">
-          <div className="text-[10px] font-bold mb-1">備考</div>
-          <div className="text-[10px] text-gray-600 min-h-[20px]">{invoice?.remarks || ''}</div>
-        </div>
-      </div>
+    return (
+      <InvoicePagesContainer
+        pages={paginatedPages}
+        renderHeader={renderHeader}
+        renderLineItems={renderLineItems}
+        renderFooter={renderFooter}
+      />
     );
   }
 
-  // 4. コンパクトレイアウト - A4最適化・最小余白
+  // 4. コンパクトレイアウト - A4最適化・最小余白・ページ分割対応
   function CompactLayout() {
-    return (
-      <div className="a4-page text-xs">
-        {/* ヘッダー（1行） */}
+    const MAX_DISPLAY_PAGE1 = 18;
+    const MAX_DISPLAY_OTHER = 30;
+    const FOOTER_ROWS = 6;
+
+    const renderHeader = () => (
+      <>
         <div className="flex justify-between items-center mb-2 pb-1 border-b border-gray-400">
           <div>
             <span className="font-bold">請求書</span>
@@ -1417,8 +1538,6 @@ export default function InvoicePrintPage() {
           </div>
           <div className="font-bold">¥{formatAmount(displayAmounts.total)}</div>
         </div>
-
-        {/* 3列情報 */}
         <div className="grid grid-cols-3 gap-2 mb-2 text-[10px]">
           <div className="border border-gray-300 p-1">
             <div className="text-gray-500">請求先</div>
@@ -1436,33 +1555,97 @@ export default function InvoicePrintPage() {
             <div>{companyInfo?.accountType} {companyInfo?.accountNumber}</div>
           </div>
         </div>
+      </>
+    );
 
-        {/* 明細テーブル */}
-        <LineItemsTable headerBg="bg-gray-200" borderColor="border-gray-400" compact={true} />
+    const renderLineItems = (pageItems: GroupedLineItem[], pageInfo: PageRenderInfo) => {
+      const dataRowCount = pageItems.reduce((sum, group) => sum + group.items.length, 0);
+      let maxDisplayRows = pageInfo.showHeader ? MAX_DISPLAY_PAGE1 : MAX_DISPLAY_OTHER;
+      if (!pageInfo.showFooter) maxDisplayRows += FOOTER_ROWS;
+      const emptyRowCount = Math.max(0, maxDisplayRows - dataRowCount);
 
-        {/* 合計（右寄せ・コンパクト） */}
-        <div className="flex justify-end">
-          <div className="text-[10px] border border-gray-400">
-            <div className="flex justify-between px-2 py-0.5 border-b border-gray-400">
-              <span>小計</span><span className="ml-4">¥{formatAmount(displayAmounts.subtotal)}</span>
-            </div>
-            <div className="flex justify-between px-2 py-0.5 border-b border-gray-400">
-              <span>消費税</span><span className="ml-4">¥{formatAmount(displayAmounts.tax)}</span>
-            </div>
-            <div className="flex justify-between px-2 py-0.5 bg-gray-100 font-bold">
-              <span>合計</span><span className="ml-4">¥{formatAmount(displayAmounts.total)}</span>
-            </div>
+      return (
+        <table className="w-full border-collapse" style={{ tableLayout: 'fixed', fontSize: '12px' }}>
+          <colgroup>
+            <col style={{ width: '58%' }} />
+            <col style={{ width: '10%' }} />
+            <col style={{ width: '16%' }} />
+            <col style={{ width: '16%' }} />
+          </colgroup>
+          <thead>
+            <tr className="bg-gray-200">
+              <th className="p-2 text-left border border-gray-400">項目</th>
+              <th className="p-2 text-center border border-gray-400">数量</th>
+              <th className="p-2 text-right border border-gray-400">単価</th>
+              <th className="p-2 text-right border border-gray-400">金額</th>
+            </tr>
+          </thead>
+          <tbody>
+            {pageItems.map((group) =>
+              group.items.map((item, idx) => (
+                <tr key={`${group.lineNo}-${idx}`}>
+                  <td className={`p-2 border border-gray-400 ${!item.isFirstOfSet && group.isSet ? 'pl-6 text-gray-600' : ''}`}>
+                    {item.label}
+                  </td>
+                  <td className="p-2 text-center border border-gray-400">
+                    {item.isFirstOfSet || !group.isSet ? (item.quantity > 0 ? item.quantity : '') : ''}
+                  </td>
+                  <td className="p-2 text-right border border-gray-400">
+                    {item.isFirstOfSet || !group.isSet ? (item.unitPrice > 0 ? `¥${formatAmount(item.unitPrice)}` : '') : ''}
+                  </td>
+                  <td className="p-2 text-right border border-gray-400 font-medium">
+                    {item.isFirstOfSet || !group.isSet ? (item.amount > 0 ? `¥${formatAmount(item.amount)}` : '') : ''}
+                  </td>
+                </tr>
+              ))
+            )}
+            {Array.from({ length: emptyRowCount }).map((_, idx) => (
+              <tr key={`empty-${idx}`}>
+                <td className="p-2 border border-gray-400">&nbsp;</td>
+                <td className="p-2 border border-gray-400">&nbsp;</td>
+                <td className="p-2 border border-gray-400">&nbsp;</td>
+                <td className="p-2 border border-gray-400">&nbsp;</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      );
+    };
+
+    const renderFooter = () => (
+      <div className="flex justify-end" style={{ marginTop: '10px' }}>
+        <div className="text-[10px] border border-gray-400">
+          <div className="flex justify-between px-2 py-0.5 border-b border-gray-400">
+            <span>小計</span><span className="ml-4">¥{formatAmount(displayAmounts.subtotal)}</span>
+          </div>
+          <div className="flex justify-between px-2 py-0.5 border-b border-gray-400">
+            <span>消費税</span><span className="ml-4">¥{formatAmount(displayAmounts.tax)}</span>
+          </div>
+          <div className="flex justify-between px-2 py-0.5 bg-gray-100 font-bold">
+            <span>合計</span><span className="ml-4">¥{formatAmount(displayAmounts.total)}</span>
           </div>
         </div>
       </div>
     );
+
+    return (
+      <InvoicePagesContainer
+        pages={paginatedPages}
+        renderHeader={renderHeader}
+        renderLineItems={renderLineItems}
+        renderFooter={renderFooter}
+      />
+    );
   }
 
-  // 5. 詳細型レイアウト - A4最適化・情報量多め
+  // 5. 詳細型レイアウト - A4最適化・情報量多め・ページ分割対応
   function DetailedLayout() {
-    return (
-      <div className="a4-page text-xs">
-        {/* ヘッダー */}
+    const MAX_DISPLAY_PAGE1 = 18;
+    const MAX_DISPLAY_OTHER = 30;
+    const FOOTER_ROWS = 6;
+
+    const renderHeader = () => (
+      <>
         <div className="border-2 border-gray-800 mb-2">
           <div className="bg-gray-800 text-white px-2 py-1 text-center">
             <h1 className="text-base font-bold">請 求 書</h1>
@@ -1488,8 +1671,6 @@ export default function InvoicePrintPage() {
             </div>
           </div>
         </div>
-
-        {/* 請求元・振込先 */}
         <div className="grid grid-cols-2 gap-2 mb-2">
           <div className="border border-gray-300 p-2">
             <div className="text-[10px] text-gray-500 border-b mb-1">請求元</div>
@@ -1507,12 +1688,66 @@ export default function InvoicePrintPage() {
             <div className="text-[10px]">名義: {companyInfo?.accountHolder}</div>
           </div>
         </div>
+      </>
+    );
 
-        {/* 明細テーブル */}
-        <LineItemsTable headerBg="bg-gray-800 text-white" borderColor="border-gray-300" compact={true} />
+    const renderLineItems = (pageItems: GroupedLineItem[], pageInfo: PageRenderInfo) => {
+      const dataRowCount = pageItems.reduce((sum, group) => sum + group.items.length, 0);
+      let maxDisplayRows = pageInfo.showHeader ? MAX_DISPLAY_PAGE1 : MAX_DISPLAY_OTHER;
+      if (!pageInfo.showFooter) maxDisplayRows += FOOTER_ROWS;
+      const emptyRowCount = Math.max(0, maxDisplayRows - dataRowCount);
 
-        {/* 合計 */}
-        <div className="flex justify-end mb-2">
+      return (
+        <table className="w-full border-collapse" style={{ tableLayout: 'fixed', fontSize: '12px' }}>
+          <colgroup>
+            <col style={{ width: '58%' }} />
+            <col style={{ width: '10%' }} />
+            <col style={{ width: '16%' }} />
+            <col style={{ width: '16%' }} />
+          </colgroup>
+          <thead>
+            <tr className="bg-gray-800 text-white">
+              <th className="p-2 text-left border border-gray-300">項目</th>
+              <th className="p-2 text-center border border-gray-300">数量</th>
+              <th className="p-2 text-right border border-gray-300">単価</th>
+              <th className="p-2 text-right border border-gray-300">金額</th>
+            </tr>
+          </thead>
+          <tbody>
+            {pageItems.map((group) =>
+              group.items.map((item, idx) => (
+                <tr key={`${group.lineNo}-${idx}`}>
+                  <td className={`p-2 border border-gray-300 ${!item.isFirstOfSet && group.isSet ? 'pl-6 text-gray-600' : ''}`}>
+                    {item.label}
+                  </td>
+                  <td className="p-2 text-center border border-gray-300">
+                    {item.isFirstOfSet || !group.isSet ? (item.quantity > 0 ? item.quantity : '') : ''}
+                  </td>
+                  <td className="p-2 text-right border border-gray-300">
+                    {item.isFirstOfSet || !group.isSet ? (item.unitPrice > 0 ? `¥${formatAmount(item.unitPrice)}` : '') : ''}
+                  </td>
+                  <td className="p-2 text-right border border-gray-300 font-medium">
+                    {item.isFirstOfSet || !group.isSet ? (item.amount > 0 ? `¥${formatAmount(item.amount)}` : '') : ''}
+                  </td>
+                </tr>
+              ))
+            )}
+            {Array.from({ length: emptyRowCount }).map((_, idx) => (
+              <tr key={`empty-${idx}`}>
+                <td className="p-2 border border-gray-300">&nbsp;</td>
+                <td className="p-2 border border-gray-300">&nbsp;</td>
+                <td className="p-2 border border-gray-300">&nbsp;</td>
+                <td className="p-2 border border-gray-300">&nbsp;</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      );
+    };
+
+    const renderFooter = () => (
+      <>
+        <div className="flex justify-end mb-2" style={{ marginTop: '10px' }}>
           <div className="w-48 border-2 border-gray-800">
             <div className="flex justify-between px-2 py-1 border-b border-gray-300">
               <span>小計</span><span>¥{formatAmount(displayAmounts.subtotal)}</span>
@@ -1525,26 +1760,35 @@ export default function InvoicePrintPage() {
             </div>
           </div>
         </div>
+        {invoice?.remarks && (
+          <div className="border border-gray-300 p-2">
+            <div className="text-[10px] font-bold mb-1">備考</div>
+            <div className="text-[10px] text-gray-600">{invoice.remarks}</div>
+          </div>
+        )}
+      </>
+    );
 
-        {/* 備考 */}
-        <div className="border border-gray-300 p-2">
-          <div className="text-[10px] font-bold mb-1">備考</div>
-          <div className="text-[10px] text-gray-600 min-h-[20px]">{invoice?.remarks || ''}</div>
-        </div>
-      </div>
+    return (
+      <InvoicePagesContainer
+        pages={paginatedPages}
+        renderHeader={renderHeader}
+        renderLineItems={renderLineItems}
+        renderFooter={renderFooter}
+      />
     );
   }
 
-  // 6. ジオメトリックレイアウト - A4最適化・ダーク基調
+  // 6. ジオメトリックレイアウト - A4最適化・ダーク基調・ページ分割対応
   function GeometricLayout() {
-    return (
-      <div className="a4-page text-xs">
-        <style jsx>{`
-          .geometric-accent { background: linear-gradient(45deg, #1e293b, #334155); }
-        `}</style>
+    const MAX_DISPLAY_PAGE1 = 18;
+    const MAX_DISPLAY_OTHER = 30;
+    const FOOTER_ROWS = 6;
+    const geometricStyle = { background: 'linear-gradient(45deg, #1e293b, #334155)' };
 
-        {/* ヘッダー */}
-        <div className="geometric-accent text-white p-2 mb-2 rounded">
+    const renderHeader = () => (
+      <>
+        <div className="text-white p-2 mb-2 rounded" style={geometricStyle}>
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-base font-bold">請 求 書</h1>
@@ -1558,8 +1802,6 @@ export default function InvoicePrintPage() {
             </div>
           </div>
         </div>
-
-        {/* 請求先・請求元 */}
         <div className="grid grid-cols-2 gap-2 mb-2">
           <div className="bg-gray-50 border-l-4 border-gray-800 p-2">
             <div className="text-[10px] text-gray-500 mb-1">請求先</div>
@@ -1575,12 +1817,66 @@ export default function InvoicePrintPage() {
             <div className="text-[10px] text-gray-600">TEL: {companyInfo?.phoneNumber}</div>
           </div>
         </div>
+      </>
+    );
 
-        {/* 明細テーブル */}
-        <LineItemsTable headerBg="geometric-accent text-white" borderColor="border-gray-300" compact={true} />
+    const renderLineItems = (pageItems: GroupedLineItem[], pageInfo: PageRenderInfo) => {
+      const dataRowCount = pageItems.reduce((sum, group) => sum + group.items.length, 0);
+      let maxDisplayRows = pageInfo.showHeader ? MAX_DISPLAY_PAGE1 : MAX_DISPLAY_OTHER;
+      if (!pageInfo.showFooter) maxDisplayRows += FOOTER_ROWS;
+      const emptyRowCount = Math.max(0, maxDisplayRows - dataRowCount);
 
-        {/* 合計 */}
-        <div className="flex justify-end mb-2">
+      return (
+        <table className="w-full border-collapse" style={{ tableLayout: 'fixed', fontSize: '12px' }}>
+          <colgroup>
+            <col style={{ width: '58%' }} />
+            <col style={{ width: '10%' }} />
+            <col style={{ width: '16%' }} />
+            <col style={{ width: '16%' }} />
+          </colgroup>
+          <thead>
+            <tr className="text-white" style={geometricStyle}>
+              <th className="p-2 text-left border border-gray-300">項目</th>
+              <th className="p-2 text-center border border-gray-300">数量</th>
+              <th className="p-2 text-right border border-gray-300">単価</th>
+              <th className="p-2 text-right border border-gray-300">金額</th>
+            </tr>
+          </thead>
+          <tbody>
+            {pageItems.map((group) =>
+              group.items.map((item, idx) => (
+                <tr key={`${group.lineNo}-${idx}`}>
+                  <td className={`p-2 border border-gray-300 ${!item.isFirstOfSet && group.isSet ? 'pl-6 text-gray-600' : ''}`}>
+                    {item.label}
+                  </td>
+                  <td className="p-2 text-center border border-gray-300">
+                    {item.isFirstOfSet || !group.isSet ? (item.quantity > 0 ? item.quantity : '') : ''}
+                  </td>
+                  <td className="p-2 text-right border border-gray-300">
+                    {item.isFirstOfSet || !group.isSet ? (item.unitPrice > 0 ? `¥${formatAmount(item.unitPrice)}` : '') : ''}
+                  </td>
+                  <td className="p-2 text-right border border-gray-300 font-medium">
+                    {item.isFirstOfSet || !group.isSet ? (item.amount > 0 ? `¥${formatAmount(item.amount)}` : '') : ''}
+                  </td>
+                </tr>
+              ))
+            )}
+            {Array.from({ length: emptyRowCount }).map((_, idx) => (
+              <tr key={`empty-${idx}`}>
+                <td className="p-2 border border-gray-300">&nbsp;</td>
+                <td className="p-2 border border-gray-300">&nbsp;</td>
+                <td className="p-2 border border-gray-300">&nbsp;</td>
+                <td className="p-2 border border-gray-300">&nbsp;</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      );
+    };
+
+    const renderFooter = () => (
+      <>
+        <div className="flex justify-end mb-2" style={{ marginTop: '10px' }}>
           <div className="w-48 border-2 border-gray-800">
             <div className="flex justify-between px-2 py-1 border-b border-gray-300">
               <span>小計</span><span>¥{formatAmount(displayAmounts.subtotal)}</span>
@@ -1588,13 +1884,11 @@ export default function InvoicePrintPage() {
             <div className="flex justify-between px-2 py-1 border-b border-gray-300">
               <span>消費税</span><span>¥{formatAmount(displayAmounts.tax)}</span>
             </div>
-            <div className="flex justify-between px-2 py-1 geometric-accent text-white font-bold">
+            <div className="flex justify-between px-2 py-1 text-white font-bold" style={geometricStyle}>
               <span>合計</span><span>¥{formatAmount(displayAmounts.total)}</span>
             </div>
           </div>
         </div>
-
-        {/* 振込先 */}
         {companyInfo?.bankName && (
           <div className="bg-gray-100 border-l-4 border-gray-800 p-2 mb-2">
             <div className="text-[10px] font-bold mb-1">お振込先</div>
@@ -1603,29 +1897,39 @@ export default function InvoicePrintPage() {
             </div>
           </div>
         )}
+        {invoice?.remarks && (
+          <div className="border border-gray-300 p-2">
+            <div className="text-[10px] font-bold mb-1">備考</div>
+            <div className="text-[10px] text-gray-600">{invoice.remarks}</div>
+          </div>
+        )}
+      </>
+    );
 
-        {/* 備考 */}
-        <div className="border border-gray-300 p-2">
-          <div className="text-[10px] font-bold mb-1">備考</div>
-          <div className="text-[10px] text-gray-600 min-h-[20px]">{invoice?.remarks || ''}</div>
-        </div>
-      </div>
+    return (
+      <InvoicePagesContainer
+        pages={paginatedPages}
+        renderHeader={renderHeader}
+        renderLineItems={renderLineItems}
+        renderFooter={renderFooter}
+      />
     );
   }
 
-  // 7. 基本レイアウト - A4最適化・シンプル
+  // 7. 基本レイアウト - A4最適化・シンプル・ページ分割対応
   function BasicLayout() {
-    return (
-      <div className="a4-page text-xs">
-        {/* ヘッダー */}
+    const MAX_DISPLAY_PAGE1 = 18;
+    const MAX_DISPLAY_OTHER = 30;
+    const FOOTER_ROWS = 6;
+
+    const renderHeader = () => (
+      <>
         <div className="text-center mb-2 pb-2 border-b-2 border-gray-400">
           <h1 className="text-base font-bold">請 求 書</h1>
           <div className="text-[10px] text-gray-600">
             No. {invoice?.invoice_number} | {formatDate(invoice?.issue_date || '')}
           </div>
         </div>
-
-        {/* 請求先・請求元・合計 */}
         <div className="grid grid-cols-3 gap-2 mb-2">
           <div className="border border-gray-400 p-2">
             <div className="text-[10px] text-gray-500">請求先</div>
@@ -1642,12 +1946,66 @@ export default function InvoicePrintPage() {
             <div className="text-base font-bold">¥{formatAmount(displayAmounts.total)}</div>
           </div>
         </div>
+      </>
+    );
 
-        {/* 明細テーブル */}
-        <LineItemsTable headerBg="bg-gray-100" borderColor="border-gray-400" compact={true} />
+    const renderLineItems = (pageItems: GroupedLineItem[], pageInfo: PageRenderInfo) => {
+      const dataRowCount = pageItems.reduce((sum, group) => sum + group.items.length, 0);
+      let maxDisplayRows = pageInfo.showHeader ? MAX_DISPLAY_PAGE1 : MAX_DISPLAY_OTHER;
+      if (!pageInfo.showFooter) maxDisplayRows += FOOTER_ROWS;
+      const emptyRowCount = Math.max(0, maxDisplayRows - dataRowCount);
 
-        {/* 合計 */}
-        <div className="flex justify-end mb-2">
+      return (
+        <table className="w-full border-collapse" style={{ tableLayout: 'fixed', fontSize: '12px' }}>
+          <colgroup>
+            <col style={{ width: '58%' }} />
+            <col style={{ width: '10%' }} />
+            <col style={{ width: '16%' }} />
+            <col style={{ width: '16%' }} />
+          </colgroup>
+          <thead>
+            <tr className="bg-gray-100">
+              <th className="p-2 text-left border border-gray-400">項目</th>
+              <th className="p-2 text-center border border-gray-400">数量</th>
+              <th className="p-2 text-right border border-gray-400">単価</th>
+              <th className="p-2 text-right border border-gray-400">金額</th>
+            </tr>
+          </thead>
+          <tbody>
+            {pageItems.map((group) =>
+              group.items.map((item, idx) => (
+                <tr key={`${group.lineNo}-${idx}`}>
+                  <td className={`p-2 border border-gray-400 ${!item.isFirstOfSet && group.isSet ? 'pl-6 text-gray-600' : ''}`}>
+                    {item.label}
+                  </td>
+                  <td className="p-2 text-center border border-gray-400">
+                    {item.isFirstOfSet || !group.isSet ? (item.quantity > 0 ? item.quantity : '') : ''}
+                  </td>
+                  <td className="p-2 text-right border border-gray-400">
+                    {item.isFirstOfSet || !group.isSet ? (item.unitPrice > 0 ? `¥${formatAmount(item.unitPrice)}` : '') : ''}
+                  </td>
+                  <td className="p-2 text-right border border-gray-400 font-medium">
+                    {item.isFirstOfSet || !group.isSet ? (item.amount > 0 ? `¥${formatAmount(item.amount)}` : '') : ''}
+                  </td>
+                </tr>
+              ))
+            )}
+            {Array.from({ length: emptyRowCount }).map((_, idx) => (
+              <tr key={`empty-${idx}`}>
+                <td className="p-2 border border-gray-400">&nbsp;</td>
+                <td className="p-2 border border-gray-400">&nbsp;</td>
+                <td className="p-2 border border-gray-400">&nbsp;</td>
+                <td className="p-2 border border-gray-400">&nbsp;</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      );
+    };
+
+    const renderFooter = () => (
+      <>
+        <div className="flex justify-end mb-2" style={{ marginTop: '10px' }}>
           <div className="w-48 border border-gray-400">
             <div className="flex justify-between px-2 py-1 border-b border-gray-400">
               <span>小計</span><span>¥{formatAmount(displayAmounts.subtotal)}</span>
@@ -1660,8 +2018,6 @@ export default function InvoicePrintPage() {
             </div>
           </div>
         </div>
-
-        {/* 振込先 */}
         {companyInfo?.bankName && (
           <div className="border border-gray-400 p-2 mb-2">
             <div className="text-[10px] font-bold mb-1">お振込先</div>
@@ -1670,20 +2026,33 @@ export default function InvoicePrintPage() {
             </div>
           </div>
         )}
+        {invoice?.remarks && (
+          <div className="border border-gray-300 p-2">
+            <div className="text-[10px] font-bold mb-1">備考</div>
+            <div className="text-[10px] text-gray-600">{invoice.remarks}</div>
+          </div>
+        )}
+      </>
+    );
 
-        {/* 備考 */}
-        <div className="border border-gray-300 p-2">
-          <div className="text-[10px] font-bold mb-1">備考</div>
-          <div className="text-[10px] text-gray-600 min-h-[20px]">{invoice?.remarks || ''}</div>
-        </div>
-      </div>
+    return (
+      <InvoicePagesContainer
+        pages={paginatedPages}
+        renderHeader={renderHeader}
+        renderLineItems={renderLineItems}
+        renderFooter={renderFooter}
+      />
     );
   }
 
   // 10. 伝統的レイアウト - A4最適化・日本式
   function TraditionalLayout() {
-    return (
-      <div className="a4-page text-xs">
+    const MAX_DISPLAY_PAGE1 = 18;
+    const MAX_DISPLAY_OTHER = 30;
+    const FOOTER_ROWS = 6;
+
+    const renderHeader = () => (
+      <>
         {/* ヘッダー */}
         <div className="border-2 border-gray-900 mb-2">
           <div className="bg-gray-900 text-white px-2 py-1 text-center">
@@ -1711,10 +2080,66 @@ export default function InvoicePrintPage() {
           <div className="font-bold">{customerInfo.name} 様</div>
           <div className="text-[10px] text-gray-600">{invoice?.subject_name || invoice?.subject}</div>
         </div>
+      </>
+    );
 
-        {/* 明細テーブル */}
-        <LineItemsTable headerBg="bg-gray-100" borderColor="border-gray-300" compact={true} />
+    const renderLineItems = (pageItems: GroupedLineItem[], pageInfo: PageRenderInfo) => {
+      const dataRowCount = pageItems.reduce((sum, group) => sum + group.items.length, 0);
+      let maxDisplayRows = pageInfo.showHeader ? MAX_DISPLAY_PAGE1 : MAX_DISPLAY_OTHER;
+      if (!pageInfo.showFooter) maxDisplayRows += FOOTER_ROWS;
+      const emptyRowCount = Math.max(0, maxDisplayRows - dataRowCount);
 
+      return (
+        <table className="w-full border-collapse mb-2" style={{ tableLayout: 'fixed', fontSize: '12px' }}>
+          <colgroup>
+            <col style={{ width: '5%' }} />
+            <col style={{ width: '40%' }} />
+            <col style={{ width: '10%' }} />
+            <col style={{ width: '20%' }} />
+            <col style={{ width: '25%' }} />
+          </colgroup>
+          <thead>
+            <tr className="bg-gray-100 border-t border-b border-gray-300">
+              <th className="py-1 px-1 text-center text-[10px] border-r border-gray-300">No</th>
+              <th className="py-1 px-1 text-left text-[10px] border-r border-gray-300">品名・作業内容</th>
+              <th className="py-1 px-1 text-center text-[10px] border-r border-gray-300">数量</th>
+              <th className="py-1 px-1 text-right text-[10px] border-r border-gray-300">単価</th>
+              <th className="py-1 px-1 text-right text-[10px]">金額</th>
+            </tr>
+          </thead>
+          <tbody>
+            {pageItems.map((group, groupIndex) => (
+              group.items.map((item, itemIndex) => (
+                <tr key={`${groupIndex}-${itemIndex}`} className="border-b border-gray-200">
+                  <td className="py-1 px-1 text-center text-[10px] border-r border-gray-200">
+                    {item.isFirstOfSet || !group.isSet ? group.lineNo : ''}
+                  </td>
+                  <td className="py-1 px-1 text-[10px] border-r border-gray-200">
+                    {group.isSet && item.isFirstOfSet && <span className="text-gray-500">[{group.setName}] </span>}
+                    {item.label}
+                  </td>
+                  <td className="py-1 px-1 text-center text-[10px] border-r border-gray-200">{item.quantity}</td>
+                  <td className="py-1 px-1 text-right text-[10px] border-r border-gray-200">¥{formatAmount(item.unitPrice)}</td>
+                  <td className="py-1 px-1 text-right text-[10px]">¥{formatAmount(item.amount)}</td>
+                </tr>
+              ))
+            ))}
+            {Array.from({ length: emptyRowCount }).map((_, i) => (
+              <tr key={`empty-${i}`} className="border-b border-gray-200">
+                <td className="py-1 px-1 border-r border-gray-200">&nbsp;</td>
+                <td className="py-1 px-1 border-r border-gray-200">&nbsp;</td>
+                <td className="py-1 px-1 border-r border-gray-200">&nbsp;</td>
+                <td className="py-1 px-1 border-r border-gray-200">&nbsp;</td>
+                <td className="py-1 px-1">&nbsp;</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      );
+    };
+
+    const renderFooter = () => (
+      <>
         {/* 合計 */}
         <div className="flex justify-end mb-2">
           <div className="w-48 border-2 border-gray-900">
@@ -1747,14 +2172,27 @@ export default function InvoicePrintPage() {
           <div className="text-[10px] font-bold mb-1">備考</div>
           <div className="text-[10px] text-gray-600 min-h-[20px]">{invoice?.remarks || ''}</div>
         </div>
-      </div>
+      </>
+    );
+
+    return (
+      <InvoicePagesContainer
+        pages={paginatedPages}
+        renderHeader={renderHeader}
+        renderLineItems={renderLineItems}
+        renderFooter={renderFooter}
+      />
     );
   }
 
   // 11. クラシックレイアウト - 白黒のオーソドックスデザイン（A4対応）
   function ClassicLayout() {
-    return (
-      <div className="a4-page text-xs">
+    const MAX_DISPLAY_PAGE1 = 18;
+    const MAX_DISPLAY_OTHER = 30;
+    const FOOTER_ROWS = 6;
+
+    const renderHeader = () => (
+      <>
         {/* ヘッダー */}
         <div className="border-b-2 border-gray-800 pb-2 mb-2">
           <div className="flex justify-between items-start">
@@ -1787,10 +2225,66 @@ export default function InvoicePrintPage() {
             <div className="text-[10px] text-gray-600">TEL: {companyInfo?.phoneNumber}</div>
           </div>
         </div>
+      </>
+    );
 
-        {/* 明細テーブル */}
-        <LineItemsTable headerBg="bg-white border-b-2 border-gray-800" borderColor="border-gray-400" compact={true} />
+    const renderLineItems = (pageItems: GroupedLineItem[], pageInfo: PageRenderInfo) => {
+      const dataRowCount = pageItems.reduce((sum, group) => sum + group.items.length, 0);
+      let maxDisplayRows = pageInfo.showHeader ? MAX_DISPLAY_PAGE1 : MAX_DISPLAY_OTHER;
+      if (!pageInfo.showFooter) maxDisplayRows += FOOTER_ROWS;
+      const emptyRowCount = Math.max(0, maxDisplayRows - dataRowCount);
 
+      return (
+        <table className="w-full border-collapse mb-2" style={{ tableLayout: 'fixed', fontSize: '12px' }}>
+          <colgroup>
+            <col style={{ width: '5%' }} />
+            <col style={{ width: '40%' }} />
+            <col style={{ width: '10%' }} />
+            <col style={{ width: '20%' }} />
+            <col style={{ width: '25%' }} />
+          </colgroup>
+          <thead>
+            <tr className="bg-white border-b-2 border-gray-800">
+              <th className="py-1 px-1 text-center text-[10px] border-r border-gray-400">No</th>
+              <th className="py-1 px-1 text-left text-[10px] border-r border-gray-400">品名・作業内容</th>
+              <th className="py-1 px-1 text-center text-[10px] border-r border-gray-400">数量</th>
+              <th className="py-1 px-1 text-right text-[10px] border-r border-gray-400">単価</th>
+              <th className="py-1 px-1 text-right text-[10px]">金額</th>
+            </tr>
+          </thead>
+          <tbody>
+            {pageItems.map((group, groupIndex) => (
+              group.items.map((item, itemIndex) => (
+                <tr key={`${groupIndex}-${itemIndex}`} className="border-b border-gray-400">
+                  <td className="py-1 px-1 text-center text-[10px] border-r border-gray-400">
+                    {item.isFirstOfSet || !group.isSet ? group.lineNo : ''}
+                  </td>
+                  <td className="py-1 px-1 text-[10px] border-r border-gray-400">
+                    {group.isSet && item.isFirstOfSet && <span className="text-gray-500">[{group.setName}] </span>}
+                    {item.label}
+                  </td>
+                  <td className="py-1 px-1 text-center text-[10px] border-r border-gray-400">{item.quantity}</td>
+                  <td className="py-1 px-1 text-right text-[10px] border-r border-gray-400">¥{formatAmount(item.unitPrice)}</td>
+                  <td className="py-1 px-1 text-right text-[10px]">¥{formatAmount(item.amount)}</td>
+                </tr>
+              ))
+            ))}
+            {Array.from({ length: emptyRowCount }).map((_, i) => (
+              <tr key={`empty-${i}`} className="border-b border-gray-400">
+                <td className="py-1 px-1 border-r border-gray-400">&nbsp;</td>
+                <td className="py-1 px-1 border-r border-gray-400">&nbsp;</td>
+                <td className="py-1 px-1 border-r border-gray-400">&nbsp;</td>
+                <td className="py-1 px-1 border-r border-gray-400">&nbsp;</td>
+                <td className="py-1 px-1">&nbsp;</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      );
+    };
+
+    const renderFooter = () => (
+      <>
         {/* 合計 */}
         <div className="flex justify-end mb-2">
           <div className="w-48 border-2 border-gray-800">
@@ -1821,7 +2315,16 @@ export default function InvoicePrintPage() {
           <div className="text-[10px] font-bold mb-1">備考</div>
           <div className="text-[10px] text-gray-600 min-h-[20px]">{invoice?.remarks || ''}</div>
         </div>
-      </div>
+      </>
+    );
+
+    return (
+      <InvoicePagesContainer
+        pages={paginatedPages}
+        renderHeader={renderHeader}
+        renderLineItems={renderLineItems}
+        renderFooter={renderFooter}
+      />
     );
   }
 
@@ -1831,8 +2334,12 @@ export default function InvoicePrintPage() {
 
   // 金額重視型 - 合計金額を最上部に大きく表示
   function AmountFirstLayout() {
-    return (
-      <div className="a4-page text-xs">
+    const MAX_DISPLAY_PAGE1 = 18;
+    const MAX_DISPLAY_OTHER = 30;
+    const FOOTER_ROWS = 6;
+
+    const renderHeader = () => (
+      <>
         {/* 最上部: 大きな合計金額 */}
         <div className="bg-blue-900 text-white p-4 mb-3 rounded-lg">
           <div className="flex justify-between items-center">
@@ -1863,10 +2370,66 @@ export default function InvoicePrintPage() {
             <div className="text-gray-600">TEL: {companyInfo?.phoneNumber}</div>
           </div>
         </div>
+      </>
+    );
 
-        {/* 明細テーブル */}
-        <LineItemsTable headerBg="bg-gray-100" borderColor="border-gray-300" compact={true} />
+    const renderLineItems = (pageItems: GroupedLineItem[], pageInfo: PageRenderInfo) => {
+      const dataRowCount = pageItems.reduce((sum, group) => sum + group.items.length, 0);
+      let maxDisplayRows = pageInfo.showHeader ? MAX_DISPLAY_PAGE1 : MAX_DISPLAY_OTHER;
+      if (!pageInfo.showFooter) maxDisplayRows += FOOTER_ROWS;
+      const emptyRowCount = Math.max(0, maxDisplayRows - dataRowCount);
 
+      return (
+        <table className="w-full border-collapse mb-2" style={{ tableLayout: 'fixed', fontSize: '12px' }}>
+          <colgroup>
+            <col style={{ width: '5%' }} />
+            <col style={{ width: '40%' }} />
+            <col style={{ width: '10%' }} />
+            <col style={{ width: '20%' }} />
+            <col style={{ width: '25%' }} />
+          </colgroup>
+          <thead>
+            <tr className="bg-gray-100 border-t border-b border-gray-300">
+              <th className="py-1 px-1 text-center text-[10px] border-r border-gray-300">No</th>
+              <th className="py-1 px-1 text-left text-[10px] border-r border-gray-300">品名・作業内容</th>
+              <th className="py-1 px-1 text-center text-[10px] border-r border-gray-300">数量</th>
+              <th className="py-1 px-1 text-right text-[10px] border-r border-gray-300">単価</th>
+              <th className="py-1 px-1 text-right text-[10px]">金額</th>
+            </tr>
+          </thead>
+          <tbody>
+            {pageItems.map((group, groupIndex) => (
+              group.items.map((item, itemIndex) => (
+                <tr key={`${groupIndex}-${itemIndex}`} className="border-b border-gray-200">
+                  <td className="py-1 px-1 text-center text-[10px] border-r border-gray-200">
+                    {item.isFirstOfSet || !group.isSet ? group.lineNo : ''}
+                  </td>
+                  <td className="py-1 px-1 text-[10px] border-r border-gray-200">
+                    {group.isSet && item.isFirstOfSet && <span className="text-gray-500">[{group.setName}] </span>}
+                    {item.label}
+                  </td>
+                  <td className="py-1 px-1 text-center text-[10px] border-r border-gray-200">{item.quantity}</td>
+                  <td className="py-1 px-1 text-right text-[10px] border-r border-gray-200">¥{formatAmount(item.unitPrice)}</td>
+                  <td className="py-1 px-1 text-right text-[10px]">¥{formatAmount(item.amount)}</td>
+                </tr>
+              ))
+            ))}
+            {Array.from({ length: emptyRowCount }).map((_, i) => (
+              <tr key={`empty-${i}`} className="border-b border-gray-200">
+                <td className="py-1 px-1 border-r border-gray-200">&nbsp;</td>
+                <td className="py-1 px-1 border-r border-gray-200">&nbsp;</td>
+                <td className="py-1 px-1 border-r border-gray-200">&nbsp;</td>
+                <td className="py-1 px-1 border-r border-gray-200">&nbsp;</td>
+                <td className="py-1 px-1">&nbsp;</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      );
+    };
+
+    const renderFooter = () => (
+      <>
         {/* 内訳 - 右寄せ小さく */}
         <div className="flex justify-end mb-2">
           <div className="w-40 text-[10px]">
@@ -1892,7 +2455,16 @@ export default function InvoicePrintPage() {
             <div className="text-gray-600">{invoice?.remarks || ''}</div>
           </div>
         </div>
-      </div>
+      </>
+    );
+
+    return (
+      <InvoicePagesContainer
+        pages={paginatedPages}
+        renderHeader={renderHeader}
+        renderLineItems={renderLineItems}
+        renderFooter={renderFooter}
+      />
     );
   }
 
