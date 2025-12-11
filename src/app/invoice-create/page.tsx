@@ -168,13 +168,26 @@ function combinePositions(positions: string[]): string {
 interface WorkItem {
   id: number
   type: 'individual' | 'set'
-  work_name: string
-  position?: string
+  work_name: string  // 組み立てラベル（表示用）
+  // DB保存用フィールド
+  target?: string           // 対象
+  actions?: string[]        // 動作（最大3つ）
+  positions?: string[]      // 位置（最大5つ）
+  other?: string            // その他
+  // 金額関連
   unit_price: number
   quantity: number
   amount: number
   memo: string
-  set_details?: string[]
+  // セット作業用
+  set_details?: string[]    // セット明細のラベル配列
+  set_detail_items?: Array<{  // セット明細の詳細情報
+    target?: string
+    actions?: string[]
+    positions?: string[]
+    other?: string
+    label: string
+  }>
   detail_positions?: string[]
 }
 
@@ -536,7 +549,7 @@ function InvoiceCreateContent() {
   const [setName, setSetName] = useState('')
   const [setPrice, setSetPrice] = useState('')
   const [setQuantity, setSetQuantity] = useState(1)
-  const [setDetails, setSetDetails] = useState<Array<{action?: string, target?: string, position?: string, memo?: string, label: string, quantity?: number, unitPrice?: number}>>([])
+  const [setDetails, setSetDetails] = useState<Array<{action?: string, actions?: string[], target?: string, position?: string, positions?: string[], memo?: string, other?: string, label: string, quantity?: number, unitPrice?: number}>>([])
   
   // セット明細入力用状態
   const [detailTarget, setDetailTarget] = useState('')
@@ -560,21 +573,26 @@ function InvoiceCreateContent() {
     if (!target) return
     const label = composedLabel(target, actions, positions, workMemo)
     const amount = Math.round((Number(unitPrice) || 0) * (qty || 0))
-    
+
     const newId = Date.now()
     const newItem: WorkItem = {
       id: newId,
       type: 'individual',
       work_name: label,
-      position: position,
+      // DB保存用フィールド
+      target: target,
+      actions: actions.slice(0, 3),      // 最大3つ
+      positions: positions.slice(0, 5),  // 最大5つ
+      other: workMemo || undefined,
+      // 金額
       unit_price: Number(unitPrice) || 0,
       quantity: qty || 0,
       amount: amount,
       memo: workMemo
     }
-    
+
     setWorkItems(prev => [newItem, ...prev])
-    
+
     // リセット
     setTarget('')
     setAction(undefined)
@@ -590,7 +608,7 @@ function InvoiceCreateContent() {
   
   const addSet = () => {
     if (!setName.trim()) return
-    
+
     const newId = Date.now()
     const newItem: WorkItem = {
       id: newId,
@@ -601,11 +619,19 @@ function InvoiceCreateContent() {
       amount: Math.round((Number(setPrice) || 0) * (setQuantity || 0)),
       memo: '',
       set_details: setDetails.map(d => d.label),
+      // セット明細の詳細情報（DB保存用）
+      set_detail_items: setDetails.map(d => ({
+        target: d.target,
+        actions: d.actions?.slice(0, 3) || (d.action ? [d.action] : []),
+        positions: d.positions?.slice(0, 5) || (d.position ? [d.position] : []),
+        other: d.other || d.memo,
+        label: d.label
+      })),
       detail_positions: setDetails.map(d => d.position || '')
     }
-    
+
     setWorkItems(prev => [newItem, ...prev])
-    
+
     // リセット
     setSetDetails([])
     setSetName('')
@@ -1324,31 +1350,34 @@ function InvoiceCreateContent() {
   // セット詳細追加（新規セット作成時）
   const addSetDetail = () => {
     if (!detailTarget.trim()) return
-    
+
     const label = composedLabel(detailTarget, detailActions, detailPositions, detailOther)
-    
+
     // 単価を取得
     const priceKey = `${detailTarget}_${detailActions.length > 0 ? detailActions[0] : ''}`
     const unitPrice = priceBookMap?.[priceKey] || 0
-    
+
     const newDetail = {
       target: detailTarget,
       action: detailActions.join('・'),
+      actions: detailActions.slice(0, 3),      // DB保存用（最大3つ）
       position: detailPositions.join(''),
+      positions: detailPositions.slice(0, 5),  // DB保存用（最大5つ）
       memo: detailOther,
+      other: detailOther,                      // DB保存用
       label: label,
       quantity: detailQuantity,
       unitPrice: unitPrice
     }
-    
+
     setSetDetails(prev => [...prev, newDetail])
-    
+
     // セット価格を明細価格の合計で自動更新
     const newTotalPrice = [...setDetails, newDetail].reduce((sum, detail) => sum + (detail.unitPrice || 0), 0)
     if (newTotalPrice > 0) {
       setSetPrice(newTotalPrice.toString())
     }
-    
+
     // リセット
     setDetailTarget('')
     setDetailActions([])
@@ -1725,12 +1754,22 @@ function InvoiceCreateContent() {
           if (item.type === 'set' && item.set_details && item.set_details.length > 0) {
             // セット作業（task_type='S'）
             // 親行: sub_no=1, 金額を持つ
+            const firstDetailItem = item.set_detail_items?.[0]
             lineItems.push({
               invoice_id: savedInvoiceId,
               line_no: lineNo,
               sub_no: 1,
               task_type: 'S',
-              target: item.work_name,
+              target: firstDetailItem?.target || null,
+              action1: firstDetailItem?.actions?.[0] || null,
+              action2: firstDetailItem?.actions?.[1] || null,
+              action3: firstDetailItem?.actions?.[2] || null,
+              position1: firstDetailItem?.positions?.[0] || null,
+              position2: firstDetailItem?.positions?.[1] || null,
+              position3: firstDetailItem?.positions?.[2] || null,
+              position4: firstDetailItem?.positions?.[3] || null,
+              position5: firstDetailItem?.positions?.[4] || null,
+              other: firstDetailItem?.other || null,
               set_name: item.work_name,
               raw_label: item.set_details.join('、'),
               raw_label_part: item.set_details[0], // 親行は最初の内訳
@@ -1742,12 +1781,22 @@ function InvoiceCreateContent() {
 
             // 子行: sub_no=2..n, 金額は親行と同じ（どの行からでもセットの金額がわかるように）
             item.set_details!.slice(1).forEach((detail, detailIndex) => {
+              const detailItem = item.set_detail_items?.[detailIndex + 1]
               lineItems.push({
                 invoice_id: savedInvoiceId,
                 line_no: lineNo,
                 sub_no: detailIndex + 2,
                 task_type: 'S',
-                target: item.work_name,
+                target: detailItem?.target || null,
+                action1: detailItem?.actions?.[0] || null,
+                action2: detailItem?.actions?.[1] || null,
+                action3: detailItem?.actions?.[2] || null,
+                position1: detailItem?.positions?.[0] || null,
+                position2: detailItem?.positions?.[1] || null,
+                position3: detailItem?.positions?.[2] || null,
+                position4: detailItem?.positions?.[3] || null,
+                position5: detailItem?.positions?.[4] || null,
+                other: detailItem?.other || null,
                 set_name: item.work_name,
                 raw_label: item.set_details!.join('、'),
                 raw_label_part: detail,
@@ -1765,7 +1814,16 @@ function InvoiceCreateContent() {
               line_no: lineNo,
               sub_no: 1,
               task_type: 'T',
-              target: item.work_name,
+              target: item.target || null,
+              action1: item.actions?.[0] || null,
+              action2: item.actions?.[1] || null,
+              action3: item.actions?.[2] || null,
+              position1: item.positions?.[0] || null,
+              position2: item.positions?.[1] || null,
+              position3: item.positions?.[2] || null,
+              position4: item.positions?.[3] || null,
+              position5: item.positions?.[4] || null,
+              other: item.other || null,
               raw_label: item.work_name,
               raw_label_part: item.work_name,
               unit_price: item.unit_price,
@@ -3701,9 +3759,9 @@ function InvoiceCreateContent() {
                                 {item.type === 'set' ? 'セット' : '個別'}
                               </span>
                               <h4 className="text-lg font-semibold text-gray-800">{item.work_name}</h4>
-                              {item.position && (
+                              {item.positions && item.positions.length > 0 && (
                                 <span className="text-sm text-gray-600 bg-gray-200 px-2 py-1 rounded">
-                                  {item.position}
+                                  {combinePositions(item.positions)}
                                 </span>
                               )}
                             </div>

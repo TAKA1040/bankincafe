@@ -1,25 +1,27 @@
 # invoice-create 画面項目 → DB マッピング確認
 
+## 最終確認日: 2024-12-12
+
 ## ========================================
 ## 📋 基本情報セクション (invoices テーブル)
 ## ========================================
 
 | 画面の項目名 | DB列名 | 現状 |
 |-------------|--------|------|
-| 請求書No | invoice_id, invoice_number | OK |
-| 請求データ年月 | billing_month | OK ("2025-01"形式) |
-| 請求日（発行日） | billing_date | OK |
-| (自動設定) | issue_date | OK (保存時の日付) |
-| 顧客カテゴリ | customer_category | OK |
-| 顧客名 | customer_name | OK |
-| 件名 | subject, subject_name | OK |
-| 登録番号（任意） | registration_number | OK |
-| 発注番号（任意） | order_number | OK |
-| オーダー番号（任意） | purchase_order_number | OK |
-| (備考欄があれば) | remarks | OK |
-| (計算値) | subtotal | OK |
-| (計算値) | tax | OK |
-| (計算値) | total_amount | OK |
+| 請求書No | invoice_id, invoice_number | ✅ OK |
+| 請求データ年月 | billing_month | ✅ OK ("2025-01"形式) |
+| 請求日（発行日） | billing_date | ✅ OK |
+| (自動設定) | issue_date | ✅ OK (保存時の日付) |
+| 顧客カテゴリ | customer_category | ✅ OK |
+| 顧客名 | customer_name | ✅ OK |
+| 件名 | subject, subject_name | ✅ OK |
+| 登録番号（任意） | registration_number | ✅ OK |
+| 発注番号（任意） | order_number | ✅ OK |
+| オーダー番号（任意） | purchase_order_number | ✅ OK |
+| (備考欄があれば) | remarks | ✅ OK |
+| (計算値) | subtotal | ✅ OK |
+| (計算値) | tax | ✅ OK |
+| (計算値) | total_amount | ✅ OK |
 
 ---
 
@@ -31,57 +33,121 @@
 
 | 画面の項目名 | DB列名 | 現状 | 問題 |
 |-------------|--------|------|------|
-| 対象 | target | work_name保存中 | ??? |
-| 動作 | action1, action2, action3 | null | 要修正 |
-| 位置 | position1~position5 | null | 要修正 |
-| その他 | ??? | ??? | どこに保存? |
-| 単価 | unit_price | OK | |
-| 数量 | quantity | OK | |
-| (計算値) | amount | OK | |
+| 対象 | target | ❌ work_name保存中 | 組み立てラベルではなく対象のみ保存すべき |
+| 動作 | action1, action2, action3 | ❌ null | 未実装 |
+| 位置 | position1~position5 | ❌ null | 未実装 |
+| その他 | memo? | ❌ 不明 | 列が存在するか確認必要 |
+| 単価 | unit_price | ✅ OK | |
+| 数量 | quantity | ✅ OK | |
+| (計算値) | amount | ✅ OK | |
 
 ### 【セット作業タブ】の入力項目
 
 | 画面の項目名 | DB列名 | 現状 | 問題 |
 |-------------|--------|------|------|
-| セット名 | ??? | ??? | どこに保存? |
-| セット価格 | unit_price | OK? | |
-| セット数量 | quantity | OK? | |
-| セット明細 | ??? | ??? | どこに保存? |
+| セット名 | set_name | ✅ OK | |
+| セット価格 | unit_price | ✅ OK | |
+| セット数量 | quantity | ✅ OK | |
+| セット明細 | raw_label_part | ✅ OK | 各子行に保存 |
 
 ---
 
 ## ========================================
-## 現在の保存コード (問題あり)
+## 現在の保存コード (page.tsx 1717-1786行目)
 ## ========================================
 
+### 個別作業の保存コード
 ```typescript
-const lineItems = workItems.map((item, index) => ({
-  invoice_id: invoiceNumber,
-  line_no: index + 1,
-  task_type: item.type === 'set' ? 'S' : 'T',
-  target: item.work_name,     // ← 「対象」ではなく組み立てラベルを保存
-  action: null,               // ← 旧列名 (今はaction1)
-  position: null,             // ← 旧列名 (今はposition1)
-  raw_label: ...,
+// 個別作業（task_type='T'）
+lineItems.push({
+  invoice_id: savedInvoiceId,
+  line_no: lineNo,
+  sub_no: 1,
+  task_type: 'T',
+  target: item.work_name,        // ← 問題: 対象ではなく組み立てラベル
+  raw_label: item.work_name,
+  raw_label_part: item.work_name,
   unit_price: item.unit_price,
   quantity: item.quantity,
-  amount: item.unit_price * item.quantity,
+  amount: amount,
   performed_at: billingDate
-}))
+  // action1, action2, action3: 未実装
+  // position1~5: 未実装
+})
+```
+
+### セット作業の保存コード
+```typescript
+// セット作業（task_type='S'）
+lineItems.push({
+  invoice_id: savedInvoiceId,
+  line_no: lineNo,
+  sub_no: 1,
+  task_type: 'S',
+  target: item.work_name,
+  set_name: item.work_name,       // ✅ OK
+  raw_label: item.set_details.join('、'),
+  raw_label_part: detail,         // ✅ OK
+  unit_price: item.unit_price,
+  quantity: item.quantity,
+  amount: amount,
+  performed_at: billingDate
+})
 ```
 
 ---
 
 ## ========================================
-## 確認したいこと
+## 必要な修正
 ## ========================================
 
-1. 「対象」→ target列: 入力した対象をそのまま保存?
-2. 「動作」→ action1~3列: 選択した動作を順番に保存?
-3. 「位置」→ position1~5列: 選択した位置を順番に保存?
-4. 「その他」→ どの列に保存?
-5. raw_label列: 何を保存? 組み立てたラベル全体?
-6. sub_no列: いつ使う?
+### 1. WorkItem型の拡張
+```typescript
+interface WorkItem {
+  work_name: string       // 組み立てラベル（表示用）
+  target?: string         // 対象（NEW）
+  action1?: string        // 動作1（NEW）
+  action2?: string        // 動作2（NEW）
+  action3?: string        // 動作3（NEW）
+  position1?: string      // 位置1（NEW）
+  position2?: string      // 位置2（NEW）
+  position3?: string      // 位置3（NEW）
+  position4?: string      // 位置4（NEW）
+  position5?: string      // 位置5（NEW）
+  memo?: string           // その他（NEW）
+  unit_price: number
+  quantity: number
+  type: 'individual' | 'set'
+  set_details?: string[]
+}
+```
+
+### 2. 保存コードの修正
+```typescript
+// 個別作業の保存
+lineItems.push({
+  invoice_id: savedInvoiceId,
+  line_no: lineNo,
+  sub_no: 1,
+  task_type: 'T',
+  target: item.target,            // 対象のみ
+  action1: item.action1 || null,
+  action2: item.action2 || null,
+  action3: item.action3 || null,
+  position1: item.position1 || null,
+  position2: item.position2 || null,
+  position3: item.position3 || null,
+  position4: item.position4 || null,
+  position5: item.position5 || null,
+  memo: item.memo || null,
+  raw_label: item.work_name,      // 組み立てラベル（互換性維持）
+  raw_label_part: item.work_name,
+  unit_price: item.unit_price,
+  quantity: item.quantity,
+  amount: amount,
+  performed_at: billingDate
+})
+```
 
 ---
 
@@ -89,21 +155,23 @@ const lineItems = workItems.map((item, index) => ({
 ## DB列一覧 (invoice_line_items)
 ## ========================================
 
-- invoice_id
-- line_no
-- sub_no (NEW)
-- task_type ('T'=個別, 'S'=セット)
-- target
-- action1 (NEW)
-- action2 (NEW)
-- action3 (NEW)
-- position1 (NEW)
-- position2 (NEW)
-- position3 (NEW)
-- position4 (NEW)
-- position5 (NEW)
-- raw_label
-- unit_price
-- quantity
-- amount
-- performed_at
+- invoice_id ✅
+- line_no ✅
+- sub_no ✅
+- task_type ('T'=個別, 'S'=セット) ✅
+- target ❌ (組み立てラベルが入っている)
+- action1 ❌ (未使用)
+- action2 ❌ (未使用)
+- action3 ❌ (未使用)
+- position1 ❌ (未使用)
+- position2 ❌ (未使用)
+- position3 ❌ (未使用)
+- position4 ❌ (未使用)
+- position5 ❌ (未使用)
+- set_name ✅
+- raw_label ✅
+- raw_label_part ✅
+- unit_price ✅
+- quantity ✅
+- amount ✅
+- performed_at ✅
