@@ -1108,13 +1108,18 @@ export default function InvoicePrintPage() {
     // シンプルなルール:
     // 1. 各ページで限界まで枠を作る
     // 2. フッターがあるページは、フッター分だけ枠を減らす
+    // 3. ヘッダー項目が増えたら、その分だけ枠を減らす
     //
+    // ヘッダー項目数に応じた動的調整
+    const DEFAULT_HEADER_ITEMS = 7; // デフォルトの項目数（基準）
+    const activeCount = activeHeaderItems.length || DEFAULT_HEADER_ITEMS;
+    const extraHeaderItems = Math.max(0, activeCount - DEFAULT_HEADER_ITEMS);
+    const headerAdjustment = Math.ceil(extraHeaderItems * 0.5); // 追加項目2つごとに1行減
+
     // ページごとの最大表示行数（データ+空白行）
-    // - 1ページ目フッターなし: 24行（18 + 6、フッター分も枠で埋める）
-    // - 1ページ目フッターあり: 18行
-    // - 2ページ目以降フッターなし: 36行（30 + 6）
-    // - 2ページ目以降フッターあり: 30行
-    const MAX_DISPLAY_PAGE1 = 18; // 1ページ目の最大表示行数
+    // - 1ページ目: 18行 - ヘッダー調整分
+    // - 2ページ目以降: 30行（ヘッダーなし）
+    const MAX_DISPLAY_PAGE1 = 18 - headerAdjustment; // 1ページ目の最大表示行数（動的）
     const MAX_DISPLAY_OTHER = 30; // 2ページ目以降の最大表示行数
     const FOOTER_ROWS = 6; // フッターが占める行数分
 
