@@ -514,6 +514,7 @@ export default function InvoicePrintPage() {
   const groupedLineItems = getGroupedLineItems();
 
   // 共通明細テーブルコンポーネント（全レイアウトで使用）
+  // 列幅: 項目55-60%, 数量10%, 単価15%, 金額15% (prompt.txt指示)
   const LineItemsTable = ({
     headerBg = 'bg-gray-100',
     headerText = 'text-gray-900',
@@ -525,35 +526,53 @@ export default function InvoicePrintPage() {
     borderColor?: string;
     compact?: boolean;
   }) => (
-    <table className="w-full text-sm">
+    <table className="w-full invoice-body" style={{ tableLayout: 'fixed' }}>
+      <colgroup>
+        <col style={{ width: '58%' }} />
+        <col style={{ width: '10%' }} />
+        <col style={{ width: '16%' }} />
+        <col style={{ width: '16%' }} />
+      </colgroup>
       <thead>
         <tr className={headerBg}>
-          <th className={`px-2 py-1 text-left border ${borderColor} ${headerText} font-medium`}>作業内容</th>
-          <th className={`px-2 py-1 text-center border ${borderColor} ${headerText} font-medium w-14`}>数量</th>
-          <th className={`px-2 py-1 text-right border ${borderColor} ${headerText} font-medium w-20`}>単価</th>
-          <th className={`px-2 py-1 text-right border ${borderColor} ${headerText} font-medium w-20`}>金額</th>
+          <th className={`px-2 py-1 text-left border ${borderColor} ${headerText} font-medium invoice-body`}>作業内容</th>
+          <th className={`px-2 py-1 text-center border ${borderColor} ${headerText} font-medium invoice-body`}>数量</th>
+          <th className={`px-2 py-1 text-right border ${borderColor} ${headerText} font-medium invoice-body`}>単価</th>
+          <th className={`px-2 py-1 text-right border ${borderColor} ${headerText} font-medium invoice-body`}>金額</th>
         </tr>
       </thead>
       <tbody>
         {groupedLineItems.map((group) => (
-          group.items.map((item, itemIdx) => (
-            <tr key={`${group.lineNo}-${itemIdx}`} className={itemIdx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-              <td className={`px-2 ${compact ? 'py-1' : 'py-1'} border ${borderColor}`}>
-                <div className={!item.isFirstOfSet && group.isSet ? 'pl-4 text-gray-600' : 'font-medium'}>
-                  {!item.isFirstOfSet && group.isSet ? `・${item.label}` : item.label}
-                </div>
-              </td>
-              <td className={`px-2 ${compact ? 'py-1' : 'py-1'} text-center border ${borderColor}`}>
-                {item.quantity > 0 ? item.quantity : ''}
-              </td>
-              <td className={`px-2 ${compact ? 'py-1' : 'py-1'} text-right border ${borderColor}`}>
-                {item.unitPrice > 0 ? `¥${formatAmount(item.unitPrice)}` : ''}
-              </td>
-              <td className={`px-2 ${compact ? 'py-1' : 'py-1'} text-right font-medium border ${borderColor}`}>
-                {item.amount > 0 ? `¥${formatAmount(item.amount)}` : ''}
-              </td>
-            </tr>
-          ))
+          group.items.map((item, itemIdx) => {
+            const isSetChild = !item.isFirstOfSet && group.isSet;
+            return (
+              <tr key={`${group.lineNo}-${itemIdx}`} className="bg-white" style={{ height: '24px' }}>
+                <td className={`px-2 py-0.5 border ${borderColor}`} style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {isSetChild ? (
+                    <div className="invoice-set-child pl-3" style={{ fontSize: '11px' }}>
+                      ・{item.label}
+                    </div>
+                  ) : (
+                    <div className="font-medium invoice-body" style={{ lineHeight: '1.3' }}>
+                      {item.label}
+                    </div>
+                  )}
+                </td>
+                <td className={`px-2 py-0.5 text-center border ${borderColor} invoice-body`}>
+                  {/* セット子行は数量表示なし */}
+                  {!isSetChild && item.quantity > 0 ? item.quantity : ''}
+                </td>
+                <td className={`px-2 py-0.5 text-right border ${borderColor} amount-cell invoice-body`}>
+                  {/* セット子行は単価表示なし */}
+                  {!isSetChild && item.unitPrice > 0 ? `¥${formatAmount(item.unitPrice)}` : ''}
+                </td>
+                <td className={`px-2 py-0.5 text-right border ${borderColor} amount-cell invoice-amount`}>
+                  {/* セット子行は金額表示なし（親行のみ金額表示） */}
+                  {!isSetChild && item.amount > 0 ? `¥${formatAmount(item.amount)}` : ''}
+                </td>
+              </tr>
+            );
+          })
         ))}
       </tbody>
     </table>
@@ -743,9 +762,12 @@ export default function InvoicePrintPage() {
 
   return (
     <>
-      {/* 印刷用CSSスタイル - プロ仕様A4請求書 */}
+      {/* 印刷用CSSスタイル - 法人向けA4縦1ページ請求書 */}
       <style jsx global>{`
-        /* 印刷時の@pageルール - ブラウザのヘッダー/フッターを消す */
+        /* フォント統一: Noto Sans JP */
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap');
+
+        /* 印刷時の@pageルール */
         @page {
           size: A4 portrait;
           margin: 0mm;
@@ -756,11 +778,12 @@ export default function InvoicePrintPage() {
             margin: 0;
             padding: 0;
             width: 210mm;
-            font-family: 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', 'Yu Gothic', 'Meiryo', sans-serif;
-            font-size: 10pt;
+            font-family: 'Noto Sans JP', 'Noto Sans', sans-serif;
+            font-size: 12px;
             line-height: 1.4;
             -webkit-print-color-adjust: exact;
             color-adjust: exact;
+            background: white;
           }
           .no-print { display: none !important; }
           .a4-print-container {
@@ -768,29 +791,36 @@ export default function InvoicePrintPage() {
             margin: 0;
             padding: 0;
           }
-          /* A4ページ: 210mm x 296.5mm (0.5mm余裕), パディング15mm */
+          /* A4ページ: 余白 上下20mm/左右15mm */
           .a4-page, .print-container {
             width: 210mm;
-            min-height: 296.5mm;
-            padding: 15mm 18mm;
+            height: 297mm;
+            max-height: 297mm;
+            padding: 20mm 15mm;
             box-sizing: border-box;
-            page-break-after: always;
             background: white;
-          }
-          .a4-page:last-child, .print-container:last-child {
-            page-break-after: auto;
+            overflow: hidden;
           }
           .page-break { page-break-after: always; }
           .avoid-break { page-break-inside: avoid; }
-          table { page-break-inside: auto; }
-          tr { page-break-inside: avoid; page-break-after: auto; }
+          table { page-break-inside: avoid; }
+          tr { page-break-inside: avoid; }
+          thead { display: table-header-group; }
 
-          /* 印刷用フォントサイズ */
-          .print-title { font-size: 14pt; font-weight: bold; }
-          .print-subtitle { font-size: 12pt; }
-          .print-body { font-size: 10pt; }
-          .print-small { font-size: 9pt; }
-          .print-tiny { font-size: 8pt; }
+          /* フォントサイズ固定 */
+          .invoice-title { font-size: 16px; font-weight: 700; }
+          .invoice-heading { font-size: 14px; font-weight: 500; }
+          .invoice-body { font-size: 12px; line-height: 1.4; }
+          .invoice-amount { font-size: 14px; font-weight: 700; }
+          .invoice-small { font-size: 11px; }
+          .invoice-set-child { font-size: 11px; color: #666; }
+
+          /* 金額右寄せ固定幅 */
+          .amount-cell {
+            text-align: right;
+            font-variant-numeric: tabular-nums;
+            white-space: nowrap;
+          }
         }
 
         /* 画面プレビュー用 */
@@ -801,13 +831,30 @@ export default function InvoicePrintPage() {
           }
           .a4-page, .print-container {
             width: 210mm;
-            min-height: 296.5mm;
-            padding: 15mm 18mm;
+            height: 297mm;
+            max-height: 297mm;
+            padding: 20mm 15mm;
             box-sizing: border-box;
             background: white;
             margin: 20px auto;
             box-shadow: 0 .5mm 2mm rgba(0,0,0,.3);
             border: 1px solid #ccc;
+            overflow: hidden;
+            font-family: 'Noto Sans JP', 'Noto Sans', sans-serif;
+          }
+          /* フォントサイズ固定 */
+          .invoice-title { font-size: 16px; font-weight: 700; }
+          .invoice-heading { font-size: 14px; font-weight: 500; }
+          .invoice-body { font-size: 12px; line-height: 1.4; }
+          .invoice-amount { font-size: 14px; font-weight: 700; }
+          .invoice-small { font-size: 11px; }
+          .invoice-set-child { font-size: 11px; color: #666; }
+
+          /* 金額右寄せ固定幅 */
+          .amount-cell {
+            text-align: right;
+            font-variant-numeric: tabular-nums;
+            white-space: nowrap;
           }
         }
       `}</style>
@@ -881,69 +928,86 @@ export default function InvoicePrintPage() {
   // 1. シンプルレイアウト - A4最適化・日本式
   function MinimalLayout() {
     return (
-      <div className="a4-page text-xs">
-        {/* ヘッダー */}
-        <div className="flex justify-between items-start mb-2 pb-1 border-b-2 border-gray-800">
+      <div className="a4-page invoice-body avoid-break">
+        {/* ヘッダー: 請求書番号・発行日を左、支払期限/合計を右で強調 */}
+        <div className="flex justify-between items-start pb-2 border-b-2 border-gray-800" style={{ marginBottom: '10px' }}>
           <div>
-            <h1 className="text-base font-bold">請 求 書</h1>
-            <div className="text-[10px] text-gray-600">
-              No. {invoice?.invoice_number} | {formatDate(invoice?.issue_date || '')}
+            <h1 className="invoice-title" style={{ fontSize: '16px', fontWeight: 700 }}>請 求 書</h1>
+            <div className="invoice-body" style={{ fontSize: '12px', marginTop: '4px' }}>
+              No. {invoice?.invoice_number}
+            </div>
+            <div className="invoice-small" style={{ fontSize: '11px', color: '#666' }}>
+              発行日: {formatDate(invoice?.issue_date || '')}
             </div>
           </div>
           <div className="text-right">
-            <div className="text-base font-bold">¥{formatAmount(displayAmounts.total)}</div>
-            <div className="text-[10px] text-gray-500">（税込）</div>
+            <div className="invoice-small" style={{ fontSize: '11px', color: '#666' }}>ご請求金額（税込）</div>
+            <div className="invoice-amount amount-cell" style={{ fontSize: '16px', fontWeight: 700 }}>
+              ¥{formatAmount(displayAmounts.total)}
+            </div>
           </div>
         </div>
 
-        {/* 請求先・請求元 */}
-        <div className="grid grid-cols-2 gap-2 mb-2">
-          <div className="border border-gray-300 p-1">
-            <div className="text-[10px] text-gray-500">請求先</div>
-            <div className="font-bold text-[11px]">{customerInfo.name} 様</div>
-            <div className="text-[10px] text-gray-600">{invoice?.subject_name || invoice?.subject}</div>
+        {/* 請求先・請求元 - 高さ固定 */}
+        <div className="grid grid-cols-2 gap-3" style={{ marginBottom: '10px' }}>
+          <div className="border border-gray-300 p-2">
+            <div className="invoice-small" style={{ fontSize: '11px', color: '#666' }}>請求先</div>
+            <div className="invoice-heading" style={{ fontSize: '14px', fontWeight: 500 }}>{customerInfo.name} 様</div>
+            <div className="invoice-body" style={{ fontSize: '12px', color: '#444' }}>{invoice?.subject_name || invoice?.subject}</div>
           </div>
-          <div className="border border-gray-300 p-1">
-            <div className="text-[10px] text-gray-500">請求元</div>
-            <div className="font-bold text-[11px]">{companyInfo?.companyName}</div>
-            <div className="text-[10px] text-gray-600">
+          <div className="border border-gray-300 p-2">
+            <div className="invoice-small" style={{ fontSize: '11px', color: '#666' }}>請求元</div>
+            <div className="invoice-heading" style={{ fontSize: '14px', fontWeight: 500 }}>{companyInfo?.companyName}</div>
+            <div className="invoice-small" style={{ fontSize: '11px', color: '#444', lineHeight: '1.3' }}>
               〒{companyInfo?.postalCode} {companyInfo?.prefecture}{companyInfo?.city}{companyInfo?.address}
             </div>
-            <div className="text-[10px] text-gray-600">TEL: {companyInfo?.phoneNumber}</div>
+            <div className="invoice-small" style={{ fontSize: '11px', color: '#444' }}>TEL: {companyInfo?.phoneNumber}</div>
+            {companyInfo?.taxRegistrationNumber && (
+              <div className="invoice-small" style={{ fontSize: '11px', color: '#444' }}>登録番号: {companyInfo.taxRegistrationNumber}</div>
+            )}
           </div>
         </div>
 
         {/* 明細テーブル */}
-        <LineItemsTable headerBg="bg-gray-100" borderColor="border-gray-300" compact={true} />
+        <div className="avoid-break" style={{ marginBottom: '10px' }}>
+          <LineItemsTable headerBg="bg-gray-100" borderColor="border-gray-300" compact={true} />
+        </div>
 
-        {/* 合計 */}
-        <div className="flex justify-end mb-2">
-          <div className="w-44 border border-gray-300 text-[10px]">
-            <div className="flex justify-between px-2 py-0.5 border-b border-gray-300">
-              <span>小計</span><span>¥{formatAmount(displayAmounts.subtotal)}</span>
+        {/* 合計欄: 3行で境界線付き */}
+        <div className="flex justify-end" style={{ marginBottom: '10px' }}>
+          <div style={{ width: '180px' }} className="border border-gray-400">
+            <div className="flex justify-between px-3 py-1 border-b border-gray-300 invoice-body" style={{ fontSize: '12px' }}>
+              <span>小計</span>
+              <span className="amount-cell">¥{formatAmount(displayAmounts.subtotal)}</span>
             </div>
-            <div className="flex justify-between px-2 py-0.5 border-b border-gray-300">
-              <span>消費税</span><span>¥{formatAmount(displayAmounts.tax)}</span>
+            <div className="flex justify-between px-3 py-1 border-b border-gray-300 invoice-body" style={{ fontSize: '12px' }}>
+              <span>消費税(10%)</span>
+              <span className="amount-cell">¥{formatAmount(displayAmounts.tax)}</span>
             </div>
-            <div className="flex justify-between px-2 py-0.5 bg-gray-100 font-bold">
-              <span>合計</span><span>¥{formatAmount(displayAmounts.total)}</span>
+            <div className="flex justify-between px-3 py-1 bg-gray-100 invoice-amount" style={{ fontSize: '14px', fontWeight: 700 }}>
+              <span>合計</span>
+              <span className="amount-cell">¥{formatAmount(displayAmounts.total)}</span>
             </div>
           </div>
         </div>
 
         {/* 振込先 */}
         {companyInfo?.bankName && (
-          <div className="border border-gray-300 p-1 mb-2 text-[10px]">
-            <span className="font-bold">お振込先: </span>
+          <div className="border border-gray-300 p-2 invoice-body" style={{ marginBottom: '8px', fontSize: '12px' }}>
+            <span className="font-medium">お振込先: </span>
             {companyInfo.bankName} {companyInfo.bankBranch} {companyInfo.accountType} {companyInfo.accountNumber} {companyInfo.accountHolder}
           </div>
         )}
 
-        {/* 備考 */}
-        <div className="border border-gray-300 p-1">
-          <div className="text-[10px] font-bold">備考</div>
-          <div className="text-[10px] text-gray-600 min-h-[15px]">{invoice?.remarks || ''}</div>
-        </div>
+        {/* 備考: 最大3行程度、空なら非表示 */}
+        {invoice?.remarks && (
+          <div className="border border-gray-300 p-2">
+            <div className="invoice-body font-medium" style={{ fontSize: '12px' }}>備考</div>
+            <div className="invoice-small" style={{ fontSize: '11px', color: '#666', maxHeight: '48px', overflow: 'hidden' }}>
+              {invoice.remarks}
+            </div>
+          </div>
+        )}
       </div>
     );
   }
