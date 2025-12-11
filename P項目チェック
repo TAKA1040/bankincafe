@@ -1,6 +1,6 @@
 # invoice-create 画面項目 → DB マッピング確認
 
-## 最終確認日: 2024-12-12
+## 最終確認日: 2025-12-12
 
 ## ========================================
 ## 📋 基本情報セクション (invoices テーブル)
@@ -31,29 +31,33 @@
 
 ### 【個別作業タブ】の入力項目
 
-| 画面の項目名 | DB列名 | 現状 | 問題 |
-|-------------|--------|------|------|
-| 対象 | target | ❌ work_name保存中 | 組み立てラベルではなく対象のみ保存すべき |
-| 動作 | action1, action2, action3 | ❌ null | 未実装 |
-| 位置 | position1~position5 | ❌ null | 未実装 |
-| その他 | memo? | ❌ 不明 | 列が存在するか確認必要 |
-| 単価 | unit_price | ✅ OK | |
-| 数量 | quantity | ✅ OK | |
-| (計算値) | amount | ✅ OK | |
+| 画面の項目名 | DB列名 | 現状 |
+|-------------|--------|------|
+| 対象 | target | ✅ OK |
+| 動作 | action1, action2, action3 | ✅ OK |
+| 位置 | position1~position5 | ✅ OK |
+| その他 | other | ✅ OK |
+| 単価 | unit_price | ✅ OK |
+| 数量 | quantity | ✅ OK |
+| (計算値) | amount | ✅ OK |
 
 ### 【セット作業タブ】の入力項目
 
-| 画面の項目名 | DB列名 | 現状 | 問題 |
-|-------------|--------|------|------|
-| セット名 | set_name | ✅ OK | |
-| セット価格 | unit_price | ✅ OK | |
-| セット数量 | quantity | ✅ OK | |
-| セット明細 | raw_label_part | ✅ OK | 各子行に保存 |
+| 画面の項目名 | DB列名 | 現状 |
+|-------------|--------|------|
+| セット名 | set_name | ✅ OK |
+| セット価格 | unit_price | ✅ OK |
+| セット数量 | quantity | ✅ OK |
+| セット明細 | raw_label_part | ✅ OK (各子行に保存) |
+| 明細の対象 | target | ✅ OK (各子行に保存) |
+| 明細の動作 | action1~3 | ✅ OK (各子行に保存) |
+| 明細の位置 | position1~5 | ✅ OK (各子行に保存) |
+| 明細のその他 | other | ✅ OK (各子行に保存) |
 
 ---
 
 ## ========================================
-## 現在の保存コード (page.tsx 1717-1786行目)
+## 現在の保存コード (page.tsx 1750-1835行目)
 ## ========================================
 
 ### 個別作業の保存コード
@@ -64,84 +68,47 @@ lineItems.push({
   line_no: lineNo,
   sub_no: 1,
   task_type: 'T',
-  target: item.work_name,        // ← 問題: 対象ではなく組み立てラベル
+  target: item.target || null,
+  action1: item.actions?.[0] || null,
+  action2: item.actions?.[1] || null,
+  action3: item.actions?.[2] || null,
+  position1: item.positions?.[0] || null,
+  position2: item.positions?.[1] || null,
+  position3: item.positions?.[2] || null,
+  position4: item.positions?.[3] || null,
+  position5: item.positions?.[4] || null,
+  other: item.other || null,
   raw_label: item.work_name,
   raw_label_part: item.work_name,
   unit_price: item.unit_price,
   quantity: item.quantity,
   amount: amount,
   performed_at: billingDate
-  // action1, action2, action3: 未実装
-  // position1~5: 未実装
 })
 ```
 
 ### セット作業の保存コード
 ```typescript
-// セット作業（task_type='S'）
+// セット作業（task_type='S'）- 各子行に詳細情報を保存
+const detailItem = item.set_detail_items?.[index]
 lineItems.push({
   invoice_id: savedInvoiceId,
   line_no: lineNo,
-  sub_no: 1,
+  sub_no: subNo,
   task_type: 'S',
-  target: item.work_name,
-  set_name: item.work_name,       // ✅ OK
-  raw_label: item.set_details.join('、'),
-  raw_label_part: detail,         // ✅ OK
-  unit_price: item.unit_price,
-  quantity: item.quantity,
-  amount: amount,
-  performed_at: billingDate
-})
-```
-
----
-
-## ========================================
-## 必要な修正
-## ========================================
-
-### 1. WorkItem型の拡張
-```typescript
-interface WorkItem {
-  work_name: string       // 組み立てラベル（表示用）
-  target?: string         // 対象（NEW）
-  action1?: string        // 動作1（NEW）
-  action2?: string        // 動作2（NEW）
-  action3?: string        // 動作3（NEW）
-  position1?: string      // 位置1（NEW）
-  position2?: string      // 位置2（NEW）
-  position3?: string      // 位置3（NEW）
-  position4?: string      // 位置4（NEW）
-  position5?: string      // 位置5（NEW）
-  memo?: string           // その他（NEW）
-  unit_price: number
-  quantity: number
-  type: 'individual' | 'set'
-  set_details?: string[]
-}
-```
-
-### 2. 保存コードの修正
-```typescript
-// 個別作業の保存
-lineItems.push({
-  invoice_id: savedInvoiceId,
-  line_no: lineNo,
-  sub_no: 1,
-  task_type: 'T',
-  target: item.target,            // 対象のみ
-  action1: item.action1 || null,
-  action2: item.action2 || null,
-  action3: item.action3 || null,
-  position1: item.position1 || null,
-  position2: item.position2 || null,
-  position3: item.position3 || null,
-  position4: item.position4 || null,
-  position5: item.position5 || null,
-  memo: item.memo || null,
-  raw_label: item.work_name,      // 組み立てラベル（互換性維持）
-  raw_label_part: item.work_name,
+  target: detailItem?.target || null,
+  action1: detailItem?.actions?.[0] || null,
+  action2: detailItem?.actions?.[1] || null,
+  action3: detailItem?.actions?.[2] || null,
+  position1: detailItem?.positions?.[0] || null,
+  position2: detailItem?.positions?.[1] || null,
+  position3: detailItem?.positions?.[2] || null,
+  position4: detailItem?.positions?.[3] || null,
+  position5: detailItem?.positions?.[4] || null,
+  other: detailItem?.other || null,
+  set_name: item.work_name,
+  raw_label: item.set_details!.join('、'),
+  raw_label_part: detail,
   unit_price: item.unit_price,
   quantity: item.quantity,
   amount: amount,
@@ -159,15 +126,16 @@ lineItems.push({
 - line_no ✅
 - sub_no ✅
 - task_type ('T'=個別, 'S'=セット) ✅
-- target ❌ (組み立てラベルが入っている)
-- action1 ❌ (未使用)
-- action2 ❌ (未使用)
-- action3 ❌ (未使用)
-- position1 ❌ (未使用)
-- position2 ❌ (未使用)
-- position3 ❌ (未使用)
-- position4 ❌ (未使用)
-- position5 ❌ (未使用)
+- target ✅ (対象のみ保存)
+- action1 ✅
+- action2 ✅
+- action3 ✅
+- position1 ✅
+- position2 ✅
+- position3 ✅
+- position4 ✅
+- position5 ✅
+- other ✅
 - set_name ✅
 - raw_label ✅
 - raw_label_part ✅
@@ -175,3 +143,15 @@ lineItems.push({
 - quantity ✅
 - amount ✅
 - performed_at ✅
+
+---
+
+## ========================================
+## 修正履歴
+## ========================================
+
+### 2025-12-12: 全項目対応完了
+- WorkItem型にtarget, actions[], positions[], otherを追加
+- 個別作業: target/action1-3/position1-5/otherをDBに保存
+- セット作業: 各子行ごとにtarget/action1-3/position1-5/otherをDBに保存
+- set_detail_itemsで各明細の詳細情報を管理
