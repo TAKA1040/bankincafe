@@ -86,7 +86,7 @@ export default function InvoicePrintPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [customerCategoryDB, setCustomerCategoryDB] = useState<CustomerCategoryDB | null>(null);
-  const [selectedLayout, setSelectedLayout] = useState<'minimal' | 'geometric' | 'standard' | 'modern' | 'compact' | 'detailed' | 'basic' | 'traditional' | 'classic'>('minimal');
+  const [selectedLayout, setSelectedLayout] = useState<'minimal' | 'geometric' | 'standard' | 'modern' | 'compact' | 'detailed' | 'basic' | 'traditional' | 'classic' | 'amountFirst' | 'splitView' | 'borderless' | 'ledger' | 'card'>('minimal');
   const [outputFormat, setOutputFormat] = useState<OutputFormat>('current');
   const [relatedInvoices, setRelatedInvoices] = useState<RelatedInvoice[]>([]);
   const [isLayoutSelectorOpen, setIsLayoutSelectorOpen] = useState(false);
@@ -734,6 +734,12 @@ export default function InvoicePrintPage() {
     { id: 'basic', name: '基本', icon: FileText, description: '最もシンプルな一般的フォーマット' },
     { id: 'traditional', name: '伝統的', icon: Layout, description: '日本の従来型請求書スタイル' },
     { id: 'classic', name: 'クラシック', icon: Grid, description: '白黒のオーソドックスデザイン' },
+    // 新デザイン - 構造が異なるもの
+    { id: 'amountFirst', name: '金額重視', icon: FileText, description: '合計金額を最上部に大きく表示' },
+    { id: 'splitView', name: '2カラム', icon: Layout, description: '左右分割で情報整理' },
+    { id: 'borderless', name: '余白重視', icon: Grid, description: '罫線最小限、余白たっぷり' },
+    { id: 'ledger', name: '帳票', icon: Briefcase, description: '日本の伝統的な帳票スタイル' },
+    { id: 'card', name: 'カード', icon: FileText, description: '各セクションをカードで区切り' },
   ] as const;
 
   // 出力形式オプション
@@ -1018,6 +1024,12 @@ export default function InvoicePrintPage() {
           {selectedLayout === 'basic' && <BasicLayout />}
           {selectedLayout === 'traditional' && <TraditionalLayout />}
           {selectedLayout === 'classic' && <ClassicLayout />}
+          {/* 新デザイン */}
+          {selectedLayout === 'amountFirst' && <AmountFirstLayout />}
+          {selectedLayout === 'splitView' && <SplitViewLayout />}
+          {selectedLayout === 'borderless' && <BorderlessLayout />}
+          {selectedLayout === 'ledger' && <LedgerLayout />}
+          {selectedLayout === 'card' && <CardLayout />}
         </div>
       </div>
     </>
@@ -1816,6 +1828,446 @@ export default function InvoicePrintPage() {
         <div className="border border-gray-600 p-2">
           <div className="text-[10px] font-bold mb-1">備考</div>
           <div className="text-[10px] text-gray-600 min-h-[20px]">{invoice?.remarks || ''}</div>
+        </div>
+      </div>
+    );
+  }
+
+  // ========================================
+  // 新デザイン: 構造が明確に異なるレイアウト
+  // ========================================
+
+  // 金額重視型 - 合計金額を最上部に大きく表示
+  function AmountFirstLayout() {
+    return (
+      <div className="a4-page text-xs">
+        {/* 最上部: 大きな合計金額 */}
+        <div className="bg-blue-900 text-white p-4 mb-3 rounded-lg">
+          <div className="flex justify-between items-center">
+            <div>
+              <div className="text-sm opacity-80">ご請求金額</div>
+              <div className="text-3xl font-bold">¥{formatAmount(displayAmounts.total)}</div>
+              <div className="text-sm opacity-70 mt-1">（税込）</div>
+            </div>
+            <div className="text-right">
+              <div className="text-lg font-bold">請求書</div>
+              <div className="text-sm opacity-80">No. {invoice?.invoice_number}</div>
+              <div className="text-sm opacity-70">{formatDate(invoice?.issue_date || '')}</div>
+            </div>
+          </div>
+        </div>
+
+        {/* 請求先・請求元 - 横並び小さめ */}
+        <div className="flex gap-3 mb-3 text-[10px]">
+          <div className="flex-1 bg-gray-50 p-2 rounded">
+            <div className="font-bold text-gray-500 mb-1">請求先</div>
+            <div className="font-medium">{customerInfo.name} 様</div>
+            <div className="text-gray-600">{invoice?.subject_name || invoice?.subject}</div>
+          </div>
+          <div className="flex-1 bg-gray-50 p-2 rounded">
+            <div className="font-bold text-gray-500 mb-1">請求元</div>
+            <div className="font-medium">{companyInfo?.companyName}</div>
+            <div className="text-gray-600">〒{companyInfo?.postalCode} {companyInfo?.prefecture}{companyInfo?.city}</div>
+            <div className="text-gray-600">TEL: {companyInfo?.phoneNumber}</div>
+          </div>
+        </div>
+
+        {/* 明細テーブル */}
+        <LineItemsTable headerBg="bg-gray-100" borderColor="border-gray-300" compact={true} />
+
+        {/* 内訳 - 右寄せ小さく */}
+        <div className="flex justify-end mb-2">
+          <div className="w-40 text-[10px]">
+            <div className="flex justify-between py-1 border-b border-gray-200">
+              <span>小計</span><span>¥{formatAmount(displayAmounts.subtotal)}</span>
+            </div>
+            <div className="flex justify-between py-1 border-b border-gray-200">
+              <span>消費税</span><span>¥{formatAmount(displayAmounts.tax)}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* 振込先・備考 - 横並び */}
+        <div className="flex gap-3 text-[10px]">
+          {companyInfo?.bankName && (
+            <div className="flex-1 border border-gray-300 p-2 rounded">
+              <div className="font-bold mb-1">お振込先</div>
+              <div>{companyInfo.bankName} {companyInfo.bankBranch} {companyInfo.accountType} {companyInfo.accountNumber}</div>
+            </div>
+          )}
+          <div className="flex-1 border border-gray-300 p-2 rounded">
+            <div className="font-bold mb-1">備考</div>
+            <div className="text-gray-600">{invoice?.remarks || ''}</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // 2カラム型 - 左右分割レイアウト
+  function SplitViewLayout() {
+    return (
+      <div className="a4-page text-xs">
+        {/* ヘッダー */}
+        <div className="text-center border-b-2 border-gray-800 pb-2 mb-3">
+          <h1 className="text-lg font-bold">請 求 書</h1>
+          <div className="text-[10px] text-gray-600">No. {invoice?.invoice_number} | {formatDate(invoice?.issue_date || '')}</div>
+        </div>
+
+        {/* 2カラムメイン */}
+        <div className="flex gap-4">
+          {/* 左カラム: 明細 */}
+          <div className="flex-1">
+            <LineItemsTable headerBg="bg-gray-800 text-white" borderColor="border-gray-400" compact={true} />
+          </div>
+
+          {/* 右カラム: 情報 */}
+          <div className="w-48 space-y-3">
+            {/* 請求先 */}
+            <div className="bg-gray-100 p-2 rounded">
+              <div className="text-[10px] font-bold text-gray-500 mb-1">請求先</div>
+              <div className="font-medium">{customerInfo.name} 様</div>
+              <div className="text-[10px] text-gray-600">{invoice?.subject_name || invoice?.subject}</div>
+            </div>
+
+            {/* 請求元 */}
+            <div className="bg-gray-100 p-2 rounded">
+              <div className="text-[10px] font-bold text-gray-500 mb-1">請求元</div>
+              <div className="font-medium text-[10px]">{companyInfo?.companyName}</div>
+              <div className="text-[10px] text-gray-600">〒{companyInfo?.postalCode}</div>
+              <div className="text-[10px] text-gray-600">{companyInfo?.prefecture}{companyInfo?.city}</div>
+              <div className="text-[10px] text-gray-600">TEL: {companyInfo?.phoneNumber}</div>
+            </div>
+
+            {/* 金額 */}
+            <div className="bg-blue-900 text-white p-2 rounded">
+              <div className="text-[10px] opacity-80 mb-1">ご請求金額</div>
+              <div className="text-xl font-bold">¥{formatAmount(displayAmounts.total)}</div>
+              <div className="text-[10px] opacity-70 mt-1">
+                小計 ¥{formatAmount(displayAmounts.subtotal)}<br/>
+                消費税 ¥{formatAmount(displayAmounts.tax)}
+              </div>
+            </div>
+
+            {/* 振込先 */}
+            {companyInfo?.bankName && (
+              <div className="border border-gray-300 p-2 rounded text-[10px]">
+                <div className="font-bold mb-1">振込先</div>
+                <div>{companyInfo.bankName}</div>
+                <div>{companyInfo.bankBranch}</div>
+                <div>{companyInfo.accountType} {companyInfo.accountNumber}</div>
+                <div>{companyInfo.accountHolder}</div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* 備考 */}
+        <div className="mt-3 border-t border-gray-300 pt-2 text-[10px]">
+          <span className="font-bold">備考:</span> {invoice?.remarks || ''}
+        </div>
+      </div>
+    );
+  }
+
+  // 余白重視型 - ボーダーレス、すっきり
+  function BorderlessLayout() {
+    return (
+      <div className="a4-page text-xs" style={{ padding: '20px 30px' }}>
+        {/* ヘッダー - 余白多め */}
+        <div className="flex justify-between items-start mb-8">
+          <div>
+            <h1 className="text-2xl font-light text-gray-700 mb-2">INVOICE</h1>
+            <div className="text-[10px] text-gray-400">
+              No. {invoice?.invoice_number}<br/>
+              {formatDate(invoice?.issue_date || '')}
+            </div>
+          </div>
+          <div className="text-right">
+            <div className="text-[10px] text-gray-400 mb-1">TOTAL</div>
+            <div className="text-2xl font-bold text-gray-800">¥{formatAmount(displayAmounts.total)}</div>
+          </div>
+        </div>
+
+        {/* 請求先・請求元 - 余白多め */}
+        <div className="flex gap-12 mb-8">
+          <div className="flex-1">
+            <div className="text-[10px] text-gray-400 uppercase tracking-wider mb-2">Bill To</div>
+            <div className="font-medium text-gray-800">{customerInfo.name}</div>
+            <div className="text-[10px] text-gray-500">{invoice?.subject_name || invoice?.subject}</div>
+          </div>
+          <div className="flex-1 text-right">
+            <div className="text-[10px] text-gray-400 uppercase tracking-wider mb-2">From</div>
+            <div className="font-medium text-gray-800">{companyInfo?.companyName}</div>
+            <div className="text-[10px] text-gray-500">
+              〒{companyInfo?.postalCode} {companyInfo?.prefecture}{companyInfo?.city}<br/>
+              {companyInfo?.phoneNumber}
+            </div>
+          </div>
+        </div>
+
+        {/* 明細 - 罫線最小限 */}
+        <table className="w-full mb-6">
+          <thead>
+            <tr className="border-b border-gray-200">
+              <th className="text-left py-2 text-[10px] text-gray-400 uppercase tracking-wider">Description</th>
+              <th className="text-center py-2 text-[10px] text-gray-400 uppercase tracking-wider w-16">Qty</th>
+              <th className="text-right py-2 text-[10px] text-gray-400 uppercase tracking-wider w-20">Price</th>
+              <th className="text-right py-2 text-[10px] text-gray-400 uppercase tracking-wider w-24">Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            {groupedLineItems.map((group) =>
+              group.items.map((item, idx) => (
+                <tr key={`${group.lineNo}-${idx}`} className="border-b border-gray-100">
+                  <td className="py-2 text-gray-700">{item.label}</td>
+                  <td className="py-2 text-center text-gray-600">{item.quantity > 0 ? item.quantity : ''}</td>
+                  <td className="py-2 text-right text-gray-600">{item.unitPrice > 0 ? `¥${formatAmount(item.unitPrice)}` : ''}</td>
+                  <td className="py-2 text-right font-medium">{item.amount > 0 ? `¥${formatAmount(item.amount)}` : ''}</td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+
+        {/* 合計 - シンプル */}
+        <div className="flex justify-end mb-8">
+          <div className="w-48">
+            <div className="flex justify-between py-1 text-gray-500">
+              <span>Subtotal</span><span>¥{formatAmount(displayAmounts.subtotal)}</span>
+            </div>
+            <div className="flex justify-between py-1 text-gray-500">
+              <span>Tax (10%)</span><span>¥{formatAmount(displayAmounts.tax)}</span>
+            </div>
+            <div className="flex justify-between py-2 font-bold text-gray-800 border-t border-gray-300 mt-2">
+              <span>Total</span><span>¥{formatAmount(displayAmounts.total)}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* 振込先・備考 - 下部に控えめに */}
+        <div className="text-[10px] text-gray-400 mt-auto">
+          {companyInfo?.bankName && (
+            <div className="mb-2">
+              <span className="uppercase tracking-wider">Bank:</span> {companyInfo.bankName} {companyInfo.bankBranch} {companyInfo.accountType} {companyInfo.accountNumber} {companyInfo.accountHolder}
+            </div>
+          )}
+          {invoice?.remarks && <div><span className="uppercase tracking-wider">Note:</span> {invoice.remarks}</div>}
+        </div>
+      </div>
+    );
+  }
+
+  // 帳票型 - 日本の伝統的な帳票スタイル
+  function LedgerLayout() {
+    return (
+      <div className="a4-page text-xs" style={{ fontFamily: 'serif' }}>
+        {/* タイトル - 二重線 */}
+        <div className="text-center mb-4">
+          <div className="border-t-2 border-b-2 border-double border-gray-800 py-2 mx-auto w-48">
+            <h1 className="text-xl font-bold tracking-widest">請　求　書</h1>
+          </div>
+        </div>
+
+        {/* 請求先 - 右上に番号・日付 */}
+        <div className="flex justify-between mb-4">
+          <div className="border-b border-gray-800 pb-1 pr-8">
+            <span className="text-lg font-bold">{customerInfo.name}</span>
+            <span className="ml-2">様</span>
+          </div>
+          <div className="text-right text-[10px]">
+            <div>No. {invoice?.invoice_number}</div>
+            <div>発行日: {formatDate(invoice?.issue_date || '')}</div>
+          </div>
+        </div>
+
+        {/* 件名・金額 */}
+        <div className="mb-4">
+          <table className="w-full border-collapse">
+            <tbody>
+              <tr>
+                <td className="border border-gray-800 bg-gray-100 p-2 w-20 text-center font-bold">件　名</td>
+                <td className="border border-gray-800 p-2">{invoice?.subject_name || invoice?.subject || '-'}</td>
+              </tr>
+              <tr>
+                <td className="border border-gray-800 bg-gray-100 p-2 text-center font-bold">金　額</td>
+                <td className="border border-gray-800 p-2 text-xl font-bold">
+                  ¥{formatAmount(displayAmounts.total)}－
+                  <span className="text-sm font-normal ml-2">（税込）</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        {/* 明細 - 罫線しっかり */}
+        <div className="mb-4">
+          <table className="w-full border-collapse">
+            <thead>
+              <tr className="bg-gray-100">
+                <th className="border border-gray-800 p-1 w-10 text-center">No</th>
+                <th className="border border-gray-800 p-1 text-center">摘　要</th>
+                <th className="border border-gray-800 p-1 w-12 text-center">数量</th>
+                <th className="border border-gray-800 p-1 w-20 text-center">単　価</th>
+                <th className="border border-gray-800 p-1 w-24 text-center">金　額</th>
+              </tr>
+            </thead>
+            <tbody>
+              {groupedLineItems.map((group) =>
+                group.items.map((item, idx) => (
+                  <tr key={`${group.lineNo}-${idx}`}>
+                    <td className="border border-gray-800 p-1 text-center">{idx === 0 ? group.lineNo : ''}</td>
+                    <td className="border border-gray-800 p-1">{item.label}</td>
+                    <td className="border border-gray-800 p-1 text-center">{item.quantity > 0 ? item.quantity : ''}</td>
+                    <td className="border border-gray-800 p-1 text-right">{item.unitPrice > 0 ? `¥${formatAmount(item.unitPrice)}` : ''}</td>
+                    <td className="border border-gray-800 p-1 text-right">{item.amount > 0 ? `¥${formatAmount(item.amount)}` : ''}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colSpan={4} className="border border-gray-800 p-1 text-right bg-gray-50">小　計</td>
+                <td className="border border-gray-800 p-1 text-right">¥{formatAmount(displayAmounts.subtotal)}</td>
+              </tr>
+              <tr>
+                <td colSpan={4} className="border border-gray-800 p-1 text-right bg-gray-50">消費税</td>
+                <td className="border border-gray-800 p-1 text-right">¥{formatAmount(displayAmounts.tax)}</td>
+              </tr>
+              <tr>
+                <td colSpan={4} className="border border-gray-800 p-1 text-right bg-gray-200 font-bold">合　計</td>
+                <td className="border border-gray-800 p-1 text-right font-bold">¥{formatAmount(displayAmounts.total)}</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
+        {/* 振込先 */}
+        {companyInfo?.bankName && (
+          <div className="mb-4">
+            <table className="w-full border-collapse">
+              <tbody>
+                <tr>
+                  <td className="border border-gray-800 bg-gray-100 p-2 w-24 text-center font-bold">振込先</td>
+                  <td className="border border-gray-800 p-2">
+                    {companyInfo.bankName} {companyInfo.bankBranch} {companyInfo.accountType} {companyInfo.accountNumber} {companyInfo.accountHolder}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* 請求元 - 右下 */}
+        <div className="flex justify-end">
+          <div className="text-right text-[10px] border-t border-gray-400 pt-2 pl-8">
+            <div className="font-bold">{companyInfo?.companyName}</div>
+            <div>〒{companyInfo?.postalCode} {companyInfo?.prefecture}{companyInfo?.city}{companyInfo?.address}</div>
+            <div>TEL: {companyInfo?.phoneNumber}</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // カード型 - 各セクションをカードで区切り
+  function CardLayout() {
+    return (
+      <div className="a4-page text-xs bg-gray-50" style={{ padding: '15px' }}>
+        {/* ヘッダーカード */}
+        <div className="bg-white rounded-lg shadow-sm p-3 mb-3">
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-lg font-bold text-gray-800">請求書</h1>
+              <div className="text-[10px] text-gray-500">No. {invoice?.invoice_number} | {formatDate(invoice?.issue_date || '')}</div>
+            </div>
+            <div className="bg-green-500 text-white px-4 py-2 rounded-lg">
+              <div className="text-[10px]">ご請求金額</div>
+              <div className="text-xl font-bold">¥{formatAmount(displayAmounts.total)}</div>
+            </div>
+          </div>
+        </div>
+
+        {/* 請求先・請求元カード */}
+        <div className="grid grid-cols-2 gap-3 mb-3">
+          <div className="bg-white rounded-lg shadow-sm p-3">
+            <div className="text-[10px] font-bold text-gray-400 uppercase mb-1">請求先</div>
+            <div className="font-medium text-gray-800">{customerInfo.name} 様</div>
+            <div className="text-[10px] text-gray-500 mt-1">{invoice?.subject_name || invoice?.subject}</div>
+          </div>
+          <div className="bg-white rounded-lg shadow-sm p-3">
+            <div className="text-[10px] font-bold text-gray-400 uppercase mb-1">請求元</div>
+            <div className="font-medium text-gray-800">{companyInfo?.companyName}</div>
+            <div className="text-[10px] text-gray-500 mt-1">
+              〒{companyInfo?.postalCode} {companyInfo?.prefecture}{companyInfo?.city}<br/>
+              TEL: {companyInfo?.phoneNumber}
+            </div>
+          </div>
+        </div>
+
+        {/* 明細カード */}
+        <div className="bg-white rounded-lg shadow-sm p-3 mb-3">
+          <div className="text-[10px] font-bold text-gray-400 uppercase mb-2">明細</div>
+          <table className="w-full">
+            <thead>
+              <tr className="border-b-2 border-gray-200">
+                <th className="text-left py-1 text-[10px] text-gray-500">項目</th>
+                <th className="text-center py-1 text-[10px] text-gray-500 w-12">数量</th>
+                <th className="text-right py-1 text-[10px] text-gray-500 w-16">単価</th>
+                <th className="text-right py-1 text-[10px] text-gray-500 w-20">金額</th>
+              </tr>
+            </thead>
+            <tbody>
+              {groupedLineItems.map((group) =>
+                group.items.map((item, idx) => (
+                  <tr key={`${group.lineNo}-${idx}`} className="border-b border-gray-100">
+                    <td className="py-1">{item.label}</td>
+                    <td className="py-1 text-center">{item.quantity > 0 ? item.quantity : ''}</td>
+                    <td className="py-1 text-right">{item.unitPrice > 0 ? `¥${formatAmount(item.unitPrice)}` : ''}</td>
+                    <td className="py-1 text-right font-medium">{item.amount > 0 ? `¥${formatAmount(item.amount)}` : ''}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* 合計・振込先カード */}
+        <div className="grid grid-cols-2 gap-3 mb-3">
+          {/* 合計 */}
+          <div className="bg-white rounded-lg shadow-sm p-3">
+            <div className="text-[10px] font-bold text-gray-400 uppercase mb-2">金額内訳</div>
+            <div className="space-y-1">
+              <div className="flex justify-between text-gray-600">
+                <span>小計</span><span>¥{formatAmount(displayAmounts.subtotal)}</span>
+              </div>
+              <div className="flex justify-between text-gray-600">
+                <span>消費税 (10%)</span><span>¥{formatAmount(displayAmounts.tax)}</span>
+              </div>
+              <div className="flex justify-between font-bold text-gray-800 border-t border-gray-200 pt-1 mt-1">
+                <span>合計</span><span>¥{formatAmount(displayAmounts.total)}</span>
+              </div>
+            </div>
+          </div>
+          {/* 振込先 */}
+          <div className="bg-white rounded-lg shadow-sm p-3">
+            <div className="text-[10px] font-bold text-gray-400 uppercase mb-2">振込先</div>
+            {companyInfo?.bankName ? (
+              <div className="text-[10px] text-gray-600">
+                <div>{companyInfo.bankName} {companyInfo.bankBranch}</div>
+                <div>{companyInfo.accountType} {companyInfo.accountNumber}</div>
+                <div>名義: {companyInfo.accountHolder}</div>
+              </div>
+            ) : (
+              <div className="text-[10px] text-gray-400">-</div>
+            )}
+          </div>
+        </div>
+
+        {/* 備考カード */}
+        <div className="bg-white rounded-lg shadow-sm p-3">
+          <div className="text-[10px] font-bold text-gray-400 uppercase mb-1">備考</div>
+          <div className="text-[10px] text-gray-600">{invoice?.remarks || '-'}</div>
         </div>
       </div>
     );
