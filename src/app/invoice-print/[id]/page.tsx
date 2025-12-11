@@ -743,25 +743,39 @@ export default function InvoicePrintPage() {
 
   return (
     <>
-      {/* 印刷用CSSスタイル - 全レイアウトA4ページ対応 */}
+      {/* 印刷用CSSスタイル - プロ仕様A4請求書 */}
       <style jsx global>{`
+        /* 印刷時の@pageルール - ブラウザのヘッダー/フッターを消す */
+        @page {
+          size: A4 portrait;
+          margin: 0mm;
+        }
+
         @media print {
-          body { margin: 0; padding: 0; font-family: 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', sans-serif; }
+          html, body {
+            margin: 0;
+            padding: 0;
+            width: 210mm;
+            font-family: 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', 'Yu Gothic', 'Meiryo', sans-serif;
+            font-size: 10pt;
+            line-height: 1.4;
+            -webkit-print-color-adjust: exact;
+            color-adjust: exact;
+          }
           .no-print { display: none !important; }
           .a4-print-container {
-            width: auto;
+            width: 210mm;
             margin: 0;
             padding: 0;
           }
+          /* A4ページ: 210mm x 296.5mm (0.5mm余裕), パディング15mm */
           .a4-page, .print-container {
             width: 210mm;
-            height: 297mm;
-            max-height: 297mm;
-            padding: 10mm 12mm;
+            min-height: 296.5mm;
+            padding: 15mm 18mm;
             box-sizing: border-box;
             page-break-after: always;
             background: white;
-            overflow: hidden;
           }
           .a4-page:last-child, .print-container:last-child {
             page-break-after: auto;
@@ -770,7 +784,16 @@ export default function InvoicePrintPage() {
           .avoid-break { page-break-inside: avoid; }
           table { page-break-inside: auto; }
           tr { page-break-inside: avoid; page-break-after: auto; }
+
+          /* 印刷用フォントサイズ */
+          .print-title { font-size: 14pt; font-weight: bold; }
+          .print-subtitle { font-size: 12pt; }
+          .print-body { font-size: 10pt; }
+          .print-small { font-size: 9pt; }
+          .print-tiny { font-size: 8pt; }
         }
+
+        /* 画面プレビュー用 */
         @media screen {
           .a4-print-container {
             padding: 20px;
@@ -778,15 +801,13 @@ export default function InvoicePrintPage() {
           }
           .a4-page, .print-container {
             width: 210mm;
-            height: 297mm;
-            max-height: 297mm;
-            padding: 10mm 12mm;
+            min-height: 296.5mm;
+            padding: 15mm 18mm;
             box-sizing: border-box;
             background: white;
             margin: 20px auto;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+            box-shadow: 0 .5mm 2mm rgba(0,0,0,.3);
             border: 1px solid #ccc;
-            overflow: hidden;
           }
         }
       `}</style>
