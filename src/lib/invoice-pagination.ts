@@ -58,9 +58,10 @@ export interface PaginationConfig {
 }
 
 // デフォルト設定（後で調整可能）
+// ※ page.tsx の MAX_ROWS_PAGE1, MAX_ROWS_OTHER と同期させること
 export const DEFAULT_PAGINATION_CONFIG: PaginationConfig = {
-  page1MaxRows: 15,    // 1ページ目はヘッダー・フッターがあるので少なめ
-  pageNMaxRows: 25,    // 2ページ目以降はヘッダーなしで多め
+  page1MaxRows: 18,    // 1ページ目はヘッダー・フッターがあるので少なめ
+  pageNMaxRows: 30,    // 2ページ目以降はヘッダーなしで多め
   rowHeight: 24,
   childRowHeight: 18,
 };
