@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Plus, Search, Edit, Trash2, Users, X, Save, Building2, UserCircle, RefreshCw, ArrowUpCircle } from 'lucide-react'
+import { ArrowLeft, Plus, Search, Edit, Trash2, Users, X, Save, Building2, UserCircle, RefreshCw, ArrowUpCircle, HelpCircle } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { CustomerCategoryDB } from '@/lib/customer-categories'
 
@@ -601,6 +601,18 @@ export default function CustomerListPage() {
             <span className="ml-2 px-2 py-0.5 bg-purple-200 text-purple-800 rounded-full text-sm">
               {otherCustomers.length}件
             </span>
+            <div className="relative group ml-2">
+              <HelpCircle className="text-purple-400 cursor-help" size={18} />
+              <div className="absolute left-0 top-6 w-72 p-3 bg-gray-800 text-white text-xs rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+                <p className="font-semibold mb-1">↑ 昇格ボタンについて</p>
+                <p>その他顧客をカテゴリ顧客に昇格できます。</p>
+                <ul className="mt-1 ml-3 list-disc">
+                  <li>請求書作成時にカテゴリとして選択可能に</li>
+                  <li>既存の請求書データも自動更新</li>
+                  <li>売上集計でカテゴリ別に集計</li>
+                </ul>
+              </div>
+            </div>
           </div>
           <table className="w-full">
             <thead className="bg-gray-50 border-b">
