@@ -13,13 +13,23 @@ import { InvoicePage, formatPageNumber } from '@/lib/invoice-pagination';
  * - 用紙全体を使う（作業内容エリアで余白調整）
  */
 
+// ページ情報（renderLineItemsに渡す）
+export interface PageRenderInfo {
+  pageNumber: number;
+  totalPages: number;
+  isFirstPage: boolean;
+  isLastPage: boolean;
+  showHeader: boolean;
+  showFooter: boolean;
+}
+
 interface InvoicePageTemplateProps {
   page: InvoicePage;
   totalPages: number;
   // ヘッダー部分のレンダリング
   renderHeader?: () => React.ReactNode;
-  // 作業内容テーブルのレンダリング
-  renderLineItems: (items: InvoicePage['items']) => React.ReactNode;
+  // 作業内容テーブルのレンダリング（ページ情報付き）
+  renderLineItems: (items: InvoicePage['items'], pageInfo: PageRenderInfo) => React.ReactNode;
   // フッター部分のレンダリング（合計・振込先・備考）
   renderFooter?: () => React.ReactNode;
   // カスタムスタイル
@@ -71,7 +81,14 @@ export function InvoicePageTemplate({
             flex: 1,
           }}
         >
-          {renderLineItems(page.items)}
+          {renderLineItems(page.items, {
+            pageNumber: page.pageNumber,
+            totalPages,
+            isFirstPage: page.isFirstPage,
+            isLastPage: page.isLastPage,
+            showHeader: page.showHeader,
+            showFooter: page.showFooter,
+          })}
         </div>
       </div>
 
@@ -111,7 +128,7 @@ export function InvoicePageTemplate({
 interface InvoicePagesContainerProps {
   pages: InvoicePage[];
   renderHeader?: () => React.ReactNode;
-  renderLineItems: (items: InvoicePage['items']) => React.ReactNode;
+  renderLineItems: (items: InvoicePage['items'], pageInfo: PageRenderInfo) => React.ReactNode;
   renderFooter?: () => React.ReactNode;
   className?: string;
 }

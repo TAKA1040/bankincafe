@@ -6,7 +6,7 @@ import { Printer, Download, ArrowLeft, Home, FileText, Layout, Grid, Briefcase, 
 import { supabase } from '@/lib/supabase';
 import { CustomerCategoryDB } from '@/lib/customer-categories';
 import { useInvoicePrintSettings, LayoutId } from '@/hooks/useInvoicePrintSettings';
-import { InvoicePagesContainer } from '@/components/invoice-print/InvoicePageTemplate';
+import { InvoicePagesContainer, PageRenderInfo } from '@/components/invoice-print/InvoicePageTemplate';
 import { paginateLineItems, GroupedLineItem, InvoicePage } from '@/lib/invoice-pagination';
 
 interface InvoiceData {
@@ -1106,13 +1106,34 @@ export default function InvoicePrintPage() {
 
     // ミニマル用明細テーブル（ページ内アイテム用）
     // 空白行で埋めて枠を統一する
-    const MIN_ROWS_PER_PAGE = 20; // 1ページあたりの最小行数
+    const MIN_ROWS_PAGE1 = 15; // 1ページ目（ヘッダーあり）の行数
+    const MIN_ROWS_OTHER = 25; // 2ページ目以降の行数
+    const MIN_ROWS_WITH_FOOTER = 18; // フッターありページの行数
 
-    const renderMinimalLineItems = (pageItems: GroupedLineItem[]) => {
+    const renderMinimalLineItems = (pageItems: GroupedLineItem[], pageInfo: PageRenderInfo) => {
       // 実際のデータ行数を計算
       const dataRowCount = pageItems.reduce((sum, group) => sum + group.items.length, 0);
+
+      // ページの種類に応じた最小行数を決定
+      // ヘッダーあり（1ページ目）とヘッダーなし（2ページ目以降）で行数が変わる
+      // フッターあり/なしでも変わる
+      let minRows = MIN_ROWS_OTHER;
+      if (pageInfo.showHeader && pageInfo.showFooter) {
+        // 1ページ目でフッターもある（1ページ完結）
+        minRows = MIN_ROWS_PAGE1;
+      } else if (pageInfo.showHeader && !pageInfo.showFooter) {
+        // 1ページ目でフッターなし（2ページ以上ある）
+        minRows = MIN_ROWS_PAGE1;
+      } else if (!pageInfo.showHeader && pageInfo.showFooter) {
+        // 2ページ目以降でフッターあり（最終ページ）
+        minRows = MIN_ROWS_WITH_FOOTER;
+      } else {
+        // 2ページ目以降でフッターなし（中間ページ）
+        minRows = MIN_ROWS_OTHER;
+      }
+
       // 空白行の数
-      const emptyRowCount = Math.max(0, MIN_ROWS_PER_PAGE - dataRowCount);
+      const emptyRowCount = Math.max(0, minRows - dataRowCount);
 
       return (
         <table className="w-full border-collapse" style={{ tableLayout: 'fixed', fontSize: '12px', borderCollapse: 'collapse' }}>
