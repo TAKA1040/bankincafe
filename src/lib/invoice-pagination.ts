@@ -60,9 +60,12 @@ export interface PaginationConfig {
 // デフォルト設定（後で調整可能）
 // ページ分割用の設定（データをこの行数で分割）
 // page.tsx の MAX_DISPLAY_* と一致させること！
+const FOOTER_ROWS = 6; // フッターが占める行数
+
 export const DEFAULT_PAGINATION_CONFIG: PaginationConfig = {
-  page1MaxRows: 18,    // 1ページ目のデータ行数（page.tsxのMAX_DISPLAY_PAGE1と一致）
-  pageNMaxRows: 30,    // 2ページ目以降のデータ行数（page.tsxのMAX_DISPLAY_OTHERと一致）
+  // フッターありの場合の行数（基準）
+  page1MaxRows: 18,    // 1ページ目（フッターあり）
+  pageNMaxRows: 30,    // 2ページ目以降（フッターあり）
   rowHeight: 24,
   childRowHeight: 18,
 };
@@ -82,53 +85,82 @@ export function calculateGroupRowCount(group: GroupedLineItem): number {
 
 /**
  * グループリストをページに分割
+ *
+ * 2パスアプローチ:
+ * 1. 総行数を計算して1ページに収まるか判定
+ * 2. フッターの有無を考慮して分割
  */
 export function paginateLineItems(
   groups: GroupedLineItem[],
   config: PaginationConfig = DEFAULT_PAGINATION_CONFIG
 ): InvoicePage[] {
+  // 総行数を計算
+  const totalRows = groups.reduce((sum, group) => sum + calculateGroupRowCount(group), 0);
+
+  // 1ページに収まるか判定（フッターありで）
+  const fitsInOnePage = totalRows <= config.page1MaxRows;
+
+  // ページごとの最大行数を取得
+  // - 1ページ完結: フッターあり → page1MaxRows
+  // - 複数ページの1ページ目: フッターなし → page1MaxRows + FOOTER_ROWS
+  // - 中間ページ: フッターなし → pageNMaxRows + FOOTER_ROWS
+  // - 最終ページ: フッターあり → pageNMaxRows
+  const getMaxRows = (pageNum: number, isLastPage: boolean) => {
+    if (pageNum === 1) {
+      // 1ページ目: フッターがあれば基準行数、なければ+FOOTER_ROWS
+      return fitsInOnePage ? config.page1MaxRows : config.page1MaxRows + FOOTER_ROWS;
+    } else {
+      // 2ページ目以降: 最終ページならフッターあり、そうでなければなし
+      return isLastPage ? config.pageNMaxRows : config.pageNMaxRows + FOOTER_ROWS;
+    }
+  };
+
   const pages: InvoicePage[] = [];
   let currentPageItems: GroupedLineItem[] = [];
   let currentRowCount = 0;
   let pageNumber = 1;
+  let remainingGroups = [...groups];
 
-  // 現在のページの最大行数を取得
-  const getMaxRows = (pageNum: number) =>
-    pageNum === 1 ? config.page1MaxRows : config.pageNMaxRows;
-
-  for (const group of groups) {
+  while (remainingGroups.length > 0) {
+    const group = remainingGroups[0];
     const groupRowCount = calculateGroupRowCount(group);
-    const maxRows = getMaxRows(pageNumber);
+
+    // 残りのグループの総行数を計算（これが最終ページかどうかの判定用）
+    const remainingRows = remainingGroups.reduce((sum, g) => sum + calculateGroupRowCount(g), 0);
+
+    // このグループを追加した後の行数
+    const afterAddRowCount = currentRowCount + groupRowCount;
+
+    // 現在のページが最終ページになるかどうか（残りの全データがこのページに収まるか）
+    const wouldBeLastPage = remainingRows <= getMaxRows(pageNumber, true);
+    const maxRows = getMaxRows(pageNumber, wouldBeLastPage);
 
     // このグループを追加すると溢れる場合
-    if (currentRowCount + groupRowCount > maxRows) {
-      // 現在のページを確定（まだアイテムがある場合）
-      if (currentPageItems.length > 0) {
-        pages.push({
-          pageNumber,
-          isFirstPage: pageNumber === 1,
-          isLastPage: false, // 後で更新
-          items: currentPageItems,
-          showHeader: pageNumber === 1,
-          showFooter: false, // 後で更新
-        });
-        pageNumber++;
-        currentPageItems = [];
-        currentRowCount = 0;
-      }
-
-      // グループが1ページに収まらないほど大きい場合の例外処理
-      const newMaxRows = getMaxRows(pageNumber);
-      if (groupRowCount > newMaxRows) {
-        // セットを分割する（例外ケース）
-        // TODO: 大きすぎるセットの分割ロジック
-        console.warn(`セットが大きすぎます: ${group.setName}, 行数: ${groupRowCount}`);
-      }
+    if (afterAddRowCount > maxRows && currentPageItems.length > 0) {
+      // 現在のページを確定
+      pages.push({
+        pageNumber,
+        isFirstPage: pageNumber === 1,
+        isLastPage: false,
+        items: currentPageItems,
+        showHeader: pageNumber === 1,
+        showFooter: false,
+      });
+      pageNumber++;
+      currentPageItems = [];
+      currentRowCount = 0;
+      continue; // 同じグループを再評価
     }
 
     // グループを現在のページに追加
     currentPageItems.push(group);
     currentRowCount += groupRowCount;
+    remainingGroups.shift();
+
+    // グループが1ページに収まらないほど大きい場合の警告
+    if (groupRowCount > getMaxRows(pageNumber, true) + FOOTER_ROWS) {
+      console.warn(`セットが大きすぎます: ${group.setName}, 行数: ${groupRowCount}`);
+    }
   }
 
   // 最後のページを追加
@@ -143,15 +175,16 @@ export function paginateLineItems(
     });
   }
 
-  // 最後のページのisLastPageを更新
-  if (pages.length > 0) {
-    pages[pages.length - 1].isLastPage = true;
-    pages[pages.length - 1].showFooter = true;
-  }
-
-  // 1ページのみの場合、フッターを表示
-  if (pages.length === 1) {
-    pages[0].showFooter = true;
+  // ページがない場合は空のページを追加
+  if (pages.length === 0) {
+    pages.push({
+      pageNumber: 1,
+      isFirstPage: true,
+      isLastPage: true,
+      items: [],
+      showHeader: true,
+      showFooter: true,
+    });
   }
 
   return pages;
