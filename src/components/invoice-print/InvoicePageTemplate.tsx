@@ -68,7 +68,6 @@ export function InvoicePageTemplate({
         <div
           className="invoice-line-items"
           style={{
-            border: '1px solid #e5e7eb',
             flex: 1,
           }}
         >

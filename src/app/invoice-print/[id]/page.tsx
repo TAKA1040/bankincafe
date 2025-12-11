@@ -1109,7 +1109,7 @@ export default function InvoicePrintPage() {
 
     // ミニマル用明細テーブル（ページ内アイテム用）
     const renderMinimalLineItems = (pageItems: GroupedLineItem[]) => (
-      <table className="w-full" style={{ tableLayout: 'fixed', fontSize: '12px' }}>
+      <table className="w-full border-collapse" style={{ tableLayout: 'fixed', fontSize: '12px', borderCollapse: 'collapse' }}>
         <colgroup>
           <col style={{ width: '58%' }} />
           <col style={{ width: '10%' }} />
@@ -1118,30 +1118,38 @@ export default function InvoicePrintPage() {
         </colgroup>
         <thead>
           <tr className="bg-gray-100">
-            <th className="p-2 text-left border border-gray-300">項目</th>
-            <th className="p-2 text-center border border-gray-300">数量</th>
-            <th className="p-2 text-right border border-gray-300">単価</th>
-            <th className="p-2 text-right border border-gray-300">金額</th>
+            <th className="p-2 text-left border border-gray-400" style={{ borderWidth: '1px' }}>項目</th>
+            <th className="p-2 text-center border border-gray-400" style={{ borderWidth: '1px' }}>数量</th>
+            <th className="p-2 text-right border border-gray-400" style={{ borderWidth: '1px' }}>単価</th>
+            <th className="p-2 text-right border border-gray-400" style={{ borderWidth: '1px' }}>金額</th>
           </tr>
         </thead>
         <tbody>
-          {pageItems.map((group) =>
-            group.items.map((item, idx) => (
-              <tr key={`${group.lineNo}-${idx}`} className={item.isFirstOfSet ? 'font-medium' : ''}>
-                <td className={`p-2 border border-gray-300 ${!item.isFirstOfSet && group.isSet ? 'pl-6 text-gray-600' : ''}`}>
-                  {item.label}
-                </td>
-                <td className="p-2 text-center border border-gray-300">
-                  {item.isFirstOfSet || !group.isSet ? (item.quantity > 0 ? item.quantity : '') : ''}
-                </td>
-                <td className="p-2 text-right border border-gray-300 amount-cell">
-                  {item.isFirstOfSet || !group.isSet ? (item.unitPrice > 0 ? `¥${formatAmount(item.unitPrice)}` : '') : ''}
-                </td>
-                <td className="p-2 text-right border border-gray-300 amount-cell">
-                  {item.isFirstOfSet || !group.isSet ? (item.amount > 0 ? `¥${formatAmount(item.amount)}` : '') : ''}
-                </td>
-              </tr>
-            ))
+          {pageItems.length === 0 ? (
+            <tr>
+              <td colSpan={4} className="p-4 text-center text-gray-400 border border-gray-300">
+                （データなし）
+              </td>
+            </tr>
+          ) : (
+            pageItems.map((group) =>
+              group.items.map((item, idx) => (
+                <tr key={`${group.lineNo}-${idx}`} className={item.isFirstOfSet ? 'font-medium' : ''}>
+                  <td className={`p-2 border border-gray-300 ${!item.isFirstOfSet && group.isSet ? 'pl-6 text-gray-600' : ''}`} style={{ borderWidth: '1px' }}>
+                    {item.label}
+                  </td>
+                  <td className="p-2 text-center border border-gray-300" style={{ borderWidth: '1px' }}>
+                    {item.isFirstOfSet || !group.isSet ? (item.quantity > 0 ? item.quantity : '') : ''}
+                  </td>
+                  <td className="p-2 text-right border border-gray-300 amount-cell" style={{ borderWidth: '1px' }}>
+                    {item.isFirstOfSet || !group.isSet ? (item.unitPrice > 0 ? `¥${formatAmount(item.unitPrice)}` : '') : ''}
+                  </td>
+                  <td className="p-2 text-right border border-gray-300 amount-cell" style={{ borderWidth: '1px' }}>
+                    {item.isFirstOfSet || !group.isSet ? (item.amount > 0 ? `¥${formatAmount(item.amount)}` : '') : ''}
+                  </td>
+                </tr>
+              ))
+            )
           )}
         </tbody>
       </table>
