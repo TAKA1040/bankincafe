@@ -131,8 +131,10 @@ export function paginateLineItems(
     // このグループを追加した後の行数
     const afterAddRowCount = currentRowCount + groupRowCount;
 
-    // 現在のページが最終ページになるかどうか（残りの全データがこのページに収まるか）
-    const wouldBeLastPage = remainingRows <= getMaxRows(pageNumber, true);
+    // 現在のページが最終ページになるかどうか
+    // （現在のページに入れた行数 + 残りの全データが収まるか）
+    const totalForThisPage = currentRowCount + remainingRows;
+    const wouldBeLastPage = totalForThisPage <= getMaxRows(pageNumber, true);
     const maxRows = getMaxRows(pageNumber, wouldBeLastPage);
 
     // このグループを追加すると溢れる場合
