@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Plus, Edit2, Trash2, Save, X, GripVertical, ChevronUp, ChevronDown, RotateCcw, Home, Users, Building2 } from 'lucide-react'
+import { ArrowLeft, Plus, Edit2, Trash2, Save, X, GripVertical, ChevronUp, ChevronDown, RotateCcw, Home, Users, Building2, ArrowUpCircle } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
 import { CustomerCategory, CustomerCategoryDB } from '@/lib/customer-categories'
@@ -247,6 +247,66 @@ export default function CustomerSettingsPage() {
       fetchOtherCustomers()
     } catch (error) {
       console.error('更新エラー:', error)
+    }
+  }
+
+  // その他顧客をカテゴリに昇格
+  const handlePromoteToCategory = async (customer: OtherCustomer) => {
+    const confirmMessage = `「${customer.customer_name}」を顧客カテゴリに昇格しますか？\n\n` +
+      `・顧客カテゴリとして選択可能になります\n` +
+      `・既存の請求書データのカテゴリも更新されます\n` +
+      `・集計時もカテゴリとして集計されます`
+
+    if (!confirm(confirmMessage)) return
+
+    try {
+      // 1. CustomerCategoryDBに新しいカテゴリを追加
+      db.addCategory({
+        name: customer.customer_name,
+        companyName: customer.customer_name
+      })
+      setCategories(db.getCategories())
+
+      // 2. 既存の請求書データを更新（その他 + この顧客名 → 新カテゴリ）
+      const { error: updateError } = await supabase
+        .from('invoices')
+        .update({ customer_category: customer.customer_name })
+        .eq('customer_category', 'その他')
+        .eq('customer_name', customer.customer_name)
+
+      if (updateError) {
+        console.error('請求書更新エラー:', updateError)
+        alert('請求書データの更新に失敗しました。カテゴリは追加されましたが、既存データは手動で更新が必要です。')
+      }
+
+      // 3. other_customersを無効化
+      const { error: deactivateError } = await (supabase as any)
+        .from('other_customers')
+        .update({
+          is_active: false,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', customer.id)
+
+      if (deactivateError) {
+        console.error('その他顧客無効化エラー:', deactivateError)
+      }
+
+      // 更新数を取得して通知
+      const { count } = await supabase
+        .from('invoices')
+        .select('*', { count: 'exact', head: true })
+        .eq('customer_category', customer.customer_name)
+
+      alert(`「${customer.customer_name}」をカテゴリに昇格しました！\n\n` +
+        `・カテゴリ一覧に追加されました\n` +
+        `・${count || 0}件の請求書データが更新されました`)
+
+      // データ再取得
+      fetchOtherCustomers()
+    } catch (error) {
+      console.error('昇格処理エラー:', error)
+      alert('昇格処理中にエラーが発生しました')
     }
   }
 
@@ -550,7 +610,7 @@ export default function CustomerSettingsPage() {
                 <strong>その他顧客について:</strong><br />
                 「その他」カテゴリーで入力した顧客名はここで管理されます。<br />
                 請求書を確定すると自動的に登録され、次回からサジェストに表示されます。<br />
-                不要な顧客名は削除または無効化できます。
+                <strong>昇格機能:</strong> よく使う顧客は「顧客カテゴリ」に昇格できます。昇格すると、集計時もカテゴリとして扱われます。
               </p>
             </div>
 
@@ -697,13 +757,24 @@ export default function CustomerSettingsPage() {
                                   <Save size={16} />
                                 </button>
                               ) : (
-                                <button
-                                  onClick={() => setEditingOtherId(customer.id)}
-                                  className="p-1 text-blue-600 hover:bg-blue-50 rounded"
-                                  title="編集"
-                                >
-                                  <Edit2 size={16} />
-                                </button>
+                                <>
+                                  <button
+                                    onClick={() => setEditingOtherId(customer.id)}
+                                    className="p-1 text-blue-600 hover:bg-blue-50 rounded"
+                                    title="編集"
+                                  >
+                                    <Edit2 size={16} />
+                                  </button>
+                                  {customer.is_active && (
+                                    <button
+                                      onClick={() => handlePromoteToCategory(customer)}
+                                      className="p-1 text-purple-600 hover:bg-purple-50 rounded"
+                                      title="カテゴリに昇格"
+                                    >
+                                      <ArrowUpCircle size={16} />
+                                    </button>
+                                  )}
+                                </>
                               )}
                               <button
                                 onClick={() => handleDeleteOtherCustomer(customer.id, customer.customer_name)}
