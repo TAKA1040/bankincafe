@@ -785,10 +785,7 @@ export default function InvoicePrintPage() {
               return (
                 <button
                   key={tab.id}
-                  onClick={() => {
-                    setSelectedLayout(tab.id);
-                    setIsLayoutSelectorOpen(false);
-                  }}
+                  onClick={() => setSelectedLayout(tab.id)}
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-all ${
                     selectedLayout === tab.id
                       ? 'bg-blue-600 text-white border-blue-600 shadow-md'
