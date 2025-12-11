@@ -1108,31 +1108,34 @@ export default function InvoicePrintPage() {
     );
 
     // ミニマル用明細テーブル（ページ内アイテム用）
-    const renderMinimalLineItems = (pageItems: GroupedLineItem[]) => (
-      <table className="w-full border-collapse" style={{ tableLayout: 'fixed', fontSize: '12px', borderCollapse: 'collapse' }}>
-        <colgroup>
-          <col style={{ width: '58%' }} />
-          <col style={{ width: '10%' }} />
-          <col style={{ width: '16%' }} />
-          <col style={{ width: '16%' }} />
-        </colgroup>
-        <thead>
-          <tr className="bg-gray-100">
-            <th className="p-2 text-left border border-gray-400" style={{ borderWidth: '1px' }}>項目</th>
-            <th className="p-2 text-center border border-gray-400" style={{ borderWidth: '1px' }}>数量</th>
-            <th className="p-2 text-right border border-gray-400" style={{ borderWidth: '1px' }}>単価</th>
-            <th className="p-2 text-right border border-gray-400" style={{ borderWidth: '1px' }}>金額</th>
-          </tr>
-        </thead>
-        <tbody>
-          {pageItems.length === 0 ? (
-            <tr>
-              <td colSpan={4} className="p-4 text-center text-gray-400 border border-gray-300">
-                （データなし）
-              </td>
+    // 空白行で埋めて枠を統一する
+    const MIN_ROWS_PER_PAGE = 20; // 1ページあたりの最小行数
+
+    const renderMinimalLineItems = (pageItems: GroupedLineItem[]) => {
+      // 実際のデータ行数を計算
+      const dataRowCount = pageItems.reduce((sum, group) => sum + group.items.length, 0);
+      // 空白行の数
+      const emptyRowCount = Math.max(0, MIN_ROWS_PER_PAGE - dataRowCount);
+
+      return (
+        <table className="w-full border-collapse" style={{ tableLayout: 'fixed', fontSize: '12px', borderCollapse: 'collapse' }}>
+          <colgroup>
+            <col style={{ width: '58%' }} />
+            <col style={{ width: '10%' }} />
+            <col style={{ width: '16%' }} />
+            <col style={{ width: '16%' }} />
+          </colgroup>
+          <thead>
+            <tr className="bg-gray-100">
+              <th className="p-2 text-left border border-gray-400" style={{ borderWidth: '1px' }}>項目</th>
+              <th className="p-2 text-center border border-gray-400" style={{ borderWidth: '1px' }}>数量</th>
+              <th className="p-2 text-right border border-gray-400" style={{ borderWidth: '1px' }}>単価</th>
+              <th className="p-2 text-right border border-gray-400" style={{ borderWidth: '1px' }}>金額</th>
             </tr>
-          ) : (
-            pageItems.map((group) =>
+          </thead>
+          <tbody>
+            {/* データ行 */}
+            {pageItems.map((group) =>
               group.items.map((item, idx) => (
                 <tr key={`${group.lineNo}-${idx}`} className={item.isFirstOfSet ? 'font-medium' : ''}>
                   <td className={`p-2 border border-gray-300 ${!item.isFirstOfSet && group.isSet ? 'pl-6 text-gray-600' : ''}`} style={{ borderWidth: '1px' }}>
@@ -1149,11 +1152,20 @@ export default function InvoicePrintPage() {
                   </td>
                 </tr>
               ))
-            )
-          )}
-        </tbody>
-      </table>
-    );
+            )}
+            {/* 空白行（枠を埋める） */}
+            {Array.from({ length: emptyRowCount }).map((_, idx) => (
+              <tr key={`empty-${idx}`}>
+                <td className="p-2 border border-gray-300" style={{ borderWidth: '1px' }}>&nbsp;</td>
+                <td className="p-2 border border-gray-300" style={{ borderWidth: '1px' }}>&nbsp;</td>
+                <td className="p-2 border border-gray-300" style={{ borderWidth: '1px' }}>&nbsp;</td>
+                <td className="p-2 border border-gray-300" style={{ borderWidth: '1px' }}>&nbsp;</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      );
+    };
 
     // フッター項目の表示判定ヘルパー
     const showFooterItem = (id: string) => activeFooterItems.length === 0 || activeFooterItems.includes(id);
