@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Plus, Search, Edit, Trash2, Users, X, Save, Building2, UserCircle, RefreshCw, ArrowUpCircle, HelpCircle } from 'lucide-react'
+import { ArrowLeft, Plus, Search, Edit, Trash2, Users, X, Save, Building2, UserCircle, RefreshCw, ArrowUpCircle, HelpCircle, Home } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { CustomerCategoryDB } from '@/lib/customer-categories'
 
@@ -224,8 +224,6 @@ export default function CustomerListPage() {
     }
     initializeData()
   }, [db, categoryDB])
-
-  const handleBack = () => router.push('/')
 
   // マスタから同期
   const handleSyncFromMaster = async () => {
@@ -507,17 +505,17 @@ export default function CustomerListPage() {
               </button>
               <button
                 onClick={() => setShowAddForm(true)}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2"
               >
                 <Plus size={20} />
                 新規顧客登録
               </button>
               <button
-                onClick={handleBack}
-                className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 flex items-center gap-2"
+                onClick={() => router.push('/')}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
               >
-                <ArrowLeft size={20} />
-                戻る
+                <Home size={20} />
+                メニューへ
               </button>
             </div>
           </div>
