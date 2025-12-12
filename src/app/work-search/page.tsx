@@ -49,6 +49,7 @@ interface WorkSearchItem {
 interface SearchFilters {
   keyword: string
   customerCategory: string
+  subject: string
   dateFrom: string
   dateTo: string
   target: string
@@ -123,7 +124,7 @@ export default function WorkSearchPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   
-  const [filters, setFilters] = useState<SearchFilters>({ keyword: '', customerCategory: '', dateFrom: '', dateTo: '', target: '' })
+  const [filters, setFilters] = useState<SearchFilters>({ keyword: '', customerCategory: '', subject: '', dateFrom: '', dateTo: '', target: '' })
   const [sortBy, setSortBy] = useState<'issue_date' | 'unit_price' | 'customer_name' | 'work_name' | 'subject' | 'registration_number' | 'invoice_month' | 'target'>('issue_date')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
 
@@ -415,12 +416,16 @@ export default function WorkSearchPage() {
       )
       
       // 顧客カテゴリーフィルター
-      const matchesCategory = filters.customerCategory === '' || 
+      const matchesCategory = filters.customerCategory === '' ||
         (() => {
           const category = customerCategories.find(cat => cat.id === filters.customerCategory)
           return category && item.customer_name === category.companyName
         })()
-      
+
+      // 件名フィルター
+      const matchesSubject = filters.subject === '' ||
+        (item.subject && item.subject === filters.subject)
+
       // 日付範囲フィルター
       const matchesDateRange = (() => {
         if (!filters.dateFrom && !filters.dateTo) return true
@@ -442,7 +447,7 @@ export default function WorkSearchPage() {
       const matchesTarget = filters.target === '' || 
         (item.target && item.target === filters.target)
       
-      return matchesKeyword && matchesCategory && matchesDateRange && matchesTarget
+      return matchesKeyword && matchesCategory && matchesSubject && matchesDateRange && matchesTarget
     })
     setFilteredItems(result)
   }, [filters, allItems, customerCategories])
@@ -474,6 +479,25 @@ export default function WorkSearchPage() {
       .sort()
     return targets
   }, [allItems])
+
+  // 件名の一覧を取得
+  const uniqueSubjects = useMemo(() => {
+    const subjects = allItems
+      .map(item => item.subject)
+      .filter((subject, index, arr) => subject && arr.indexOf(subject) === index)
+      .sort() as string[]
+    return subjects
+  }, [allItems])
+
+  // 件名フィルター用：入力値で絞り込んだ件名リスト
+  const [subjectInput, setSubjectInput] = useState('')
+  const filteredSubjects = useMemo(() => {
+    if (!subjectInput) return uniqueSubjects
+    const normalizedInput = normalizeForSearch(subjectInput)
+    return uniqueSubjects.filter(subject =>
+      normalizeForSearch(subject).includes(normalizedInput)
+    )
+  }, [uniqueSubjects, subjectInput])
 
   // 統計情報
   const statistics = useMemo(() => {
@@ -764,6 +788,49 @@ export default function WorkSearchPage() {
                   {filters.customerCategory && (
                     <button
                       onClick={() => setFilters({ ...filters, customerCategory: '' })}
+                      className="px-2 py-1 text-xs text-gray-600 hover:text-gray-800 border border-gray-300 rounded hover:bg-gray-50"
+                    >
+                      クリア
+                    </button>
+                  )}
+                </div>
+
+                {/* 件名フィルター（曖昧検索付きプルダウン） */}
+                <div className="flex gap-2 items-center min-w-0">
+                  <label className="text-sm font-medium text-gray-700 whitespace-nowrap">件名:</label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      placeholder="件名を検索..."
+                      value={subjectInput}
+                      onChange={(e) => setSubjectInput(e.target.value)}
+                      className="w-40 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                    {subjectInput && filteredSubjects.length > 0 && (
+                      <div className="absolute z-10 w-64 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                        {filteredSubjects.slice(0, 20).map((subject) => (
+                          <button
+                            key={subject}
+                            onClick={() => {
+                              setFilters({ ...filters, subject: subject })
+                              setSubjectInput('')
+                            }}
+                            className="w-full px-3 py-2 text-left text-sm hover:bg-blue-50 truncate"
+                          >
+                            {subject}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  {filters.subject && (
+                    <span className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded truncate max-w-32" title={filters.subject}>
+                      {filters.subject.length > 10 ? filters.subject.substring(0, 10) + '...' : filters.subject}
+                    </span>
+                  )}
+                  {filters.subject && (
+                    <button
+                      onClick={() => setFilters({ ...filters, subject: '' })}
                       className="px-2 py-1 text-xs text-gray-600 hover:text-gray-800 border border-gray-300 rounded hover:bg-gray-50"
                     >
                       クリア
