@@ -2254,23 +2254,26 @@ function InvoiceCreateContent() {
           task_type
         `)
 
-      // 作業名フィルター
+      // 作業名フィルター（表示に使うraw_label_partも検索対象に含む）
       if (workKeyword) {
         const keywordHiragana = katakanaToHiragana(workKeyword)
         const keywordKatakana = hiraganaToKatakana(workKeyword)
 
         const orConditions = [
           `raw_label.ilike.%${workKeyword}%`,
+          `raw_label_part.ilike.%${workKeyword}%`,
           `target.ilike.%${workKeyword}%`,
           `set_name.ilike.%${workKeyword}%`
         ]
         if (keywordHiragana !== workKeyword) {
           orConditions.push(`raw_label.ilike.%${keywordHiragana}%`)
+          orConditions.push(`raw_label_part.ilike.%${keywordHiragana}%`)
           orConditions.push(`target.ilike.%${keywordHiragana}%`)
           orConditions.push(`set_name.ilike.%${keywordHiragana}%`)
         }
         if (keywordKatakana !== workKeyword && keywordKatakana !== keywordHiragana) {
           orConditions.push(`raw_label.ilike.%${keywordKatakana}%`)
+          orConditions.push(`raw_label_part.ilike.%${keywordKatakana}%`)
           orConditions.push(`target.ilike.%${keywordKatakana}%`)
           orConditions.push(`set_name.ilike.%${keywordKatakana}%`)
         }
