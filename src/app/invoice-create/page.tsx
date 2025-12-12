@@ -3514,7 +3514,10 @@ function InvoiceCreateContent() {
                         {/* セット基本情報 */}
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end mb-4">
                           <div className="md:col-span-2">
-                            <SimpleLabel>セット名</SimpleLabel>
+                            <div className="flex items-center mb-2">
+                              <span className="text-sm font-medium text-gray-700">セット名</span>
+                              <HelpTooltip text="複数の作業をまとめて1つの金額で請求する場合に使用します。例：「板金塗装一式」" />
+                            </div>
                             <input
                               type="text"
                               value={setName}
@@ -3552,7 +3555,10 @@ function InvoiceCreateContent() {
 
                         {/* セット明細入力 */}
                         <div className="mb-4">
-                          <h4 className="text-sm font-medium text-gray-700 mb-2">セット明細</h4>
+                          <div className="flex items-center mb-2">
+                            <h4 className="text-sm font-medium text-gray-700">セット明細</h4>
+                            <HelpTooltip text="セットに含まれる作業の詳細を入力します。対象・動作・位置を入力して「追加」してください。" />
+                          </div>
                           <div className="grid grid-cols-1 md:grid-cols-6 gap-3 items-start mb-2">
                             <div className="relative">
                               <div className="flex items-center mb-2">
