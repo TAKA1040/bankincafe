@@ -673,6 +673,7 @@ function InvoiceCreateContent() {
     customer_name: string | null
     issue_date: string | null
     invoice_id: string
+    task_type: string | null
   }>>([])
   const [priceSearchLoading, setPriceSearchLoading] = useState(false)
 
@@ -2195,6 +2196,28 @@ function InvoiceCreateContent() {
     setPriceSearchLoading(true)
     try {
       const keyword = priceSearchKeyword.trim()
+      // ひらがな・カタカナ両方のパターンで検索
+      const keywordHiragana = katakanaToHiragana(keyword)
+      const keywordKatakana = hiraganaToKatakana(keyword)
+
+      // orクエリを構築（ひらがな・カタカナ両方）
+      const orConditions = [
+        `raw_label.ilike.%${keyword}%`,
+        `target.ilike.%${keyword}%`,
+        `set_name.ilike.%${keyword}%`
+      ]
+      // ひらがな版が異なる場合は追加
+      if (keywordHiragana !== keyword) {
+        orConditions.push(`raw_label.ilike.%${keywordHiragana}%`)
+        orConditions.push(`target.ilike.%${keywordHiragana}%`)
+        orConditions.push(`set_name.ilike.%${keywordHiragana}%`)
+      }
+      // カタカナ版が異なる場合は追加
+      if (keywordKatakana !== keyword && keywordKatakana !== keywordHiragana) {
+        orConditions.push(`raw_label.ilike.%${keywordKatakana}%`)
+        orConditions.push(`target.ilike.%${keywordKatakana}%`)
+        orConditions.push(`set_name.ilike.%${keywordKatakana}%`)
+      }
 
       // invoice_line_itemsを検索
       const { data, error } = await supabase
@@ -2207,9 +2230,10 @@ function InvoiceCreateContent() {
           target,
           set_name,
           invoice_id,
-          line_no
+          line_no,
+          task_type
         `)
-        .or(`raw_label.ilike.%${keyword}%,target.ilike.%${keyword}%,set_name.ilike.%${keyword}%`)
+        .or(orConditions.join(','))
         .order('invoice_id', { ascending: false })
         .limit(200)
 
@@ -2243,7 +2267,8 @@ function InvoiceCreateContent() {
           subject: invoice?.subject || null,
           customer_name: invoice?.customer_name || null,
           issue_date: invoice?.issue_date || null,
-          invoice_id: item.invoice_id || ''
+          invoice_id: item.invoice_id || '',
+          task_type: item.task_type || null
         }
       })
 
@@ -4571,6 +4596,7 @@ function InvoiceCreateContent() {
                     <thead className="bg-gray-50 sticky top-0">
                       <tr>
                         <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">請求日</th>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">種別</th>
                         <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">件名</th>
                         <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">作業名</th>
                         <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">数量</th>
@@ -4587,6 +4613,13 @@ function InvoiceCreateContent() {
                         >
                           <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
                             {result.issue_date ? new Date(result.issue_date).toLocaleDateString('ja-JP') : '-'}
+                          </td>
+                          <td className="px-3 py-2 whitespace-nowrap text-sm">
+                            <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                              result.task_type === 'S' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'
+                            }`}>
+                              {result.task_type === 'S' ? 'セット' : '個別'}
+                            </span>
                           </td>
                           <td className="px-3 py-2 text-sm text-gray-900 max-w-[150px] truncate" title={result.subject || ''}>
                             {result.subject || '-'}
