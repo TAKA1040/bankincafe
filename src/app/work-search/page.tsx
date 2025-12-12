@@ -1043,7 +1043,7 @@ export default function WorkSearchPage() {
                   <div className="text-center space-y-3">
                     <div className="text-sm text-gray-600 mb-3">この請求書の詳細を確認する場合</div>
                     <button 
-                      onClick={() => window.open(`/invoice-view/${selectedInvoiceDetail.invoice_id}`, '_blank')}
+                      onClick={() => router.push(`/invoice-view/${selectedInvoiceDetail.invoice_id}`)}
                       className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
                     >
                       請求書詳細ページを開く
