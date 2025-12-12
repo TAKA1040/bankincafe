@@ -4790,11 +4790,9 @@ function InvoiceCreateContent() {
                               <div>
                                 <div className="font-medium">{item.set_name}</div>
                                 {item.set_details && item.set_details.length > 0 ? (
-                                  <ul className="text-gray-500 text-xs mt-1 space-y-0.5 list-disc list-inside">
-                                    {item.set_details.map((detail, idx) => (
-                                      <li key={idx}>{detail}</li>
-                                    ))}
-                                  </ul>
+                                  <div className="text-gray-500 text-xs mt-1">
+                                    {item.set_details.join(' / ')}
+                                  </div>
                                 ) : (
                                   <div className="text-gray-500 text-xs">{item.raw_label}</div>
                                 )}
