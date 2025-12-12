@@ -3322,7 +3322,10 @@ function InvoiceCreateContent() {
                           />
                         </div>
                         <div>
-                          <SimpleLabel>その他</SimpleLabel>
+                          <div className="flex items-center mb-2">
+                            <span className="text-sm font-medium text-gray-700">その他</span>
+                            <HelpTooltip text="対象・動作・位置だけでは表現しきれない補足情報（状態、部品の種類、作業の詳細など）を入力します。" />
+                          </div>
                           <input
                             type="text"
                             value={workMemo}
@@ -3333,11 +3336,14 @@ function InvoiceCreateContent() {
                         </div>
                       </div>
                     </div>
-                    
+
                     {/* PC: 4列レイアウト（その他・単価・数量・追加ボタン） */}
                     <div className="hidden md:grid grid-cols-4 gap-3 items-end mb-4">
                       <div>
-                        <SimpleLabel>その他</SimpleLabel>
+                        <div className="flex items-center mb-2">
+                          <span className="text-sm font-medium text-gray-700">その他</span>
+                          <HelpTooltip text="対象・動作・位置だけでは表現しきれない補足情報（状態、部品の種類、作業の詳細など）を入力します。" />
+                        </div>
                         <input
                           type="text"
                           value={workMemo}
@@ -3882,7 +3888,10 @@ function InvoiceCreateContent() {
                               )}
                             </div>
                             <div>
-                              <SimpleLabel>その他</SimpleLabel>
+                              <div className="flex items-center mb-2">
+                                <span className="text-sm font-medium text-gray-700">その他</span>
+                                <HelpTooltip text="対象・動作・位置だけでは表現しきれない補足情報（状態、部品の種類、作業の詳細など）を入力します。" />
+                              </div>
                               <input
                                 type="text"
                                 value={detailOther}
