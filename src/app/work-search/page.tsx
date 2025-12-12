@@ -758,20 +758,18 @@ export default function WorkSearchPage() {
         <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
           <div className="flex gap-8">
             <div className="flex-grow space-y-4">
-              {/* キーワード検索 */}
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-                <input
-                  type="text"
-                  placeholder="作業名、件名（顧客名含む）、登録番号、請求月、対象で検索..."
-                  value={filters.keyword}
-                  onChange={(e) => setFilters({ ...filters, keyword: e.target.value })}
-                  className="w-full pl-10 pr-4 py-2 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-              
-              {/* フィルター行 */}
-              <div className="flex flex-wrap gap-4 items-center">
+              {/* キーワード検索 + 顧客名フィルター（同じ行） */}
+              <div className="flex gap-4 items-center">
+                <div className="relative flex-grow">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                  <input
+                    type="text"
+                    placeholder="作業名、件名（顧客名含む）、登録番号、請求月、対象で検索..."
+                    value={filters.keyword}
+                    onChange={(e) => setFilters({ ...filters, keyword: e.target.value })}
+                    className="w-full pl-10 pr-4 py-2 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
                 {/* 顧客カテゴリーフィルター */}
                 <div className="flex gap-2 items-center min-w-0">
                   <label className="text-sm font-medium text-gray-700 whitespace-nowrap">顧客名:</label>
@@ -794,7 +792,10 @@ export default function WorkSearchPage() {
                     </button>
                   )}
                 </div>
+              </div>
 
+              {/* フィルター行 */}
+              <div className="flex flex-wrap gap-4 items-center">
                 {/* 件名フィルター（曖昧検索付きプルダウン） */}
                 <div className="flex gap-2 items-center min-w-0">
                   <label className="text-sm font-medium text-gray-700 whitespace-nowrap">件名:</label>
