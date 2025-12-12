@@ -668,6 +668,7 @@ function InvoiceCreateContent() {
   const [priceSearchResults, setPriceSearchResults] = useState<Array<{
     id: number
     work_name: string
+    raw_label_part: string | null  // セット明細用
     unit_price: number
     quantity: number
     subject: string | null
@@ -2243,6 +2244,7 @@ function InvoiceCreateContent() {
         .select(`
           id,
           raw_label,
+          raw_label_part,
           unit_price,
           quantity,
           target,
@@ -2330,6 +2332,7 @@ function InvoiceCreateContent() {
         return {
           id: item.id,
           work_name: item.raw_label || item.set_name || '',
+          raw_label_part: item.raw_label_part || null,
           unit_price: item.unit_price || 0,
           quantity: item.quantity || 0,
           subject: invoice?.subject || null,
@@ -4713,7 +4716,9 @@ function InvoiceCreateContent() {
                             {result.subject || '-'}
                           </td>
                           <td className="px-3 py-2 text-sm text-gray-900 max-w-[250px]">
-                            <div className="truncate" title={result.work_name}>{result.work_name}</div>
+                            <div className="truncate" title={result.raw_label_part || result.work_name}>
+                              {result.raw_label_part || result.work_name}
+                            </div>
                             {result.set_details && result.set_details.length > 0 && (
                               <div className="text-xs text-gray-500 mt-0.5 truncate" title={result.set_details.join(' / ')}>
                                 {result.set_details.join(' / ')}
@@ -4814,19 +4819,13 @@ function InvoiceCreateContent() {
                             )}
                           </td>
                           <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">
-                            {item.is_set_detail ? (
-                              <span className="text-gray-500">{item.quantity}</span>
-                            ) : item.quantity}
+                            {item.is_set_detail ? '' : item.quantity}
                           </td>
                           <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">
-                            {item.is_set_detail ? (
-                              <span className="text-gray-500">¥{item.unit_price.toLocaleString()}</span>
-                            ) : `¥${item.unit_price.toLocaleString()}`}
+                            {item.is_set_detail ? '' : `¥${item.unit_price.toLocaleString()}`}
                           </td>
                           <td className="px-3 py-2 whitespace-nowrap text-sm font-medium text-gray-900 text-right">
-                            {item.is_set_detail ? (
-                              <span className="text-gray-500">¥{item.amount.toLocaleString()}</span>
-                            ) : `¥${item.amount.toLocaleString()}`}
+                            {item.is_set_detail ? '' : `¥${item.amount.toLocaleString()}`}
                           </td>
                         </tr>
                       ))}
