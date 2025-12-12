@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Edit, Download, Trash2, RotateCcw, FileText, Calendar, User, Hash, Building2, Phone, Printer } from 'lucide-react';
+import { ArrowLeft, Edit, Download, Trash2, RotateCcw, FileText, Calendar, User, Hash, Building2, Phone, Printer, Home } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import type { InvoiceWithItems } from '@/hooks/useInvoiceList';
 
@@ -290,6 +290,13 @@ export default function InvoiceViewPage({ params }: PageProps) {
           >
             <Download className="w-4 h-4" />
             PDF出力
+          </button>
+          <button
+            onClick={() => router.push('/')}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2"
+          >
+            <Home className="w-4 h-4" />
+            メニュー
           </button>
         </div>
       </div>
