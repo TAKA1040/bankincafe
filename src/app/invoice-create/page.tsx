@@ -676,6 +676,24 @@ function InvoiceCreateContent() {
   }>>([])
   const [priceSearchLoading, setPriceSearchLoading] = useState(false)
 
+  // 価格検索の詳細表示用state
+  const [selectedPriceInvoice, setSelectedPriceInvoice] = useState<{
+    invoice_id: string
+    customer_name: string | null
+    subject: string | null
+    issue_date: string | null
+    line_items: Array<{
+      line_no: number
+      raw_label: string
+      unit_price: number
+      quantity: number
+      amount: number
+      task_type: string | null
+      set_name: string | null
+    }>
+  } | null>(null)
+  const [priceDetailLoading, setPriceDetailLoading] = useState(false)
+
   // 作業項目の状態（明細として保存）
   const [workItems, setWorkItems] = useState<WorkItem[]>([])
   
@@ -2235,6 +2253,59 @@ function InvoiceCreateContent() {
       alert('検索中にエラーが発生しました')
     } finally {
       setPriceSearchLoading(false)
+    }
+  }
+
+  // 請求書詳細を取得
+  const fetchPriceInvoiceDetail = async (invoiceId: string) => {
+    setPriceDetailLoading(true)
+    try {
+      // 請求書情報を取得
+      const { data: invoiceData, error: invoiceError } = await supabase
+        .from('invoices')
+        .select('invoice_id, customer_name, subject, issue_date')
+        .eq('invoice_id', invoiceId)
+        .single()
+
+      if (invoiceError) throw invoiceError
+
+      // 明細を取得
+      const { data: lineItemsData, error: lineItemsError } = await supabase
+        .from('invoice_line_items')
+        .select('line_no, raw_label, unit_price, quantity, amount, task_type, set_name')
+        .eq('invoice_id', invoiceId)
+        .order('line_no', { ascending: true })
+
+      if (lineItemsError) throw lineItemsError
+
+      // 重複排除（同じline_noは1つだけ）
+      const uniqueLineItems = new Map<number, typeof lineItemsData[0]>()
+      for (const item of lineItemsData || []) {
+        if (!uniqueLineItems.has(item.line_no)) {
+          uniqueLineItems.set(item.line_no, item)
+        }
+      }
+
+      setSelectedPriceInvoice({
+        invoice_id: invoiceData.invoice_id,
+        customer_name: invoiceData.customer_name,
+        subject: invoiceData.subject,
+        issue_date: invoiceData.issue_date,
+        line_items: Array.from(uniqueLineItems.values()).map(item => ({
+          line_no: item.line_no,
+          raw_label: item.raw_label || '',
+          unit_price: item.unit_price || 0,
+          quantity: item.quantity || 0,
+          amount: item.amount || 0,
+          task_type: item.task_type,
+          set_name: item.set_name
+        }))
+      })
+    } catch (error) {
+      console.error('Fetch invoice detail error:', error)
+      alert('請求書詳細の取得に失敗しました')
+    } finally {
+      setPriceDetailLoading(false)
     }
   }
 
@@ -4455,6 +4526,7 @@ function InvoiceCreateContent() {
                   setShowPriceSearchModal(false)
                   setPriceSearchKeyword('')
                   setPriceSearchResults([])
+                  setSelectedPriceInvoice(null)
                 }}
                 className="text-gray-500 hover:text-gray-700 text-2xl"
               >
@@ -4492,13 +4564,14 @@ function InvoiceCreateContent() {
                 </p>
               )}
 
-              {priceSearchResults.length > 0 && (
+              {priceSearchResults.length > 0 && !selectedPriceInvoice && (
                 <div className="overflow-x-auto">
+                  <p className="text-sm text-gray-600 mb-2">※ 行をクリックすると請求書の全明細を確認できます</p>
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50 sticky top-0">
                       <tr>
                         <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">請求日</th>
-                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">顧客名</th>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">件名</th>
                         <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">作業名</th>
                         <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">数量</th>
                         <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">単価</th>
@@ -4507,12 +4580,16 @@ function InvoiceCreateContent() {
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                       {priceSearchResults.map((result, index) => (
-                        <tr key={`${result.invoice_id}-${index}`} className="hover:bg-gray-50">
+                        <tr
+                          key={`${result.invoice_id}-${index}`}
+                          className="hover:bg-blue-50 cursor-pointer transition-colors"
+                          onClick={() => fetchPriceInvoiceDetail(result.invoice_id)}
+                        >
                           <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
                             {result.issue_date ? new Date(result.issue_date).toLocaleDateString('ja-JP') : '-'}
                           </td>
-                          <td className="px-3 py-2 text-sm text-gray-900 max-w-[150px] truncate" title={result.customer_name || ''}>
-                            {result.customer_name || '-'}
+                          <td className="px-3 py-2 text-sm text-gray-900 max-w-[150px] truncate" title={result.subject || ''}>
+                            {result.subject || '-'}
                           </td>
                           <td className="px-3 py-2 text-sm text-gray-900 max-w-[200px] truncate" title={result.work_name}>
                             {result.work_name}
@@ -4535,6 +4612,104 @@ function InvoiceCreateContent() {
                   </p>
                 </div>
               )}
+
+              {/* 請求書詳細表示 */}
+              {selectedPriceInvoice && (
+                <div>
+                  <button
+                    onClick={() => setSelectedPriceInvoice(null)}
+                    className="mb-4 px-3 py-1.5 text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg flex items-center gap-1"
+                  >
+                    ← 検索結果に戻る
+                  </button>
+
+                  <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <span className="text-gray-500">請求書番号:</span>
+                        <span className="ml-2 font-medium">{selectedPriceInvoice.invoice_id}</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">請求日:</span>
+                        <span className="ml-2 font-medium">
+                          {selectedPriceInvoice.issue_date ? new Date(selectedPriceInvoice.issue_date).toLocaleDateString('ja-JP') : '-'}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">顧客名:</span>
+                        <span className="ml-2 font-medium">{selectedPriceInvoice.customer_name || '-'}</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">件名:</span>
+                        <span className="ml-2 font-medium">{selectedPriceInvoice.subject || '-'}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <h4 className="font-medium text-gray-800 mb-2">明細一覧</h4>
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No</th>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">種別</th>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">作業名</th>
+                        <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">数量</th>
+                        <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">単価</th>
+                        <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">金額</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {selectedPriceInvoice.line_items.map((item) => (
+                        <tr key={item.line_no} className="hover:bg-gray-50">
+                          <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-500">
+                            {item.line_no}
+                          </td>
+                          <td className="px-3 py-2 whitespace-nowrap text-sm">
+                            <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                              item.task_type === 'S' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'
+                            }`}>
+                              {item.task_type === 'S' ? 'セット' : '個別'}
+                            </span>
+                          </td>
+                          <td className="px-3 py-2 text-sm text-gray-900">
+                            {item.set_name ? (
+                              <div>
+                                <div className="font-medium">{item.set_name}</div>
+                                <div className="text-gray-500 text-xs">{item.raw_label}</div>
+                              </div>
+                            ) : (
+                              item.raw_label
+                            )}
+                          </td>
+                          <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">
+                            {item.quantity}
+                          </td>
+                          <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">
+                            ¥{item.unit_price.toLocaleString()}
+                          </td>
+                          <td className="px-3 py-2 whitespace-nowrap text-sm font-medium text-gray-900 text-right">
+                            ¥{item.amount.toLocaleString()}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                    <tfoot className="bg-gray-50">
+                      <tr>
+                        <td colSpan={5} className="px-3 py-2 text-sm font-medium text-right">合計:</td>
+                        <td className="px-3 py-2 text-sm font-bold text-right text-blue-600">
+                          ¥{selectedPriceInvoice.line_items.reduce((sum, item) => sum + item.amount, 0).toLocaleString()}
+                        </td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              )}
+
+              {priceDetailLoading && (
+                <div className="text-center py-8">
+                  <p className="text-gray-500">読み込み中...</p>
+                </div>
+              )}
             </div>
 
             {/* フッター */}
@@ -4544,6 +4719,7 @@ function InvoiceCreateContent() {
                   setShowPriceSearchModal(false)
                   setPriceSearchKeyword('')
                   setPriceSearchResults([])
+                  setSelectedPriceInvoice(null)
                 }}
                 className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600"
               >
