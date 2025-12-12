@@ -542,6 +542,13 @@ export default function CustomerListPage() {
           )}
         </div>
 
+        {/* 案内文 */}
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
+          <p className="text-amber-800 text-sm">
+            <strong>⚠️ 重要:</strong> 顧客管理情報を元に請求書データを作成します。正確に入力してください。
+          </p>
+        </div>
+
         {/* カテゴリ顧客セクション */}
         <div className="bg-white rounded-lg shadow-sm overflow-hidden mb-6">
           <div className="p-4 bg-blue-50 border-b border-blue-200 flex items-center gap-2">
