@@ -108,8 +108,8 @@ function Card({ children, className = "" }: { children: React.ReactNode; classNa
   return <div className={`border border-gray-200 rounded-lg ${className}`}>{children}</div>
 }
 
-function CardHeader({ children }: { children: React.ReactNode }) {
-  return <div className="border-b border-gray-200 px-4 py-3">{children}</div>
+function CardHeader({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  return <div className={`border-b border-gray-200 px-4 py-3 ${className}`}>{children}</div>
 }
 
 function CardTitle({ children }: { children: React.ReactNode }) {
@@ -660,7 +660,22 @@ function InvoiceCreateContent() {
   const [orderNumber, setOrderNumber] = useState('')
   const [internalOrderNumber, setInternalOrderNumber] = useState('')
   const [memo, setMemo] = useState('')
-  
+
+  // 作業価格検索モーダルの状態
+  const [showPriceSearchModal, setShowPriceSearchModal] = useState(false)
+  const [priceSearchKeyword, setPriceSearchKeyword] = useState('')
+  const [priceSearchResults, setPriceSearchResults] = useState<Array<{
+    id: number
+    work_name: string
+    unit_price: number
+    quantity: number
+    subject: string | null
+    customer_name: string | null
+    issue_date: string | null
+    invoice_id: string
+  }>>([])
+  const [priceSearchLoading, setPriceSearchLoading] = useState(false)
+
   // 作業項目の状態（明細として保存）
   const [workItems, setWorkItems] = useState<WorkItem[]>([])
   
@@ -2152,6 +2167,77 @@ function InvoiceCreateContent() {
     }
   }
 
+  // 作業価格検索関数
+  const searchPrices = async () => {
+    if (!priceSearchKeyword.trim()) {
+      setPriceSearchResults([])
+      return
+    }
+
+    setPriceSearchLoading(true)
+    try {
+      const keyword = priceSearchKeyword.trim()
+
+      // invoice_line_itemsを検索
+      const { data, error } = await supabase
+        .from('invoice_line_items')
+        .select(`
+          id,
+          raw_label,
+          unit_price,
+          quantity,
+          target,
+          set_name,
+          invoice_id,
+          line_no
+        `)
+        .or(`raw_label.ilike.%${keyword}%,target.ilike.%${keyword}%,set_name.ilike.%${keyword}%`)
+        .order('invoice_id', { ascending: false })
+        .limit(200)
+
+      if (error) throw error
+
+      // 重複排除（同じinvoice_id + line_noは1つだけ）
+      const uniqueMap = new Map<string, typeof data[0]>()
+      for (const item of data || []) {
+        const key = `${item.invoice_id}-${item.line_no}`
+        if (!uniqueMap.has(key)) {
+          uniqueMap.set(key, item)
+        }
+      }
+
+      // invoice_idsを取得して請求書情報を別途取得
+      const invoiceIds = [...new Set(Array.from(uniqueMap.values()).map(item => item.invoice_id))]
+      const { data: invoicesData } = await supabase
+        .from('invoices')
+        .select('invoice_id, customer_name, subject, issue_date')
+        .in('invoice_id', invoiceIds)
+
+      const invoiceMap = new Map(invoicesData?.map(inv => [inv.invoice_id, inv]) || [])
+
+      const results = Array.from(uniqueMap.values()).map(item => {
+        const invoice = invoiceMap.get(item.invoice_id)
+        return {
+          id: item.id,
+          work_name: item.raw_label || item.set_name || '',
+          unit_price: item.unit_price || 0,
+          quantity: item.quantity || 0,
+          subject: invoice?.subject || null,
+          customer_name: invoice?.customer_name || null,
+          issue_date: invoice?.issue_date || null,
+          invoice_id: item.invoice_id || ''
+        }
+      })
+
+      setPriceSearchResults(results)
+    } catch (error) {
+      console.error('Price search error:', error)
+      alert('検索中にエラーが発生しました')
+    } finally {
+      setPriceSearchLoading(false)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-8">
@@ -2850,8 +2936,16 @@ function InvoiceCreateContent() {
 
             {/* 作業項目入力フォーム（prototype2スタイル） */}
             <Card className="bg-white shadow-sm">
-              <CardHeader>
+              <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle>🛠️ 作業項目入力</CardTitle>
+                <button
+                  type="button"
+                  onClick={() => setShowPriceSearchModal(true)}
+                  className="px-3 py-1.5 text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg flex items-center gap-1 transition-colors"
+                >
+                  <Search className="w-4 h-4" />
+                  過去価格検索
+                </button>
               </CardHeader>
               <CardContent>
                 {dictLoading ? (
@@ -4343,6 +4437,117 @@ function InvoiceCreateContent() {
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
               >
                 はい、続ける
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 作業価格検索モーダル */}
+      {showPriceSearchModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" role="dialog" aria-modal="true">
+          <div className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+            {/* ヘッダー */}
+            <div className="bg-gray-50 px-6 py-4 border-b flex justify-between items-center">
+              <h2 className="text-xl font-bold text-gray-800">過去の作業価格検索</h2>
+              <button
+                onClick={() => {
+                  setShowPriceSearchModal(false)
+                  setPriceSearchKeyword('')
+                  setPriceSearchResults([])
+                }}
+                className="text-gray-500 hover:text-gray-700 text-2xl"
+              >
+                ×
+              </button>
+            </div>
+
+            {/* 検索入力 */}
+            <div className="px-6 py-4 border-b">
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={priceSearchKeyword}
+                  onChange={(e) => setPriceSearchKeyword(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && searchPrices()}
+                  placeholder="作業名で検索（例: フェンダー、バンパー）"
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+                <button
+                  onClick={searchPrices}
+                  disabled={priceSearchLoading}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 flex items-center gap-2"
+                >
+                  <Search className="w-4 h-4" />
+                  {priceSearchLoading ? '検索中...' : '検索'}
+                </button>
+              </div>
+            </div>
+
+            {/* 検索結果 */}
+            <div className="flex-1 overflow-auto px-6 py-4">
+              {priceSearchResults.length === 0 && !priceSearchLoading && (
+                <p className="text-gray-500 text-center py-8">
+                  {priceSearchKeyword ? '検索結果がありません' : '検索キーワードを入力してください'}
+                </p>
+              )}
+
+              {priceSearchResults.length > 0 && (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50 sticky top-0">
+                      <tr>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">請求日</th>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">顧客名</th>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">作業名</th>
+                        <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">数量</th>
+                        <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">単価</th>
+                        <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">金額</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {priceSearchResults.map((result, index) => (
+                        <tr key={`${result.invoice_id}-${index}`} className="hover:bg-gray-50">
+                          <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
+                            {result.issue_date ? new Date(result.issue_date).toLocaleDateString('ja-JP') : '-'}
+                          </td>
+                          <td className="px-3 py-2 text-sm text-gray-900 max-w-[150px] truncate" title={result.customer_name || ''}>
+                            {result.customer_name || '-'}
+                          </td>
+                          <td className="px-3 py-2 text-sm text-gray-900 max-w-[200px] truncate" title={result.work_name}>
+                            {result.work_name}
+                          </td>
+                          <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">
+                            {result.quantity}
+                          </td>
+                          <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">
+                            ¥{result.unit_price.toLocaleString()}
+                          </td>
+                          <td className="px-3 py-2 whitespace-nowrap text-sm font-medium text-gray-900 text-right">
+                            ¥{(result.unit_price * result.quantity).toLocaleString()}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  <p className="text-sm text-gray-500 mt-2 text-right">
+                    {priceSearchResults.length}件の結果
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* フッター */}
+            <div className="px-6 py-4 border-t bg-gray-50 flex justify-end">
+              <button
+                onClick={() => {
+                  setShowPriceSearchModal(false)
+                  setPriceSearchKeyword('')
+                  setPriceSearchResults([])
+                }}
+                className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600"
+              >
+                閉じる
               </button>
             </div>
           </div>
