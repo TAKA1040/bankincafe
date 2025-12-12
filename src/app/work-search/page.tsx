@@ -94,6 +94,28 @@ const formatCurrency = (amount: number | null) => {
   return `¥${amount.toLocaleString()}`
 }
 
+// ひらがな→カタカナ変換
+const hiraganaToKatakana = (str: string): string => {
+  return str.replace(/[\u3041-\u3096]/g, (match) => {
+    return String.fromCharCode(match.charCodeAt(0) + 0x60)
+  })
+}
+
+// カタカナ→ひらがな変換
+const katakanaToHiragana = (str: string): string => {
+  return str.replace(/[\u30A1-\u30F6]/g, (match) => {
+    return String.fromCharCode(match.charCodeAt(0) - 0x60)
+  })
+}
+
+// 曖昧検索用：文字列を正規化（カタカナに統一、小文字化、全角→半角）
+const normalizeForSearch = (str: string): string => {
+  if (!str) return ''
+  return hiraganaToKatakana(str)
+    .toLowerCase()
+    .replace(/[Ａ-Ｚａ-ｚ０-９]/g, (s) => String.fromCharCode(s.charCodeAt(0) - 0xFEE0)) // 全角英数→半角
+}
+
 export default function WorkSearchPage() {
   const router = useRouter()
   const [allItems, setAllItems] = useState<WorkSearchItem[]>([])
@@ -143,7 +165,8 @@ export default function WorkSearchPage() {
           quantity,
           amount,
           task_type,
-          target
+          target,
+          set_name
         `)
         
         if (lineItemsRes.error) {
@@ -253,50 +276,42 @@ export default function WorkSearchPage() {
 
         // 4. 元の請求書項目をベースに画面表示用データを作成（取り消し作業は除外）
         const workSearchItems: WorkSearchItem[] = []
-        
+
         const filteredLineItems = lineItems.filter(item => {
           // 取り消し作業を除外
           const workName = (item.raw_label || '').trim()
           const cancelKeywords = ['取消', '取り消し', 'キャンセル', 'CANCEL']
-          return !cancelKeywords.some(keyword => 
+          return !cancelKeywords.some(keyword =>
             workName.includes(keyword) || workName === keyword
           )
         })
-        
+
+        // 同じinvoice_id + line_noをグループ化（S作業の重複表示を防ぐ）
+        const lineItemGroups = new Map<string, typeof filteredLineItems>()
         for (const item of filteredLineItems) {
-          // 完全一致を先に試し、失敗したら基本ID（ハイフン前）で検索
-          const invoice = invoiceMap.get(item.invoice_id) || invoiceMap.get(item.invoice_id.split('-')[0])
-          const key = `${item.invoice_id}-${item.line_no}`
-          const splitDetails = splitMap.get(key) || []
-          
-          // 最初の5件でマッピング確認
-          if (workSearchItems.length < 5) {
-
-
-
-            if (invoice) {
-
-
-
-
-            } else {
-
-            }
-
+          const groupKey = `${item.invoice_id}-${item.line_no}`
+          if (!lineItemGroups.has(groupKey)) {
+            lineItemGroups.set(groupKey, [])
           }
-          
-          // 請求月を取得（billing_monthがあればそれを使用、なければissue_dateから生成）
+          lineItemGroups.get(groupKey)!.push(item)
+        }
+
+        // グループごとに処理
+        for (const [groupKey, groupItems] of lineItemGroups) {
+          // グループ内の最初のアイテムを代表として使用
+          const firstItem = groupItems[0]
+          const invoice = invoiceMap.get(firstItem.invoice_id) || invoiceMap.get(firstItem.invoice_id.split('-')[0])
+          const splitDetails = splitMap.get(groupKey) || []
+
+          // 請求月を取得
           let invoice_month = null
           if (invoice?.billing_month) {
-            // billing_monthの形式が '2504' や '2025-09' の場合の対応
             const billingMonth = invoice.billing_month.toString()
             if (billingMonth.length === 4) {
-              // '2504' -> '25年04月' 形式
               const year = billingMonth.substring(0, 2)
               const month = billingMonth.substring(2, 4)
               invoice_month = `${year}年${month}月`
             } else if (billingMonth.includes('-') && billingMonth.length === 7) {
-              // '2025-09' -> '25年09月' 形式
               const [year, month] = billingMonth.split('-')
               const shortYear = year.slice(-2)
               invoice_month = `${shortYear}年${month}月`
@@ -304,70 +319,59 @@ export default function WorkSearchPage() {
               invoice_month = billingMonth
             }
           } else if (invoice?.issue_date) {
-            // フォールバック: issue_dateから生成
             const date = new Date(invoice.issue_date)
             const shortYear = date.getFullYear().toString().slice(-2)
             invoice_month = `${shortYear}年${(date.getMonth() + 1).toString().padStart(2, '0')}月`
           }
 
-          // 分割データから詳細情報を取得（最初の分割項目から）
-          const firstSplit = splitDetails[0] || {}
-          
-          const isSetWork = item.task_type === 'S'
-          
+          const isSetWork = firstItem.task_type === 'S'
+
           if (isSetWork) {
-            // S作業の場合：raw_labelを分割して明細ごとに行を作成
-            const breakdownItems = item.raw_label 
-              ? item.raw_label.split(/[,、，・･]/).map(s => s.trim()).filter(s => s.length > 0)
-              : ['セット作業明細不明']
-            
+            // S作業の場合：グループを1行としてまとめて表示
+            // set_nameがあればそれを使用、なければraw_labelの最初の部分
+            const workName = firstItem.set_name ||
+              firstItem.raw_label?.split(/[,、，・･]/)[0]?.trim() ||
+              'セット作業'
 
-            for (let index = 0; index < breakdownItems.length; index++) {
-              const breakdownItem = breakdownItems[index]
-
-              
-              // データベースのtargetをそのまま使用（S作業の場合は分割しないので親のtargetを使用）
-              const workItem = {
-                line_item_id: item.id + (index * 0.1), // 一意性を保つために小数点追加
-                work_name: breakdownItem,
-                unit_price: null, // セット作業は単価なし
-                quantity: item.quantity || 0,
-                invoice_id: item.invoice_id,
-                customer_name: invoice?.customer_name || null,
-                subject: invoice?.subject || invoice?.subject_name || null,
-                registration_number: invoice?.registration_number || null,
-                issue_date: invoice?.issue_date || null,
-                target: item.target, // データベースのtargetをそのまま使用
-                action: null, // TODO: アクション抽出機能を実装
-                is_set: item.task_type === 'S',
-                invoice_month: invoice_month,
-                split_details: splitDetails,
-              }
-              
-              workSearchItems.push(workItem)
-            }
-          } else {
-            // T作業の場合：そのまま1行で表示
-            const work_name = item.raw_label || '名称不明'
-
-            
             const workItem = {
-              line_item_id: item.id,
-              work_name: work_name,
-              unit_price: item.unit_price || 0,
-              quantity: item.quantity || 0,
-              invoice_id: item.invoice_id,
+              line_item_id: firstItem.id,
+              work_name: workName,
+              unit_price: firstItem.unit_price, // S作業でもセット単価を表示
+              quantity: firstItem.quantity || 0,
+              invoice_id: firstItem.invoice_id,
               customer_name: invoice?.customer_name || null,
               subject: invoice?.subject || invoice?.subject_name || null,
               registration_number: invoice?.registration_number || null,
               issue_date: invoice?.issue_date || null,
-              target: item.target, // データベースのtargetをそのまま使用
-              action: null, // TODO: アクション抽出機能を実装
-              is_set: item.task_type === 'S',
+              target: firstItem.target,
+              action: null,
+              is_set: true,
               invoice_month: invoice_month,
               split_details: splitDetails,
             }
-            
+
+            workSearchItems.push(workItem)
+          } else {
+            // T作業の場合：そのまま1行で表示
+            const work_name = firstItem.raw_label || '名称不明'
+
+            const workItem = {
+              line_item_id: firstItem.id,
+              work_name: work_name,
+              unit_price: firstItem.unit_price || 0,
+              quantity: firstItem.quantity || 0,
+              invoice_id: firstItem.invoice_id,
+              customer_name: invoice?.customer_name || null,
+              subject: invoice?.subject || invoice?.subject_name || null,
+              registration_number: invoice?.registration_number || null,
+              issue_date: invoice?.issue_date || null,
+              target: firstItem.target,
+              action: null,
+              is_set: false,
+              invoice_month: invoice_month,
+              split_details: splitDetails,
+            }
+
             workSearchItems.push(workItem)
           }
         }
@@ -395,19 +399,19 @@ export default function WorkSearchPage() {
     fetchData()
   }, [])
 
-  // 検索フィルター処理
+  // 検索フィルター処理（ひらがな/カタカナ曖昧検索対応）
   useEffect(() => {
-    const lowerCaseKeyword = filters.keyword.toLowerCase()
+    const normalizedKeyword = normalizeForSearch(filters.keyword)
     const result = allItems.filter(item => {
-      // キーワード検索（顧客名、対象、アクションも含む）
-      const matchesKeyword = (
-        (item.work_name?.toLowerCase() || '').includes(lowerCaseKeyword) ||
-        (item.customer_name?.toLowerCase() || '').includes(lowerCaseKeyword) ||
-        (item.subject?.toLowerCase() || '').includes(lowerCaseKeyword) ||
-        (item.registration_number?.toLowerCase() || '').includes(lowerCaseKeyword) ||
-        (item.invoice_month?.toLowerCase() || '').includes(lowerCaseKeyword) ||
-        (item.target?.toLowerCase() || '').includes(lowerCaseKeyword) ||
-        (item.action?.toLowerCase() || '').includes(lowerCaseKeyword)
+      // キーワード検索（ひらがな/カタカナ/大小文字/全角半角を区別しない）
+      const matchesKeyword = !normalizedKeyword || (
+        normalizeForSearch(item.work_name || '').includes(normalizedKeyword) ||
+        normalizeForSearch(item.customer_name || '').includes(normalizedKeyword) ||
+        normalizeForSearch(item.subject || '').includes(normalizedKeyword) ||
+        normalizeForSearch(item.registration_number || '').includes(normalizedKeyword) ||
+        normalizeForSearch(item.invoice_month || '').includes(normalizedKeyword) ||
+        normalizeForSearch(item.target || '').includes(normalizedKeyword) ||
+        normalizeForSearch(item.action || '').includes(normalizedKeyword)
       )
       
       // 顧客カテゴリーフィルター
@@ -499,34 +503,37 @@ export default function WorkSearchPage() {
   // 作業項目から請求書詳細を取得する関数
   const fetchInvoiceDetail = async (workItem: WorkSearchItem) => {
     try {
-      // 同じ請求書IDのすべての作業項目を取得
+      // 同じ請求書IDのすべての作業項目を取得（sub_noも含む）
       const { data: invoiceWorkItems, error } = await supabase
         .from('invoice_line_items')
         .select(`
           id,
           line_no,
+          sub_no,
           raw_label,
+          raw_label_part,
           unit_price,
           quantity,
           amount,
-          task_type
+          task_type,
+          target,
+          set_name,
+          action1
         `)
         .eq('invoice_id', workItem.invoice_id)
         .order('line_no')
-      
+        .order('sub_no')
+
       if (error) throw error
-      
-      
+
       // 分割データも取得
       const { data: splitData, error: splitError } = await supabase
         .from('invoice_line_items_split')
         .select('*')
         .eq('invoice_id', workItem.invoice_id)
-      
+
       if (splitError) throw splitError
-      
-      // split itemsをマップ化
-      
+
       // 分割データをグループ化
       const splitMap = new Map()
       splitData?.forEach(split => {
@@ -536,74 +543,118 @@ export default function WorkSearchPage() {
         }
         splitMap.get(key).push(split)
       })
-      
-      // 請求書詳細データを構築
-      const work_items = []
+
+      // 同じline_noをグループ化（S作業の重複表示を防ぐ）
+      const lineNoGroups = new Map<number, typeof invoiceWorkItems>()
       for (const item of invoiceWorkItems || []) {
-        const key = `${workItem.invoice_id}-${item.line_no}`
+        const lineNo = item.line_no
+        if (!lineNoGroups.has(lineNo)) {
+          lineNoGroups.set(lineNo, [])
+        }
+        lineNoGroups.get(lineNo)!.push(item)
+      }
+
+      // 請求書詳細データを構築
+      const work_items: InvoiceDetail['work_items'] = []
+
+      for (const [lineNo, groupItems] of lineNoGroups) {
+        const key = `${workItem.invoice_id}-${lineNo}`
         const split_details = splitMap.get(key) || []
-        
-        // 全ての分割データの金額を合計（cancelledも含めて）
-        const totalSplitAmount = split_details.reduce((sum: number, split: any) => sum + (split.amount || 0), 0)
-        const totalSplitQuantity = split_details.reduce((sum: number, split: any) => sum + (split.quantity || 0), 0)
-        
-        // 分割データがある場合はそれを使用、ない場合は元データを使用
-        const amount = totalSplitAmount > 0 ? totalSplitAmount : (item.amount || ((item.unit_price || 0) * (item.quantity || 0)) || 0)
-        const quantity = totalSplitQuantity > 0 ? totalSplitQuantity : (item.quantity || 0)
-        
-        // 単価は合計金額から逆算、または最初の有効な分割データから
-        const firstValidSplit = split_details.find((split: any) => (split.amount || 0) > 0) || split_details[0]
-        const unit_price = firstValidSplit?.unit_price || (quantity > 0 ? Math.round(amount / quantity) : 0) || item.unit_price || 0
-        
-        
-        // 分割データから最初のtargetを取得（複数ある場合）
-        const target = split_details.length > 0 ? split_details[0].target : null
-        
-        // システムルールに従った作業名の決定と明細処理
-        const isSetWork = item.task_type === 'S'
-        
-        if (isSetWork) {
-          // S作業の場合：raw_labelを分割して明細ごとに作業項目を作成
-          const breakdownItems = item.raw_label 
-            ? item.raw_label.split(/[,、，・･]/).map(s => s.trim()).filter(s => s.length > 0)
+
+        // グループ内の最初のアイテム（sub_no=1または最小）を親として使用
+        const sortedGroup = [...groupItems].sort((a, b) => (a.sub_no || 0) - (b.sub_no || 0))
+        const parentItem = sortedGroup[0]
+        const isSetWork = parentItem.task_type === 'S'
+
+        // 金額情報は親アイテムから1回だけ取得（重複カウントを防ぐ）
+        const amount = parentItem.amount || ((parentItem.unit_price || 0) * (parentItem.quantity || 0)) || 0
+        const quantity = parentItem.quantity || 0
+        const unit_price = parentItem.unit_price || 0
+
+        if (isSetWork && sortedGroup.length > 1) {
+          // S作業で複数のsub_noがある場合：グループ化して表示
+          // 親項目として最初のアイテムを使用
+          const parentWorkName = parentItem.set_name || parentItem.raw_label?.split(/[,、，・･]/)[0] || 'セット作業'
+
+          work_items.push({
+            line_item_id: parentItem.id,
+            line_no: lineNo,
+            work_name: parentWorkName,
+            unit_price: unit_price,
+            quantity: quantity,
+            amount: amount,
+            task_type: 'S',
+            target: parentItem.target,
+            split_details: split_details,
+            is_breakdown: false
+          })
+
+          // 明細項目として残りのアイテムを追加
+          for (let i = 0; i < sortedGroup.length; i++) {
+            const subItem = sortedGroup[i]
+            // raw_label_partがあればそれを使用、なければ作業名から生成
+            const subWorkName = subItem.raw_label_part ||
+              (subItem.target ? `${subItem.target}${subItem.action1 || ''}` : `明細${i + 1}`)
+
+            work_items.push({
+              line_item_id: subItem.id + 0.01 * (i + 1),
+              line_no: lineNo,
+              work_name: subWorkName,
+              unit_price: 0,
+              quantity: 0,
+              amount: 0,
+              task_type: 'S',
+              target: subItem.target,
+              split_details: [],
+              is_breakdown: true,
+              breakdown_parent: parentItem.id
+            })
+          }
+        } else if (isSetWork) {
+          // S作業だがsub_noが1つだけの場合
+          const breakdownItems = parentItem.raw_label
+            ? parentItem.raw_label.split(/[,、，・･]/).map(s => s.trim()).filter(s => s.length > 0)
             : ['セット作業明細不明']
-          
+
           for (let index = 0; index < breakdownItems.length; index++) {
             const breakdownItem = breakdownItems[index]
-            
+
             work_items.push({
-              line_item_id: item.id + (index * 0.1), // 一意性を保つために小数点追加
-              line_no: item.line_no,
+              line_item_id: parentItem.id + (index * 0.1),
+              line_no: lineNo,
               work_name: breakdownItem,
-              unit_price: index === 0 ? unit_price : 0, // 最初の明細のみ単価を表示
-              quantity: index === 0 ? quantity : 1, // 最初の明細のみ数量を表示
-              amount: index === 0 ? amount : 0, // 最初の明細のみ金額を表示
-              task_type: item.task_type || 'S',
-              target: target, // 分割データからのtargetを使用
-              split_details: index === 0 ? split_details : [], // 最初の明細のみ分割詳細を表示
-              is_breakdown: index > 0, // 2番目以降は明細項目として識別
-              breakdown_parent: index > 0 ? item.id : undefined // 親項目のID
+              unit_price: index === 0 ? unit_price : 0,
+              quantity: index === 0 ? quantity : 0,
+              amount: index === 0 ? amount : 0,
+              task_type: 'S',
+              target: parentItem.target,
+              split_details: index === 0 ? split_details : [],
+              is_breakdown: index > 0,
+              breakdown_parent: index > 0 ? parentItem.id : undefined
             })
           }
         } else {
           // T作業の場合：そのまま1行で表示
-          const work_name = item.raw_label || '名称不明'
-          
+          const work_name = parentItem.raw_label || '名称不明'
+
           work_items.push({
-            line_item_id: item.id,
-            line_no: item.line_no,
+            line_item_id: parentItem.id,
+            line_no: lineNo,
             work_name: work_name,
             unit_price: unit_price,
             quantity: quantity,
             amount: amount,
-            task_type: item.task_type || 'T',
-            target: target, // 分割データからのtargetを使用
+            task_type: 'T',
+            target: parentItem.target,
             split_details: split_details
           })
         }
       }
-      
-      const total_amount = work_items.reduce((sum, item) => sum + item.amount, 0)
+
+      // 親項目のみの金額を合計（重複カウントを防ぐ）
+      const total_amount = work_items
+        .filter(item => !item.is_breakdown)
+        .reduce((sum, item) => sum + item.amount, 0)
       
       const invoiceDetail: InvoiceDetail = {
         invoice_id: workItem.invoice_id,
