@@ -453,6 +453,57 @@ class OtherCustomerMasterDB {
   }
 }
 
+// 対象マスターDBクラス（件名と同じ構造）
+class TargetMasterDB {
+  private readonly STORAGE_KEY = 'bankin_target_master'
+
+  getTargets() {
+    try {
+      if (typeof window === 'undefined') return []
+      const stored = localStorage.getItem(this.STORAGE_KEY)
+      return stored ? JSON.parse(stored) : []
+    } catch {
+      return []
+    }
+  }
+
+  searchTargets(keyword: string) {
+    if (!keyword.trim()) return this.getTargets()
+    const normalizedKeyword = keyword.toLowerCase()
+    return this.getTargets()
+      .filter((target: any) =>
+        target.targetName.toLowerCase().includes(normalizedKeyword)
+      )
+      .sort((a: any, b: any) => b.usageCount - a.usageCount)
+      .slice(0, 10)
+  }
+
+  autoRegisterTarget(targetName: string) {
+    const targets = this.getTargets()
+    const existing = targets.find((t: any) =>
+      t.targetName.toLowerCase() === targetName.toLowerCase()
+    )
+
+    if (existing) {
+      const updated = targets.map((t: any) =>
+        t.id === existing.id
+          ? { ...t, usageCount: t.usageCount + 1, lastUsedAt: new Date().toISOString().split('T')[0] }
+          : t
+      )
+      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(updated))
+    } else {
+      const newTarget = {
+        id: Date.now().toString(),
+        targetName: targetName,
+        usageCount: 1,
+        lastUsedAt: new Date().toISOString().split('T')[0]
+      }
+      targets.push(newTarget)
+      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(targets))
+    }
+  }
+}
+
 // 顧客カテゴリーDBクラス
 class CustomerCategoryDB {
   private readonly STORAGE_KEY = 'bankin_customer_categories'
@@ -507,6 +558,7 @@ function InvoiceCreateContent() {
   const [subjectDb, setSubjectDb] = useState<SubjectMasterDB | null>(null)
   const [registrationDb, setRegistrationDb] = useState<RegistrationMasterDB | null>(null)
   const [otherCustomerDb, setOtherCustomerDb] = useState<OtherCustomerMasterDB | null>(null)
+  const [targetMasterDb, setTargetMasterDb] = useState<TargetMasterDB | null>(null)
 
   // Supabaseから最大連番を取得する関数
   const getMaxSequence = async (year: string, month: string, type: 'invoice' | 'estimate'): Promise<number> => {
@@ -1036,6 +1088,7 @@ function InvoiceCreateContent() {
     setSubjectDb(subjectDatabase)
     setRegistrationDb(registrationDatabase)
     setOtherCustomerDb(new OtherCustomerMasterDB())
+    setTargetMasterDb(new TargetMasterDB())
 
     // Supabaseから件名マスタデータを取得
     fetchSubjectMasterData()
@@ -1944,6 +1997,39 @@ function InvoiceCreateContent() {
             console.error('その他顧客マスタ登録エラー:', customerError)
           }
         }
+
+        // 対象マスタに登録（作業項目から対象を収集してtargetsテーブルにupsert）
+        const uniqueTargets = new Set<string>()
+        workItems.forEach(item => {
+          if (item.target && item.target.trim()) {
+            uniqueTargets.add(item.target.trim())
+          }
+          // セット作業の場合、明細の対象も収集
+          if (item.set_detail_items) {
+            item.set_detail_items.forEach(detail => {
+              if (detail.target && detail.target.trim()) {
+                uniqueTargets.add(detail.target.trim())
+              }
+            })
+          }
+        })
+
+        // 各対象をtargetsテーブルに登録
+        for (const targetName of uniqueTargets) {
+          const { error: targetError } = await supabase
+            .from('targets')
+            .upsert(
+              {
+                name: targetName,
+                is_active: true,
+                sort_order: 9999  // 新規追加は最後に
+              },
+              { onConflict: 'name', ignoreDuplicates: true }
+            )
+          if (targetError) {
+            console.error('対象マスタ登録エラー:', targetError, targetName)
+          }
+        }
       }
 
       alert(isDraft ? `${docTypeName}を下書き保存しました` : `${docTypeName}を確定保存しました`)
@@ -2628,7 +2714,13 @@ function InvoiceCreateContent() {
                               setShowTargetSuggestions(true)
                             }
                           }}
-                          onBlur={() => setTimeout(() => setShowTargetSuggestions(false), 200)}
+                          onBlur={() => {
+                            // 対象をlocalStorageに自動登録
+                            if (target.trim() && targetMasterDb) {
+                              targetMasterDb.autoRegisterTarget(target.trim())
+                            }
+                            setTimeout(() => setShowTargetSuggestions(false), 200)
+                          }}
                           onKeyDown={(e) => {
                             if (e.key === 'ArrowDown') {
                               e.preventDefault()
