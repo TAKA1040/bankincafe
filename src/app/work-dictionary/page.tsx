@@ -6,7 +6,18 @@ import { Settings, Plus, Trash2, Edit2, Save, X, ArrowLeft, ArrowUp, ArrowDown, 
 import { supabase } from '@/lib/supabase'
 import type { Target, Action, Position, ReadingMapping, TargetAction, ActionPosition, PriceSuggestion } from '@/hooks/useWorkDictionary'
 
-type TabType = 'targets' | 'actions' | 'positions' | 'readings' | 'relations'
+type TabType = 'targets' | 'actions' | 'positions' | 'readings' | 'relations' | 'pending'
+
+// 登録待ちアイテムの型
+interface PendingMasterItem {
+  id: string
+  item_type: 'action' | 'position'
+  name: string
+  reading: string | null
+  invoice_id: string | null
+  is_registered: boolean
+  created_at: string
+}
 
 // 漢字判定ユーティリティ
 const hasKanji = (text: string): boolean => {
@@ -48,6 +59,7 @@ export default function WorkDictionaryPage() {
   const [targetActions, setTargetActions] = useState<TargetAction[]>([])
   const [actionPositions, setActionPositions] = useState<ActionPosition[]>([])
   const [priceSuggestions, setPriceSuggestions] = useState<PriceSuggestion[]>([])
+  const [pendingItems, setPendingItems] = useState<PendingMasterItem[]>([])
   
   // 編集状態
   type EditingItem = any // TODO: 適切な型定義に変更予定
@@ -136,7 +148,8 @@ export default function WorkDictionaryPage() {
         readingsRes,
         targetActionsRes,
         actionPositionsRes,
-        pricesRes
+        pricesRes,
+        pendingRes
       ] = await Promise.all([
         supabase.from('targets').select('*').eq('is_active', true).order('sort_order'),
         supabase.from('actions').select('*').eq('is_active', true).order('sort_order'),
@@ -154,7 +167,8 @@ export default function WorkDictionaryPage() {
           actions(name),
           positions(name)
         `),
-        supabase.from('price_suggestions').select('*')
+        supabase.from('price_suggestions').select('*'),
+        (supabase as any).from('pending_master_items').select('*').eq('is_registered', false).order('created_at', { ascending: false })
       ])
 
       if (targetsRes.data) setTargets(targetsRes.data.map(item => ({
@@ -191,6 +205,7 @@ export default function WorkDictionaryPage() {
         frequency: item.usage_count ?? 0,
         last_used: item.last_used_at ?? ''
       })))
+      if (pendingRes.data) setPendingItems(pendingRes.data)
       
     } catch (error) {
       console.error('データ読み込みエラー:', error)
@@ -1026,6 +1041,81 @@ export default function WorkDictionaryPage() {
     )
   }
 
+  // 登録待ちアイテム行コンポーネント
+  const PendingItemRow = ({ item, onRegister, onDelete, saving }: {
+    item: PendingMasterItem
+    onRegister: (reading: string) => Promise<void>
+    onDelete: () => Promise<void>
+    saving: boolean
+  }) => {
+    const [reading, setReading] = useState('')
+    const [isEditing, setIsEditing] = useState(false)
+
+    return (
+      <div className="px-4 py-3 flex items-center gap-4 bg-white hover:bg-gray-50">
+        <div className="flex-1">
+          <div className="font-medium text-gray-900">{item.name}</div>
+          <div className="text-xs text-gray-500">
+            {new Date(item.created_at).toLocaleDateString('ja-JP')}
+            {item.invoice_id && ` / 請求書: ${item.invoice_id}`}
+          </div>
+        </div>
+
+        {isEditing ? (
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              value={reading}
+              onChange={(e) => setReading(e.target.value)}
+              placeholder="読み仮名（ひらがな）"
+              className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm w-40 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              autoFocus
+            />
+            <button
+              onClick={async () => {
+                await onRegister(reading)
+                setIsEditing(false)
+                setReading('')
+              }}
+              disabled={saving}
+              className="px-3 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 disabled:opacity-50"
+            >
+              登録
+            </button>
+            <button
+              onClick={() => {
+                setIsEditing(false)
+                setReading('')
+              }}
+              className="px-3 py-1.5 bg-gray-200 text-gray-700 text-sm rounded-lg hover:bg-gray-300"
+            >
+              キャンセル
+            </button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setIsEditing(true)}
+              disabled={saving}
+              className="px-3 py-1.5 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 disabled:opacity-50 flex items-center gap-1"
+            >
+              <Plus size={14} />
+              マスタに登録
+            </button>
+            <button
+              onClick={onDelete}
+              disabled={saving}
+              className="px-2 py-1.5 text-red-600 hover:bg-red-50 rounded-lg disabled:opacity-50"
+              title="削除"
+            >
+              <Trash2 size={16} />
+            </button>
+          </div>
+        )}
+      </div>
+    )
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -1118,6 +1208,16 @@ export default function WorkDictionaryPage() {
               }`}
             >
               関連設定 ({targetActions.length + actionPositions.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('pending')}
+              className={`px-6 py-3 font-medium ${
+                activeTab === 'pending'
+                  ? 'border-b-2 border-orange-500 text-orange-600'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              登録待ち ({pendingItems.length})
             </button>
           </div>
 
@@ -2019,8 +2119,184 @@ export default function WorkDictionaryPage() {
                 </div>
               </div>
             )}
+
+            {/* 登録待ちマスタ */}
+            {activeTab === 'pending' && (
+              <div>
+                <div className="flex justify-between items-center mb-4">
+                  <div>
+                    <h2 className="text-lg font-semibold">登録待ちマスタ</h2>
+                    <p className="text-sm text-gray-600 mt-1">
+                      請求書で新しく入力された動作・位置が登録待ちになっています。読み仮名を入力してマスタに登録してください。
+                    </p>
+                  </div>
+                </div>
+
+                {pendingItems.length === 0 ? (
+                  <div className="text-center py-12 text-gray-500">
+                    登録待ちの項目はありません
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {/* 動作の登録待ち */}
+                    {pendingItems.filter(item => item.item_type === 'action').length > 0 && (
+                      <div className="border border-green-200 rounded-lg overflow-hidden">
+                        <div className="bg-green-50 px-4 py-3 border-b border-green-200">
+                          <h3 className="font-medium text-green-800">
+                            動作 ({pendingItems.filter(item => item.item_type === 'action').length}件)
+                          </h3>
+                        </div>
+                        <div className="divide-y divide-gray-100">
+                          {pendingItems.filter(item => item.item_type === 'action').map(item => (
+                            <PendingItemRow
+                              key={item.id}
+                              item={item}
+                              onRegister={async (reading) => {
+                                try {
+                                  setSaving(true)
+                                  // 動作マスタに登録
+                                  const maxSortOrder = Math.max(...actions.map(a => a.sort_order || 0), 0)
+                                  const { error: insertError } = await supabase
+                                    .from('actions')
+                                    .insert({
+                                      name: item.name,
+                                      is_active: true,
+                                      sort_order: maxSortOrder + 1
+                                    })
+                                  if (insertError) throw insertError
+
+                                  // 読み仮名マッピングに登録（読み仮名がある場合）
+                                  if (reading && reading.trim()) {
+                                    await supabase
+                                      .from('reading_mappings')
+                                      .insert({
+                                        word: item.name,
+                                        reading_hiragana: reading.trim(),
+                                        reading_katakana: '',
+                                        word_type: 'action'
+                                      })
+                                  }
+
+                                  // 登録待ちを登録済みに更新
+                                  await (supabase as any)
+                                    .from('pending_master_items')
+                                    .update({ is_registered: true, reading: reading || null })
+                                    .eq('id', item.id)
+
+                                  await loadAllData()
+                                  alert(`「${item.name}」を動作マスタに登録しました`)
+                                } catch (error) {
+                                  console.error('登録エラー:', error)
+                                  showError('マスタ登録に失敗しました')
+                                } finally {
+                                  setSaving(false)
+                                }
+                              }}
+                              onDelete={async () => {
+                                if (!confirm(`「${item.name}」を登録待ちから削除しますか？`)) return
+                                try {
+                                  setSaving(true)
+                                  await (supabase as any)
+                                    .from('pending_master_items')
+                                    .delete()
+                                    .eq('id', item.id)
+                                  await loadAllData()
+                                } catch (error) {
+                                  console.error('削除エラー:', error)
+                                  showError('削除に失敗しました')
+                                } finally {
+                                  setSaving(false)
+                                }
+                              }}
+                              saving={saving}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* 位置の登録待ち */}
+                    {pendingItems.filter(item => item.item_type === 'position').length > 0 && (
+                      <div className="border border-purple-200 rounded-lg overflow-hidden">
+                        <div className="bg-purple-50 px-4 py-3 border-b border-purple-200">
+                          <h3 className="font-medium text-purple-800">
+                            位置 ({pendingItems.filter(item => item.item_type === 'position').length}件)
+                          </h3>
+                        </div>
+                        <div className="divide-y divide-gray-100">
+                          {pendingItems.filter(item => item.item_type === 'position').map(item => (
+                            <PendingItemRow
+                              key={item.id}
+                              item={item}
+                              onRegister={async (reading) => {
+                                try {
+                                  setSaving(true)
+                                  // 位置マスタに登録
+                                  const maxSortOrder = Math.max(...positions.map(p => p.sort_order || 0), 0)
+                                  const { error: insertError } = await supabase
+                                    .from('positions')
+                                    .insert({
+                                      name: item.name,
+                                      is_active: true,
+                                      sort_order: maxSortOrder + 1
+                                    })
+                                  if (insertError) throw insertError
+
+                                  // 読み仮名マッピングに登録（読み仮名がある場合）
+                                  if (reading && reading.trim()) {
+                                    await supabase
+                                      .from('reading_mappings')
+                                      .insert({
+                                        word: item.name,
+                                        reading_hiragana: reading.trim(),
+                                        reading_katakana: '',
+                                        word_type: 'position'
+                                      })
+                                  }
+
+                                  // 登録待ちを登録済みに更新
+                                  await (supabase as any)
+                                    .from('pending_master_items')
+                                    .update({ is_registered: true, reading: reading || null })
+                                    .eq('id', item.id)
+
+                                  await loadAllData()
+                                  alert(`「${item.name}」を位置マスタに登録しました`)
+                                } catch (error) {
+                                  console.error('登録エラー:', error)
+                                  showError('マスタ登録に失敗しました')
+                                } finally {
+                                  setSaving(false)
+                                }
+                              }}
+                              onDelete={async () => {
+                                if (!confirm(`「${item.name}」を登録待ちから削除しますか？`)) return
+                                try {
+                                  setSaving(true)
+                                  await (supabase as any)
+                                    .from('pending_master_items')
+                                    .delete()
+                                    .eq('id', item.id)
+                                  await loadAllData()
+                                } catch (error) {
+                                  console.error('削除エラー:', error)
+                                  showError('削除に失敗しました')
+                                } finally {
+                                  setSaving(false)
+                                }
+                              }}
+                              saving={saving}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
-          
+
           {/* 管理者向け整列ボタン（こっそり配置） */}
           <div className="mt-8 pt-4 border-t border-gray-200">
             <div className="flex justify-end">

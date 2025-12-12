@@ -2030,6 +2030,93 @@ function InvoiceCreateContent() {
             console.error('対象マスタ登録エラー:', targetError, targetName)
           }
         }
+
+        // 動作・位置の登録待ち保存（マスタ未登録のもののみ）
+        // 作業項目から動作と位置を収集
+        const uniqueActions = new Set<string>()
+        const uniquePositions = new Set<string>()
+        workItems.forEach(item => {
+          // 動作を収集
+          if (item.actions) {
+            item.actions.forEach(action => {
+              if (action && action.trim()) uniqueActions.add(action.trim())
+            })
+          }
+          // 位置を収集
+          if (item.positions) {
+            item.positions.forEach(position => {
+              if (position && position.trim()) uniquePositions.add(position.trim())
+            })
+          }
+          // セット作業の場合、明細の動作・位置も収集
+          if (item.set_detail_items) {
+            item.set_detail_items.forEach(detail => {
+              if (detail.actions) {
+                detail.actions.forEach(action => {
+                  if (action && action.trim()) uniqueActions.add(action.trim())
+                })
+              }
+              if (detail.positions) {
+                detail.positions.forEach(position => {
+                  if (position && position.trim()) uniquePositions.add(position.trim())
+                })
+              }
+            })
+          }
+        })
+
+        // 既存のマスタデータを取得
+        const { data: existingActions } = await supabase
+          .from('actions')
+          .select('name')
+          .eq('is_active', true)
+        const { data: existingPositions } = await supabase
+          .from('positions')
+          .select('name')
+          .eq('is_active', true)
+
+        const existingActionNames = new Set((existingActions || []).map(a => a.name))
+        const existingPositionNames = new Set((existingPositions || []).map(p => p.name))
+
+        // 未登録の動作を登録待ちに保存
+        for (const actionName of uniqueActions) {
+          if (!existingActionNames.has(actionName)) {
+            const { error: pendingError } = await (supabase as any)
+              .from('pending_master_items')
+              .upsert(
+                {
+                  item_type: 'action',
+                  name: actionName,
+                  invoice_id: finalInvoiceId,
+                  is_registered: false
+                },
+                { onConflict: 'item_type,name', ignoreDuplicates: true }
+              )
+            if (pendingError) {
+              console.error('動作登録待ち保存エラー:', pendingError, actionName)
+            }
+          }
+        }
+
+        // 未登録の位置を登録待ちに保存
+        for (const positionName of uniquePositions) {
+          if (!existingPositionNames.has(positionName)) {
+            const { error: pendingError } = await (supabase as any)
+              .from('pending_master_items')
+              .upsert(
+                {
+                  item_type: 'position',
+                  name: positionName,
+                  invoice_id: finalInvoiceId,
+                  is_registered: false
+                },
+                { onConflict: 'item_type,name', ignoreDuplicates: true }
+              )
+            if (pendingError) {
+              console.error('位置登録待ち保存エラー:', pendingError, positionName)
+            }
+          }
+        }
       }
 
       alert(isDraft ? `${docTypeName}を下書き保存しました` : `${docTypeName}を確定保存しました`)
