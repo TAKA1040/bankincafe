@@ -4645,7 +4645,7 @@ function InvoiceCreateContent() {
                     value={priceSearchSubject}
                     onChange={(e) => setPriceSearchSubject(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && searchPrices()}
-                    placeholder="例: 車検、修理"
+                    placeholder="例: 会社名"
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
