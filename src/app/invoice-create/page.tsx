@@ -2156,8 +2156,9 @@ function InvoiceCreateContent() {
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-8">
         {/* ヘッダー */}
-        <header className="bg-white rounded-lg shadow-sm p-6 mb-6">
-          <div className="flex justify-between items-center">
+        <header className="bg-white rounded-lg shadow-sm p-4 md:p-6 mb-6">
+          {/* PC版: 1行レイアウト */}
+          <div className="hidden md:flex justify-between items-center">
             <h1 className="text-2xl font-bold text-gray-800">
               {isEditMode ? '請求書編集' : '請求書作成'}
             </h1>
@@ -2185,17 +2186,49 @@ function InvoiceCreateContent() {
               </button>
             </div>
           </div>
+          {/* スマホ版: 2行レイアウト */}
+          <div className="md:hidden space-y-3">
+            <div className="flex justify-between items-center">
+              <h1 className="text-xl font-bold text-gray-800">
+                {isEditMode ? '請求書編集' : '請求書作成'}
+              </h1>
+              <button
+                onClick={() => router.push('/')}
+                className="px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 flex items-center gap-1 font-medium text-sm"
+              >
+                <Home size={18} />
+                メニューへ
+              </button>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => handleSave(true)}
+                className="flex-1 px-3 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 flex items-center justify-center gap-1 font-medium text-sm"
+              >
+                <Save size={18} />
+                下書き
+              </button>
+              <button
+                onClick={() => handleSave(false)}
+                className="flex-1 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center justify-center gap-1 font-medium text-sm"
+              >
+                <Save size={18} />
+                保存
+              </button>
+            </div>
+          </div>
         </header>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* メインフォーム */}
           <div className="lg:col-span-2 space-y-6">
             {/* 基本情報 */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <div className="flex items-center justify-between mb-6 gap-4">
+            <div className="bg-white rounded-lg shadow-sm p-4 md:p-6">
+              {/* PC版: 1行レイアウト */}
+              <div className="hidden md:flex items-center justify-between mb-6 gap-4">
                 <div className="flex items-center gap-4">
                   <h2 className="text-lg font-semibold text-gray-800">📋 基本情報</h2>
-                  
+
                   {/* 請求書・見積書タブ */}
                   <div className="flex bg-gray-100 rounded-lg p-1">
                     <button
@@ -2222,7 +2255,7 @@ function InvoiceCreateContent() {
                     </button>
                   </div>
                 </div>
-                
+
                 {/* 請求書No欄 */}
                 <div className="flex items-center gap-2">
                   <label className="text-sm font-medium text-gray-700 whitespace-nowrap">
@@ -2235,6 +2268,51 @@ function InvoiceCreateContent() {
                     className="w-32 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     placeholder={documentType === 'invoice' ? '例: INV-001' : '例: EST-001'}
                   />
+                </div>
+              </div>
+
+              {/* スマホ版: 2行レイアウト */}
+              <div className="md:hidden space-y-3 mb-4">
+                {/* 1行目: 基本情報 + 請求書No */}
+                <div className="flex items-center justify-between gap-2">
+                  <h2 className="text-base font-semibold text-gray-800">📋 基本情報</h2>
+                  <div className="flex items-center gap-1">
+                    <label className="text-xs font-medium text-gray-700 whitespace-nowrap">
+                      {documentType === 'invoice' ? '請求書No' : '見積書No'}
+                    </label>
+                    <input
+                      type="text"
+                      value={invoiceNumber}
+                      onChange={(e) => setInvoiceNumber(e.target.value)}
+                      className="w-24 px-2 py-1 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="No"
+                    />
+                  </div>
+                </div>
+                {/* 2行目: 請求書・見積書タブ */}
+                <div className="flex bg-gray-100 rounded-lg p-1">
+                  <button
+                    type="button"
+                    onClick={() => setDocumentType('invoice')}
+                    className={`flex-1 px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                      documentType === 'invoice'
+                        ? 'bg-white text-blue-700 shadow-sm'
+                        : 'text-gray-600 hover:text-gray-800'
+                    }`}
+                  >
+                    📄 請求書
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDocumentType('estimate')}
+                    className={`flex-1 px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                      documentType === 'estimate'
+                        ? 'bg-white text-blue-700 shadow-sm'
+                        : 'text-gray-600 hover:text-gray-800'
+                    }`}
+                  >
+                    📊 見積書
+                  </button>
                 </div>
               </div>
               

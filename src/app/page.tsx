@@ -160,17 +160,17 @@ export default function HomePage() {
             <h2 className="text-xl font-bold text-gray-800 mb-4 text-center">
               🚀 基本機能
             </h2>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               {primaryItems.map((item) => {
                 const Icon = item.icon
                 return (
                   <button
                     key={item.path}
                     onClick={() => router.push(item.path)}
-                    className={`flex items-center gap-2 p-4 rounded-lg text-sm font-bold transition-all duration-200 hover:scale-105 ${item.color}`}
+                    className={`flex items-center justify-center gap-2 p-4 rounded-lg text-sm font-bold transition-all duration-200 hover:scale-105 ${item.color}`}
                   >
                     <Icon size={20} />
-                    <span className="truncate">{item.title}</span>
+                    <span>{item.title}</span>
                   </button>
                 )
               })}
