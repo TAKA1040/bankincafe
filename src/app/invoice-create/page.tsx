@@ -692,6 +692,7 @@ function InvoiceCreateContent() {
       amount: number
       task_type: string | null
       set_name: string | null
+      set_details?: string[]  // セット明細のraw_label_part配列
     }>
   } | null>(null)
   const [priceDetailLoading, setPriceDetailLoading] = useState(false)
@@ -2328,27 +2329,46 @@ function InvoiceCreateContent() {
   const fetchPriceInvoiceDetail = async (invoiceId: string) => {
     setPriceDetailLoading(true)
     try {
-      // 請求書情報を取得
-      const { data: invoiceData, error: invoiceError } = await supabase
-        .from('invoices')
-        .select('invoice_id, customer_name, subject, issue_date')
-        .eq('invoice_id', invoiceId)
-        .single()
+      // 請求書情報と明細を並行取得
+      const [invoiceRes, lineItemsRes, splitItemsRes] = await Promise.all([
+        supabase
+          .from('invoices')
+          .select('invoice_id, customer_name, subject, issue_date')
+          .eq('invoice_id', invoiceId)
+          .single(),
+        supabase
+          .from('invoice_line_items')
+          .select('line_no, raw_label, unit_price, quantity, amount, task_type, set_name')
+          .eq('invoice_id', invoiceId)
+          .order('line_no', { ascending: true }),
+        supabase
+          .from('invoice_line_items_split')
+          .select('line_no, raw_label_part')
+          .eq('invoice_id', invoiceId)
+          .order('line_no', { ascending: true })
+      ])
 
-      if (invoiceError) throw invoiceError
+      if (invoiceRes.error) throw invoiceRes.error
+      if (lineItemsRes.error) throw lineItemsRes.error
 
-      // 明細を取得
-      const { data: lineItemsData, error: lineItemsError } = await supabase
-        .from('invoice_line_items')
-        .select('line_no, raw_label, unit_price, quantity, amount, task_type, set_name')
-        .eq('invoice_id', invoiceId)
-        .order('line_no', { ascending: true })
+      const invoiceData = invoiceRes.data
+      const lineItemsData = lineItemsRes.data || []
+      const splitItemsData = splitItemsRes.data || []
 
-      if (lineItemsError) throw lineItemsError
+      // セット明細をline_noでグループ化
+      const splitDetailsMap = new Map<number, string[]>()
+      for (const item of splitItemsData) {
+        if (!splitDetailsMap.has(item.line_no)) {
+          splitDetailsMap.set(item.line_no, [])
+        }
+        if (item.raw_label_part) {
+          splitDetailsMap.get(item.line_no)!.push(item.raw_label_part)
+        }
+      }
 
       // 重複排除（同じline_noは1つだけ）
       const uniqueLineItems = new Map<number, typeof lineItemsData[0]>()
-      for (const item of lineItemsData || []) {
+      for (const item of lineItemsData) {
         if (!uniqueLineItems.has(item.line_no)) {
           uniqueLineItems.set(item.line_no, item)
         }
@@ -2366,7 +2386,8 @@ function InvoiceCreateContent() {
           quantity: item.quantity || 0,
           amount: item.amount || 0,
           task_type: item.task_type,
-          set_name: item.set_name
+          set_name: item.set_name,
+          set_details: splitDetailsMap.get(item.line_no)
         }))
       })
     } catch (error) {
@@ -4768,7 +4789,15 @@ function InvoiceCreateContent() {
                             {item.set_name ? (
                               <div>
                                 <div className="font-medium">{item.set_name}</div>
-                                <div className="text-gray-500 text-xs">{item.raw_label}</div>
+                                {item.set_details && item.set_details.length > 0 ? (
+                                  <ul className="text-gray-500 text-xs mt-1 space-y-0.5 list-disc list-inside">
+                                    {item.set_details.map((detail, idx) => (
+                                      <li key={idx}>{detail}</li>
+                                    ))}
+                                  </ul>
+                                ) : (
+                                  <div className="text-gray-500 text-xs">{item.raw_label}</div>
+                                )}
                               </div>
                             ) : (
                               item.raw_label
