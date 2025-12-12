@@ -675,6 +675,8 @@ function InvoiceCreateContent() {
     issue_date: string | null
     invoice_id: string
     task_type: string | null
+    line_no: number
+    set_details?: string[]  // セット明細のraw_label_part配列
   }>>([])
   const [priceSearchLoading, setPriceSearchLoading] = useState(false)
 
@@ -686,13 +688,15 @@ function InvoiceCreateContent() {
     issue_date: string | null
     line_items: Array<{
       line_no: number
+      sub_no: number
       raw_label: string
+      raw_label_part: string | null  // セット明細用
       unit_price: number
       quantity: number
       amount: number
       task_type: string | null
       set_name: string | null
-      set_details?: string[]  // セット明細のraw_label_part配列
+      is_set_detail: boolean  // セット明細行かどうか
     }>
   } | null>(null)
   const [priceDetailLoading, setPriceDetailLoading] = useState(false)
@@ -2292,17 +2296,37 @@ function InvoiceCreateContent() {
         }
       }
 
-      // invoice_idsを取得して請求書情報を別途取得
+      // invoice_idsを取得して請求書情報とセット明細を並行取得
       const invoiceIds = [...new Set(Array.from(uniqueMap.values()).map(item => item.invoice_id))]
-      const { data: invoicesData } = await supabase
-        .from('invoices')
-        .select('invoice_id, customer_name, subject, issue_date')
-        .in('invoice_id', invoiceIds)
 
-      const invoiceMap = new Map(invoicesData?.map(inv => [inv.invoice_id, inv]) || [])
+      const [invoicesRes, splitItemsRes] = await Promise.all([
+        supabase
+          .from('invoices')
+          .select('invoice_id, customer_name, subject, issue_date')
+          .in('invoice_id', invoiceIds),
+        supabase
+          .from('invoice_line_items_split')
+          .select('invoice_id, line_no, raw_label_part')
+          .in('invoice_id', invoiceIds)
+      ])
+
+      const invoiceMap = new Map(invoicesRes.data?.map(inv => [inv.invoice_id, inv]) || [])
+
+      // セット明細をinvoice_id + line_noでグループ化
+      const splitDetailsMap = new Map<string, string[]>()
+      for (const item of splitItemsRes.data || []) {
+        const key = `${item.invoice_id}-${item.line_no}`
+        if (!splitDetailsMap.has(key)) {
+          splitDetailsMap.set(key, [])
+        }
+        if (item.raw_label_part) {
+          splitDetailsMap.get(key)!.push(item.raw_label_part)
+        }
+      }
 
       const results = Array.from(uniqueMap.values()).map(item => {
         const invoice = invoiceMap.get(item.invoice_id)
+        const key = `${item.invoice_id}-${item.line_no}`
         return {
           id: item.id,
           work_name: item.raw_label || item.set_name || '',
@@ -2312,7 +2336,9 @@ function InvoiceCreateContent() {
           customer_name: invoice?.customer_name || null,
           issue_date: invoice?.issue_date || null,
           invoice_id: item.invoice_id || '',
-          task_type: item.task_type || null
+          task_type: item.task_type || null,
+          line_no: item.line_no,
+          set_details: splitDetailsMap.get(key)
         }
       })
 
@@ -2329,8 +2355,8 @@ function InvoiceCreateContent() {
   const fetchPriceInvoiceDetail = async (invoiceId: string) => {
     setPriceDetailLoading(true)
     try {
-      // 請求書情報と明細を並行取得
-      const [invoiceRes, lineItemsRes, splitItemsRes] = await Promise.all([
+      // 請求書情報と明細を並行取得（sub_noも取得してセット明細の各行を表示）
+      const [invoiceRes, lineItemsRes] = await Promise.all([
         supabase
           .from('invoices')
           .select('invoice_id, customer_name, subject, issue_date')
@@ -2338,14 +2364,10 @@ function InvoiceCreateContent() {
           .single(),
         supabase
           .from('invoice_line_items')
-          .select('line_no, raw_label, unit_price, quantity, amount, task_type, set_name')
-          .eq('invoice_id', invoiceId)
-          .order('line_no', { ascending: true }),
-        supabase
-          .from('invoice_line_items_split')
-          .select('line_no, raw_label_part')
+          .select('line_no, sub_no, raw_label, raw_label_part, unit_price, quantity, amount, task_type, set_name')
           .eq('invoice_id', invoiceId)
           .order('line_no', { ascending: true })
+          .order('sub_no', { ascending: true })
       ])
 
       if (invoiceRes.error) throw invoiceRes.error
@@ -2353,42 +2375,27 @@ function InvoiceCreateContent() {
 
       const invoiceData = invoiceRes.data
       const lineItemsData = lineItemsRes.data || []
-      const splitItemsData = splitItemsRes.data || []
 
-      // セット明細をline_noでグループ化
-      const splitDetailsMap = new Map<number, string[]>()
-      for (const item of splitItemsData) {
-        if (!splitDetailsMap.has(item.line_no)) {
-          splitDetailsMap.set(item.line_no, [])
-        }
-        if (item.raw_label_part) {
-          splitDetailsMap.get(item.line_no)!.push(item.raw_label_part)
-        }
-      }
-
-      // 重複排除（同じline_noは1つだけ）
-      const uniqueLineItems = new Map<number, typeof lineItemsData[0]>()
-      for (const item of lineItemsData) {
-        if (!uniqueLineItems.has(item.line_no)) {
-          uniqueLineItems.set(item.line_no, item)
-        }
-      }
+      // 全てのアイテムを処理（sub_no > 1のものはセット明細として表示）
+      const processedItems = lineItemsData.map(item => ({
+        line_no: item.line_no,
+        sub_no: item.sub_no || 1,
+        raw_label: item.raw_label || '',
+        raw_label_part: item.raw_label_part || null,
+        unit_price: item.unit_price || 0,
+        quantity: item.quantity || 0,
+        amount: item.amount || 0,
+        task_type: item.task_type,
+        set_name: item.set_name,
+        is_set_detail: (item.sub_no || 1) > 1  // sub_no > 1はセット明細
+      }))
 
       setSelectedPriceInvoice({
         invoice_id: invoiceData.invoice_id,
         customer_name: invoiceData.customer_name,
         subject: invoiceData.subject,
         issue_date: invoiceData.issue_date,
-        line_items: Array.from(uniqueLineItems.values()).map(item => ({
-          line_no: item.line_no,
-          raw_label: item.raw_label || '',
-          unit_price: item.unit_price || 0,
-          quantity: item.quantity || 0,
-          amount: item.amount || 0,
-          task_type: item.task_type,
-          set_name: item.set_name,
-          set_details: splitDetailsMap.get(item.line_no)
-        }))
+        line_items: processedItems
       })
     } catch (error) {
       console.error('Fetch invoice detail error:', error)
@@ -4705,8 +4712,13 @@ function InvoiceCreateContent() {
                           <td className="px-3 py-2 text-sm text-gray-900 max-w-[150px] truncate" title={result.subject || ''}>
                             {result.subject || '-'}
                           </td>
-                          <td className="px-3 py-2 text-sm text-gray-900 max-w-[200px] truncate" title={result.work_name}>
-                            {result.work_name}
+                          <td className="px-3 py-2 text-sm text-gray-900 max-w-[250px]">
+                            <div className="truncate" title={result.work_name}>{result.work_name}</div>
+                            {result.set_details && result.set_details.length > 0 && (
+                              <div className="text-xs text-gray-500 mt-0.5 truncate" title={result.set_details.join(' / ')}>
+                                {result.set_details.join(' / ')}
+                              </div>
+                            )}
                           </td>
                           <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">
                             {result.quantity}
@@ -4773,42 +4785,48 @@ function InvoiceCreateContent() {
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                      {selectedPriceInvoice.line_items.map((item) => (
-                        <tr key={item.line_no} className="hover:bg-gray-50">
+                      {selectedPriceInvoice.line_items.map((item, index) => (
+                        <tr
+                          key={`${item.line_no}-${item.sub_no}`}
+                          className={`hover:bg-gray-50 ${item.is_set_detail ? 'bg-gray-50' : ''}`}
+                        >
                           <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-500">
-                            {item.line_no}
+                            {item.is_set_detail ? '' : item.line_no}
                           </td>
                           <td className="px-3 py-2 whitespace-nowrap text-sm">
-                            <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-                              item.task_type === 'S' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'
-                            }`}>
-                              {item.task_type === 'S' ? 'セット' : '個別'}
-                            </span>
+                            {item.is_set_detail ? (
+                              <span className="text-xs text-gray-400 ml-2">└</span>
+                            ) : (
+                              <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                                item.task_type === 'S' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'
+                              }`}>
+                                {item.task_type === 'S' ? 'セット' : '個別'}
+                              </span>
+                            )}
                           </td>
                           <td className="px-3 py-2 text-sm text-gray-900">
-                            {item.set_name ? (
-                              <div>
-                                <div className="font-medium">{item.set_name}</div>
-                                {item.set_details && item.set_details.length > 0 ? (
-                                  <div className="text-gray-500 text-xs mt-1">
-                                    {item.set_details.join(' / ')}
-                                  </div>
-                                ) : (
-                                  <div className="text-gray-500 text-xs">{item.raw_label}</div>
-                                )}
-                              </div>
+                            {item.is_set_detail ? (
+                              <span className="pl-4 text-gray-600">{item.raw_label_part || item.raw_label}</span>
+                            ) : item.set_name ? (
+                              <span className="font-medium">{item.set_name}</span>
                             ) : (
                               item.raw_label
                             )}
                           </td>
                           <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">
-                            {item.quantity}
+                            {item.is_set_detail ? (
+                              <span className="text-gray-500">{item.quantity}</span>
+                            ) : item.quantity}
                           </td>
                           <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">
-                            ¥{item.unit_price.toLocaleString()}
+                            {item.is_set_detail ? (
+                              <span className="text-gray-500">¥{item.unit_price.toLocaleString()}</span>
+                            ) : `¥${item.unit_price.toLocaleString()}`}
                           </td>
                           <td className="px-3 py-2 whitespace-nowrap text-sm font-medium text-gray-900 text-right">
-                            ¥{item.amount.toLocaleString()}
+                            {item.is_set_detail ? (
+                              <span className="text-gray-500">¥{item.amount.toLocaleString()}</span>
+                            ) : `¥${item.amount.toLocaleString()}`}
                           </td>
                         </tr>
                       ))}
@@ -4817,7 +4835,9 @@ function InvoiceCreateContent() {
                       <tr>
                         <td colSpan={5} className="px-3 py-2 text-sm font-medium text-right">合計:</td>
                         <td className="px-3 py-2 text-sm font-bold text-right text-blue-600">
-                          ¥{selectedPriceInvoice.line_items.reduce((sum, item) => sum + item.amount, 0).toLocaleString()}
+                          ¥{selectedPriceInvoice.line_items
+                            .filter(item => !item.is_set_detail)
+                            .reduce((sum, item) => sum + item.amount, 0).toLocaleString()}
                         </td>
                       </tr>
                     </tfoot>
