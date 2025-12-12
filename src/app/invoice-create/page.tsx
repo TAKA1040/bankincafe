@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useRef, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Plus, Trash2, Save, Search, Calculator, Home, AlertCircle } from 'lucide-react'
+import { Plus, Trash2, Save, Search, Calculator, Home, AlertCircle, HelpCircle } from 'lucide-react'
 import { useWorkDictionary } from '@/hooks/useWorkDictionary'
 import { supabase } from '@/lib/supabase'
 import { generateDocumentNumber, parseDocumentNumber } from '@/lib/utils'
@@ -122,6 +122,31 @@ function CardContent({ children, className = "" }: { children: React.ReactNode; 
 
 function SimpleLabel({ children }: { children: React.ReactNode }) {
   return <label className="block text-sm font-medium text-gray-700 mb-2">{children}</label>
+}
+
+// ヘルプツールチップコンポーネント
+function HelpTooltip({ text }: { text: string }) {
+  const [isVisible, setIsVisible] = useState(false)
+
+  return (
+    <div className="relative inline-block ml-1">
+      <button
+        type="button"
+        onMouseEnter={() => setIsVisible(true)}
+        onMouseLeave={() => setIsVisible(false)}
+        onClick={() => setIsVisible(!isVisible)}
+        className="text-gray-400 hover:text-blue-500 focus:outline-none"
+      >
+        <HelpCircle size={16} />
+      </button>
+      {isVisible && (
+        <div className="absolute z-50 w-64 p-3 text-sm bg-gray-800 text-white rounded-lg shadow-lg -left-28 top-6">
+          <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 border-8 border-transparent border-b-gray-800"></div>
+          {text}
+        </div>
+      )}
+    </div>
+  )
 }
 
 // 位置組み合わせユーティリティ
@@ -2330,6 +2355,7 @@ function InvoiceCreateContent() {
                 <div className="relative">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     顧客名 <span className="text-red-500">*</span>
+                    <HelpTooltip text="「その他」カテゴリの場合、確定保存時に顧客マスタへ自動登録されます。次回から候補として表示されます。" />
                   </label>
                   <input
                     type="text"
@@ -2377,6 +2403,7 @@ function InvoiceCreateContent() {
                   <div className="flex items-center justify-between mb-2">
                     <label className="block text-sm font-medium text-gray-700">
                       件名 <span className="text-red-500">*</span>
+                      <HelpTooltip text="入力した件名は確定保存時に件名マスタへ自動登録されます。次回から候補として表示されます。" />
                       <span className="text-xs text-gray-500 ml-2">（顧客名から自動入力されます。変更可能）</span>
                     </label>
                     <button
@@ -2508,6 +2535,7 @@ function InvoiceCreateContent() {
                   <div className="flex items-center justify-between mb-2">
                     <label className="block text-sm font-medium text-gray-700">
                       登録番号（任意）
+                      <HelpTooltip text="入力した登録番号は確定保存時に登録番号マスタへ自動登録されます。次回から候補として表示されます。" />
                     </label>
                     <button
                       type="button"
@@ -2766,7 +2794,10 @@ function InvoiceCreateContent() {
                         {/* PC: 3列レイアウト（対象・動作・位置） */}
                         <div className="hidden md:grid grid-cols-3 gap-3 items-end mb-4">
                         <div className="relative">
-                        <SimpleLabel>対象</SimpleLabel>
+                        <div className="flex items-center mb-2">
+                          <span className="text-sm font-medium text-gray-700">対象</span>
+                          <HelpTooltip text="入力した対象は確定保存時に対象マスタへ自動登録されます。次回から候補として表示されます。" />
+                        </div>
                         <input
                           type="text"
                           value={target}
@@ -2875,14 +2906,17 @@ function InvoiceCreateContent() {
                       </div>
                       
                       <div className="relative">
-                        <SimpleLabel>動作</SimpleLabel>
+                        <div className="flex items-center mb-2">
+                          <span className="text-sm font-medium text-gray-700">動作</span>
+                          <HelpTooltip text="マスタ未登録の動作は確定保存時に「登録待ち」に追加されます。作業辞書から読み仮名を入力してマスタ登録できます。" />
+                        </div>
                         <input
                           type="text"
                           value={actionSearch || actions.join('・')}
                           onChange={(e) => {
                             const value = e.target.value
                             setActionSearch(value)
-                            
+
                             if (value.trim() && target && TARGET_ACTIONS && TARGET_ACTIONS[target]) {
                               // 対象に紐づく動作からフィルタ
                               const filtered = TARGET_ACTIONS[target].filter(a => 
@@ -2988,14 +3022,17 @@ function InvoiceCreateContent() {
                         )}
                       </div>
                       <div className="relative">
-                        <SimpleLabel>位置</SimpleLabel>
+                        <div className="flex items-center mb-2">
+                          <span className="text-sm font-medium text-gray-700">位置</span>
+                          <HelpTooltip text="マスタ未登録の位置は確定保存時に「登録待ち」に追加されます。作業辞書から読み仮名を入力してマスタ登録できます。" />
+                        </div>
                         <input
                           type="text"
                           value={positionSearch || positions.join('')}
                           onChange={(e) => {
                             const value = e.target.value
                             setPositionSearch(value)
-                            
+
                             if (value.trim() && actions.length > 0 && ACTION_POSITIONS && ACTION_POSITIONS[actions[0]]) {
                               // 動作に紐づく位置からフィルタ
                               const filtered = ACTION_POSITIONS[actions[0]].filter(p => 
@@ -3183,7 +3220,10 @@ function InvoiceCreateContent() {
                       {/* 1行目: 対象・動作 */}
                       <div className="grid grid-cols-2 gap-3">
                         <div className="relative">
-                          <SimpleLabel>対象</SimpleLabel>
+                          <div className="flex items-center mb-2">
+                            <span className="text-sm font-medium text-gray-700">対象</span>
+                            <HelpTooltip text="入力した対象は確定保存時に対象マスタへ自動登録されます。" />
+                          </div>
                           <input
                             type="text"
                             value={target}
@@ -3242,7 +3282,10 @@ function InvoiceCreateContent() {
                           )}
                         </div>
                         <div>
-                          <SimpleLabel>動作</SimpleLabel>
+                          <div className="flex items-center mb-2">
+                            <span className="text-sm font-medium text-gray-700">動作</span>
+                            <HelpTooltip text="マスタ未登録の動作は確定保存時に「登録待ち」に追加されます。" />
+                          </div>
                           <input
                             type="text"
                             value={actions.join('・')}
@@ -3259,11 +3302,14 @@ function InvoiceCreateContent() {
                           />
                         </div>
                       </div>
-                      
+
                       {/* 2行目: 位置・その他 */}
                       <div className="grid grid-cols-2 gap-3">
                         <div>
-                          <SimpleLabel>位置</SimpleLabel>
+                          <div className="flex items-center mb-2">
+                            <span className="text-sm font-medium text-gray-700">位置</span>
+                            <HelpTooltip text="マスタ未登録の位置は確定保存時に「登録待ち」に追加されます。" />
+                          </div>
                           <input
                             type="text"
                             value={positions.join('')}
@@ -3509,7 +3555,10 @@ function InvoiceCreateContent() {
                           <h4 className="text-sm font-medium text-gray-700 mb-2">セット明細</h4>
                           <div className="grid grid-cols-1 md:grid-cols-6 gap-3 items-start mb-2">
                             <div className="relative">
-                              <SimpleLabel>対象</SimpleLabel>
+                              <div className="flex items-center mb-2">
+                                <span className="text-sm font-medium text-gray-700">対象</span>
+                                <HelpTooltip text="入力した対象は確定保存時に対象マスタへ自動登録されます。" />
+                              </div>
                               <input
                                 type="text"
                                 value={detailTarget}
@@ -3599,14 +3648,17 @@ function InvoiceCreateContent() {
                               )}
                             </div>
                             <div className="relative">
-                              <SimpleLabel>動作</SimpleLabel>
+                              <div className="flex items-center mb-2">
+                                <span className="text-sm font-medium text-gray-700">動作</span>
+                                <HelpTooltip text="マスタ未登録の動作は確定保存時に「登録待ち」に追加されます。" />
+                              </div>
                               <input
                                 type="text"
                                 value={detailActionSearch || detailActions.join('・')}
                                 onChange={(e) => {
                                   const value = e.target.value
                                   setDetailActionSearch(value)
-                                  
+
                                   if (value.trim() && detailTarget && TARGET_ACTIONS && TARGET_ACTIONS[detailTarget]) {
                                     // 対象に紐づく動作からフィルタ
                                     const filtered = TARGET_ACTIONS[detailTarget].filter(a => 
@@ -3710,14 +3762,17 @@ function InvoiceCreateContent() {
                               )}
                             </div>
                             <div className="relative">
-                              <SimpleLabel>位置</SimpleLabel>
+                              <div className="flex items-center mb-2">
+                                <span className="text-sm font-medium text-gray-700">位置</span>
+                                <HelpTooltip text="マスタ未登録の位置は確定保存時に「登録待ち」に追加されます。" />
+                              </div>
                               <input
                                 type="text"
                                 value={detailPositionSearch || detailPositions.join('')}
                                 onChange={(e) => {
                                   const value = e.target.value
                                   setDetailPositionSearch(value)
-                                  
+
                                   if (value.trim() && detailActions.length > 0 && ACTION_POSITIONS && ACTION_POSITIONS[detailActions[0]]) {
                                     // 動作に紐づく位置からフィルタ
                                     const filtered = ACTION_POSITIONS[detailActions[0]].filter(p => 
