@@ -664,6 +664,7 @@ function InvoiceCreateContent() {
   // 作業価格検索モーダルの状態
   const [showPriceSearchModal, setShowPriceSearchModal] = useState(false)
   const [priceSearchKeyword, setPriceSearchKeyword] = useState('')
+  const [priceSearchSubject, setPriceSearchSubject] = useState('')
   const [priceSearchResults, setPriceSearchResults] = useState<Array<{
     id: number
     work_name: string
@@ -2188,39 +2189,51 @@ function InvoiceCreateContent() {
 
   // 作業価格検索関数
   const searchPrices = async () => {
-    if (!priceSearchKeyword.trim()) {
+    const workKeyword = priceSearchKeyword.trim()
+    const subjectKeyword = priceSearchSubject.trim()
+
+    // どちらも空の場合は検索しない
+    if (!workKeyword && !subjectKeyword) {
       setPriceSearchResults([])
       return
     }
 
     setPriceSearchLoading(true)
     try {
-      const keyword = priceSearchKeyword.trim()
-      // ひらがな・カタカナ両方のパターンで検索
-      const keywordHiragana = katakanaToHiragana(keyword)
-      const keywordKatakana = hiraganaToKatakana(keyword)
+      let targetInvoiceIds: string[] | null = null
 
-      // orクエリを構築（ひらがな・カタカナ両方）
-      const orConditions = [
-        `raw_label.ilike.%${keyword}%`,
-        `target.ilike.%${keyword}%`,
-        `set_name.ilike.%${keyword}%`
-      ]
-      // ひらがな版が異なる場合は追加
-      if (keywordHiragana !== keyword) {
-        orConditions.push(`raw_label.ilike.%${keywordHiragana}%`)
-        orConditions.push(`target.ilike.%${keywordHiragana}%`)
-        orConditions.push(`set_name.ilike.%${keywordHiragana}%`)
-      }
-      // カタカナ版が異なる場合は追加
-      if (keywordKatakana !== keyword && keywordKatakana !== keywordHiragana) {
-        orConditions.push(`raw_label.ilike.%${keywordKatakana}%`)
-        orConditions.push(`target.ilike.%${keywordKatakana}%`)
-        orConditions.push(`set_name.ilike.%${keywordKatakana}%`)
+      // 件名フィルターがある場合、先にinvoicesを検索
+      if (subjectKeyword) {
+        const subjectHiragana = katakanaToHiragana(subjectKeyword)
+        const subjectKatakana = hiraganaToKatakana(subjectKeyword)
+
+        const subjectConditions = [`subject.ilike.%${subjectKeyword}%`]
+        if (subjectHiragana !== subjectKeyword) {
+          subjectConditions.push(`subject.ilike.%${subjectHiragana}%`)
+        }
+        if (subjectKatakana !== subjectKeyword && subjectKatakana !== subjectHiragana) {
+          subjectConditions.push(`subject.ilike.%${subjectKatakana}%`)
+        }
+
+        const { data: matchedInvoices, error: invoiceError } = await supabase
+          .from('invoices')
+          .select('invoice_id')
+          .or(subjectConditions.join(','))
+          .limit(500)
+
+        if (invoiceError) throw invoiceError
+
+        targetInvoiceIds = matchedInvoices?.map(inv => inv.invoice_id) || []
+
+        // 件名でマッチするものがなければ結果なし
+        if (targetInvoiceIds.length === 0) {
+          setPriceSearchResults([])
+          return
+        }
       }
 
       // invoice_line_itemsを検索
-      const { data, error } = await supabase
+      let query = supabase
         .from('invoice_line_items')
         .select(`
           id,
@@ -2233,7 +2246,37 @@ function InvoiceCreateContent() {
           line_no,
           task_type
         `)
-        .or(orConditions.join(','))
+
+      // 作業名フィルター
+      if (workKeyword) {
+        const keywordHiragana = katakanaToHiragana(workKeyword)
+        const keywordKatakana = hiraganaToKatakana(workKeyword)
+
+        const orConditions = [
+          `raw_label.ilike.%${workKeyword}%`,
+          `target.ilike.%${workKeyword}%`,
+          `set_name.ilike.%${workKeyword}%`
+        ]
+        if (keywordHiragana !== workKeyword) {
+          orConditions.push(`raw_label.ilike.%${keywordHiragana}%`)
+          orConditions.push(`target.ilike.%${keywordHiragana}%`)
+          orConditions.push(`set_name.ilike.%${keywordHiragana}%`)
+        }
+        if (keywordKatakana !== workKeyword && keywordKatakana !== keywordHiragana) {
+          orConditions.push(`raw_label.ilike.%${keywordKatakana}%`)
+          orConditions.push(`target.ilike.%${keywordKatakana}%`)
+          orConditions.push(`set_name.ilike.%${keywordKatakana}%`)
+        }
+
+        query = query.or(orConditions.join(','))
+      }
+
+      // 件名フィルターでマッチしたinvoice_idに絞り込み
+      if (targetInvoiceIds) {
+        query = query.in('invoice_id', targetInvoiceIds)
+      }
+
+      const { data, error } = await query
         .order('invoice_id', { ascending: false })
         .limit(200)
 
@@ -4550,6 +4593,7 @@ function InvoiceCreateContent() {
                 onClick={() => {
                   setShowPriceSearchModal(false)
                   setPriceSearchKeyword('')
+                  setPriceSearchSubject('')
                   setPriceSearchResults([])
                   setSelectedPriceInvoice(null)
                 }}
@@ -4561,15 +4605,31 @@ function InvoiceCreateContent() {
 
             {/* 検索入力 */}
             <div className="px-6 py-4 border-b">
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={priceSearchKeyword}
-                  onChange={(e) => setPriceSearchKeyword(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && searchPrices()}
-                  placeholder="作業名で検索（例: フェンダー、バンパー）"
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">作業名</label>
+                  <input
+                    type="text"
+                    value={priceSearchKeyword}
+                    onChange={(e) => setPriceSearchKeyword(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && searchPrices()}
+                    placeholder="例: フェンダー、バンパー"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">件名</label>
+                  <input
+                    type="text"
+                    value={priceSearchSubject}
+                    onChange={(e) => setPriceSearchSubject(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && searchPrices()}
+                    placeholder="例: 車検、修理"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end">
                 <button
                   onClick={searchPrices}
                   disabled={priceSearchLoading}
@@ -4585,7 +4645,7 @@ function InvoiceCreateContent() {
             <div className="flex-1 overflow-auto px-6 py-4">
               {priceSearchResults.length === 0 && !priceSearchLoading && (
                 <p className="text-gray-500 text-center py-8">
-                  {priceSearchKeyword ? '検索結果がありません' : '検索キーワードを入力してください'}
+                  {(priceSearchKeyword || priceSearchSubject) ? '検索結果がありません' : '作業名または件名を入力して検索してください'}
                 </p>
               )}
 
@@ -4751,6 +4811,7 @@ function InvoiceCreateContent() {
                 onClick={() => {
                   setShowPriceSearchModal(false)
                   setPriceSearchKeyword('')
+                  setPriceSearchSubject('')
                   setPriceSearchResults([])
                   setSelectedPriceInvoice(null)
                 }}
