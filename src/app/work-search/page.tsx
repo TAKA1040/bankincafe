@@ -124,8 +124,8 @@ export default function WorkSearchPage() {
   const [error, setError] = useState<string | null>(null)
   
   const [filters, setFilters] = useState<SearchFilters>({ keyword: '', customerCategory: '', dateFrom: '', dateTo: '', target: '' })
-  const [sortBy, setSortBy] = useState<'issue_date' | 'unit_price' | 'customer_name' | 'work_name' | 'subject' | 'registration_number' | 'invoice_month' | 'target'>('unit_price')
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
+  const [sortBy, setSortBy] = useState<'issue_date' | 'unit_price' | 'customer_name' | 'work_name' | 'subject' | 'registration_number' | 'invoice_month' | 'target'>('issue_date')
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
 
   const [selectedItem, setSelectedItem] = useState<WorkSearchItem | null>(null)
   const [selectedInvoiceDetail, setSelectedInvoiceDetail] = useState<InvoiceDetail | null>(null)
