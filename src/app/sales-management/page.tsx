@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect, Fragment } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, BarChart3, Download, TrendingUp, Calendar, JapaneseYen, RefreshCw, Banknote, Home } from 'lucide-react'
+import { ArrowLeft, BarChart3, Download, TrendingUp, Calendar, JapaneseYen, RefreshCw, Banknote, Home, HelpCircle } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 import { useSalesData } from '@/hooks/useSalesData'
 import { supabase } from '@/lib/supabase'
@@ -132,7 +132,7 @@ const PaymentManagementTab = ({ invoices, summary, onUpdate, onPartialPayment, l
           <div className="flex items-center gap-1">
             <label htmlFor="paymentDate" className="text-sm font-medium text-gray-700">入金日:</label>
             <input type="date" id="paymentDate" value={paymentDate} onChange={e => setPaymentDate(e.target.value)} className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" />
-            <span className="text-gray-400 cursor-help" title="チェックした請求書を一括で入金済みにする際の入金日です">❓</span>
+            <HelpCircle size={16} className="text-gray-400 cursor-help" title="チェックした請求書を一括で入金済みにする際の入金日です" />
           </div>
           <button onClick={handleUpdate} disabled={loading || selectedIds.length === 0} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 flex items-center gap-2" title="チェックした請求書を全額入金済みとして処理します">
             {loading ? '更新中...' : 'チェック分を入金済みにする'}
