@@ -24,6 +24,10 @@ const PaymentManagementTab = ({ invoices, summary, onUpdate, onPartialPayment, o
   const [partialAmounts, setPartialAmounts] = useState<Record<string, string>>({});
   const [partialDates, setPartialDates] = useState<Record<string, string>>({});
   const [showPartialInput, setShowPartialInput] = useState<string | null>(null);
+  const [processingId, setProcessingId] = useState<string | null>(null);
+
+  // 表示件数制限
+  const [displayLimit, setDisplayLimit] = useState(50);
 
   // 絞り込みフィルター
   const [paymentStatusFilter, setPaymentStatusFilter] = useState<'all' | 'unpaid' | 'partial' | 'paid'>('unpaid');
@@ -31,7 +35,7 @@ const PaymentManagementTab = ({ invoices, summary, onUpdate, onPartialPayment, o
   const [subjectFilter, setSubjectFilter] = useState('');
   const [invoiceMonthFilter, setInvoiceMonthFilter] = useState<string>('all');
 
-  // 請求月の選択肢を生成
+  // 請求月の選択肢を生成（メモ化）
   const availableMonths = useMemo(() => {
     const months = new Set<string>();
     invoices.forEach(inv => {
@@ -99,59 +103,66 @@ const PaymentManagementTab = ({ invoices, summary, onUpdate, onPartialPayment, o
     return hiraganaToKatakana(str.toLowerCase().replace(/\s/g, ''));
   };
 
-  // フィルタリング処理
-  const filteredInvoices = invoices
-    // 入金ステータスフィルター
-    .filter(inv => {
-      if (paymentStatusFilter === 'all') return true;
-      if (paymentStatusFilter === 'unpaid') return inv.payment_status === 'unpaid' || inv.payment_status === 'partial';
-      return inv.payment_status === paymentStatusFilter;
-    })
-    // カテゴリーフィルター
-    .filter(inv => {
-        if (selectedCategory === 'all') return true;
-        const category = categories.find(c => c.id === selectedCategory);
-        if (!category) return false;
+  // フィルタリング処理（メモ化で最適化）
+  const filteredInvoices = useMemo(() => {
+    return invoices
+      // 入金ステータスフィルター
+      .filter(inv => {
+        if (paymentStatusFilter === 'all') return true;
+        if (paymentStatusFilter === 'unpaid') return inv.payment_status === 'unpaid' || inv.payment_status === 'partial';
+        return inv.payment_status === paymentStatusFilter;
+      })
+      // カテゴリーフィルター
+      .filter(inv => {
+          if (selectedCategory === 'all') return true;
+          const category = categories.find(c => c.id === selectedCategory);
+          if (!category) return false;
 
-        const normalizedInvoiceCustomerName = normalizeName(inv.customer_name);
-        if (!normalizedInvoiceCustomerName) return false;
+          const normalizedInvoiceCustomerName = normalizeName(inv.customer_name);
+          if (!normalizedInvoiceCustomerName) return false;
 
-        if (category.id === 'other') {
-            const registeredCompanyNames = categories
-                .filter(c => c.id !== 'other' && c.companyName)
-                .map(c => normalizeName(c.companyName))
-                .filter(Boolean);
-            return !registeredCompanyNames.some(regName => normalizedInvoiceCustomerName.includes(regName));
-        }
+          if (category.id === 'other') {
+              const registeredCompanyNames = categories
+                  .filter(c => c.id !== 'other' && c.companyName)
+                  .map(c => normalizeName(c.companyName))
+                  .filter(Boolean);
+              return !registeredCompanyNames.some(regName => normalizedInvoiceCustomerName.includes(regName));
+          }
 
-        const normalizedCategoryCompanyName = normalizeName(category.companyName);
-        if (!normalizedCategoryCompanyName) return false;
+          const normalizedCategoryCompanyName = normalizeName(category.companyName);
+          if (!normalizedCategoryCompanyName) return false;
 
-        return normalizedInvoiceCustomerName.includes(normalizedCategoryCompanyName);
-    })
-    // 顧客名フィルター（曖昧検索）
-    .filter(inv => {
-      if (!customerNameFilter) return true;
-      const normalizedCustomer = normalizeForSearch(inv.customer_name || '');
-      const normalizedSearch = normalizeForSearch(customerNameFilter);
-      return normalizedCustomer.includes(normalizedSearch);
-    })
-    // 件名フィルター（曖昧検索）
-    .filter(inv => {
-      if (!subjectFilter) return true;
-      const subject = inv.subject_name || inv.subject || '';
-      const normalizedSubject = normalizeForSearch(subject);
-      const normalizedSearch = normalizeForSearch(subjectFilter);
-      return normalizedSubject.includes(normalizedSearch);
-    })
-    // 請求月フィルター
-    .filter(inv => {
-      if (invoiceMonthFilter === 'all') return true;
-      if (!inv.issue_date) return false;
-      const date = new Date(inv.issue_date);
-      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-      return monthKey === invoiceMonthFilter;
-    });
+          return normalizedInvoiceCustomerName.includes(normalizedCategoryCompanyName);
+      })
+      // 顧客名フィルター（曖昧検索）
+      .filter(inv => {
+        if (!customerNameFilter) return true;
+        const normalizedCustomer = normalizeForSearch(inv.customer_name || '');
+        const normalizedSearch = normalizeForSearch(customerNameFilter);
+        return normalizedCustomer.includes(normalizedSearch);
+      })
+      // 件名フィルター（曖昧検索）
+      .filter(inv => {
+        if (!subjectFilter) return true;
+        const subject = inv.subject_name || inv.subject || '';
+        const normalizedSubject = normalizeForSearch(subject);
+        const normalizedSearch = normalizeForSearch(subjectFilter);
+        return normalizedSubject.includes(normalizedSearch);
+      })
+      // 請求月フィルター
+      .filter(inv => {
+        if (invoiceMonthFilter === 'all') return true;
+        if (!inv.issue_date) return false;
+        const date = new Date(inv.issue_date);
+        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        return monthKey === invoiceMonthFilter;
+      });
+  }, [invoices, paymentStatusFilter, selectedCategory, categories, customerNameFilter, subjectFilter, invoiceMonthFilter]);
+
+  // 表示用データ（件数制限付き）
+  const displayedInvoices = useMemo(() => {
+    return filteredInvoices.slice(0, displayLimit);
+  }, [filteredInvoices, displayLimit]);
 
   return (
     <div className="lg:col-span-2 space-y-6">
@@ -267,7 +278,24 @@ const PaymentManagementTab = ({ invoices, summary, onUpdate, onPartialPayment, o
           <button onClick={handleUpdate} disabled={loading || selectedIds.length === 0} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 flex items-center gap-2" title="チェックした請求書を全額入金済みとして処理します">
             {loading ? '更新中...' : 'チェック分を入金済みにする'}
           </button>
-          <span className="text-sm text-gray-500">（{filteredInvoices.length}件表示）</span>
+        </div>
+        {/* 表示件数コントロール */}
+        <div className="flex items-center gap-3 mt-3 pt-3 border-t">
+          <span className="text-sm text-gray-600">表示件数:</span>
+          <select
+            value={displayLimit}
+            onChange={e => setDisplayLimit(Number(e.target.value))}
+            className="px-2 py-1 border border-gray-300 rounded text-sm"
+          >
+            <option value={30}>30件</option>
+            <option value={50}>50件</option>
+            <option value={100}>100件</option>
+            <option value={200}>200件</option>
+            <option value={99999}>全て</option>
+          </select>
+          <span className="text-sm text-gray-500">
+            {displayedInvoices.length}件表示 / 全{filteredInvoices.length}件
+          </span>
         </div>
       </div>
 
@@ -278,7 +306,7 @@ const PaymentManagementTab = ({ invoices, summary, onUpdate, onPartialPayment, o
               <th rowSpan={2} className="p-2 align-middle w-10">
                 <input type="checkbox" onChange={e => {
                   if (e.target.checked) {
-                    setSelectedIds(filteredInvoices.filter(i => i.payment_status !== 'paid').map(i => i.invoice_id));
+                    setSelectedIds(displayedInvoices.filter(i => i.payment_status !== 'paid').map(i => i.invoice_id));
                   } else {
                     setSelectedIds([]);
                   }
@@ -301,7 +329,7 @@ const PaymentManagementTab = ({ invoices, summary, onUpdate, onPartialPayment, o
             </tr>
           </thead>
           <tbody className="bg-white">
-            {filteredInvoices.map(invoice => (
+            {displayedInvoices.map(invoice => (
               <Fragment key={invoice.invoice_id}>
                 <tr className="hover:bg-gray-50">
                   <td rowSpan={2} className="p-2 align-middle w-10 border-b">
@@ -417,7 +445,17 @@ const PaymentManagementTab = ({ invoices, summary, onUpdate, onPartialPayment, o
             ))}
           </tbody>
         </table>
-        {filteredInvoices.length === 0 && <p className="p-4 text-center text-gray-500">条件に該当する請求書はありません。</p>}
+        {displayedInvoices.length === 0 && <p className="p-4 text-center text-gray-500">条件に該当する請求書はありません。</p>}
+        {displayedInvoices.length > 0 && displayedInvoices.length < filteredInvoices.length && (
+          <div className="p-4 text-center border-t">
+            <button
+              onClick={() => setDisplayLimit(prev => prev + 50)}
+              className="px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+            >
+              さらに表示（残り{filteredInvoices.length - displayedInvoices.length}件）
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

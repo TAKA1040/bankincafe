@@ -491,15 +491,35 @@ export function useSalesData() {
     return summary
   }, [invoices])
 
-  // 新スキーマ対応: invoice_payments テーブルへの入金記録
+  // 新スキーマ対応: invoice_payments テーブルへの入金記録 - 楽観的UI更新
   const recordPayment = useCallback(async (invoiceId: string, paymentData: {
     payment_date: string
     payment_amount: number
     payment_method?: string
     notes?: string
   }): Promise<boolean> => {
+    // 楽観的UI更新: 先にローカル状態を更新
+    const originalInvoices = [...invoices]
+    setInvoices(prev => prev.map(inv => {
+      if (inv.invoice_id !== invoiceId) return inv
+      const newTotalPaid = inv.total_paid + paymentData.payment_amount
+      const newRemaining = inv.total_amount - newTotalPaid
+      let newStatus: 'unpaid' | 'paid' | 'partial' = 'unpaid'
+      if (newRemaining <= 0) {
+        newStatus = 'paid'
+      } else if (newTotalPaid > 0) {
+        newStatus = 'partial'
+      }
+      return {
+        ...inv,
+        payment_status: newStatus,
+        total_paid: newTotalPaid,
+        remaining_amount: Math.max(0, newRemaining),
+        last_payment_date: paymentData.payment_date
+      }
+    }))
+
     try {
-      setLoading(true)
       setError(null)
 
       // invoice_payments テーブルに入金記録を挿入
@@ -517,13 +537,15 @@ export function useSalesData() {
         // フォールバック: 古いテーブル構造での更新
         const { error: fallbackError } = await supabase
           .from('invoices')
-          .update({ 
+          .update({
             payment_status: 'paid',
-            // payment_date: paymentData.payment_date  // 新スキーマでは削除済み
           })
           .eq('invoice_id', invoiceId)
-        
-        if (fallbackError) throw fallbackError
+
+        if (fallbackError) {
+          setInvoices(originalInvoices)
+          throw fallbackError
+        }
       } else {
         // 請求書の支払い状況を更新
         // 入金合計を計算して支払い状況を決定
@@ -541,7 +563,7 @@ export function useSalesData() {
         if (payments && invoice) {
           const totalPaid = payments.reduce((sum, p) => sum + (p.payment_amount || 0), 0)
           const total = invoice.total || 0
-          
+
           let newStatus: 'unpaid' | 'paid' | 'partial' = 'unpaid'
           if (totalPaid >= total) {
             newStatus = 'paid'
@@ -556,20 +578,26 @@ export function useSalesData() {
         }
       }
 
-      await fetchInvoices()
       return true
     } catch (err) {
       console.error('Failed to record payment:', err)
       setError(err instanceof Error ? err.message : '入金記録の登録に失敗しました')
-      setLoading(false)
+      setInvoices(originalInvoices)
       return false
     }
-  }, [fetchInvoices])
+  }, [invoices])
 
-  // 複数請求書の一括支払い更新（新スキーマ対応）
+  // 複数請求書の一括支払い更新（新スキーマ対応）- 楽観的UI更新
   const updateInvoicesPaymentStatus = useCallback(async (invoiceIds: string[], paymentDate: string): Promise<boolean> => {
+    // 楽観的UI更新: 先にローカル状態を更新
+    const originalInvoices = [...invoices]
+    setInvoices(prev => prev.map(inv =>
+      invoiceIds.includes(inv.invoice_id)
+        ? { ...inv, payment_status: 'paid' as const, total_paid: inv.total_amount, remaining_amount: 0, last_payment_date: paymentDate }
+        : inv
+    ))
+
     try {
-      setLoading(true)
       setError(null)
 
       // 各請求書の残額を取得して入金記録を作成
@@ -578,7 +606,10 @@ export function useSalesData() {
         .select('invoice_id, total')
         .in('invoice_id', invoiceIds)
 
-      if (!invoicesData) throw new Error('請求書データの取得に失敗しました')
+      if (!invoicesData) {
+        setInvoices(originalInvoices)
+        throw new Error('請求書データの取得に失敗しました')
+      }
 
       // 各請求書に対して入金記録を作成
       for (const invoice of invoicesData) {
@@ -610,20 +641,26 @@ export function useSalesData() {
         }
       }
 
-      await fetchInvoices()
       return true
     } catch (err) {
       console.error('Failed to update payment status:', err)
       setError(err instanceof Error ? err.message : '入金状況の更新に失敗しました')
-      setLoading(false)
+      setInvoices(originalInvoices)
       return false
     }
-  }, [fetchInvoices])
+  }, [invoices])
 
-  // 入金取り消し（入金履歴を全削除して未入金に戻す）
+  // 入金取り消し（入金履歴を全削除して未入金に戻す）- 楽観的UI更新
   const cancelPayment = useCallback(async (invoiceId: string, deleteHistory: boolean = true): Promise<boolean> => {
+    // 楽観的UI更新: 先にローカル状態を更新
+    const originalInvoices = [...invoices]
+    setInvoices(prev => prev.map(inv =>
+      inv.invoice_id === invoiceId
+        ? { ...inv, payment_status: 'unpaid' as const, total_paid: 0, remaining_amount: inv.total_amount, payment_history: [] }
+        : inv
+    ))
+
     try {
-      setLoading(true)
       setError(null)
 
       if (deleteHistory) {
@@ -645,17 +682,21 @@ export function useSalesData() {
         .update({ payment_status: 'unpaid' })
         .eq('invoice_id', invoiceId)
 
-      if (updateError) throw updateError
+      if (updateError) {
+        // エラー時はロールバック
+        setInvoices(originalInvoices)
+        throw updateError
+      }
 
-      await fetchInvoices()
       return true
     } catch (err) {
       console.error('Failed to cancel payment:', err)
       setError(err instanceof Error ? err.message : '入金取り消しに失敗しました')
-      setLoading(false)
+      // ロールバック
+      setInvoices(originalInvoices)
       return false
     }
-  }, [fetchInvoices])
+  }, [invoices])
 
   // 特定の入金記録を削除（一部入金の取り消し用）
   const deletePaymentRecord = useCallback(async (paymentId: number, invoiceId: string): Promise<boolean> => {
