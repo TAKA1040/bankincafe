@@ -700,6 +700,7 @@ function InvoiceCreateContent() {
     }>
   } | null>(null)
   const [priceDetailLoading, setPriceDetailLoading] = useState(false)
+  const [selectedPriceResultId, setSelectedPriceResultId] = useState<string | null>(null)  // 選択した検索結果のinvoice_id（スクロール復元用）
 
   // 作業項目の状態（明細として保存）
   const [workItems, setWorkItems] = useState<WorkItem[]>([])
@@ -4615,23 +4616,37 @@ function InvoiceCreateContent() {
               <h2 className="text-xl font-bold text-gray-800">
                 {selectedPriceInvoice ? '請求書詳細' : '過去の作業価格検索'}
               </h2>
-              <button
-                onClick={() => {
-                  if (selectedPriceInvoice) {
-                    // 詳細表示中は検索結果に戻る
-                    setSelectedPriceInvoice(null)
-                  } else {
-                    // 検索結果一覧ではモーダルを閉じる
+              <div className="flex items-center gap-2">
+                {selectedPriceInvoice && (
+                  <button
+                    onClick={() => {
+                      setSelectedPriceInvoice(null)
+                      // 選択した行にスクロール
+                      if (selectedPriceResultId) {
+                        setTimeout(() => {
+                          const row = document.getElementById(`price-result-${selectedPriceResultId}`)
+                          row?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                        }, 100)
+                      }
+                    }}
+                    className="px-3 py-1.5 text-sm bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg"
+                  >
+                    ← 戻る
+                  </button>
+                )}
+                <button
+                  onClick={() => {
                     setShowPriceSearchModal(false)
                     setPriceSearchKeyword('')
                     setPriceSearchSubject('')
                     setPriceSearchResults([])
-                  }
-                }}
-                className="text-gray-500 hover:text-gray-700 text-2xl"
-              >
-                ×
-              </button>
+                    setSelectedPriceInvoice(null)
+                  }}
+                  className="text-gray-500 hover:text-gray-700 text-2xl"
+                >
+                  ×
+                </button>
+              </div>
             </div>
 
             {/* 検索入力 */}
@@ -4699,8 +4714,12 @@ function InvoiceCreateContent() {
                       {priceSearchResults.map((result, index) => (
                         <tr
                           key={`${result.invoice_id}-${index}`}
+                          id={`price-result-${result.invoice_id}-${index}`}
                           className="hover:bg-blue-50 cursor-pointer transition-colors"
-                          onClick={() => fetchPriceInvoiceDetail(result.invoice_id)}
+                          onClick={() => {
+                            setSelectedPriceResultId(`${result.invoice_id}-${index}`)
+                            fetchPriceInvoiceDetail(result.invoice_id)
+                          }}
                         >
                           <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
                             {result.issue_date ? new Date(result.issue_date).toLocaleDateString('ja-JP') : '-'}
@@ -4747,12 +4766,6 @@ function InvoiceCreateContent() {
               {/* 請求書詳細表示 */}
               {selectedPriceInvoice && (
                 <div>
-                  <button
-                    onClick={() => setSelectedPriceInvoice(null)}
-                    className="mb-4 px-3 py-1.5 text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg flex items-center gap-1"
-                  >
-                    ← 検索結果に戻る
-                  </button>
 
                   <div className="bg-gray-50 rounded-lg p-4 mb-4">
                     <div className="grid grid-cols-2 gap-4 text-sm">
