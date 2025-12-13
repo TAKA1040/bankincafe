@@ -1,349 +1,310 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Search, Clock, Download, Filter, X, BarChart3 } from 'lucide-react'
+import { ArrowLeft, Search, Calendar, Filter, X, ChevronDown, ChevronUp } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
-// 型定義
-interface WorkHistoryItem {
+// ひらがな⇔カタカナ変換
+function hiraganaToKatakana(str: string): string {
+  return str.replace(/[\u3041-\u3096]/g, (match) =>
+    String.fromCharCode(match.charCodeAt(0) + 0x60)
+  )
+}
+
+function katakanaToHiragana(str: string): string {
+  return str.replace(/[\u30a1-\u30f6]/g, (match) =>
+    String.fromCharCode(match.charCodeAt(0) - 0x60)
+  )
+}
+
+// 検索結果の型
+interface SearchResult {
   id: number
-  work_name: string
+  raw_label_part: string | null
   unit_price: number
-  customer_name: string
-  date: string
-  invoice_id?: string
-  memo: string
   quantity: number
-  total_amount: number
+  subject: string | null
+  customer_name: string | null
+  issue_date: string | null
+  invoice_id: string
+  task_type: string | null
+  line_no: number
 }
 
-interface SearchFilters {
-  keyword: string
-  minPrice: string
-  maxPrice: string
-  startDate: string
-  endDate: string
-}
-
-interface WorkStatistics {
-  totalWorks: number
-  totalAmount: number
-  averagePrice: number
-  topCustomer: string
-}
-
-// 検索関数
-function searchItems(data: WorkHistoryItem[], filters: SearchFilters): WorkHistoryItem[] {
-  return data.filter(item => {
-      // AND検索（空白区切りトークンでANDマッチ）
-      if (filters.keyword.trim()) {
-        const tokens = filters.keyword.toLowerCase().split(/\s+/).filter(Boolean)
-        const searchText = [
-          item.id.toString(),
-          `#${item.id}`,
-          item.work_name,
-          item.customer_name,
-          item.memo,
-          item.date,
-          item.invoice_id ? `請求書#${item.invoice_id}` : '',
-          item.invoice_id ? item.invoice_id.toString() : ''
-        ].join(' ').toLowerCase()
-        
-        // すべてのトークンがマッチする必要がある（AND検索）
-        const allTokensMatch = tokens.every(token => searchText.includes(token))
-        if (!allTokensMatch) return false
-      }
-
-      // 価格範囲フィルター（健全性チェック付き）
-      if (filters.minPrice) {
-        const minPrice = parseInt(filters.minPrice)
-        if (isNaN(minPrice) || item.unit_price < minPrice) return false
-      }
-      if (filters.maxPrice) {
-        const maxPrice = parseInt(filters.maxPrice)
-        if (isNaN(maxPrice) || item.unit_price > maxPrice) return false
-      }
-      
-      // min > max の場合の自動補正
-      if (filters.minPrice && filters.maxPrice) {
-        const minPrice = parseInt(filters.minPrice)
-        const maxPrice = parseInt(filters.maxPrice)
-        if (!isNaN(minPrice) && !isNaN(maxPrice) && minPrice > maxPrice) {
-          // 自動補正: minとmaxを入れ替えてチェック
-          if (item.unit_price < maxPrice || item.unit_price > minPrice) return false
-        }
-      }
-
-      // 日付範囲フィルター（健全性チェック付き）
-      if (filters.startDate) {
-        try {
-          const startDate = new Date(filters.startDate)
-          const itemDate = new Date(item.date)
-          if (isNaN(startDate.getTime()) || itemDate < startDate) return false
-        } catch {
-          return false
-        }
-      }
-      if (filters.endDate) {
-        try {
-          const endDate = new Date(filters.endDate)
-          const itemDate = new Date(item.date)
-          if (isNaN(endDate.getTime()) || itemDate > endDate) return false
-        } catch {
-          return false
-        }
-      }
-      
-      // start > end の場合の自動補正
-      if (filters.startDate && filters.endDate) {
-        try {
-          const startDate = new Date(filters.startDate)
-          const endDate = new Date(filters.endDate)
-          const itemDate = new Date(item.date)
-          if (!isNaN(startDate.getTime()) && !isNaN(endDate.getTime()) && startDate > endDate) {
-            // 自動補正: startとendを入れ替えてチェック
-            if (itemDate < endDate || itemDate > startDate) return false
-          }
-        } catch {
-          return false
-        }
-      }
-
-      return true
-    })
-}
-
-// 統計計算関数
-function getStatistics(items: WorkHistoryItem[]): WorkStatistics {
-    if (items.length === 0) {
-      return {
-        totalWorks: 0,
-        totalAmount: 0,
-        averagePrice: 0,
-        topCustomer: ''
-      }
-    }
-
-    const totalAmount = items.reduce((sum, item) => sum + item.total_amount, 0)
-    const averagePrice = Math.round(totalAmount / items.length)
-
-    // 顧客別集計（金額合計最大で決定）
-    const customerAmounts = items.reduce((amounts, item) => {
-      amounts[item.customer_name] = (amounts[item.customer_name] || 0) + item.total_amount
-      return amounts
-    }, {} as Record<string, number>)
-    const topCustomer = Object.entries(customerAmounts).sort(([,a], [,b]) => b - a)[0]?.[0] || ''
-
-    return {
-      totalWorks: items.length,
-      totalAmount,
-      averagePrice,
-      topCustomer
-    }
-}
-
-// CSVサニタイズ関数
-function sanitizeCSVValue(value: string): string {
-  // CSVインジェクション対策
-  if (/^[=+\-@]/.test(value)) {
-    value = "'" + value
-  }
-
-  // カンマ、改行、ダブルクォートが含まれる場合はクォートで囲む
-  if (value.includes(',') || value.includes('\n') || value.includes('"')) {
-    value = value.replace(/"/g, '""')
-    value = `"${value}"`
-  }
-
-  return value
-}
-
-// CSVエクスポート関数
-function exportToCSV(items: WorkHistoryItem[], filters: SearchFilters): void {
-  if (items.length === 0) {
-    alert('エクスポートするデータがありません')
-    return
-  }
-
-  const headers = [
-    'ID', '作業名', '単価', '顧客名', '日付', '請求書ID', 'メモ', '数量', '合計金額'
-  ]
-
-  const rows = items.map(item => [
-    sanitizeCSVValue(item.id.toString()),
-    sanitizeCSVValue(item.work_name),
-    sanitizeCSVValue(item.unit_price.toString()),
-    sanitizeCSVValue(item.customer_name),
-    sanitizeCSVValue(item.date),
-    sanitizeCSVValue(item.invoice_id?.toString() || ''),
-    sanitizeCSVValue(item.memo),
-    sanitizeCSVValue(item.quantity.toString()),
-    sanitizeCSVValue(item.total_amount.toString())
-  ])
-
-  // BOM付きCSVコンテント
-  const csvContent = '\uFEFF' + [headers.join(','), ...rows.map(row => row.join(','))].join('\n')
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-  const url = typeof URL !== 'undefined' ? URL.createObjectURL(blob) : ''
-
-  // ファイル名に期間やキーワードを含める
-  let filename = '作業履歴'
-  if (filters.keyword) filename += `_${filters.keyword.replace(/[\s\/\\:*?"<>|]/g, '_')}`
-  if (filters.startDate) filename += `_${filters.startDate}`
-  if (filters.endDate) filename += `_${filters.endDate}`
-  filename += `_${new Date().toISOString().split('T')[0]}.csv`
-
-  if (typeof document !== 'undefined') {
-    const link = document.createElement('a')
-    link.href = url
-    link.download = filename
-    link.click()
-  }
-
-  // メモリリーク防止
-  if (typeof URL !== 'undefined' && url) {
-    setTimeout(() => {
-      URL.revokeObjectURL(url)
-    }, 100)
-  }
+// 請求書詳細の型
+interface InvoiceDetail {
+  invoice_id: string
+  customer_name: string | null
+  subject: string | null
+  issue_date: string | null
+  line_items: Array<{
+    line_no: number
+    sub_no: number
+    raw_label: string | null
+    raw_label_part: string | null
+    unit_price: number | null
+    quantity: number | null
+    amount: number | null
+    task_type: string | null
+    set_name: string | null
+    is_set_detail: boolean
+  }>
 }
 
 export default function WorkHistoryPage() {
   const router = useRouter()
-  const [allItems, setAllItems] = useState<WorkHistoryItem[]>([])
-  const [workItems, setWorkItems] = useState<WorkHistoryItem[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [isSearching, setIsSearching] = useState(false)
-  const [sortBy, setSortBy] = useState<'date' | 'price' | 'customer' | 'work'>('date')
+
+  // 検索条件
+  const [workKeyword, setWorkKeyword] = useState('')
+  const [subjectKeyword, setSubjectKeyword] = useState('')
+  const [customerKeyword, setCustomerKeyword] = useState('')
+  const [startDate, setStartDate] = useState('')
+  const [endDate, setEndDate] = useState('')
+  const [minPrice, setMinPrice] = useState('')
+  const [maxPrice, setMaxPrice] = useState('')
+  const [taskTypeFilter, setTaskTypeFilter] = useState<'all' | 'S' | 'T'>('all')
+
+  // 検索結果
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([])
+  const [isLoading, setIsLoading] = useState(false)
+  const [hasSearched, setHasSearched] = useState(false)
+
+  // 並び替え
+  const [sortBy, setSortBy] = useState<'date' | 'price' | 'subject'>('date')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
 
-  const [filters, setFilters] = useState<SearchFilters>({
-    keyword: '',
-    minPrice: '',
-    maxPrice: '',
-    startDate: '',
-    endDate: ''
-  })
+  // 詳細表示
+  const [selectedInvoice, setSelectedInvoice] = useState<InvoiceDetail | null>(null)
+  const [detailLoading, setDetailLoading] = useState(false)
 
-  // Supabaseからデータを取得
-  useEffect(() => {
-    const fetchData = async () => {
-      setIsLoading(true)
-      try {
-        // invoice_line_itemsとinvoicesをJOIN
-        const { data: lineItems, error } = await supabase
-          .from('invoice_line_items')
-          .select(`
-            id,
-            invoice_id,
-            line_no,
-            sub_no,
-            task_type,
-            target,
-            action1,
-            position1,
-            set_name,
-            raw_label,
-            raw_label_part,
-            unit_price,
-            quantity,
-            amount,
-            performed_at,
-            invoices!inner (
-              customer_name,
-              subject_name
-            )
-          `)
-          .order('performed_at', { ascending: false })
-          .limit(1000)
-
-        if (error) throw error
-
-        // データを変換
-        const items: WorkHistoryItem[] = (lineItems || []).map((item: any, index: number) => {
-          // 作業名の構築
-          let workName = ''
-          if (item.task_type === 'S' || item.task_type === 'set') {
-            workName = item.set_name || item.raw_label || item.target || 'セット作業'
-          } else {
-            workName = item.raw_label_part || item.raw_label ||
-              [item.target, item.action1, item.position1].filter(Boolean).join(' ') || '作業'
-          }
-
-          return {
-            id: item.id || index + 1,
-            work_name: workName,
-            unit_price: item.unit_price || 0,
-            customer_name: item.invoices?.customer_name || '',
-            date: item.performed_at || '',
-            invoice_id: item.invoice_id,
-            memo: item.invoices?.subject_name || '',
-            quantity: item.quantity || 1,
-            total_amount: item.amount || 0
-          }
-        })
-
-        setAllItems(items)
-        setWorkItems(items)
-      } catch (err) {
-        console.error('Failed to fetch work history:', err)
-      } finally {
-        setIsLoading(false)
-      }
+  // 検索実行
+  const handleSearch = async () => {
+    // 何も入力されていない場合は検索しない
+    if (!workKeyword.trim() && !subjectKeyword.trim() && !customerKeyword.trim() && !startDate && !endDate) {
+      alert('検索条件を入力してください')
+      return
     }
 
-    fetchData()
-  }, [])
+    setIsLoading(true)
+    setHasSearched(true)
+    setSelectedInvoice(null)
 
-  // 検索処理（フィルター変更時）
-  useEffect(() => {
-    if (allItems.length === 0) return
-    setIsSearching(true)
-    const timer = setTimeout(() => {
-      const filtered = searchItems(allItems, filters)
-      setWorkItems(filtered)
-      setIsSearching(false)
-    }, 200)
-    return () => clearTimeout(timer)
-  }, [filters, allItems])
+    try {
+      let targetInvoiceIds: string[] | null = null
 
-  // ソート処理
-  const sortedItems = useMemo(() => {
-    const sorted = [...workItems].sort((a, b) => {
+      // 件名・顧客名フィルターがある場合、先にinvoicesを検索
+      if (subjectKeyword.trim() || customerKeyword.trim() || startDate || endDate) {
+        let invoiceQuery = supabase.from('invoices').select('invoice_id')
+
+        // 件名検索（あいまい検索）
+        if (subjectKeyword.trim()) {
+          const subjectHiragana = katakanaToHiragana(subjectKeyword.trim())
+          const subjectKatakana = hiraganaToKatakana(subjectKeyword.trim())
+          const subjectConditions = [`subject.ilike.%${subjectKeyword.trim()}%`]
+          if (subjectHiragana !== subjectKeyword.trim()) {
+            subjectConditions.push(`subject.ilike.%${subjectHiragana}%`)
+          }
+          if (subjectKatakana !== subjectKeyword.trim() && subjectKatakana !== subjectHiragana) {
+            subjectConditions.push(`subject.ilike.%${subjectKatakana}%`)
+          }
+          invoiceQuery = invoiceQuery.or(subjectConditions.join(','))
+        }
+
+        // 顧客名検索（あいまい検索）
+        if (customerKeyword.trim()) {
+          const customerHiragana = katakanaToHiragana(customerKeyword.trim())
+          const customerKatakana = hiraganaToKatakana(customerKeyword.trim())
+          const customerConditions = [`customer_name.ilike.%${customerKeyword.trim()}%`]
+          if (customerHiragana !== customerKeyword.trim()) {
+            customerConditions.push(`customer_name.ilike.%${customerHiragana}%`)
+          }
+          if (customerKatakana !== customerKeyword.trim() && customerKatakana !== customerHiragana) {
+            customerConditions.push(`customer_name.ilike.%${customerKatakana}%`)
+          }
+          invoiceQuery = invoiceQuery.or(customerConditions.join(','))
+        }
+
+        // 期間フィルター
+        if (startDate) {
+          invoiceQuery = invoiceQuery.gte('issue_date', startDate)
+        }
+        if (endDate) {
+          invoiceQuery = invoiceQuery.lte('issue_date', endDate)
+        }
+
+        const { data: matchedInvoices, error: invoiceError } = await invoiceQuery.limit(1000)
+        if (invoiceError) throw invoiceError
+
+        targetInvoiceIds = matchedInvoices?.map(inv => inv.invoice_id) || []
+
+        // マッチするものがなければ結果なし
+        if (targetInvoiceIds.length === 0) {
+          setSearchResults([])
+          return
+        }
+      }
+
+      // invoice_line_itemsを検索
+      let query = supabase
+        .from('invoice_line_items')
+        .select(`
+          id,
+          raw_label,
+          raw_label_part,
+          unit_price,
+          quantity,
+          target,
+          set_name,
+          invoice_id,
+          line_no,
+          task_type
+        `)
+
+      // 作業名フィルター（raw_label_partのみ検索）
+      if (workKeyword.trim()) {
+        const keywordHiragana = katakanaToHiragana(workKeyword.trim())
+        const keywordKatakana = hiraganaToKatakana(workKeyword.trim())
+        const orConditions = [`raw_label_part.ilike.%${workKeyword.trim()}%`]
+        if (keywordHiragana !== workKeyword.trim()) {
+          orConditions.push(`raw_label_part.ilike.%${keywordHiragana}%`)
+        }
+        if (keywordKatakana !== workKeyword.trim() && keywordKatakana !== keywordHiragana) {
+          orConditions.push(`raw_label_part.ilike.%${keywordKatakana}%`)
+        }
+        query = query.or(orConditions.join(','))
+      }
+
+      // 種別フィルター
+      if (taskTypeFilter !== 'all') {
+        query = query.eq('task_type', taskTypeFilter)
+      }
+
+      // 価格範囲フィルター
+      if (minPrice) {
+        query = query.gte('unit_price', parseInt(minPrice))
+      }
+      if (maxPrice) {
+        query = query.lte('unit_price', parseInt(maxPrice))
+      }
+
+      // 請求書IDフィルター
+      if (targetInvoiceIds) {
+        query = query.in('invoice_id', targetInvoiceIds)
+      }
+
+      const { data, error } = await query
+        .order('invoice_id', { ascending: false })
+        .limit(500)
+
+      if (error) throw error
+
+      // 重複排除（同じinvoice_id + line_noは1つだけ）
+      const uniqueMap = new Map<string, typeof data[0]>()
+      for (const item of data || []) {
+        const key = `${item.invoice_id}-${item.line_no}`
+        if (!uniqueMap.has(key)) {
+          uniqueMap.set(key, item)
+        }
+      }
+
+      // 請求書情報を取得
+      const invoiceIds = [...new Set(Array.from(uniqueMap.values()).map(item => item.invoice_id))]
+
+      const { data: invoicesData } = await supabase
+        .from('invoices')
+        .select('invoice_id, customer_name, subject, issue_date')
+        .in('invoice_id', invoiceIds)
+
+      const invoiceMap = new Map(invoicesData?.map(inv => [inv.invoice_id, inv]) || [])
+
+      const results = Array.from(uniqueMap.values()).map(item => {
+        const invoice = invoiceMap.get(item.invoice_id)
+        return {
+          id: item.id,
+          raw_label_part: item.raw_label_part || null,
+          unit_price: item.unit_price || 0,
+          quantity: item.quantity || 0,
+          subject: invoice?.subject || null,
+          customer_name: invoice?.customer_name || null,
+          issue_date: invoice?.issue_date || null,
+          invoice_id: item.invoice_id || '',
+          task_type: item.task_type || null,
+          line_no: item.line_no
+        }
+      })
+
+      setSearchResults(results)
+    } catch (error) {
+      console.error('Search error:', error)
+      alert('検索中にエラーが発生しました')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // 請求書詳細を取得
+  const fetchInvoiceDetail = async (invoiceId: string) => {
+    setDetailLoading(true)
+    try {
+      const [invoiceRes, lineItemsRes] = await Promise.all([
+        supabase
+          .from('invoices')
+          .select('invoice_id, customer_name, subject, issue_date')
+          .eq('invoice_id', invoiceId)
+          .single(),
+        supabase
+          .from('invoice_line_items')
+          .select('line_no, sub_no, raw_label, raw_label_part, unit_price, quantity, amount, task_type, set_name')
+          .eq('invoice_id', invoiceId)
+          .order('line_no', { ascending: true })
+          .order('sub_no', { ascending: true })
+      ])
+
+      if (invoiceRes.error) throw invoiceRes.error
+
+      // セット明細を識別（sub_no > 0 はセット明細）
+      const lineItems = (lineItemsRes.data || []).map(item => ({
+        ...item,
+        is_set_detail: item.sub_no > 0
+      }))
+
+      setSelectedInvoice({
+        invoice_id: invoiceRes.data.invoice_id,
+        customer_name: invoiceRes.data.customer_name,
+        subject: invoiceRes.data.subject,
+        issue_date: invoiceRes.data.issue_date,
+        line_items: lineItems
+      })
+    } catch (error) {
+      console.error('Detail fetch error:', error)
+      alert('詳細の取得に失敗しました')
+    } finally {
+      setDetailLoading(false)
+    }
+  }
+
+  // 並び替え処理
+  const sortedResults = useMemo(() => {
+    const sorted = [...searchResults].sort((a, b) => {
       let comparison = 0
-
       switch (sortBy) {
         case 'date':
-          comparison = new Date(a.date).getTime() - new Date(b.date).getTime()
+          comparison = new Date(a.issue_date || '').getTime() - new Date(b.issue_date || '').getTime()
           break
         case 'price':
           comparison = a.unit_price - b.unit_price
           break
-        case 'customer':
-          comparison = a.customer_name.localeCompare(b.customer_name)
-          break
-        case 'work':
-          comparison = a.work_name.localeCompare(b.work_name)
+        case 'subject':
+          comparison = (a.subject || '').localeCompare(b.subject || '')
           break
       }
-
       return sortOrder === 'asc' ? comparison : -comparison
     })
-
     return sorted
-  }, [workItems, sortBy, sortOrder])
+  }, [searchResults, sortBy, sortOrder])
 
-  const statistics = useMemo(() => {
-    return getStatistics(workItems)
-  }, [workItems])
-
-  const handleBack = () => router.push('/')
-
-  const handleExportCSV = () => {
-    exportToCSV(sortedItems, filters)
-  }
-
+  // 並び替えボタン
   const handleSort = (field: typeof sortBy) => {
     if (sortBy === field) {
       setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')
@@ -353,296 +314,397 @@ export default function WorkHistoryPage() {
     }
   }
 
+  // 検索条件クリア
   const clearFilters = () => {
-    setFilters({
-      keyword: '',
-      minPrice: '',
-      maxPrice: '',
-      startDate: '',
-      endDate: ''
-    })
+    setWorkKeyword('')
+    setSubjectKeyword('')
+    setCustomerKeyword('')
+    setStartDate('')
+    setEndDate('')
+    setMinPrice('')
+    setMaxPrice('')
+    setTaskTypeFilter('all')
+    setSearchResults([])
+    setHasSearched(false)
+    setSelectedInvoice(null)
   }
 
-  const hasActiveFilters = filters.keyword || filters.minPrice || filters.maxPrice || filters.startDate || filters.endDate
-
-  // 作業名からの即時絞り込み
-  const handleWorkNameClick = (workName: string) => {
-    setFilters(prev => ({ ...prev, keyword: workName }))
-  }
-
-  // 請求書表示への遷移
-  const handleViewInvoice = (invoiceId: string) => {
-    router.push(`/invoice-view/${invoiceId}`)
-  }
+  const hasActiveFilters = workKeyword || subjectKeyword || customerKeyword || startDate || endDate || minPrice || maxPrice || taskTypeFilter !== 'all'
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-6">
         {/* ヘッダー */}
-        <header className="bg-white rounded-lg shadow-sm p-6 mb-6">
+        <header className="bg-white rounded-lg shadow-sm p-4 mb-4">
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-3">
-              <Clock className="text-blue-600" size={32} />
-              <h1 className="text-2xl font-bold text-gray-800">作業履歴管理</h1>
+              <Search className="text-blue-600" size={28} />
+              <h1 className="text-xl font-bold text-gray-800">過去価格検索</h1>
             </div>
-            <div className="flex gap-2">
-              <button
-                onClick={handleExportCSV}
-                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2"
-              >
-                <Download size={20} />
-                CSV出力
-              </button>
-              <button
-                onClick={handleBack}
-                className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 flex items-center gap-2"
-              >
-                <ArrowLeft size={20} />
-                戻る
-              </button>
-            </div>
+            <button
+              onClick={() => router.push('/')}
+              className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 flex items-center gap-2"
+            >
+              <ArrowLeft size={20} />
+              戻る
+            </button>
           </div>
         </header>
 
-        {/* 統計情報 */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <div className="bg-white rounded-lg shadow-sm p-4">
-            <h3 className="text-sm font-medium text-gray-600 flex items-center gap-1">
-              <BarChart3 size={16} />
-              総件数
-            </h3>
-            <p className="text-2xl font-bold text-gray-800">{statistics.totalWorks}件</p>
-          </div>
-          <div className="bg-white rounded-lg shadow-sm p-4">
-            <h3 className="text-sm font-medium text-gray-600">総金額</h3>
-            <p className="text-2xl font-bold text-blue-600">¥{statistics.totalAmount.toLocaleString()}</p>
-          </div>
-          <div className="bg-white rounded-lg shadow-sm p-4">
-            <h3 className="text-sm font-medium text-gray-600">平均単価</h3>
-            <p className="text-2xl font-bold text-green-600">¥{statistics.averagePrice.toLocaleString()}</p>
-          </div>
-          <div className="bg-white rounded-lg shadow-sm p-4">
-            <h3 className="text-sm font-medium text-gray-600">主要顧客</h3>
-            <p className="text-sm font-bold text-purple-600 truncate">{statistics.topCustomer}</p>
-          </div>
-        </div>
-
-        {/* 検索・フィルターセクション */}
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-          {/* AND検索キーワード */}
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2" id="search-label">
-              🔍 AND検索（空白区切りで複数キーワード）
-            </label>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+        {/* 検索条件 */}
+        <div className="bg-white rounded-lg shadow-sm p-4 mb-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            {/* 作業名 */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">作業名</label>
               <input
                 type="text"
-                placeholder="作業名 顧客名 メモ 請求書番号 等で検索..."
-                value={filters.keyword}
-                onChange={(e) => setFilters({...filters, keyword: e.target.value})}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                aria-labelledby="search-label"
-                aria-describedby="search-help"
+                value={workKeyword}
+                onChange={(e) => setWorkKeyword(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                placeholder="例: フェンダー、バンパー"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
-            <p id="search-help" className="text-xs text-gray-500 mt-1">
-              例: &ldquo;Web テクノロジー&rdquo; → &ldquo;Web&rdquo;と&ldquo;テクノロジー&rdquo;両方を含む結果を表示
-            </p>
-          </div>
-          
-          {/* フィルター */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="flex gap-2">
-              <div className="flex-1">
-                <label className="block text-xs font-medium text-gray-600 mb-1">最低価格</label>
-                <input
-                  type="number"
-                  placeholder="0"
-                  value={filters.minPrice}
-                  onChange={(e) => setFilters({...filters, minPrice: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  min="0"
-                  step="1000"
-                />
-              </div>
-              <div className="flex-1">
-                <label className="block text-xs font-medium text-gray-600 mb-1">最高価格</label>
-                <input
-                  type="number"
-                  placeholder="無制限"
-                  value={filters.maxPrice}
-                  onChange={(e) => setFilters({...filters, maxPrice: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  min="0"
-                  step="1000"
-                />
-              </div>
+            {/* 件名 */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">件名</label>
+              <input
+                type="text"
+                value={subjectKeyword}
+                onChange={(e) => setSubjectKeyword(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                placeholder="例: 平和物流"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
             </div>
-          
-            <div className="flex gap-2">
-              <div className="flex-1">
-                <label className="block text-xs font-medium text-gray-600 mb-1">開始日</label>
-                <input
-                  type="date"
-                  value={filters.startDate}
-                  onChange={(e) => setFilters({...filters, startDate: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div className="flex-1">
-                <label className="block text-xs font-medium text-gray-600 mb-1">終了日</label>
-                <input
-                  type="date"
-                  value={filters.endDate}
-                  onChange={(e) => setFilters({...filters, endDate: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
+            {/* 顧客名 */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">顧客名</label>
+              <input
+                type="text"
+                value={customerKeyword}
+                onChange={(e) => setCustomerKeyword(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                placeholder="例: UDトラックス"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
             </div>
           </div>
-          
-          {hasActiveFilters && (
-            <div className="mt-4 flex items-center gap-2">
-              <span className="text-sm text-gray-600">検索結果: {workItems.length}件</span>
+
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+            {/* 期間（開始） */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">期間（開始）</label>
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+            {/* 期間（終了） */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">期間（終了）</label>
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+            {/* 価格（最小） */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">単価（最小）</label>
+              <input
+                type="number"
+                value={minPrice}
+                onChange={(e) => setMinPrice(e.target.value)}
+                placeholder="¥0"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+            {/* 価格（最大） */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">単価（最大）</label>
+              <input
+                type="number"
+                value={maxPrice}
+                onChange={(e) => setMaxPrice(e.target.value)}
+                placeholder="上限なし"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            {/* 種別フィルター */}
+            <div className="flex items-center gap-4">
+              <span className="text-sm font-medium text-gray-700">種別:</span>
+              <label className="flex items-center gap-1 cursor-pointer">
+                <input
+                  type="radio"
+                  name="taskType"
+                  checked={taskTypeFilter === 'all'}
+                  onChange={() => setTaskTypeFilter('all')}
+                  className="text-blue-600"
+                />
+                <span className="text-sm">すべて</span>
+              </label>
+              <label className="flex items-center gap-1 cursor-pointer">
+                <input
+                  type="radio"
+                  name="taskType"
+                  checked={taskTypeFilter === 'S'}
+                  onChange={() => setTaskTypeFilter('S')}
+                  className="text-blue-600"
+                />
+                <span className="text-sm">セット</span>
+              </label>
+              <label className="flex items-center gap-1 cursor-pointer">
+                <input
+                  type="radio"
+                  name="taskType"
+                  checked={taskTypeFilter === 'T'}
+                  onChange={() => setTaskTypeFilter('T')}
+                  className="text-blue-600"
+                />
+                <span className="text-sm">個別</span>
+              </label>
+            </div>
+
+            {/* ボタン */}
+            <div className="flex items-center gap-2">
+              {hasActiveFilters && (
+                <button
+                  onClick={clearFilters}
+                  className="px-3 py-2 text-sm text-gray-600 hover:text-gray-800 flex items-center gap-1"
+                >
+                  <X size={16} />
+                  クリア
+                </button>
+              )}
               <button
-                onClick={clearFilters}
-                className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                onClick={handleSearch}
+                disabled={isLoading}
+                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 flex items-center gap-2"
               >
-                <X size={16} />
-                フィルターをクリア
+                <Search size={18} />
+                {isLoading ? '検索中...' : '検索'}
               </button>
             </div>
-          )}
-        </div>
-
-        {/* ソート・表示オプション */}
-        <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
-          <div className="flex flex-wrap items-center gap-4">
-            <span className="text-sm font-medium text-gray-700">並び替え:</span>
-            <div className="flex gap-2">
-              {[
-                { key: 'date', label: '日付' },
-                { key: 'price', label: '価格' },
-                { key: 'customer', label: '顧客名' },
-                { key: 'work', label: '作業名' }
-              ].map(({ key, label }) => (
-                <button
-                  key={key}
-                  onClick={() => handleSort(key as typeof sortBy)}
-                  className={`px-3 py-1 rounded text-sm ${
-                    sortBy === key
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  {label} {sortBy === key && (sortOrder === 'asc' ? '↑' : '↓')}
-                </button>
-              ))}
-            </div>
           </div>
         </div>
 
-        {/* 作業履歴一覧テーブル */}
+        {/* 検索結果 */}
         <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-          <table className="w-full">
-            <thead className="bg-gray-50 border-b">
-              <tr>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  作業情報
-                </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  顧客名
-                </th>
-                <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  単価・合計
-                </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  日付・請求書
-                </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  メモ
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+          {/* 並び替え・件数 */}
+          {searchResults.length > 0 && !selectedInvoice && (
+            <div className="px-4 py-3 bg-gray-50 border-b flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-600">並び替え:</span>
+                {[
+                  { key: 'date', label: '日付' },
+                  { key: 'price', label: '単価' },
+                  { key: 'subject', label: '件名' }
+                ].map(({ key, label }) => (
+                  <button
+                    key={key}
+                    onClick={() => handleSort(key as typeof sortBy)}
+                    className={`px-3 py-1 rounded text-sm flex items-center gap-1 ${
+                      sortBy === key
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    }`}
+                  >
+                    {label}
+                    {sortBy === key && (sortOrder === 'asc' ? <ChevronUp size={14} /> : <ChevronDown size={14} />)}
+                  </button>
+                ))}
+              </div>
+              <span className="text-sm text-gray-600">{searchResults.length}件の結果</span>
+            </div>
+          )}
+
+          {/* 検索結果一覧 */}
+          {!selectedInvoice && (
+            <div className="overflow-x-auto">
               {isLoading ? (
-                <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
-                    <div className="flex justify-center items-center">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mr-3"></div>
-                      データを読み込み中...
-                    </div>
-                  </td>
-                </tr>
-              ) : isSearching ? (
-                <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
-                    検索中...
-                  </td>
-                </tr>
-              ) : sortedItems.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
-                    {hasActiveFilters ? '検索条件に一致する作業がありません' : '作業履歴がありません'}
-                  </td>
-                </tr>
+                <div className="text-center py-12 text-gray-500">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-3"></div>
+                  検索中...
+                </div>
+              ) : !hasSearched ? (
+                <div className="text-center py-12 text-gray-500">
+                  <Search size={48} className="mx-auto mb-3 text-gray-300" />
+                  検索条件を入力して検索してください
+                </div>
+              ) : searchResults.length === 0 ? (
+                <div className="text-center py-12 text-gray-500">
+                  検索結果がありません
+                </div>
               ) : (
-                sortedItems.map((item) => (
-                  <tr key={item.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4">
-                      <button
-                        onClick={() => handleWorkNameClick(item.work_name)}
-                        className="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline text-left"
-                        title="この作業名で絞り込み"
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">請求日</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">種別</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">顧客名</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">件名</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">作業名</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">数量</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">単価</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">金額</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {sortedResults.map((result, index) => (
+                      <tr
+                        key={`${result.invoice_id}-${index}`}
+                        className="hover:bg-blue-50 cursor-pointer transition-colors"
+                        onClick={() => fetchInvoiceDetail(result.invoice_id)}
                       >
-                        {item.work_name}
-                      </button>
-                      <div className="text-xs text-gray-500">
-                        ID: {item.id}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm text-gray-900">
-                        {item.customer_name}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="text-sm font-medium text-gray-900">
-                        ¥{item.unit_price.toLocaleString()}
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        数量: {item.quantity} / 合計: ¥{item.total_amount.toLocaleString()}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm text-gray-900">
-                        {new Date(item.date).toLocaleDateString('ja-JP')}
-                      </div>
-                      {item.invoice_id ? (
-                        <button
-                          onClick={() => handleViewInvoice(item.invoice_id!)}
-                          className="text-xs text-blue-600 hover:text-blue-800 hover:underline"
-                          title="請求書を表示"
-                        >
-                          請求書 #{item.invoice_id}
-                        </button>
-                      ) : (
-                        <div className="text-xs text-gray-400">
-                          未請求
-                        </div>
-                      )}
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm text-gray-700">
-                        {item.memo}
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                          {result.issue_date ? new Date(result.issue_date).toLocaleDateString('ja-JP') : '-'}
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap text-sm">
+                          <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                            result.task_type === 'S' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'
+                          }`}>
+                            {result.task_type === 'S' ? 'セット' : '個別'}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-900 max-w-[150px] truncate" title={result.customer_name || ''}>
+                          {result.customer_name || '-'}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-900 max-w-[150px] truncate" title={result.subject || ''}>
+                          {result.subject || '-'}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-900 max-w-[250px] truncate" title={result.raw_label_part || ''}>
+                          {result.raw_label_part || '-'}
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 text-right">
+                          {result.quantity}
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 text-right">
+                          ¥{result.unit_price.toLocaleString()}
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900 text-right">
+                          ¥{(result.unit_price * result.quantity).toLocaleString()}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               )}
-            </tbody>
-          </table>
+            </div>
+          )}
+
+          {/* 請求書詳細 */}
+          {selectedInvoice && (
+            <div className="p-6">
+              <button
+                onClick={() => setSelectedInvoice(null)}
+                className="mb-4 px-3 py-1.5 text-sm bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg flex items-center gap-1"
+              >
+                ← 検索結果に戻る
+              </button>
+
+              <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                <h3 className="text-lg font-bold text-gray-800 mb-3">請求書情報</h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                  <div>
+                    <span className="text-gray-500">請求書番号:</span>
+                    <span className="ml-2 font-medium">{selectedInvoice.invoice_id}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">請求日:</span>
+                    <span className="ml-2 font-medium">
+                      {selectedInvoice.issue_date ? new Date(selectedInvoice.issue_date).toLocaleDateString('ja-JP') : '-'}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">顧客名:</span>
+                    <span className="ml-2 font-medium">{selectedInvoice.customer_name || '-'}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">件名:</span>
+                    <span className="ml-2 font-medium">{selectedInvoice.subject || '-'}</span>
+                  </div>
+                </div>
+              </div>
+
+              <h4 className="font-medium text-gray-800 mb-2">明細一覧</h4>
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No</th>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">種別</th>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">作業名</th>
+                      <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">数量</th>
+                      <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">単価</th>
+                      <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">金額</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {selectedInvoice.line_items.map((item, index) => (
+                      <tr
+                        key={`${item.line_no}-${item.sub_no}`}
+                        className={`${item.is_set_detail ? 'bg-gray-50' : ''}`}
+                      >
+                        <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-500">
+                          {item.is_set_detail ? '' : item.line_no}
+                        </td>
+                        <td className="px-3 py-2 whitespace-nowrap text-sm">
+                          {item.is_set_detail ? (
+                            <span className="text-xs text-gray-400 ml-2">└</span>
+                          ) : (
+                            <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                              item.task_type === 'S' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'
+                            }`}>
+                              {item.task_type === 'S' ? 'セット' : '個別'}
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-3 py-2 text-sm text-gray-900">
+                          {item.is_set_detail ? (
+                            <span className="pl-4 text-gray-600">{item.raw_label_part || item.raw_label}</span>
+                          ) : item.set_name ? (
+                            <span className="font-medium">{item.set_name}</span>
+                          ) : (
+                            <span>{item.raw_label_part || item.raw_label}</span>
+                          )}
+                        </td>
+                        <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">
+                          {item.is_set_detail ? '' : item.quantity}
+                        </td>
+                        <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">
+                          {item.is_set_detail ? '' : `¥${(item.unit_price || 0).toLocaleString()}`}
+                        </td>
+                        <td className="px-3 py-2 whitespace-nowrap text-sm font-medium text-gray-900 text-right">
+                          {item.is_set_detail ? '' : `¥${(item.amount || 0).toLocaleString()}`}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot className="bg-gray-50">
+                    <tr>
+                      <td colSpan={5} className="px-3 py-2 text-sm font-medium text-gray-900 text-right">
+                        合計
+                      </td>
+                      <td className="px-3 py-2 whitespace-nowrap text-sm font-bold text-gray-900 text-right">
+                        ¥{selectedInvoice.line_items
+                          .filter(item => !item.is_set_detail)
+                          .reduce((sum, item) => sum + (item.amount || 0), 0)
+                          .toLocaleString()}
+                      </td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
