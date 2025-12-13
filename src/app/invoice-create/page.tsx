@@ -667,8 +667,7 @@ function InvoiceCreateContent() {
   const [priceSearchSubject, setPriceSearchSubject] = useState('')
   const [priceSearchResults, setPriceSearchResults] = useState<Array<{
     id: number
-    work_name: string
-    raw_label_part: string | null  // セット明細用
+    raw_label_part: string | null  // 作業名表示用
     unit_price: number
     quantity: number
     subject: string | null
@@ -2254,24 +2253,20 @@ function InvoiceCreateContent() {
           task_type
         `)
 
-      // 作業名フィルター（表示と一致させるため、raw_label_partとraw_labelのみ検索）
+      // 作業名フィルター（raw_label_partのみ検索 - 表示内容と一致）
       if (workKeyword) {
         const keywordHiragana = katakanaToHiragana(workKeyword)
         const keywordKatakana = hiraganaToKatakana(workKeyword)
 
-        // raw_label_part: セット明細の表示用
-        // raw_label: 個別作業の表示用（raw_label_partがない場合のフォールバック）
+        // raw_label_partのみ検索（raw_labelは今後空になるため除外）
         const orConditions = [
-          `raw_label_part.ilike.%${workKeyword}%`,
-          `raw_label.ilike.%${workKeyword}%`
+          `raw_label_part.ilike.%${workKeyword}%`
         ]
         if (keywordHiragana !== workKeyword) {
           orConditions.push(`raw_label_part.ilike.%${keywordHiragana}%`)
-          orConditions.push(`raw_label.ilike.%${keywordHiragana}%`)
         }
         if (keywordKatakana !== workKeyword && keywordKatakana !== keywordHiragana) {
           orConditions.push(`raw_label_part.ilike.%${keywordKatakana}%`)
-          orConditions.push(`raw_label.ilike.%${keywordKatakana}%`)
         }
 
         query = query.or(orConditions.join(','))
@@ -2330,7 +2325,6 @@ function InvoiceCreateContent() {
         const key = `${item.invoice_id}-${item.line_no}`
         return {
           id: item.id,
-          work_name: item.raw_label || item.set_name || '',
           raw_label_part: item.raw_label_part || null,
           unit_price: item.unit_price || 0,
           quantity: item.quantity || 0,
@@ -4715,8 +4709,8 @@ function InvoiceCreateContent() {
                             {result.subject || '-'}
                           </td>
                           <td className="px-3 py-2 text-sm text-gray-900 max-w-[250px]">
-                            <div className="truncate" title={result.raw_label_part || result.work_name}>
-                              {result.raw_label_part || result.work_name}
+                            <div className="truncate" title={result.raw_label_part || ''}>
+                              {result.raw_label_part || '-'}
                             </div>
                             {result.set_details && result.set_details.length > 0 && (
                               <div className="text-xs text-gray-500 mt-0.5 truncate" title={result.set_details.join(' / ')}>
