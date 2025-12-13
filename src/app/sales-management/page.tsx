@@ -7,10 +7,11 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { useSalesData } from '@/hooks/useSalesData'
 import { supabase } from '@/lib/supabase'
 
-const PaymentManagementTab = ({ invoices, summary, onUpdate, loading, categories, selectedCategory, onCategoryChange, router }: {
+const PaymentManagementTab = ({ invoices, summary, onUpdate, onPartialPayment, loading, categories, selectedCategory, onCategoryChange, router }: {
   invoices: any[],
   summary: any,
   onUpdate: (selectedIds: string[], paymentDate: string) => void,
+  onPartialPayment: (invoiceId: string, paymentDate: string, amount: number) => void,
   loading: boolean,
   categories: any[],
   selectedCategory: string,
@@ -19,6 +20,8 @@ const PaymentManagementTab = ({ invoices, summary, onUpdate, loading, categories
 }) => {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [paymentDate, setPaymentDate] = useState(new Date().toISOString().split('T')[0]);
+  const [partialAmounts, setPartialAmounts] = useState<Record<string, string>>({});
+  const [showPartialInput, setShowPartialInput] = useState<string | null>(null);
 
   const normalizeName = (name: string | null): string => {
     if (!name) return '';
@@ -39,8 +42,29 @@ const PaymentManagementTab = ({ invoices, summary, onUpdate, loading, categories
     setSelectedIds([]);
   };
 
+  const handlePartialPayment = (invoiceId: string, remainingAmount: number) => {
+    const amountStr = partialAmounts[invoiceId];
+    if (!amountStr || !paymentDate) {
+      alert('入金額と入金日を入力してください。');
+      return;
+    }
+    const amount = parseInt(amountStr, 10);
+    if (isNaN(amount) || amount <= 0) {
+      alert('有効な入金額を入力してください。');
+      return;
+    }
+    if (amount > remainingAmount) {
+      alert(`入金額は残額（¥${remainingAmount.toLocaleString()}）以下にしてください。`);
+      return;
+    }
+    onPartialPayment(invoiceId, paymentDate, amount);
+    setPartialAmounts(prev => ({ ...prev, [invoiceId]: '' }));
+    setShowPartialInput(null);
+  };
+
+  // 未入金と一部入金を表示（完全入金済みは除く）
   const unpaidInvoices = invoices
-    .filter(inv => inv.payment_status === 'unpaid')
+    .filter(inv => inv.payment_status === 'unpaid' || inv.payment_status === 'partial')
     .filter(inv => {
         if (selectedCategory === 'all') return true;
         const category = categories.find(c => c.id === selectedCategory);
@@ -134,7 +158,7 @@ const PaymentManagementTab = ({ invoices, summary, onUpdate, loading, categories
               <th className="px-4 py-2 text-left font-bold text-gray-700">登録番号</th>
               <th className="px-4 py-2 text-left font-bold text-gray-700">オーダー番号</th>
               <th className="px-4 py-2 text-right font-bold text-gray-700">残額</th>
-              <th className="px-4 py-2 text-center font-bold text-gray-700">ステータス</th>
+              <th className="px-4 py-2 text-center font-bold text-gray-700">ステータス/操作</th>
             </tr>
           </thead>
           <tbody className="bg-white">
@@ -166,14 +190,56 @@ const PaymentManagementTab = ({ invoices, summary, onUpdate, loading, categories
                 </tr>
                 <tr className="hover:bg-gray-50 border-b">
                   <td className="px-4 py-2 whitespace-nowrap text-gray-700 border-l">{invoice.issue_date ? new Date(invoice.issue_date).getMonth() + 1 : 'N/A'}月</td>
-                  <td className="px-4 py-2 whitespace-nowrap text-gray-700 border-l">{invoice.payment_date || '未入金'}</td>
+                  <td className="px-4 py-2 whitespace-nowrap text-gray-700 border-l">{invoice.payment_date || '-'}</td>
                   <td className="px-4 py-2 whitespace-nowrap text-gray-700 border-l">{invoice.registration_number || 'N/A'}</td>
                   <td className="px-4 py-2 whitespace-nowrap text-gray-700 border-l">{invoice.order_id || 'N/A'}</td>
-                  <td className="px-4 py-2 whitespace-nowrap text-right text-gray-700 border-l">¥{invoice.remaining_amount?.toLocaleString() || invoice.total_amount.toLocaleString()}</td>
-                  <td className="px-4 py-2 whitespace-nowrap text-center border-l">
-                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${invoice.payment_status === 'paid' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
-                      {invoice.payment_status === 'paid' ? '入金済' : '未入金'}
+                  <td className="px-4 py-2 whitespace-nowrap text-right font-medium border-l">
+                    <span className={invoice.payment_status === 'partial' ? 'text-orange-600' : 'text-gray-700'}>
+                      ¥{(invoice.remaining_amount ?? invoice.total_amount).toLocaleString()}
                     </span>
+                  </td>
+                  <td className="px-4 py-2 whitespace-nowrap text-center border-l">
+                    <div className="flex flex-col items-center gap-1">
+                      <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${
+                        invoice.payment_status === 'paid' ? 'bg-green-100 text-green-800' :
+                        invoice.payment_status === 'partial' ? 'bg-orange-100 text-orange-800' :
+                        'bg-yellow-100 text-yellow-800'
+                      }`}>
+                        {invoice.payment_status === 'paid' ? '入金済' :
+                         invoice.payment_status === 'partial' ? '一部入金' : '未入金'}
+                      </span>
+                      {showPartialInput === invoice.invoice_id ? (
+                        <div className="flex items-center gap-1 mt-1">
+                          <input
+                            type="number"
+                            value={partialAmounts[invoice.invoice_id] || ''}
+                            onChange={e => setPartialAmounts(prev => ({ ...prev, [invoice.invoice_id]: e.target.value }))}
+                            placeholder="入金額"
+                            className="w-24 px-2 py-1 text-xs border rounded"
+                          />
+                          <button
+                            onClick={() => handlePartialPayment(invoice.invoice_id, invoice.remaining_amount ?? invoice.total_amount)}
+                            disabled={loading}
+                            className="px-2 py-1 text-xs bg-orange-500 text-white rounded hover:bg-orange-600 disabled:bg-gray-400"
+                          >
+                            確定
+                          </button>
+                          <button
+                            onClick={() => setShowPartialInput(null)}
+                            className="px-2 py-1 text-xs bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => setShowPartialInput(invoice.invoice_id)}
+                          className="px-2 py-0.5 text-xs bg-orange-100 text-orange-700 rounded hover:bg-orange-200"
+                        >
+                          一部入金
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               </Fragment>
@@ -194,18 +260,19 @@ import { CustomerCategory, CustomerCategoryDB } from '@/lib/customer-categories'
 
 export default function SalesManagementPage() {
   const router = useRouter()
-  const { 
-    invoices, 
-    loading, 
-    error, 
-    getMonthlySales, 
-    getCustomerSales, 
-    getStatistics, 
-    getAvailableYears, 
+  const {
+    invoices,
+    loading,
+    error,
+    getMonthlySales,
+    getCustomerSales,
+    getStatistics,
+    getAvailableYears,
     exportToCSV,
     refetch,
     getPaymentStatusSummary,
-    updateInvoicesPaymentStatus
+    updateInvoicesPaymentStatus,
+    recordPayment
   } = useSalesData()
   
   const [selectedYear, setSelectedYear] = useState<number | undefined>(new Date().getFullYear())
@@ -228,6 +295,16 @@ export default function SalesManagementPage() {
 
   const handleExportCSV = () => {
     exportToCSV(selectedYear)
+  }
+
+  // 一部入金処理
+  const handlePartialPayment = async (invoiceId: string, paymentDate: string, amount: number) => {
+    await recordPayment(invoiceId, {
+      payment_date: paymentDate,
+      payment_amount: amount,
+      payment_method: '一部入金',
+      notes: '売上管理画面からの一部入金'
+    })
   }
 
   // グラフ用のカラーパレット
@@ -492,6 +569,7 @@ export default function SalesManagementPage() {
               invoices={invoices}
               summary={paymentSummary}
               onUpdate={updateInvoicesPaymentStatus}
+              onPartialPayment={handlePartialPayment}
               loading={loading}
               categories={categories}
               selectedCategory={selectedCategory}
