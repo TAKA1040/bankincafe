@@ -4594,7 +4594,7 @@ function InvoiceCreateContent() {
             {/* ヘッダー */}
             <div className="bg-gray-50 px-6 py-4 border-b flex justify-between items-center">
               <h2 className="text-xl font-bold text-gray-800">
-                {selectedPriceInvoice ? '請求書詳細' : '過去の作業価格検索'}
+                {selectedPriceInvoice ? '請求書詳細' : '作業価格検索'}
               </h2>
               <div className="flex items-center gap-2">
                 {selectedPriceInvoice && (
