@@ -80,7 +80,7 @@ export default function HomePage() {
       category: 'settings'
     },
     {
-      title: '作業履歴',
+      title: '作業価格検索',
       description: '過去の作業実績を検索・管理',
       icon: Clock,
       path: '/work-history',

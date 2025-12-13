@@ -3088,7 +3088,7 @@ function InvoiceCreateContent() {
                   className="px-3 py-1.5 text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg flex items-center gap-1 transition-colors"
                 >
                   <Search className="w-4 h-4" />
-                  過去価格検索
+                  作業価格検索
                 </button>
               </CardHeader>
               <CardContent>

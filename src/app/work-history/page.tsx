@@ -370,7 +370,7 @@ export default function WorkHistoryPage() {
             <div className="flex items-center gap-3">
               <Search className="text-blue-600" size={28} />
               <h1 className="text-xl font-bold text-gray-800">
-                {selectedInvoice ? '請求書詳細' : '過去価格検索'}
+                {selectedInvoice ? '請求書詳細' : '作業価格検索'}
               </h1>
             </div>
             <div className="flex items-center gap-2">

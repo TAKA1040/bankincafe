@@ -80,7 +80,7 @@ export default function DashboardClient({ user }: DashboardClientProps) {
     },
     {
       id: 'work-history',
-      title: '作業履歴',
+      title: '作業価格検索',
       description: '過去の作業記録を確認',
       icon: '🔧',
       color: '#ea580c',
