@@ -67,6 +67,7 @@ interface InvoiceDetail {
   customer_name: string | null
   subject: string | null
   issue_date: string | null
+  remarks: string | null
   line_items: Array<{
     line_no: number
     sub_no: number
@@ -279,7 +280,7 @@ export default function WorkHistoryPage() {
       const [invoiceRes, lineItemsRes] = await Promise.all([
         supabase
           .from('invoices')
-          .select('invoice_id, customer_name, subject, issue_date')
+          .select('invoice_id, customer_name, subject, issue_date, remarks')
           .eq('invoice_id', invoiceId)
           .single(),
         supabase
@@ -304,6 +305,7 @@ export default function WorkHistoryPage() {
         customer_name: invoiceRes.data.customer_name,
         subject: invoiceRes.data.subject,
         issue_date: invoiceRes.data.issue_date,
+        remarks: invoiceRes.data.remarks,
         line_items: lineItems
       })
     } catch (error) {
@@ -751,6 +753,34 @@ export default function WorkHistoryPage() {
                   </tfoot>
                 </table>
               </div>
+
+              {/* メモ欄 */}
+              {(() => {
+                // sub_no === 1のレコードからraw_labelを取得（旧システムの明細内容）
+                const rawLabels = selectedInvoice.line_items
+                  .filter(item => item.raw_label && (!item.sub_no || item.sub_no === 1))
+                  .map(item => item.raw_label)
+                  .filter((label, index, self) => self.indexOf(label) === index) // 重複排除
+
+                if (!selectedInvoice.remarks && rawLabels.length === 0) return null
+
+                return (
+                  <div className="mt-4 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+                    <h4 className="text-sm font-semibold text-gray-700 mb-2">📝 メモ</h4>
+                    {selectedInvoice.remarks && (
+                      <p className="text-sm text-gray-900 whitespace-pre-wrap mb-3">{selectedInvoice.remarks}</p>
+                    )}
+                    {rawLabels.length > 0 && (
+                      <>
+                        <div className="text-xs text-gray-500 mb-1">旧システム明細内容</div>
+                        {rawLabels.map((label, idx) => (
+                          <p key={idx} className="text-sm text-gray-700">{label}</p>
+                        ))}
+                      </>
+                    )}
+                  </div>
+                )
+              })()}
             </div>
           )}
         </div>

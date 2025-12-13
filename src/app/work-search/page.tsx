@@ -70,6 +70,8 @@ interface InvoiceDetail {
   registration_number: string | null
   issue_date: string | null
   invoice_month: string | null
+  remarks: string | null
+  raw_labels: string[]
   work_items: {
     line_item_id: number
     line_no: number
@@ -680,6 +682,20 @@ export default function WorkSearchPage() {
         .filter(item => !item.is_breakdown)
         .reduce((sum, item) => sum + item.amount, 0)
       
+      // 請求書のremarksを取得
+      const { data: invoiceData } = await supabase
+        .from('invoices')
+        .select('remarks')
+        .eq('invoice_id', workItem.invoice_id)
+        .single()
+
+      // raw_labelsを抽出（sub_no=1のみ、重複排除）
+      const raw_labels = [...new Set(
+        (invoiceWorkItems || [])
+          .filter(item => item.raw_label && (!item.sub_no || item.sub_no === 1))
+          .map(item => item.raw_label as string)
+      )]
+
       const invoiceDetail: InvoiceDetail = {
         invoice_id: workItem.invoice_id,
         customer_name: workItem.customer_name,
@@ -687,12 +703,14 @@ export default function WorkSearchPage() {
         registration_number: workItem.registration_number,
         issue_date: workItem.issue_date,
         invoice_month: workItem.invoice_month,
+        remarks: invoiceData?.remarks || null,
+        raw_labels: raw_labels,
         work_items: work_items,
         total_amount: total_amount,
         work_count: work_items.length
       }
-      
-      
+
+
       setSelectedInvoiceDetail(invoiceDetail)
     } catch (error) {
       console.error('請求書詳細の取得エラー:', error)
@@ -1120,6 +1138,24 @@ export default function WorkSearchPage() {
                     </a>
                   </div>
                 </div>
+
+                {/* メモ欄 */}
+                {(selectedInvoiceDetail.remarks || selectedInvoiceDetail.raw_labels.length > 0) && (
+                  <div className="bg-yellow-50 rounded-lg p-4 border border-yellow-200">
+                    <h4 className="text-sm font-semibold text-gray-700 mb-2">📝 メモ</h4>
+                    {selectedInvoiceDetail.remarks && (
+                      <p className="text-sm text-gray-600 whitespace-pre-wrap mb-2">{selectedInvoiceDetail.remarks}</p>
+                    )}
+                    {selectedInvoiceDetail.raw_labels.length > 0 && (
+                      <>
+                        <div className="text-xs text-gray-500 mb-1">旧システム明細内容</div>
+                        {selectedInvoiceDetail.raw_labels.map((label, idx) => (
+                          <p key={idx} className="text-sm text-gray-600 whitespace-pre-wrap">{label}</p>
+                        ))}
+                      </>
+                    )}
+                  </div>
+                )}
               </div>
 
               <div className="bg-gray-50 px-6 py-4 border-t flex justify-end">
