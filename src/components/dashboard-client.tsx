@@ -89,7 +89,7 @@ export default function DashboardClient({ user }: DashboardClientProps) {
     },
     {
       id: 'work-search',
-      title: '作業履歴検索',
+      title: '作業検索',
       description: '作業内容と価格履歴を検索',
       icon: '🔍',
       color: '#8b5cf6',
