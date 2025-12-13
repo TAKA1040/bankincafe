@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import React, { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Search, Calendar, Filter, X, ChevronDown, ChevronUp } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
@@ -16,6 +16,35 @@ function katakanaToHiragana(str: string): string {
   return str.replace(/[\u30a1-\u30f6]/g, (match) =>
     String.fromCharCode(match.charCodeAt(0) - 0x60)
   )
+}
+
+// キーワードをハイライト表示（ひらがな/カタカナ両対応）
+function highlightKeyword(text: string, keyword: string): React.ReactNode {
+  if (!keyword.trim() || !text) return text
+
+  // ひらがな・カタカナ両方でマッチするパターンを作成
+  const keywordHiragana = katakanaToHiragana(keyword.trim())
+  const keywordKatakana = hiraganaToKatakana(keyword.trim())
+
+  // 正規表現用にエスケープ
+  const escapeRegex = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+
+  const patterns = [escapeRegex(keyword.trim())]
+  if (keywordHiragana !== keyword.trim()) patterns.push(escapeRegex(keywordHiragana))
+  if (keywordKatakana !== keyword.trim() && keywordKatakana !== keywordHiragana) {
+    patterns.push(escapeRegex(keywordKatakana))
+  }
+
+  const regex = new RegExp(`(${patterns.join('|')})`, 'gi')
+  const parts = text.split(regex)
+
+  return parts.map((part, index) => {
+    const isMatch = patterns.some(p => new RegExp(`^${p}$`, 'i').test(part))
+    if (isMatch) {
+      return <span key={index} className="bg-orange-200 text-orange-800 px-0.5 rounded">{part}</span>
+    }
+    return part
+  })
 }
 
 // 検索結果の型
@@ -77,7 +106,6 @@ export default function WorkHistoryPage() {
   // 詳細表示
   const [selectedInvoice, setSelectedInvoice] = useState<InvoiceDetail | null>(null)
   const [detailLoading, setDetailLoading] = useState(false)
-  const [highlightedLineNo, setHighlightedLineNo] = useState<number | null>(null)
 
   // 検索実行
   const handleSearch = async () => {
@@ -245,9 +273,8 @@ export default function WorkHistoryPage() {
   }
 
   // 請求書詳細を取得
-  const fetchInvoiceDetail = async (invoiceId: string, lineNo?: number) => {
+  const fetchInvoiceDetail = async (invoiceId: string) => {
     setDetailLoading(true)
-    setHighlightedLineNo(lineNo ?? null)
     try {
       const [invoiceRes, lineItemsRes] = await Promise.all([
         supabase
@@ -577,7 +604,7 @@ export default function WorkHistoryPage() {
                       <tr
                         key={`${result.invoice_id}-${index}`}
                         className="hover:bg-blue-50 cursor-pointer transition-colors"
-                        onClick={() => fetchInvoiceDetail(result.invoice_id, result.line_no)}
+                        onClick={() => fetchInvoiceDetail(result.invoice_id)}
                       >
                         <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
                           {result.issue_date ? new Date(result.issue_date).toLocaleDateString('ja-JP') : '-'}
@@ -663,12 +690,10 @@ export default function WorkHistoryPage() {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {selectedInvoice.line_items.map((item, index) => {
-                      const isHighlighted = highlightedLineNo !== null && item.line_no === highlightedLineNo && !item.is_set_detail
-                      return (
+                    {selectedInvoice.line_items.map((item, index) => (
                       <tr
                         key={`${item.line_no}-${item.sub_no}`}
-                        className={`${isHighlighted ? 'bg-yellow-100 border-l-4 border-yellow-500' : item.is_set_detail ? 'bg-gray-50' : ''}`}
+                        className={item.is_set_detail ? 'bg-gray-50' : ''}
                       >
                         <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-500">
                           {item.is_set_detail ? '' : item.line_no}
@@ -686,11 +711,17 @@ export default function WorkHistoryPage() {
                         </td>
                         <td className="px-3 py-2 text-sm text-gray-900">
                           {item.is_set_detail ? (
-                            <span className="pl-4 text-gray-600">{item.raw_label_part || item.raw_label}</span>
+                            <span className="pl-4 text-gray-600">
+                              {highlightKeyword(item.raw_label_part || item.raw_label || '', workKeyword)}
+                            </span>
                           ) : item.set_name ? (
-                            <span className="font-medium">{item.set_name}</span>
+                            <span className="font-medium">
+                              {highlightKeyword(item.set_name, workKeyword)}
+                            </span>
                           ) : (
-                            <span>{item.raw_label_part || item.raw_label}</span>
+                            <span>
+                              {highlightKeyword(item.raw_label_part || item.raw_label || '', workKeyword)}
+                            </span>
                           )}
                         </td>
                         <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">
@@ -703,7 +734,7 @@ export default function WorkHistoryPage() {
                           {item.is_set_detail ? '' : `¥${(item.amount || 0).toLocaleString()}`}
                         </td>
                       </tr>
-                    )})}
+                    ))}
                   </tbody>
                   <tfoot className="bg-gray-50">
                     <tr>
