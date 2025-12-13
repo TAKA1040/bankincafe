@@ -620,6 +620,96 @@ export function useSalesData() {
     }
   }, [fetchInvoices])
 
+  // 入金取り消し（入金履歴を全削除して未入金に戻す）
+  const cancelPayment = useCallback(async (invoiceId: string, deleteHistory: boolean = true): Promise<boolean> => {
+    try {
+      setLoading(true)
+      setError(null)
+
+      if (deleteHistory) {
+        // invoice_payments テーブルから入金記録を削除
+        const { error: deleteError } = await supabase
+          .from('invoice_payments')
+          .delete()
+          .eq('invoice_id', invoiceId)
+
+        if (deleteError) {
+          console.warn('入金履歴の削除に失敗:', deleteError)
+          // テーブルがない場合は無視して続行
+        }
+      }
+
+      // 請求書の支払い状況を「未入金」に更新
+      const { error: updateError } = await supabase
+        .from('invoices')
+        .update({ payment_status: 'unpaid' })
+        .eq('invoice_id', invoiceId)
+
+      if (updateError) throw updateError
+
+      await fetchInvoices()
+      return true
+    } catch (err) {
+      console.error('Failed to cancel payment:', err)
+      setError(err instanceof Error ? err.message : '入金取り消しに失敗しました')
+      setLoading(false)
+      return false
+    }
+  }, [fetchInvoices])
+
+  // 特定の入金記録を削除（一部入金の取り消し用）
+  const deletePaymentRecord = useCallback(async (paymentId: number, invoiceId: string): Promise<boolean> => {
+    try {
+      setLoading(true)
+      setError(null)
+
+      // 入金記録を削除
+      const { error: deleteError } = await supabase
+        .from('invoice_payments')
+        .delete()
+        .eq('id', paymentId)
+
+      if (deleteError) throw deleteError
+
+      // 残りの入金記録を確認して支払い状況を更新
+      const { data: remainingPayments } = await supabase
+        .from('invoice_payments')
+        .select('payment_amount')
+        .eq('invoice_id', invoiceId)
+
+      const { data: invoice } = await supabase
+        .from('invoices')
+        .select('total')
+        .eq('invoice_id', invoiceId)
+        .single()
+
+      if (invoice) {
+        const totalPaid = remainingPayments?.reduce((sum, p) => sum + (p.payment_amount || 0), 0) || 0
+        const total = invoice.total || 0
+
+        let newStatus: 'unpaid' | 'paid' | 'partial' = 'unpaid'
+        if (totalPaid >= total) {
+          newStatus = 'paid'
+        } else if (totalPaid > 0) {
+          newStatus = 'partial'
+        }
+
+        await supabase
+          .from('invoices')
+          .update({ payment_status: newStatus })
+          .eq('invoice_id', invoiceId)
+      }
+
+      await fetchInvoices()
+      return true
+    } catch (err) {
+      console.error('Failed to delete payment record:', err)
+      setError(err instanceof Error ? err.message : '入金記録の削除に失敗しました')
+      setLoading(false)
+      return false
+    }
+  }, [fetchInvoices])
+
   // 初期データロード
   useEffect(() => {
     fetchInvoices()
@@ -637,6 +727,8 @@ export function useSalesData() {
     refetch: fetchInvoices,
     getPaymentStatusSummary,
     recordPayment,
-    updateInvoicesPaymentStatus
+    updateInvoicesPaymentStatus,
+    cancelPayment,
+    deletePaymentRecord
   }
 }

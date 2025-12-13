@@ -2,16 +2,17 @@
 
 import { useState, useMemo, useEffect, Fragment } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, BarChart3, Download, TrendingUp, Calendar, JapaneseYen, RefreshCw, Banknote, Home, HelpCircle, Search, Filter } from 'lucide-react'
+import { ArrowLeft, BarChart3, Download, TrendingUp, Calendar, JapaneseYen, RefreshCw, Banknote, Home, HelpCircle, Search, Filter, Undo2 } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 import { useSalesData } from '@/hooks/useSalesData'
 import { supabase } from '@/lib/supabase'
 
-const PaymentManagementTab = ({ invoices, summary, onUpdate, onPartialPayment, loading, categories, selectedCategory, onCategoryChange, router }: {
+const PaymentManagementTab = ({ invoices, summary, onUpdate, onPartialPayment, onCancelPayment, loading, categories, selectedCategory, onCategoryChange, router }: {
   invoices: any[],
   summary: any,
   onUpdate: (selectedIds: string[], paymentDate: string) => void,
   onPartialPayment: (invoiceId: string, paymentDate: string, amount: number) => void,
+  onCancelPayment: (invoiceId: string) => void,
   loading: boolean,
   categories: any[],
   selectedCategory: string,
@@ -384,12 +385,30 @@ const PaymentManagementTab = ({ invoices, summary, onUpdate, onPartialPayment, l
                           </div>
                         </div>
                       ) : (
-                        <button
-                          onClick={() => setShowPartialInput(invoice.invoice_id)}
-                          className="px-2 py-0.5 text-xs bg-orange-100 text-orange-700 rounded hover:bg-orange-200"
-                        >
-                          一部入金
-                        </button>
+                        <div className="flex flex-col gap-1">
+                          {invoice.payment_status !== 'paid' && (
+                            <button
+                              onClick={() => setShowPartialInput(invoice.invoice_id)}
+                              className="px-2 py-0.5 text-xs bg-orange-100 text-orange-700 rounded hover:bg-orange-200"
+                            >
+                              一部入金
+                            </button>
+                          )}
+                          {(invoice.payment_status === 'paid' || invoice.payment_status === 'partial') && (
+                            <button
+                              onClick={() => {
+                                if (confirm(`${invoice.invoice_id} の入金を取り消しますか？\n（入金履歴も削除されます）`)) {
+                                  onCancelPayment(invoice.invoice_id);
+                                }
+                              }}
+                              disabled={loading}
+                              className="px-2 py-0.5 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200 flex items-center gap-1 justify-center"
+                            >
+                              <Undo2 size={12} />
+                              取り消し
+                            </button>
+                          )}
+                        </div>
                       )}
                     </div>
                   </td>
@@ -424,7 +443,8 @@ export default function SalesManagementPage() {
     refetch,
     getPaymentStatusSummary,
     updateInvoicesPaymentStatus,
-    recordPayment
+    recordPayment,
+    cancelPayment
   } = useSalesData()
   
   const [selectedYear, setSelectedYear] = useState<number | undefined>(new Date().getFullYear())
@@ -722,6 +742,7 @@ export default function SalesManagementPage() {
               summary={paymentSummary}
               onUpdate={updateInvoicesPaymentStatus}
               onPartialPayment={handlePartialPayment}
+              onCancelPayment={cancelPayment}
               loading={loading}
               categories={categories}
               selectedCategory={selectedCategory}

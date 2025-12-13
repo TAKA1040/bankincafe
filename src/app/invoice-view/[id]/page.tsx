@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Edit, Download, Trash2, RotateCcw, FileText, Calendar, User, Hash, Building2, Phone, Printer, Home } from 'lucide-react';
+import { ArrowLeft, Edit, Download, Trash2, RotateCcw, FileText, Calendar, User, Hash, Building2, Phone, Printer, Home, Undo2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import type { InvoiceWithItems } from '@/hooks/useInvoiceList';
 
@@ -31,6 +31,94 @@ export default function InvoiceViewPage({ params }: PageProps) {
   const [error, setError] = useState<string | null>(null);
   const [showEditConfirm, setShowEditConfirm] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [cancelingPayment, setCancelingPayment] = useState(false);
+
+  // 入金取り消し処理
+  const handleCancelPayment = async () => {
+    if (!invoice) return;
+
+    if (!confirm(`${invoice.invoice_id} の入金を取り消しますか？\n（入金履歴も削除されます）`)) {
+      return;
+    }
+
+    setCancelingPayment(true);
+    try {
+      // 入金履歴を削除
+      const { error: deleteError } = await supabase
+        .from('invoice_payments')
+        .delete()
+        .eq('invoice_id', invoice.invoice_id);
+
+      if (deleteError) {
+        console.warn('入金履歴の削除に失敗:', deleteError);
+      }
+
+      // 支払い状況を未入金に更新
+      const { error: updateError } = await supabase
+        .from('invoices')
+        .update({ payment_status: 'unpaid' })
+        .eq('invoice_id', invoice.invoice_id);
+
+      if (updateError) throw updateError;
+
+      // 画面をリロード
+      window.location.reload();
+    } catch (err) {
+      console.error('入金取り消しに失敗:', err);
+      alert('入金取り消しに失敗しました');
+    } finally {
+      setCancelingPayment(false);
+    }
+  };
+
+  // 個別の入金記録を削除
+  const handleDeletePaymentRecord = async (paymentId: number) => {
+    if (!invoice) return;
+
+    if (!confirm('この入金記録を削除しますか？')) {
+      return;
+    }
+
+    setCancelingPayment(true);
+    try {
+      // 入金記録を削除
+      const { error: deleteError } = await supabase
+        .from('invoice_payments')
+        .delete()
+        .eq('id', paymentId);
+
+      if (deleteError) throw deleteError;
+
+      // 残りの入金記録を確認して支払い状況を更新
+      const { data: remainingPayments } = await supabase
+        .from('invoice_payments')
+        .select('payment_amount')
+        .eq('invoice_id', invoice.invoice_id);
+
+      const totalPaid = remainingPayments?.reduce((sum, p) => sum + (p.payment_amount || 0), 0) || 0;
+      const total = invoice.total || 0;
+
+      let newStatus: 'unpaid' | 'paid' | 'partial' = 'unpaid';
+      if (totalPaid >= total) {
+        newStatus = 'paid';
+      } else if (totalPaid > 0) {
+        newStatus = 'partial';
+      }
+
+      await supabase
+        .from('invoices')
+        .update({ payment_status: newStatus })
+        .eq('invoice_id', invoice.invoice_id);
+
+      // 画面をリロード
+      window.location.reload();
+    } catch (err) {
+      console.error('入金記録の削除に失敗:', err);
+      alert('入金記録の削除に失敗しました');
+    } finally {
+      setCancelingPayment(false);
+    }
+  };
 
   // 請求書データを取得
   useEffect(() => {
@@ -463,6 +551,20 @@ export default function InvoiceViewPage({ params }: PageProps) {
                 </div>
               </div>
 
+              {/* 入金取り消しボタン */}
+              {(paymentStatus === 'paid' || paymentStatus === 'partial') && (
+                <div className="flex justify-end mt-4">
+                  <button
+                    onClick={handleCancelPayment}
+                    disabled={cancelingPayment}
+                    className="px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 flex items-center gap-2 disabled:opacity-50"
+                  >
+                    <Undo2 className="w-4 h-4" />
+                    {cancelingPayment ? '処理中...' : '全入金を取り消し'}
+                  </button>
+                </div>
+              )}
+
               {/* 入金履歴 */}
               {payments.length > 0 ? (
                 <div className="mt-4">
@@ -475,6 +577,7 @@ export default function InvoiceViewPage({ params }: PageProps) {
                           <th className="px-4 py-2 text-right font-medium text-gray-500">入金額</th>
                           <th className="px-4 py-2 text-left font-medium text-gray-500">入金方法</th>
                           <th className="px-4 py-2 text-left font-medium text-gray-500">備考</th>
+                          <th className="px-4 py-2 text-center font-medium text-gray-500">操作</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-200">
@@ -486,6 +589,15 @@ export default function InvoiceViewPage({ params }: PageProps) {
                             </td>
                             <td className="px-4 py-2 whitespace-nowrap">{payment.payment_method || '-'}</td>
                             <td className="px-4 py-2">{payment.notes || '-'}</td>
+                            <td className="px-4 py-2 text-center">
+                              <button
+                                onClick={() => handleDeletePaymentRecord(payment.id)}
+                                disabled={cancelingPayment}
+                                className="px-2 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200 disabled:opacity-50"
+                              >
+                                削除
+                              </button>
+                            </td>
                           </tr>
                         ))}
                       </tbody>
