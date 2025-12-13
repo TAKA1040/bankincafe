@@ -21,6 +21,7 @@ const PaymentManagementTab = ({ invoices, summary, onUpdate, onPartialPayment, l
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [paymentDate, setPaymentDate] = useState(new Date().toISOString().split('T')[0]);
   const [partialAmounts, setPartialAmounts] = useState<Record<string, string>>({});
+  const [partialDates, setPartialDates] = useState<Record<string, string>>({});
   const [showPartialInput, setShowPartialInput] = useState<string | null>(null);
 
   const normalizeName = (name: string | null): string => {
@@ -44,8 +45,13 @@ const PaymentManagementTab = ({ invoices, summary, onUpdate, onPartialPayment, l
 
   const handlePartialPayment = (invoiceId: string, remainingAmount: number) => {
     const amountStr = partialAmounts[invoiceId];
-    if (!amountStr || !paymentDate) {
-      alert('入金額と入金日を入力してください。');
+    const dateStr = partialDates[invoiceId] || new Date().toISOString().split('T')[0];
+    if (!amountStr) {
+      alert('入金額を入力してください。');
+      return;
+    }
+    if (!dateStr) {
+      alert('入金日を入力してください。');
       return;
     }
     const amount = parseInt(amountStr, 10);
@@ -57,8 +63,9 @@ const PaymentManagementTab = ({ invoices, summary, onUpdate, onPartialPayment, l
       alert(`入金額は残額（¥${remainingAmount.toLocaleString()}）以下にしてください。`);
       return;
     }
-    onPartialPayment(invoiceId, paymentDate, amount);
+    onPartialPayment(invoiceId, dateStr, amount);
     setPartialAmounts(prev => ({ ...prev, [invoiceId]: '' }));
+    setPartialDates(prev => ({ ...prev, [invoiceId]: '' }));
     setShowPartialInput(null);
   };
 
@@ -122,12 +129,13 @@ const PaymentManagementTab = ({ invoices, summary, onUpdate, onPartialPayment, l
               ))}
             </select>
           </div>
-          <div>
-            <label htmlFor="paymentDate" className="text-sm font-medium text-gray-700 mr-2">一括入金日:</label>
+          <div className="flex items-center gap-1">
+            <label htmlFor="paymentDate" className="text-sm font-medium text-gray-700">入金日:</label>
             <input type="date" id="paymentDate" value={paymentDate} onChange={e => setPaymentDate(e.target.value)} className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" />
+            <span className="text-gray-400 cursor-help" title="チェックした請求書を一括で入金済みにする際の入金日です">❓</span>
           </div>
-          <button onClick={handleUpdate} disabled={loading || selectedIds.length === 0} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 flex items-center gap-2">
-            {loading ? '更新中...' : '選択した明細を入金済みにする'}
+          <button onClick={handleUpdate} disabled={loading || selectedIds.length === 0} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 flex items-center gap-2" title="チェックした請求書を全額入金済みとして処理します">
+            {loading ? '更新中...' : 'チェック分を入金済みにする'}
           </button>
         </div>
       </div>
@@ -209,27 +217,37 @@ const PaymentManagementTab = ({ invoices, summary, onUpdate, onPartialPayment, l
                          invoice.payment_status === 'partial' ? '一部入金' : '未入金'}
                       </span>
                       {showPartialInput === invoice.invoice_id ? (
-                        <div className="flex items-center gap-1 mt-1">
-                          <input
-                            type="number"
-                            value={partialAmounts[invoice.invoice_id] || ''}
-                            onChange={e => setPartialAmounts(prev => ({ ...prev, [invoice.invoice_id]: e.target.value }))}
-                            placeholder="入金額"
-                            className="w-24 px-2 py-1 text-xs border rounded"
-                          />
-                          <button
-                            onClick={() => handlePartialPayment(invoice.invoice_id, invoice.remaining_amount ?? invoice.total_amount)}
-                            disabled={loading}
-                            className="px-2 py-1 text-xs bg-orange-500 text-white rounded hover:bg-orange-600 disabled:bg-gray-400"
-                          >
-                            確定
-                          </button>
-                          <button
-                            onClick={() => setShowPartialInput(null)}
-                            className="px-2 py-1 text-xs bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
-                          >
-                            ×
-                          </button>
+                        <div className="flex flex-col gap-1 mt-1">
+                          <div className="flex items-center gap-1">
+                            <input
+                              type="date"
+                              value={partialDates[invoice.invoice_id] || new Date().toISOString().split('T')[0]}
+                              onChange={e => setPartialDates(prev => ({ ...prev, [invoice.invoice_id]: e.target.value }))}
+                              className="w-28 px-2 py-1 text-xs border rounded"
+                            />
+                            <input
+                              type="number"
+                              value={partialAmounts[invoice.invoice_id] || ''}
+                              onChange={e => setPartialAmounts(prev => ({ ...prev, [invoice.invoice_id]: e.target.value }))}
+                              placeholder="入金額"
+                              className="w-24 px-2 py-1 text-xs border rounded"
+                            />
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={() => handlePartialPayment(invoice.invoice_id, invoice.remaining_amount ?? invoice.total_amount)}
+                              disabled={loading}
+                              className="px-3 py-1 text-xs bg-orange-500 text-white rounded hover:bg-orange-600 disabled:bg-gray-400"
+                            >
+                              確定
+                            </button>
+                            <button
+                              onClick={() => setShowPartialInput(null)}
+                              className="px-2 py-1 text-xs bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
+                            >
+                              キャンセル
+                            </button>
+                          </div>
                         </div>
                       ) : (
                         <button
