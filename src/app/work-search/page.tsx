@@ -966,7 +966,7 @@ export default function WorkSearchPage() {
         {/* 詳細モーダル - 請求書情報表示 */}
         {selectedInvoiceDetail && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" role="dialog" aria-modal="true">
-            <div className="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto m-4">
+            <div className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto m-4">
               <div className="bg-gray-50 px-6 py-4 border-b flex justify-between items-center">
                 <h2 className="text-xl font-bold text-gray-800">請求書情報</h2>
                 <button onClick={() => setSelectedInvoiceDetail(null)} className="text-gray-500 hover:text-gray-700">
@@ -1014,14 +1014,14 @@ export default function WorkSearchPage() {
                 <div className="bg-gray-50 rounded-lg p-6">
                   <h3 className="text-lg font-semibold text-gray-800 mb-4">作業内容詳細</h3>
                   <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-                    <table className="w-full">
+                    <table className="w-full table-fixed">
                       <thead className="bg-gray-50 border-b">
                         <tr>
-                          <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">No</th>
-                          <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">作業内容</th>
-                          <th className="px-4 py-3 text-right text-sm font-medium text-gray-700">単価</th>
-                          <th className="px-4 py-3 text-center text-sm font-medium text-gray-700">数量</th>
-                          <th className="px-4 py-3 text-right text-sm font-medium text-gray-700">金額</th>
+                          <th className="w-20 px-3 py-3 text-left text-sm font-medium text-gray-700">No</th>
+                          <th className="px-3 py-3 text-left text-sm font-medium text-gray-700">作業内容</th>
+                          <th className="w-28 px-3 py-3 text-right text-sm font-medium text-gray-700">単価</th>
+                          <th className="w-16 px-3 py-3 text-center text-sm font-medium text-gray-700">数量</th>
+                          <th className="w-28 px-3 py-3 text-right text-sm font-medium text-gray-700">金額</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-200">
@@ -1035,18 +1035,18 @@ export default function WorkSearchPage() {
                               <React.Fragment key={workItem.line_item_id}>
                                 {/* メイン作業項目 */}
                                 <tr className="hover:bg-gray-50">
-                                  <td className="px-4 py-3 text-sm font-medium text-gray-600">
-                                    #{workItem.line_no}
-                                    <span className={`ml-2 px-2 py-1 rounded-full text-xs font-medium ${
-                                      workItem.task_type === 'S' 
-                                        ? 'bg-purple-100 text-purple-800' 
+                                  <td className="w-20 px-3 py-3 text-sm font-medium text-gray-600 align-top">
+                                    <div>#{workItem.line_no}</div>
+                                    <span className={`inline-block mt-1 px-2 py-0.5 rounded-full text-xs font-medium ${
+                                      workItem.task_type === 'S'
+                                        ? 'bg-purple-100 text-purple-800'
                                         : 'bg-blue-100 text-blue-800'
                                     }`}>
                                       {workItem.task_type === 'S' ? 'S' : 'T'}
                                     </span>
                                   </td>
-                                  <td className="px-4 py-3">
-                                    <div className="text-gray-900 font-medium">{workItem.work_name}</div>
+                                  <td className="px-3 py-3 align-top">
+                                    <div className="text-gray-900 font-medium break-words">{workItem.work_name}</div>
                                     {workItem.target && (
                                       <div className="text-sm text-blue-600 mt-1">対象: {workItem.target}</div>
                                     )}
@@ -1057,7 +1057,7 @@ export default function WorkSearchPage() {
                                           {breakdownItems.map((breakdown) => (
                                             <li key={breakdown.line_item_id} className="flex items-start">
                                               <span className="text-gray-400 mr-2">•</span>
-                                              <span className="flex-1">{breakdown.work_name}</span>
+                                              <span className="flex-1 break-words">{breakdown.work_name}</span>
                                               {breakdown.target && (
                                                 <span className="text-blue-600 text-xs ml-2">({breakdown.target})</span>
                                               )}
@@ -1067,13 +1067,13 @@ export default function WorkSearchPage() {
                                       </div>
                                     )}
                                   </td>
-                                  <td className="px-4 py-3 text-right text-sm font-medium">
+                                  <td className="w-28 px-3 py-3 text-right text-sm font-medium align-top">
                                     {formatCurrency(workItem.unit_price)}
                                   </td>
-                                  <td className="px-4 py-3 text-center text-sm font-medium">
+                                  <td className="w-16 px-3 py-3 text-center text-sm font-medium align-top">
                                     {workItem.quantity}
                                   </td>
-                                  <td className="px-4 py-3 text-right text-lg font-bold text-green-600">
+                                  <td className="w-28 px-3 py-3 text-right text-base font-bold text-green-600 align-top">
                                     {formatCurrency(workItem.amount)}
                                   </td>
                                 </tr>
