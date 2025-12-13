@@ -4612,14 +4612,21 @@ function InvoiceCreateContent() {
           <div className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
             {/* ヘッダー */}
             <div className="bg-gray-50 px-6 py-4 border-b flex justify-between items-center">
-              <h2 className="text-xl font-bold text-gray-800">過去の作業価格検索</h2>
+              <h2 className="text-xl font-bold text-gray-800">
+                {selectedPriceInvoice ? '請求書詳細' : '過去の作業価格検索'}
+              </h2>
               <button
                 onClick={() => {
-                  setShowPriceSearchModal(false)
-                  setPriceSearchKeyword('')
-                  setPriceSearchSubject('')
-                  setPriceSearchResults([])
-                  setSelectedPriceInvoice(null)
+                  if (selectedPriceInvoice) {
+                    // 詳細表示中は検索結果に戻る
+                    setSelectedPriceInvoice(null)
+                  } else {
+                    // 検索結果一覧ではモーダルを閉じる
+                    setShowPriceSearchModal(false)
+                    setPriceSearchKeyword('')
+                    setPriceSearchSubject('')
+                    setPriceSearchResults([])
+                  }
                 }}
                 className="text-gray-500 hover:text-gray-700 text-2xl"
               >
