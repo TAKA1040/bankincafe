@@ -89,7 +89,7 @@ export default function HomePage() {
       category: 'analysis'
     },
     {
-      title: '作業検索',
+      title: '顧客別作業履歴',
       description: '作業内容と価格を確認・分析',
       icon: Search,
       path: '/work-search',

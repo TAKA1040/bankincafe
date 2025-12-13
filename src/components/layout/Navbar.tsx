@@ -26,7 +26,7 @@ const navigation = [
   { name: '請求書一覧', href: '/invoice-list', icon: List },
   { name: '顧客管理', href: '/customer-list', icon: Users },
   { name: '作業価格検索', href: '/work-history', icon: Search },
-  { name: '作業検索', href: '/work-search', icon: FileText },
+  { name: '顧客別作業履歴', href: '/work-search', icon: FileText },
   { name: '売上管理', href: '/sales-management', icon: BarChart3 },
 ]
 

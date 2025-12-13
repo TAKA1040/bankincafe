@@ -744,7 +744,7 @@ export default function WorkSearchPage() {
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-3">
               <Search className="text-blue-600" size={32} />
-              <h1 className="text-2xl font-bold text-gray-800">作業価格履歴検索</h1>
+              <h1 className="text-2xl font-bold text-gray-800">顧客別作業履歴</h1>
             </div>
             <div className="flex gap-2">
               <button onClick={handleExportCSV} className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2 font-medium"><Download size={20} />CSV出力</button>
