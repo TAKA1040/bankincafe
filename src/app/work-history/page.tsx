@@ -263,10 +263,11 @@ export default function WorkHistoryPage() {
 
       if (invoiceRes.error) throw invoiceRes.error
 
-      // セット明細を識別（sub_no > 0 はセット明細）
+      // セット明細の判定: task_type='S'でsub_no > 1の場合のみセット明細
+      // sub_no=1はセットの親行、sub_no > 1は子行（金額表示なし）
       const lineItems = (lineItemsRes.data || []).map(item => ({
         ...item,
-        is_set_detail: item.sub_no > 0
+        is_set_detail: item.task_type === 'S' && item.sub_no > 1
       }))
 
       setSelectedInvoice({
@@ -339,15 +340,27 @@ export default function WorkHistoryPage() {
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-3">
               <Search className="text-blue-600" size={28} />
-              <h1 className="text-xl font-bold text-gray-800">過去価格検索</h1>
+              <h1 className="text-xl font-bold text-gray-800">
+                {selectedInvoice ? '請求書詳細' : '過去価格検索'}
+              </h1>
             </div>
-            <button
-              onClick={() => router.push('/')}
-              className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 flex items-center gap-2"
-            >
-              <ArrowLeft size={20} />
-              戻る
-            </button>
+            <div className="flex items-center gap-2">
+              {selectedInvoice && (
+                <button
+                  onClick={() => setSelectedInvoice(null)}
+                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 flex items-center gap-2"
+                >
+                  <ArrowLeft size={20} />
+                  戻る
+                </button>
+              )}
+              <button
+                onClick={() => router.push('/')}
+                className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 flex items-center gap-2"
+              >
+                メニューへ
+              </button>
+            </div>
           </div>
         </header>
 
