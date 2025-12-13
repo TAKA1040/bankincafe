@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect, Fragment } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, BarChart3, Download, TrendingUp, Calendar, JapaneseYen, RefreshCw, Banknote, Home, HelpCircle } from 'lucide-react'
+import { ArrowLeft, BarChart3, Download, TrendingUp, Calendar, JapaneseYen, RefreshCw, Banknote, Home, HelpCircle, Search, Filter } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 import { useSalesData } from '@/hooks/useSalesData'
 import { supabase } from '@/lib/supabase'
@@ -23,6 +23,25 @@ const PaymentManagementTab = ({ invoices, summary, onUpdate, onPartialPayment, l
   const [partialAmounts, setPartialAmounts] = useState<Record<string, string>>({});
   const [partialDates, setPartialDates] = useState<Record<string, string>>({});
   const [showPartialInput, setShowPartialInput] = useState<string | null>(null);
+
+  // 絞り込みフィルター
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState<'all' | 'unpaid' | 'partial' | 'paid'>('unpaid');
+  const [customerNameFilter, setCustomerNameFilter] = useState('');
+  const [subjectFilter, setSubjectFilter] = useState('');
+  const [invoiceMonthFilter, setInvoiceMonthFilter] = useState<string>('all');
+
+  // 請求月の選択肢を生成
+  const availableMonths = useMemo(() => {
+    const months = new Set<string>();
+    invoices.forEach(inv => {
+      if (inv.issue_date) {
+        const date = new Date(inv.issue_date);
+        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        months.add(monthKey);
+      }
+    });
+    return Array.from(months).sort().reverse();
+  }, [invoices]);
 
   const normalizeName = (name: string | null): string => {
     if (!name) return '';
@@ -69,9 +88,25 @@ const PaymentManagementTab = ({ invoices, summary, onUpdate, onPartialPayment, l
     setShowPartialInput(null);
   };
 
-  // 未入金と一部入金を表示（完全入金済みは除く）
-  const unpaidInvoices = invoices
-    .filter(inv => inv.payment_status === 'unpaid' || inv.payment_status === 'partial')
+  // 曖昧検索用のノーマライズ関数
+  const normalizeForSearch = (str: string): string => {
+    if (!str) return '';
+    // ひらがな→カタカナ変換
+    const hiraganaToKatakana = (s: string) => s.replace(/[\u3041-\u3096]/g, ch =>
+      String.fromCharCode(ch.charCodeAt(0) + 0x60)
+    );
+    return hiraganaToKatakana(str.toLowerCase().replace(/\s/g, ''));
+  };
+
+  // フィルタリング処理
+  const filteredInvoices = invoices
+    // 入金ステータスフィルター
+    .filter(inv => {
+      if (paymentStatusFilter === 'all') return true;
+      if (paymentStatusFilter === 'unpaid') return inv.payment_status === 'unpaid' || inv.payment_status === 'partial';
+      return inv.payment_status === paymentStatusFilter;
+    })
+    // カテゴリーフィルター
     .filter(inv => {
         if (selectedCategory === 'all') return true;
         const category = categories.find(c => c.id === selectedCategory);
@@ -87,11 +122,34 @@ const PaymentManagementTab = ({ invoices, summary, onUpdate, onPartialPayment, l
                 .filter(Boolean);
             return !registeredCompanyNames.some(regName => normalizedInvoiceCustomerName.includes(regName));
         }
-        
+
         const normalizedCategoryCompanyName = normalizeName(category.companyName);
         if (!normalizedCategoryCompanyName) return false;
 
         return normalizedInvoiceCustomerName.includes(normalizedCategoryCompanyName);
+    })
+    // 顧客名フィルター（曖昧検索）
+    .filter(inv => {
+      if (!customerNameFilter) return true;
+      const normalizedCustomer = normalizeForSearch(inv.customer_name || '');
+      const normalizedSearch = normalizeForSearch(customerNameFilter);
+      return normalizedCustomer.includes(normalizedSearch);
+    })
+    // 件名フィルター（曖昧検索）
+    .filter(inv => {
+      if (!subjectFilter) return true;
+      const subject = inv.subject_name || inv.subject || '';
+      const normalizedSubject = normalizeForSearch(subject);
+      const normalizedSearch = normalizeForSearch(subjectFilter);
+      return normalizedSubject.includes(normalizedSearch);
+    })
+    // 請求月フィルター
+    .filter(inv => {
+      if (invoiceMonthFilter === 'all') return true;
+      if (!inv.issue_date) return false;
+      const date = new Date(inv.issue_date);
+      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      return monthKey === invoiceMonthFilter;
     });
 
   return (
@@ -118,8 +176,79 @@ const PaymentManagementTab = ({ invoices, summary, onUpdate, onPartialPayment, l
         </div>
       </div>
 
+      {/* 絞り込みフィルター */}
       <div className="bg-white rounded-lg shadow-sm p-4">
-        <div className="flex flex-wrap items-center gap-4">
+        <div className="flex items-center gap-2 mb-3">
+          <Filter size={18} className="text-gray-600" />
+          <span className="text-sm font-semibold text-gray-700">絞り込み</span>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+          {/* 入金ステータス */}
+          <div>
+            <label htmlFor="paymentStatusFilter" className="text-xs font-medium text-gray-600 block mb-1">入金ステータス</label>
+            <select
+              id="paymentStatusFilter"
+              value={paymentStatusFilter}
+              onChange={e => setPaymentStatusFilter(e.target.value as 'all' | 'unpaid' | 'partial' | 'paid')}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+            >
+              <option value="unpaid">未入金（一部含む）</option>
+              <option value="all">全て</option>
+              <option value="paid">入金済み</option>
+              <option value="partial">一部入金のみ</option>
+            </select>
+          </div>
+          {/* 請求月 */}
+          <div>
+            <label htmlFor="invoiceMonthFilter" className="text-xs font-medium text-gray-600 block mb-1">請求月</label>
+            <select
+              id="invoiceMonthFilter"
+              value={invoiceMonthFilter}
+              onChange={e => setInvoiceMonthFilter(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+            >
+              <option value="all">全て</option>
+              {availableMonths.map(month => {
+                const [year, m] = month.split('-');
+                return (
+                  <option key={month} value={month}>{year}年{parseInt(m)}月</option>
+                );
+              })}
+            </select>
+          </div>
+          {/* 顧客名 */}
+          <div>
+            <label htmlFor="customerNameFilter" className="text-xs font-medium text-gray-600 block mb-1">顧客名</label>
+            <div className="relative">
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                id="customerNameFilter"
+                value={customerNameFilter}
+                onChange={e => setCustomerNameFilter(e.target.value)}
+                placeholder="顧客名で検索..."
+                className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+              />
+            </div>
+          </div>
+          {/* 件名 */}
+          <div>
+            <label htmlFor="subjectFilter" className="text-xs font-medium text-gray-600 block mb-1">件名</label>
+            <div className="relative">
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                id="subjectFilter"
+                value={subjectFilter}
+                onChange={e => setSubjectFilter(e.target.value)}
+                placeholder="件名で検索..."
+                className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+              />
+            </div>
+          </div>
+        </div>
+        {/* カテゴリー・入金操作 */}
+        <div className="flex flex-wrap items-center gap-4 mt-4 pt-4 border-t">
           <div>
             <label htmlFor="categoryFilter" className="text-sm font-medium text-gray-700 mr-2">カテゴリー:</label>
             <select id="categoryFilter" value={selectedCategory} onChange={e => onCategoryChange(e.target.value)} className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
@@ -137,6 +266,7 @@ const PaymentManagementTab = ({ invoices, summary, onUpdate, onPartialPayment, l
           <button onClick={handleUpdate} disabled={loading || selectedIds.length === 0} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 flex items-center gap-2" title="チェックした請求書を全額入金済みとして処理します">
             {loading ? '更新中...' : 'チェック分を入金済みにする'}
           </button>
+          <span className="text-sm text-gray-500">（{filteredInvoices.length}件表示）</span>
         </div>
       </div>
 
@@ -147,7 +277,7 @@ const PaymentManagementTab = ({ invoices, summary, onUpdate, onPartialPayment, l
               <th rowSpan={2} className="p-2 align-middle w-10">
                 <input type="checkbox" onChange={e => {
                   if (e.target.checked) {
-                    setSelectedIds(unpaidInvoices.map(i => i.invoice_id));
+                    setSelectedIds(filteredInvoices.filter(i => i.payment_status !== 'paid').map(i => i.invoice_id));
                   } else {
                     setSelectedIds([]);
                   }
@@ -170,7 +300,7 @@ const PaymentManagementTab = ({ invoices, summary, onUpdate, onPartialPayment, l
             </tr>
           </thead>
           <tbody className="bg-white">
-            {unpaidInvoices.map(invoice => (
+            {filteredInvoices.map(invoice => (
               <Fragment key={invoice.invoice_id}>
                 <tr className="hover:bg-gray-50">
                   <td rowSpan={2} className="p-2 align-middle w-10 border-b">
@@ -268,7 +398,7 @@ const PaymentManagementTab = ({ invoices, summary, onUpdate, onPartialPayment, l
             ))}
           </tbody>
         </table>
-        {unpaidInvoices.length === 0 && <p className="p-4 text-center text-gray-500">このカテゴリーに該当する未入金の請求書はありません。</p>}
+        {filteredInvoices.length === 0 && <p className="p-4 text-center text-gray-500">条件に該当する請求書はありません。</p>}
       </div>
     </div>
   );
