@@ -676,7 +676,6 @@ function InvoiceCreateContent() {
     invoice_id: string
     task_type: string | null
     line_no: number
-    set_details?: string[]  // セット明細のraw_label_part配列
   }>>([])
   const [priceSearchLoading, setPriceSearchLoading] = useState(false)
 
@@ -2296,34 +2295,16 @@ function InvoiceCreateContent() {
       // invoice_idsを取得して請求書情報とセット明細を並行取得
       const invoiceIds = [...new Set(Array.from(uniqueMap.values()).map(item => item.invoice_id))]
 
-      const [invoicesRes, splitItemsRes] = await Promise.all([
-        supabase
-          .from('invoices')
-          .select('invoice_id, customer_name, subject, issue_date')
-          .in('invoice_id', invoiceIds),
-        supabase
-          .from('invoice_line_items_split')
-          .select('invoice_id, line_no, raw_label_part')
-          .in('invoice_id', invoiceIds)
-      ])
+      // 請求書情報を取得
+      const { data: invoicesData } = await supabase
+        .from('invoices')
+        .select('invoice_id, customer_name, subject, issue_date')
+        .in('invoice_id', invoiceIds)
 
-      const invoiceMap = new Map(invoicesRes.data?.map(inv => [inv.invoice_id, inv]) || [])
-
-      // セット明細をinvoice_id + line_noでグループ化
-      const splitDetailsMap = new Map<string, string[]>()
-      for (const item of splitItemsRes.data || []) {
-        const key = `${item.invoice_id}-${item.line_no}`
-        if (!splitDetailsMap.has(key)) {
-          splitDetailsMap.set(key, [])
-        }
-        if (item.raw_label_part) {
-          splitDetailsMap.get(key)!.push(item.raw_label_part)
-        }
-      }
+      const invoiceMap = new Map(invoicesData?.map(inv => [inv.invoice_id, inv]) || [])
 
       const results = Array.from(uniqueMap.values()).map(item => {
         const invoice = invoiceMap.get(item.invoice_id)
-        const key = `${item.invoice_id}-${item.line_no}`
         return {
           id: item.id,
           raw_label_part: item.raw_label_part || null,
@@ -2334,8 +2315,7 @@ function InvoiceCreateContent() {
           issue_date: invoice?.issue_date || null,
           invoice_id: item.invoice_id || '',
           task_type: item.task_type || null,
-          line_no: item.line_no,
-          set_details: splitDetailsMap.get(key)
+          line_no: item.line_no
         }
       })
 
@@ -4734,15 +4714,8 @@ function InvoiceCreateContent() {
                           <td className="px-3 py-2 text-sm text-gray-900 max-w-[150px] truncate" title={result.subject || ''}>
                             {result.subject || '-'}
                           </td>
-                          <td className="px-3 py-2 text-sm text-gray-900 max-w-[250px]">
-                            <div className="truncate" title={result.raw_label_part || ''}>
-                              {result.raw_label_part || '-'}
-                            </div>
-                            {result.set_details && result.set_details.length > 0 && (
-                              <div className="text-xs text-gray-500 mt-0.5 truncate" title={result.set_details.join(' / ')}>
-                                {result.set_details.join(' / ')}
-                              </div>
-                            )}
+                          <td className="px-3 py-2 text-sm text-gray-900 max-w-[250px] truncate" title={result.raw_label_part || ''}>
+                            {result.raw_label_part || '-'}
                           </td>
                           <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">
                             {result.quantity}
