@@ -12,9 +12,21 @@ interface PageProps {
   };
 }
 
+// 入金情報の型
+interface PaymentRecord {
+  id: number;
+  invoice_id: string;
+  payment_date: string;
+  payment_amount: number;
+  payment_method: string | null;
+  notes: string | null;
+  created_at: string | null;
+}
+
 export default function InvoiceViewPage({ params }: PageProps) {
   const router = useRouter();
   const [invoice, setInvoice] = useState<InvoiceWithItems | null>(null);
+  const [payments, setPayments] = useState<PaymentRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showEditConfirm, setShowEditConfirm] = useState(false);
@@ -129,6 +141,22 @@ export default function InvoiceViewPage({ params }: PageProps) {
         };
 
         setInvoice(invoiceWithItems);
+
+        // 入金情報を取得
+        try {
+          const { data: paymentData, error: paymentError } = await supabase
+            .from('invoice_payments')
+            .select('*')
+            .eq('invoice_id', params.id)
+            .order('payment_date', { ascending: true });
+
+          if (!paymentError && paymentData) {
+            setPayments(paymentData);
+          }
+        } catch (e) {
+          // invoice_paymentsテーブルが存在しない場合はスキップ
+          console.warn('invoice_payments table not found or error:', e);
+        }
       } catch (err) {
         console.error('Failed to fetch invoice:', err);
         setError(err instanceof Error ? err.message : 'データの取得に失敗しました');
@@ -392,6 +420,87 @@ export default function InvoiceViewPage({ params }: PageProps) {
           </div>
         );
       })()}
+
+      {/* 入金情報 */}
+      <div className="bg-white rounded-lg shadow-sm border p-6 mb-8">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+          <Calendar className="w-5 h-5" />
+          入金情報
+        </h2>
+        {(() => {
+          const totalPaid = payments.reduce((sum, p) => sum + (p.payment_amount || 0), 0);
+          const invoiceTotal = invoice.total || 0;
+          const remaining = invoiceTotal - totalPaid;
+          const paymentStatus = invoice.payment_status;
+
+          return (
+            <div className="space-y-4">
+              {/* 入金サマリー */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="text-center p-4 bg-gray-50 rounded-lg">
+                  <label className="text-sm font-medium text-gray-500">請求金額</label>
+                  <p className="text-xl font-bold text-gray-900">{formatAmount(invoiceTotal)}</p>
+                </div>
+                <div className="text-center p-4 bg-green-50 rounded-lg">
+                  <label className="text-sm font-medium text-green-600">入金済み</label>
+                  <p className="text-xl font-bold text-green-600">{formatAmount(totalPaid)}</p>
+                </div>
+                <div className="text-center p-4 bg-orange-50 rounded-lg">
+                  <label className="text-sm font-medium text-orange-600">残額</label>
+                  <p className="text-xl font-bold text-orange-600">{formatAmount(remaining)}</p>
+                </div>
+                <div className="text-center p-4 rounded-lg" style={{
+                  backgroundColor: paymentStatus === 'paid' ? '#dcfce7' : paymentStatus === 'partial' ? '#ffedd5' : '#fef9c3'
+                }}>
+                  <label className="text-sm font-medium text-gray-600">ステータス</label>
+                  <p className={`text-xl font-bold ${
+                    paymentStatus === 'paid' ? 'text-green-700' :
+                    paymentStatus === 'partial' ? 'text-orange-700' : 'text-yellow-700'
+                  }`}>
+                    {paymentStatus === 'paid' ? '入金済' :
+                     paymentStatus === 'partial' ? '一部入金' : '未入金'}
+                  </p>
+                </div>
+              </div>
+
+              {/* 入金履歴 */}
+              {payments.length > 0 ? (
+                <div className="mt-4">
+                  <h3 className="text-sm font-semibold text-gray-700 mb-2">入金履歴</h3>
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200 text-sm">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-4 py-2 text-left font-medium text-gray-500">入金日</th>
+                          <th className="px-4 py-2 text-right font-medium text-gray-500">入金額</th>
+                          <th className="px-4 py-2 text-left font-medium text-gray-500">入金方法</th>
+                          <th className="px-4 py-2 text-left font-medium text-gray-500">備考</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-200">
+                        {payments.map((payment, index) => (
+                          <tr key={payment.id} className="hover:bg-gray-50">
+                            <td className="px-4 py-2 whitespace-nowrap">{formatDate(payment.payment_date)}</td>
+                            <td className="px-4 py-2 whitespace-nowrap text-right font-medium text-green-600">
+                              {formatAmount(payment.payment_amount)}
+                            </td>
+                            <td className="px-4 py-2 whitespace-nowrap">{payment.payment_method || '-'}</td>
+                            <td className="px-4 py-2">{payment.notes || '-'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-4 text-gray-500">
+                  入金記録はありません
+                </div>
+              )}
+            </div>
+          );
+        })()}
+      </div>
 
       {/* 明細情報 */}
       <div className="bg-white rounded-lg shadow-sm border">
