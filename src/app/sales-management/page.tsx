@@ -593,43 +593,89 @@ const PaymentManagementTab = ({ invoices, summary, onUpdate, onPartialPayment, o
       {/* 選択した請求書の合計金額 - 右側固定表示（選択があるか入金金額入力がある場合表示） */}
       {(selectedIds.length > 0 || inputPaymentAmount) && (
         <div
-          className="fixed z-[9999] bg-white border-2 border-green-600 rounded-lg shadow-2xl p-4 min-w-[200px]"
-          style={{ right: '20px', top: '120px' }}
+          className="fixed z-[9999] bg-white border-2 border-green-600 rounded-lg shadow-2xl p-4 min-w-[220px] max-w-[280px]"
+          style={{ right: '20px', top: '100px', maxHeight: 'calc(100vh - 120px)', overflowY: 'auto' }}
         >
-          <div className="text-center space-y-3">
+          <div className="space-y-3">
             {/* 選択件数と合計 */}
-            <div className="bg-green-600 text-white rounded-lg p-3">
+            <div className="bg-green-600 text-white rounded-lg p-3 text-center">
               <div className="text-sm opacity-90">選択中</div>
               <div className="text-2xl font-bold">{selectedIds.length}件</div>
               <div className="text-lg font-bold mt-1">¥{selectedTotal.toLocaleString()}</div>
             </div>
 
-            {/* 入金金額入力 */}
-            <div>
-              <label className="text-sm text-gray-600 block mb-1">入金金額</label>
-              <input
-                type="text"
-                value={inputPaymentAmount}
-                onChange={(e) => {
-                  const value = e.target.value.replace(/[^\d]/g, '');
-                  if (value) {
-                    setInputPaymentAmount(parseInt(value, 10).toLocaleString());
-                  } else {
-                    setInputPaymentAmount('');
-                  }
-                  setAutoSelectMessage(null); // 入力変更時にメッセージクリア
-                }}
-                placeholder="金額を入力"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-right text-lg font-bold focus:ring-2 focus:ring-green-500 focus:border-green-500"
-              />
+            {/* 選択中の請求書ID一覧 */}
+            {selectedIds.length > 0 && (
+              <div className="bg-gray-50 rounded-lg p-2">
+                <div className="text-xs text-gray-500 mb-1">選択中の請求書:</div>
+                <div className="max-h-20 overflow-y-auto">
+                  {selectedIds.map(id => (
+                    <div key={id} className="text-xs text-gray-700 py-0.5 flex justify-between items-center">
+                      <span className="font-mono">{id}</span>
+                      <button
+                        onClick={() => setSelectedIds(prev => prev.filter(i => i !== id))}
+                        className="text-red-400 hover:text-red-600 ml-1"
+                        title="選択解除"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* 自動選択セクション */}
+            <div className="border-t pt-3">
+              <div className="text-sm font-medium text-gray-700 mb-2">🔍 自動選択</div>
+
+              {/* 対象請求月 */}
+              <div className="mb-2">
+                <label className="text-xs text-gray-600 block mb-1">対象請求月</label>
+                <select
+                  value={invoiceMonthFilter}
+                  onChange={(e) => setInvoiceMonthFilter(e.target.value)}
+                  className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-purple-500"
+                >
+                  <option value="all">全期間</option>
+                  {availableMonths.map(month => {
+                    const [year, m] = month.split('-');
+                    return (
+                      <option key={month} value={month}>{year}年{parseInt(m)}月</option>
+                    );
+                  })}
+                </select>
+              </div>
+
+              {/* 入金金額入力 */}
+              <div className="mb-2">
+                <label className="text-xs text-gray-600 block mb-1">入金金額</label>
+                <input
+                  type="text"
+                  value={inputPaymentAmount}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/[^\d]/g, '');
+                    if (value) {
+                      setInputPaymentAmount(parseInt(value, 10).toLocaleString());
+                    } else {
+                      setInputPaymentAmount('');
+                    }
+                    setAutoSelectMessage(null);
+                  }}
+                  placeholder="金額を入力"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-right text-lg font-bold focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                />
+              </div>
+
               {/* 自動選択ボタン */}
               <button
                 onClick={handleAutoSelect}
                 disabled={!inputPaymentAmount}
-                className="w-full mt-2 px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:bg-gray-400 text-sm font-medium transition-colors"
+                className="w-full px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:bg-gray-400 text-sm font-medium transition-colors"
               >
-                🔍 自動選択
+                この金額で検索
               </button>
+
               {/* 自動選択結果メッセージ */}
               {autoSelectMessage && (
                 <div className={`mt-2 text-xs text-center p-2 rounded ${
@@ -645,13 +691,13 @@ const PaymentManagementTab = ({ invoices, summary, onUpdate, onPartialPayment, o
             {/* 差額表示 */}
             {paymentDifference !== null && (
               <div className={`rounded-lg p-3 ${paymentDifference === 0 ? 'bg-green-100' : paymentDifference > 0 ? 'bg-blue-100' : 'bg-red-100'}`}>
-                <div className="text-sm text-gray-600">差額</div>
-                <div className={`text-xl font-bold ${paymentDifference === 0 ? 'text-green-600' : paymentDifference > 0 ? 'text-blue-600' : 'text-red-600'}`}>
+                <div className="text-sm text-gray-600 text-center">差額</div>
+                <div className={`text-xl font-bold text-center ${paymentDifference === 0 ? 'text-green-600' : paymentDifference > 0 ? 'text-blue-600' : 'text-red-600'}`}>
                   {paymentDifference === 0 ? '一致 ✓' : (paymentDifference > 0 ? '+' : '') + '¥' + paymentDifference.toLocaleString()}
                 </div>
                 {paymentDifference !== 0 && (
-                  <div className="text-xs text-gray-500 mt-1">
-                    {paymentDifference > 0 ? '入金が多い（お釣り/過払い）' : '入金が足りない'}
+                  <div className="text-xs text-gray-500 mt-1 text-center">
+                    {paymentDifference > 0 ? '入金が多い' : '入金が足りない'}
                   </div>
                 )}
               </div>
