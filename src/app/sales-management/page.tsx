@@ -46,6 +46,121 @@ const PaymentManagementTab = ({ invoices, summary, onUpdate, onPartialPayment, o
     return inputAmount - selectedTotal;
   }, [inputPaymentAmount, selectedTotal]);
 
+  // 自動選択の結果メッセージ
+  const [autoSelectMessage, setAutoSelectMessage] = useState<string | null>(null);
+
+  // 入金金額から請求書を自動選択する関数
+  const handleAutoSelect = () => {
+    const targetAmount = parseInt(inputPaymentAmount.replace(/,/g, ''), 10);
+    if (isNaN(targetAmount) || targetAmount <= 0) {
+      setAutoSelectMessage('入金金額を入力してください');
+      return;
+    }
+
+    // フィルター済みの未払い請求書を取得
+    const unpaidInvoices = invoices.filter(inv => {
+      // 未払いまたは一部入金のみ対象
+      if (inv.payment_status === 'paid') return false;
+
+      // 月フィルターが設定されている場合は適用
+      if (invoiceMonthFilter !== 'all' && inv.issue_date) {
+        const date = new Date(inv.issue_date);
+        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        if (monthKey !== invoiceMonthFilter) return false;
+      }
+
+      // 顧客名フィルター
+      if (customerNameFilter && inv.customer_name) {
+        if (!inv.customer_name.includes(customerNameFilter)) return false;
+      }
+
+      return true;
+    });
+
+    if (unpaidInvoices.length === 0) {
+      setAutoSelectMessage('対象の請求書がありません');
+      return;
+    }
+
+    // 金額を取得（残額または請求金額）
+    const getAmount = (inv: any) => inv.remaining_amount ?? inv.total_amount;
+
+    // 1. まず完全一致する単一請求書を探す
+    const exactMatch = unpaidInvoices.find(inv => getAmount(inv) === targetAmount);
+    if (exactMatch) {
+      setSelectedIds([exactMatch.invoice_id]);
+      setAutoSelectMessage(`完全一致: ${exactMatch.invoice_id}`);
+      return;
+    }
+
+    // 2. 組み合わせで完全一致を探す（最大10件まで）
+    // 金額でソート（大きい順）
+    const sortedInvoices = [...unpaidInvoices].sort((a, b) => getAmount(b) - getAmount(a));
+
+    // 組み合わせ検索（貪欲法 + 完全探索のハイブリッド）
+    let bestMatch: string[] = [];
+    let bestDiff = Infinity;
+
+    // 貪欲法で近似解を求める
+    const greedyMatch: string[] = [];
+    let greedySum = 0;
+    for (const inv of sortedInvoices) {
+      const amount = getAmount(inv);
+      if (greedySum + amount <= targetAmount) {
+        greedyMatch.push(inv.invoice_id);
+        greedySum += amount;
+      }
+      if (greedySum === targetAmount) break;
+    }
+    if (greedySum === targetAmount) {
+      setSelectedIds(greedyMatch);
+      setAutoSelectMessage(`完全一致: ${greedyMatch.length}件の組み合わせ`);
+      return;
+    }
+    if (Math.abs(targetAmount - greedySum) < bestDiff) {
+      bestDiff = Math.abs(targetAmount - greedySum);
+      bestMatch = greedyMatch;
+    }
+
+    // 小規模なら完全探索（最大15件まで）
+    if (sortedInvoices.length <= 15) {
+      const n = sortedInvoices.length;
+      const maxCombinations = Math.min(Math.pow(2, n), 32768); // 最大32768通り
+
+      for (let mask = 1; mask < maxCombinations; mask++) {
+        let sum = 0;
+        const ids: string[] = [];
+        for (let i = 0; i < n && i < 15; i++) {
+          if (mask & (1 << i)) {
+            sum += getAmount(sortedInvoices[i]);
+            ids.push(sortedInvoices[i].invoice_id);
+          }
+        }
+        const diff = Math.abs(targetAmount - sum);
+        if (diff < bestDiff) {
+          bestDiff = diff;
+          bestMatch = ids;
+        }
+        if (diff === 0) break; // 完全一致が見つかった
+      }
+    }
+
+    if (bestMatch.length > 0) {
+      setSelectedIds(bestMatch);
+      if (bestDiff === 0) {
+        setAutoSelectMessage(`完全一致: ${bestMatch.length}件の組み合わせ`);
+      } else {
+        const matchSum = bestMatch.reduce((sum, id) => {
+          const inv = invoices.find(i => i.invoice_id === id);
+          return sum + (inv ? getAmount(inv) : 0);
+        }, 0);
+        setAutoSelectMessage(`近似一致: ${bestMatch.length}件 (差額: ¥${(targetAmount - matchSum).toLocaleString()})`);
+      }
+    } else {
+      setAutoSelectMessage('一致する組み合わせが見つかりませんでした');
+    }
+  };
+
   // 絞り込みフィルター
   const [paymentStatusFilter, setPaymentStatusFilter] = useState<'all' | 'unpaid' | 'partial' | 'paid'>('unpaid');
   const [customerNameFilter, setCustomerNameFilter] = useState('');
@@ -475,8 +590,8 @@ const PaymentManagementTab = ({ invoices, summary, onUpdate, onPartialPayment, o
         )}
       </div>
 
-      {/* 選択した請求書の合計金額 - 右側固定表示 */}
-      {selectedIds.length > 0 && (
+      {/* 選択した請求書の合計金額 - 右側固定表示（選択があるか入金金額入力がある場合表示） */}
+      {(selectedIds.length > 0 || inputPaymentAmount) && (
         <div
           className="fixed z-[9999] bg-white border-2 border-green-600 rounded-lg shadow-2xl p-4 min-w-[200px]"
           style={{ right: '20px', top: '120px' }}
@@ -502,10 +617,29 @@ const PaymentManagementTab = ({ invoices, summary, onUpdate, onPartialPayment, o
                   } else {
                     setInputPaymentAmount('');
                   }
+                  setAutoSelectMessage(null); // 入力変更時にメッセージクリア
                 }}
                 placeholder="金額を入力"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-right text-lg font-bold focus:ring-2 focus:ring-green-500 focus:border-green-500"
               />
+              {/* 自動選択ボタン */}
+              <button
+                onClick={handleAutoSelect}
+                disabled={!inputPaymentAmount}
+                className="w-full mt-2 px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:bg-gray-400 text-sm font-medium transition-colors"
+              >
+                🔍 自動選択
+              </button>
+              {/* 自動選択結果メッセージ */}
+              {autoSelectMessage && (
+                <div className={`mt-2 text-xs text-center p-2 rounded ${
+                  autoSelectMessage.includes('完全一致') ? 'bg-green-100 text-green-700' :
+                  autoSelectMessage.includes('近似') ? 'bg-yellow-100 text-yellow-700' :
+                  'bg-gray-100 text-gray-600'
+                }`}>
+                  {autoSelectMessage}
+                </div>
+              )}
             </div>
 
             {/* 差額表示 */}
