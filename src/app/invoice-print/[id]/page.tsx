@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import { Printer, Download, ArrowLeft, Home, FileText, Layout, Grid, Briefcase, ChevronDown, ChevronUp, Settings } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { CustomerCategoryDB } from '@/lib/customer-categories';
@@ -86,7 +86,11 @@ interface CompanyInfo {
 export default function InvoicePrintPage() {
   const router = useRouter();
   const params = useParams();
+  const searchParams = useSearchParams();
   const invoiceId = params?.id as string;
+
+  // URLパラメータからバッチ/分割出力かどうかを判定
+  const isFromBatchExport = searchParams?.get('format') === 'pdf' || searchParams?.get('format') === 'print';
 
   // SSR時のエラーを回避するため、マウント後に処理開始
   const [isMounted, setIsMounted] = useState(false);
@@ -112,7 +116,21 @@ export default function InvoicePrintPage() {
   useEffect(() => {
     setIsMounted(true);
     setCustomerCategoryDB(new CustomerCategoryDB());
-  }, []);
+
+    // URLパラメータから書類タイプを設定（バッチ/分割出力時）
+    const typeParam = searchParams?.get('type');
+    if (typeParam) {
+      const typeMap: Record<string, DocumentType> = {
+        'invoice': 'invoice',
+        'delivery': 'delivery',
+        'copy': 'copy',
+        'estimate': 'estimate'
+      };
+      if (typeMap[typeParam]) {
+        setSelectedDocumentTypes([typeMap[typeParam]]);
+      }
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     if (!isMounted) return; // SSR時は処理しない
@@ -837,8 +855,8 @@ export default function InvoicePrintPage() {
         </div>
       )}
 
-      {/* 出力形式選択（修正伝票がある場合のみ表示） */}
-      {(invoice?.invoice_type === 'red' || invoice?.invoice_type === 'black' || relatedInvoices.length > 1) && (
+      {/* 出力形式選択（修正伝票がある場合のみ表示、バッチ出力時は非表示） */}
+      {!isFromBatchExport && (invoice?.invoice_type === 'red' || invoice?.invoice_type === 'black' || relatedInvoices.length > 1) && (
         <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
           <h4 className="text-md font-semibold mb-2 text-yellow-800">
             ⚠️ 修正履歴あり - 出力形式を選択
