@@ -839,12 +839,13 @@ const MonthlyClosingTab = ({ invoices, loading }: {
   // 出力項目の選択状態
   const [exportItems, setExportItems] = useState({
     csv: false,
+    list: false,  // 請求書一覧（印刷/PDF）
     batch: false,
     split: false
   });
 
   // 出力項目のトグル
-  const toggleExportItem = (item: 'csv' | 'batch' | 'split') => {
+  const toggleExportItem = (item: 'csv' | 'list' | 'batch' | 'split') => {
     setExportItems(prev => ({ ...prev, [item]: !prev[item] }));
   };
 
@@ -853,6 +854,9 @@ const MonthlyClosingTab = ({ invoices, loading }: {
     if (exportItems.csv) {
       handleExportCSV();
     }
+    if (exportItems.list) {
+      handleExportListPrint();
+    }
     if (exportItems.batch) {
       handleExportInvoicesCopy();
     }
@@ -860,14 +864,25 @@ const MonthlyClosingTab = ({ invoices, loading }: {
       handleExportInvoicesSplit();
     }
     // 選択をリセット
-    setExportItems({ csv: false, batch: false, split: false });
+    setExportItems({ csv: false, list: false, batch: false, split: false });
     setShowExportMenu(false);
   };
 
   // 何か選択されているか
-  const hasSelectedExport = exportItems.csv || exportItems.batch || exportItems.split;
-  // 控え系が選択されているか（形式選択を表示するため）
-  const hasInvoiceCopySelected = exportItems.batch || exportItems.split;
+  const hasSelectedExport = exportItems.csv || exportItems.list || exportItems.batch || exportItems.split;
+  // 印刷/PDF形式選択が必要か
+  const needsFormatSelection = exportItems.list || exportItems.batch || exportItems.split;
+
+  // 請求書一覧の印刷/PDF出力
+  const handleExportListPrint = () => {
+    if (monthlyData.invoices.length === 0) {
+      alert('出力する請求書がありません');
+      return;
+    }
+    const ids = monthlyData.invoices.map(inv => inv.invoice_id).join(',');
+    const url = `/invoice-print/list?ids=${encodeURIComponent(ids)}&month=${selectedMonth}&format=${outputFormat}`;
+    window.open(url, '_blank');
+  };
 
   // 請求書控え一括出力（新しいウィンドウで全請求書を表示）
   const handleExportInvoicesCopy = () => {
@@ -1007,6 +1022,8 @@ const MonthlyClosingTab = ({ invoices, loading }: {
                   <div className="px-4 py-3 border-b">
                     <div className="text-xs font-medium text-gray-600 mb-3">出力項目を選択</div>
                     <div className="space-y-2">
+                      {/* 請求書一覧 */}
+                      <div className="text-xs text-gray-500 font-medium mt-1 mb-1">売上一覧</div>
                       <label className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 cursor-pointer">
                         <input
                           type="checkbox"
@@ -1016,10 +1033,26 @@ const MonthlyClosingTab = ({ invoices, loading }: {
                         />
                         <FileText size={18} className="text-green-600" />
                         <div className="flex-1">
-                          <div className="text-sm font-medium">請求書一覧CSV</div>
-                          <div className="text-xs text-gray-500">当月の売上リスト</div>
+                          <div className="text-sm font-medium">CSV形式</div>
+                          <div className="text-xs text-gray-500">Excelで編集可能</div>
                         </div>
                       </label>
+                      <label className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={exportItems.list}
+                          onChange={() => toggleExportItem('list')}
+                          className="w-4 h-4 text-orange-600 rounded border-gray-300 focus:ring-orange-500"
+                        />
+                        <Printer size={18} className="text-orange-600" />
+                        <div className="flex-1">
+                          <div className="text-sm font-medium">印刷/PDF形式</div>
+                          <div className="text-xs text-gray-500">印刷用レイアウト</div>
+                        </div>
+                      </label>
+
+                      {/* 請求書控え */}
+                      <div className="text-xs text-gray-500 font-medium mt-3 mb-1">請求書控え</div>
                       <label className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 cursor-pointer">
                         <input
                           type="checkbox"
@@ -1029,8 +1062,8 @@ const MonthlyClosingTab = ({ invoices, loading }: {
                         />
                         <Printer size={18} className="text-blue-600" />
                         <div className="flex-1">
-                          <div className="text-sm font-medium">請求書控え一括</div>
-                          <div className="text-xs text-gray-500">全請求書をまとめて出力</div>
+                          <div className="text-sm font-medium">一括出力</div>
+                          <div className="text-xs text-gray-500">全請求書をまとめて</div>
                         </div>
                       </label>
                       <label className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 cursor-pointer">
@@ -1042,15 +1075,15 @@ const MonthlyClosingTab = ({ invoices, loading }: {
                         />
                         <Files size={18} className="text-purple-600" />
                         <div className="flex-1">
-                          <div className="text-sm font-medium">請求書控え分割</div>
-                          <div className="text-xs text-gray-500">請求書ごとに個別出力</div>
+                          <div className="text-sm font-medium">分割出力</div>
+                          <div className="text-xs text-gray-500">請求書ごとに個別</div>
                         </div>
                       </label>
                     </div>
                   </div>
 
-                  {/* 出力形式選択（控え系が選択されている場合のみ表示） */}
-                  {hasInvoiceCopySelected && (
+                  {/* 出力形式選択（印刷/PDF系が選択されている場合のみ表示） */}
+                  {needsFormatSelection && (
                     <div className="px-4 py-3 border-b bg-blue-50">
                       <div className="text-xs font-medium text-gray-600 mb-2">出力形式</div>
                       <div className="flex gap-2">
