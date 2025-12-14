@@ -41,7 +41,7 @@ const PaymentManagementTab = ({ invoices, summary, onUpdate, onPartialPayment, o
 
   // 差額を計算（入金金額 - 選択合計）
   const paymentDifference = useMemo(() => {
-    const inputAmount = parseInt(inputPaymentAmount.replace(/,/g, ''), 10);
+    const inputAmount = parseInt(inputPaymentAmount, 10);
     if (isNaN(inputAmount)) return null;
     return inputAmount - selectedTotal;
   }, [inputPaymentAmount, selectedTotal]);
@@ -51,7 +51,7 @@ const PaymentManagementTab = ({ invoices, summary, onUpdate, onPartialPayment, o
 
   // 入金金額から請求書を自動選択する関数
   const handleAutoSelect = () => {
-    const targetAmount = parseInt(inputPaymentAmount.replace(/,/g, ''), 10);
+    const targetAmount = parseInt(inputPaymentAmount, 10);
     if (isNaN(targetAmount) || targetAmount <= 0) {
       setAutoSelectMessage('入金金額を入力してください');
       return;
@@ -652,19 +652,23 @@ const PaymentManagementTab = ({ invoices, summary, onUpdate, onPartialPayment, o
                 <label className="text-xs text-gray-600 block mb-1">入金金額</label>
                 <input
                   type="text"
+                  inputMode="numeric"
                   value={inputPaymentAmount}
                   onChange={(e) => {
-                    const value = e.target.value.replace(/[^\d]/g, '');
-                    if (value) {
-                      setInputPaymentAmount(parseInt(value, 10).toLocaleString());
-                    } else {
-                      setInputPaymentAmount('');
-                    }
+                    // 数字以外を除去
+                    const rawValue = e.target.value.replace(/[^\d]/g, '');
+                    setInputPaymentAmount(rawValue);
                     setAutoSelectMessage(null);
                   }}
                   placeholder="金額を入力"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-right text-lg font-bold focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                 />
+                {/* フォーマット済み金額表示 */}
+                {inputPaymentAmount && (
+                  <div className="text-right text-sm text-gray-500 mt-1">
+                    ¥{parseInt(inputPaymentAmount, 10).toLocaleString()}
+                  </div>
+                )}
               </div>
 
               {/* 自動選択ボタン */}
