@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Users, Settings, Shield, CheckCircle, Clock, XCircle } from 'lucide-react'
+import { ArrowLeft, Users, Settings, Shield, CheckCircle, Clock, XCircle, Trash2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
 interface UserManagement {
@@ -70,6 +70,29 @@ export default function AdminSettingsPage() {
       setError(err instanceof Error ? err.message : 'データの取得に失敗しました')
     } finally {
       setLoading(false)
+    }
+  }
+
+  // ユーザー削除
+  const deleteUser = async (userId: string, userEmail: string) => {
+    if (!confirm(`${userEmail} を削除しますか？\nこの操作は取り消せません。`)) {
+      return
+    }
+
+    try {
+      const supabase = createClient()
+      const { error } = await supabase
+        .from('user_management')
+        .delete()
+        .eq('id', userId)
+
+      if (error) throw error
+
+      // データを再取得
+      await fetchData()
+    } catch (err) {
+      console.error('Error deleting user:', err)
+      alert('ユーザーの削除に失敗しました: ' + (err as Error).message)
     }
   }
 
@@ -294,38 +317,47 @@ export default function AdminSettingsPage() {
                         }
                       </td>
                       <td className="px-4 py-3">
-                        {user.status === 'pending' && (
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => updateUserStatus(user.id, 'approved')}
-                              className="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700"
-                            >
-                              承認
-                            </button>
+                        <div className="flex gap-2 items-center">
+                          {user.status === 'pending' && (
+                            <>
+                              <button
+                                onClick={() => updateUserStatus(user.id, 'approved')}
+                                className="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700"
+                              >
+                                承認
+                              </button>
+                              <button
+                                onClick={() => updateUserStatus(user.id, 'rejected')}
+                                className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700"
+                              >
+                                拒否
+                              </button>
+                            </>
+                          )}
+                          {user.status === 'approved' && (
                             <button
                               onClick={() => updateUserStatus(user.id, 'rejected')}
                               className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700"
                             >
-                              拒否
+                              無効化
                             </button>
-                          </div>
-                        )}
-                        {user.status === 'approved' && (
+                          )}
+                          {user.status === 'rejected' && (
+                            <button
+                              onClick={() => updateUserStatus(user.id, 'approved')}
+                              className="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700"
+                            >
+                              再承認
+                            </button>
+                          )}
                           <button
-                            onClick={() => updateUserStatus(user.id, 'rejected')}
-                            className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700"
+                            onClick={() => deleteUser(user.id, user.google_email)}
+                            className="p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded"
+                            title="ユーザーを削除"
                           >
-                            無効化
+                            <Trash2 className="w-4 h-4" />
                           </button>
-                        )}
-                        {user.status === 'rejected' && (
-                          <button
-                            onClick={() => updateUserStatus(user.id, 'approved')}
-                            className="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700"
-                          >
-                            再承認
-                          </button>
-                        )}
+                        </div>
                       </td>
                     </tr>
                   ))
