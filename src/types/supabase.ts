@@ -326,6 +326,7 @@ export type Database = {
         Row: {
           billing_date: string | null
           billing_month: string | null
+          closed_at: string | null
           created_at: string | null
           customer_category: string | null
           customer_name: string | null
@@ -352,6 +353,7 @@ export type Database = {
         Insert: {
           billing_date?: string | null
           billing_month?: string | null
+          closed_at?: string | null
           created_at?: string | null
           customer_category?: string | null
           customer_name?: string | null
@@ -378,6 +380,7 @@ export type Database = {
         Update: {
           billing_date?: string | null
           billing_month?: string | null
+          closed_at?: string | null
           created_at?: string | null
           customer_category?: string | null
           customer_name?: string | null

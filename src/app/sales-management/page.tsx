@@ -806,7 +806,7 @@ const MonthlyClosingTab = ({ invoices, loading }: {
   }, [invoices, selectedMonth]);
 
   // 月締め確定処理
-  const handleCloseMonth = () => {
+  const handleCloseMonth = async () => {
     if (closedMonths.includes(selectedMonth)) {
       alert('この月は既に締め済みです');
       return;
@@ -816,20 +816,70 @@ const MonthlyClosingTab = ({ invoices, loading }: {
         return;
       }
     }
-    const newClosedMonths = [...closedMonths, selectedMonth];
-    setClosedMonths(newClosedMonths);
-    localStorage.setItem('closedMonths', JSON.stringify(newClosedMonths));
-    alert(`${selectedMonth.replace('-', '年')}月 の締め処理が完了しました`);
+
+    try {
+      // DBのclosed_atを更新（該当月の全請求書）
+      const closedAt = new Date().toISOString();
+      const invoiceIds = monthlyData.invoices.map(inv => inv.invoice_id);
+
+      if (invoiceIds.length > 0) {
+        const { error } = await supabase
+          .from('invoices')
+          .update({ closed_at: closedAt })
+          .in('invoice_id', invoiceIds);
+
+        if (error) {
+          console.error('締め処理エラー:', error);
+          alert('締め処理に失敗しました: ' + error.message);
+          return;
+        }
+      }
+
+      // ローカルストレージにも保存（キャッシュとして）
+      const newClosedMonths = [...closedMonths, selectedMonth];
+      setClosedMonths(newClosedMonths);
+      localStorage.setItem('closedMonths', JSON.stringify(newClosedMonths));
+
+      alert(`${selectedMonth.replace('-', '年')}月 の締め処理が完了しました\n対象請求書: ${invoiceIds.length}件`);
+    } catch (err) {
+      console.error('締め処理エラー:', err);
+      alert('締め処理に失敗しました');
+    }
   };
 
   // 締め解除処理
-  const handleReopenMonth = () => {
-    if (!confirm(`${selectedMonth.replace('-', '年')}月 の締めを解除しますか？`)) {
+  const handleReopenMonth = async () => {
+    if (!confirm(`${selectedMonth.replace('-', '年')}月 の締めを解除しますか？\n※ この操作は経理処理に影響を与える可能性があります。`)) {
       return;
     }
-    const newClosedMonths = closedMonths.filter(m => m !== selectedMonth);
-    setClosedMonths(newClosedMonths);
-    localStorage.setItem('closedMonths', JSON.stringify(newClosedMonths));
+
+    try {
+      // DBのclosed_atをNULLに戻す（該当月の全請求書）
+      const invoiceIds = monthlyData.invoices.map(inv => inv.invoice_id);
+
+      if (invoiceIds.length > 0) {
+        const { error } = await supabase
+          .from('invoices')
+          .update({ closed_at: null })
+          .in('invoice_id', invoiceIds);
+
+        if (error) {
+          console.error('締め解除エラー:', error);
+          alert('締め解除に失敗しました: ' + error.message);
+          return;
+        }
+      }
+
+      // ローカルストレージも更新
+      const newClosedMonths = closedMonths.filter(m => m !== selectedMonth);
+      setClosedMonths(newClosedMonths);
+      localStorage.setItem('closedMonths', JSON.stringify(newClosedMonths));
+
+      alert(`${selectedMonth.replace('-', '年')}月 の締めを解除しました`);
+    } catch (err) {
+      console.error('締め解除エラー:', err);
+      alert('締め解除に失敗しました');
+    }
   };
 
   // 出力メニューの表示状態
