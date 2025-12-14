@@ -154,10 +154,16 @@ function BatchPrintContent() {
         <div className="text-center">
           <p className="text-red-600 mb-4">{error}</p>
           <button
-            onClick={() => window.history.back()}
+            onClick={() => {
+              if (window.history.length > 1) {
+                window.history.back();
+              } else {
+                window.close();
+              }
+            }}
             className="px-4 py-2 bg-gray-600 text-white rounded-lg"
           >
-            戻る
+            閉じる
           </button>
         </div>
       </div>
@@ -171,11 +177,18 @@ function BatchPrintContent() {
         <div className="container mx-auto flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button
-              onClick={() => window.history.back()}
+              onClick={() => {
+                // 履歴があれば戻る、なければタブを閉じる
+                if (window.history.length > 1) {
+                  window.history.back();
+                } else {
+                  window.close();
+                }
+              }}
               className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 flex items-center gap-2"
             >
               <ArrowLeft size={18} />
-              戻る
+              閉じる
             </button>
             <span className="text-gray-700">
               {getDocTypeLabel()} {isPdfMode ? 'PDF出力' : '一括印刷'} （{invoices.length}件）
