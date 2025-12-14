@@ -375,19 +375,19 @@ export default function AdminSettingsPage() {
           </div>
 
           <div className="space-y-4">
-            {settings.map((setting) => (
+            {settings
+              .filter(setting => setting.setting_key !== 'default_user_role')
+              .map((setting) => (
               <div key={setting.id} className="flex justify-between items-center py-3 border-b border-gray-200">
                 <div>
                   <h3 className="font-medium text-gray-900">
                     {setting.setting_key === 'google_oauth_enabled' && 'Google OAuth認証'}
                     {setting.setting_key === 'require_admin_approval' && '管理者承認必須'}
-                    {setting.setting_key === 'default_user_role' && 'デフォルトユーザー権限'}
-                    {!['google_oauth_enabled', 'require_admin_approval', 'default_user_role'].includes(setting.setting_key) && setting.setting_key}
+                    {!['google_oauth_enabled', 'require_admin_approval'].includes(setting.setting_key) && setting.setting_key}
                   </h3>
                   <p className="text-sm text-gray-600">
                     {setting.setting_key === 'google_oauth_enabled' && 'Google アカウントでのログインを有効にする'}
                     {setting.setting_key === 'require_admin_approval' && '新規ユーザーに管理者承認を必須とする'}
-                    {setting.setting_key === 'default_user_role' && '新規ユーザーのデフォルト権限レベル'}
                   </p>
                 </div>
                 <div>
