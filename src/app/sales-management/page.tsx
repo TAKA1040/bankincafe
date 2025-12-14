@@ -502,8 +502,8 @@ const PaymentManagementTab = ({ invoices, summary, onUpdate, onPartialPayment, o
                   </td>
                 </tr>
                 <tr className="hover:bg-gray-50 border-b">
-                  <td className="px-4 py-2 whitespace-nowrap text-gray-700 border-l">{invoice.issue_date ? new Date(invoice.issue_date).getMonth() + 1 : 'N/A'}月</td>
-                  <td className="px-4 py-2 whitespace-nowrap text-gray-700 border-l">{invoice.payment_date || '-'}</td>
+                  <td className="px-4 py-2 whitespace-nowrap text-gray-700 border-l">{invoice.billing_month || (invoice.issue_date ? new Date(invoice.issue_date).getMonth() + 1 + '月' : 'N/A')}</td>
+                  <td className="px-4 py-2 whitespace-nowrap text-gray-700 border-l">{invoice.last_payment_date || '-'}</td>
                   <td className="px-4 py-2 whitespace-nowrap text-gray-700 border-l">{invoice.registration_number || 'N/A'}</td>
                   <td className="px-4 py-2 whitespace-nowrap text-gray-700 border-l">{invoice.order_number || '-'}</td>
                   <td className="px-4 py-2 whitespace-nowrap text-right font-medium border-l">

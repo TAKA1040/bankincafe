@@ -17,6 +17,7 @@ export interface PaymentRecord {
 export interface SalesInvoice {
   invoice_id: string
   issue_date: string | null
+  billing_month: string | null
   customer_name: string | null
   subject_name: string | null
   subject: string | null
@@ -90,6 +91,7 @@ export function useSalesData() {
             invoice_id,
             issue_date,
             billing_date,
+            billing_month,
             customer_name,
             subject_name,
             subject,
@@ -125,6 +127,7 @@ export function useSalesData() {
                 invoice_id,
                 issue_date,
                 billing_date,
+                billing_month,
                 customer_name,
                 subject_name,
                 subject,
@@ -187,6 +190,7 @@ export function useSalesData() {
         return {
           invoice_id: invoice.invoice_id,
           issue_date: invoice.issue_date || invoice.billing_date,
+          billing_month: invoice.billing_month,
           customer_name: invoice.customer_name,
           subject_name: invoice.subject_name,
           subject: invoice.subject,
