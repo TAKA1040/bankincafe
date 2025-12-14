@@ -29,6 +29,13 @@ const PaymentManagementTab = ({ invoices, summary, onUpdate, onPartialPayment, o
   // 表示件数制限
   const [displayLimit, setDisplayLimit] = useState(50);
 
+  // 選択した請求書の合計金額を計算
+  const selectedTotal = useMemo(() => {
+    return invoices
+      .filter(inv => selectedIds.includes(inv.invoice_id))
+      .reduce((sum, inv) => sum + (inv.remaining_amount ?? inv.total_amount), 0);
+  }, [invoices, selectedIds]);
+
   // 絞り込みフィルター
   const [paymentStatusFilter, setPaymentStatusFilter] = useState<'all' | 'unpaid' | 'partial' | 'paid'>('unpaid');
   const [customerNameFilter, setCustomerNameFilter] = useState('');
@@ -278,6 +285,16 @@ const PaymentManagementTab = ({ invoices, summary, onUpdate, onPartialPayment, o
           <button onClick={handleUpdate} disabled={loading || selectedIds.length === 0} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 flex items-center gap-2" title="チェックした請求書を全額入金済みとして処理します">
             {loading ? '更新中...' : 'チェック分を入金済みにする'}
           </button>
+          {/* 選択した請求書の合計金額 */}
+          {selectedIds.length > 0 && (
+            <div className="flex items-center gap-2 px-4 py-2 bg-green-50 border border-green-200 rounded-lg">
+              <span className="text-sm text-green-700">選択中:</span>
+              <span className="text-lg font-bold text-green-700">{selectedIds.length}件</span>
+              <span className="text-green-400">|</span>
+              <span className="text-sm text-green-700">合計:</span>
+              <span className="text-lg font-bold text-green-700">¥{selectedTotal.toLocaleString()}</span>
+            </div>
+          )}
         </div>
         {/* 表示件数コントロール */}
         <div className="flex items-center gap-3 mt-3 pt-3 border-t">
