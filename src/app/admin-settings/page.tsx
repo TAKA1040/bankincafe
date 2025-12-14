@@ -73,44 +73,6 @@ export default function AdminSettingsPage() {
     }
   }
 
-  // 管理者追加機能は削除 - 環境変数NEXT_PUBLIC_ALLOWED_EMAILSで管理
-
-  // テスト用承認待ちユーザー追加
-  const addTestPendingUser = async () => {
-    const testEmails = [
-      'test.user1@gmail.com',
-      'test.user2@gmail.com', 
-      'pending.user@yahoo.com',
-      'sample.user@outlook.com'
-    ]
-    
-    const randomEmail = testEmails[Math.floor(Math.random() * testEmails.length)]
-    
-    try {
-      const supabase = createClient()
-      const { error } = await supabase
-        .from('user_management')
-        .insert({
-          google_email: randomEmail,
-          display_name: `テストユーザー${Math.floor(Math.random() * 100)}`,
-          status: 'pending',
-          requested_at: new Date().toISOString(),
-          last_login_at: new Date().toISOString()
-        })
-
-      if (error && error.code !== '23505') {
-        throw error
-      }
-
-      // データを再取得
-      await fetchData()
-      alert(`${randomEmail} をテスト承認待ちユーザーとして追加しました`)
-    } catch (err) {
-      console.error('Error adding test user:', err)
-      alert('テストユーザーの追加に失敗しました: ' + (err as Error).message)
-    }
-  }
-
   // ユーザーステータス更新
   const updateUserStatus = async (userId: string, newStatus: 'approved' | 'rejected') => {
     try {
@@ -257,21 +219,9 @@ export default function AdminSettingsPage() {
 
         {/* ユーザー管理セクション */}
         <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <Users className="w-6 h-6 text-blue-600" />
-              <h2 className="text-xl font-semibold text-gray-800">ユーザー管理</h2>
-            </div>
-            <div className="flex gap-2">
-              {/* 管理者追加は環境変数NEXT_PUBLIC_ALLOWED_EMAILSで管理されるため、UIでの追加機能は削除 */}
-              <button
-                onClick={() => addTestPendingUser()}
-                className="px-4 py-2 bg-yellow-600 text-white text-sm rounded-lg hover:bg-yellow-700 flex items-center gap-2"
-              >
-                <Clock className="w-4 h-4" />
-                テストユーザー追加
-              </button>
-            </div>
+          <div className="flex items-center gap-3 mb-6">
+            <Users className="w-6 h-6 text-blue-600" />
+            <h2 className="text-xl font-semibold text-gray-800">ユーザー管理</h2>
           </div>
 
           <div className="overflow-x-auto">
