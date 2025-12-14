@@ -1000,38 +1000,11 @@ export default function InvoicePrintPage() {
       `}</style>
 
       <div className="min-h-screen bg-gray-100">
-        {/* ツールバー（印刷時非表示） */}
+        {/* ツールバー（印刷時非表示）- 2段構成 */}
         <div className="no-print bg-white border-b sticky top-0 z-10">
-          <div className="max-w-4xl mx-auto px-4 py-3 flex justify-between items-center">
-            <div className="flex items-center gap-4">
-              <h1 className="text-base font-bold text-gray-800">請求書印刷</h1>
-              {/* 書類タイプ選択（複数選択可） */}
-              <div className="flex items-center gap-3">
-                <span className="text-sm text-gray-600">書類:</span>
-                {DOCUMENT_TYPE_ORDER.map((docType) => (
-                  <label key={docType} className="flex items-center gap-1 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={selectedDocumentTypes.includes(docType)}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setSelectedDocumentTypes(prev => [...prev, docType].sort((a, b) =>
-                            DOCUMENT_TYPE_ORDER.indexOf(a) - DOCUMENT_TYPE_ORDER.indexOf(b)
-                          ));
-                        } else {
-                          // 最低1つは選択必須
-                          if (selectedDocumentTypes.length > 1) {
-                            setSelectedDocumentTypes(prev => prev.filter(t => t !== docType));
-                          }
-                        }
-                      }}
-                      className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
-                    />
-                    <span className="text-sm text-gray-700">{DOCUMENT_TYPE_LABELS[docType]}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
+          {/* 1段目: タイトルとアクションボタン */}
+          <div className="max-w-4xl mx-auto px-4 py-2 flex justify-between items-center border-b border-gray-200">
+            <h1 className="text-base font-bold text-gray-800">請求書印刷</h1>
             <div className="flex gap-2">
               <button
                 onClick={handlePrint}
@@ -1061,6 +1034,36 @@ export default function InvoicePrintPage() {
                 <Home size={20} />
                 メニューへ
               </button>
+            </div>
+          </div>
+          {/* 2段目: 書類タイプ選択 */}
+          <div className="max-w-4xl mx-auto px-4 py-2">
+            <div className="flex items-center gap-4">
+              <span className="text-sm font-medium text-gray-700">出力する書類:</span>
+              <div className="flex items-center gap-4">
+                {DOCUMENT_TYPE_ORDER.map((docType) => (
+                  <label key={docType} className="flex items-center gap-1.5 cursor-pointer hover:bg-gray-50 px-2 py-1 rounded">
+                    <input
+                      type="checkbox"
+                      checked={selectedDocumentTypes.includes(docType)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedDocumentTypes(prev => [...prev, docType].sort((a, b) =>
+                            DOCUMENT_TYPE_ORDER.indexOf(a) - DOCUMENT_TYPE_ORDER.indexOf(b)
+                          ));
+                        } else {
+                          // 最低1つは選択必須
+                          if (selectedDocumentTypes.length > 1) {
+                            setSelectedDocumentTypes(prev => prev.filter(t => t !== docType));
+                          }
+                        }
+                      }}
+                      className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                    />
+                    <span className="text-sm text-gray-700">{DOCUMENT_TYPE_LABELS[docType]}</span>
+                  </label>
+                ))}
+              </div>
             </div>
           </div>
         </div>
