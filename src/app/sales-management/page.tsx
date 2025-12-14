@@ -29,12 +29,22 @@ const PaymentManagementTab = ({ invoices, summary, onUpdate, onPartialPayment, o
   // 表示件数制限
   const [displayLimit, setDisplayLimit] = useState(50);
 
+  // 入金金額入力
+  const [inputPaymentAmount, setInputPaymentAmount] = useState<string>('');
+
   // 選択した請求書の合計金額を計算
   const selectedTotal = useMemo(() => {
     return invoices
       .filter(inv => selectedIds.includes(inv.invoice_id))
       .reduce((sum, inv) => sum + (inv.remaining_amount ?? inv.total_amount), 0);
   }, [invoices, selectedIds]);
+
+  // 差額を計算（入金金額 - 選択合計）
+  const paymentDifference = useMemo(() => {
+    const inputAmount = parseInt(inputPaymentAmount.replace(/,/g, ''), 10);
+    if (isNaN(inputAmount)) return null;
+    return inputAmount - selectedTotal;
+  }, [inputPaymentAmount, selectedTotal]);
 
   // 絞り込みフィルター
   const [paymentStatusFilter, setPaymentStatusFilter] = useState<'all' | 'unpaid' | 'partial' | 'paid'>('unpaid');
@@ -468,16 +478,50 @@ const PaymentManagementTab = ({ invoices, summary, onUpdate, onPartialPayment, o
       {/* 選択した請求書の合計金額 - 右側固定表示 */}
       {selectedIds.length > 0 && (
         <div
-          className="fixed z-[9999] bg-green-600 text-white rounded-lg shadow-2xl p-4 min-w-[180px]"
+          className="fixed z-[9999] bg-white border-2 border-green-600 rounded-lg shadow-2xl p-4 min-w-[200px]"
           style={{ right: '20px', top: '120px' }}
         >
-          <div className="text-center">
-            <div className="text-sm opacity-90 mb-1">選択中</div>
-            <div className="text-3xl font-bold mb-2">{selectedIds.length}件</div>
-            <div className="border-t border-green-400 pt-2 mt-2">
-              <div className="text-sm opacity-90 mb-1">合計金額</div>
-              <div className="text-2xl font-bold">¥{selectedTotal.toLocaleString()}</div>
+          <div className="text-center space-y-3">
+            {/* 選択件数と合計 */}
+            <div className="bg-green-600 text-white rounded-lg p-3">
+              <div className="text-sm opacity-90">選択中</div>
+              <div className="text-2xl font-bold">{selectedIds.length}件</div>
+              <div className="text-lg font-bold mt-1">¥{selectedTotal.toLocaleString()}</div>
             </div>
+
+            {/* 入金金額入力 */}
+            <div>
+              <label className="text-sm text-gray-600 block mb-1">入金金額</label>
+              <input
+                type="text"
+                value={inputPaymentAmount}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/[^\d]/g, '');
+                  if (value) {
+                    setInputPaymentAmount(parseInt(value, 10).toLocaleString());
+                  } else {
+                    setInputPaymentAmount('');
+                  }
+                }}
+                placeholder="金額を入力"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-right text-lg font-bold focus:ring-2 focus:ring-green-500 focus:border-green-500"
+              />
+            </div>
+
+            {/* 差額表示 */}
+            {paymentDifference !== null && (
+              <div className={`rounded-lg p-3 ${paymentDifference === 0 ? 'bg-green-100' : paymentDifference > 0 ? 'bg-blue-100' : 'bg-red-100'}`}>
+                <div className="text-sm text-gray-600">差額</div>
+                <div className={`text-xl font-bold ${paymentDifference === 0 ? 'text-green-600' : paymentDifference > 0 ? 'text-blue-600' : 'text-red-600'}`}>
+                  {paymentDifference === 0 ? '一致 ✓' : (paymentDifference > 0 ? '+' : '') + '¥' + paymentDifference.toLocaleString()}
+                </div>
+                {paymentDifference !== 0 && (
+                  <div className="text-xs text-gray-500 mt-1">
+                    {paymentDifference > 0 ? '入金が多い（お釣り/過払い）' : '入金が足りない'}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       )}
