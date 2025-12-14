@@ -836,6 +836,38 @@ const MonthlyClosingTab = ({ invoices, loading }: {
   const [showExportMenu, setShowExportMenu] = useState(false);
   // 出力形式: 'print' or 'pdf'
   const [outputFormat, setOutputFormat] = useState<'print' | 'pdf'>('print');
+  // 出力項目の選択状態
+  const [exportItems, setExportItems] = useState({
+    csv: false,
+    batch: false,
+    split: false
+  });
+
+  // 出力項目のトグル
+  const toggleExportItem = (item: 'csv' | 'batch' | 'split') => {
+    setExportItems(prev => ({ ...prev, [item]: !prev[item] }));
+  };
+
+  // 出力実行
+  const handleExecuteExport = () => {
+    if (exportItems.csv) {
+      handleExportCSV();
+    }
+    if (exportItems.batch) {
+      handleExportInvoicesCopy();
+    }
+    if (exportItems.split) {
+      handleExportInvoicesSplit();
+    }
+    // 選択をリセット
+    setExportItems({ csv: false, batch: false, split: false });
+    setShowExportMenu(false);
+  };
+
+  // 何か選択されているか
+  const hasSelectedExport = exportItems.csv || exportItems.batch || exportItems.split;
+  // 控え系が選択されているか（形式選択を表示するため）
+  const hasInvoiceCopySelected = exportItems.batch || exportItems.split;
 
   // 請求書控え一括出力（新しいウィンドウで全請求書を表示）
   const handleExportInvoicesCopy = () => {
@@ -847,7 +879,6 @@ const MonthlyClosingTab = ({ invoices, loading }: {
     const ids = monthlyData.invoices.map(inv => inv.invoice_id).join(',');
     const url = `/invoice-print/batch?ids=${encodeURIComponent(ids)}&type=copy&format=${outputFormat}`;
     window.open(url, '_blank');
-    setShowExportMenu(false);
   };
 
   // 請求書控え分割出力（各請求書を個別ウィンドウで開く）
@@ -867,12 +898,10 @@ const MonthlyClosingTab = ({ invoices, loading }: {
         window.open(`/invoice-print/${inv.invoice_id}?type=copy&format=${outputFormat}`, '_blank');
       }, index * 300); // 300ms間隔で開く（ブラウザ負荷軽減）
     });
-    setShowExportMenu(false);
   };
 
   // CSV出力処理（請求書一覧）
   const handleExportCSV = () => {
-    setShowExportMenu(false);
     const [year, month] = selectedMonth.split('-');
     const headers = [
       '請求書ID', '請求日', '顧客名', '件名', '請求金額',
@@ -973,69 +1002,99 @@ const MonthlyClosingTab = ({ invoices, loading }: {
                 <ChevronDown size={16} className={`transition-transform ${showExportMenu ? 'rotate-180' : ''}`} />
               </button>
               {showExportMenu && (
-                <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border z-50">
-                  {/* 出力形式選択 */}
-                  <div className="px-4 py-3 border-b bg-gray-50 rounded-t-lg">
-                    <div className="text-xs font-medium text-gray-600 mb-2">出力形式</div>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => setOutputFormat('print')}
-                        className={`flex-1 px-3 py-1.5 text-sm rounded-lg flex items-center justify-center gap-1.5 transition-colors ${
-                          outputFormat === 'print'
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-100'
-                        }`}
-                      >
-                        <Printer size={14} />
-                        印刷
-                      </button>
-                      <button
-                        onClick={() => setOutputFormat('pdf')}
-                        className={`flex-1 px-3 py-1.5 text-sm rounded-lg flex items-center justify-center gap-1.5 transition-colors ${
-                          outputFormat === 'pdf'
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-100'
-                        }`}
-                      >
-                        <FileText size={14} />
-                        PDF
-                      </button>
+                <div className="absolute right-0 mt-2 w-72 bg-white rounded-lg shadow-lg border z-50">
+                  {/* 出力項目選択 */}
+                  <div className="px-4 py-3 border-b">
+                    <div className="text-xs font-medium text-gray-600 mb-3">出力項目を選択</div>
+                    <div className="space-y-2">
+                      <label className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={exportItems.csv}
+                          onChange={() => toggleExportItem('csv')}
+                          className="w-4 h-4 text-green-600 rounded border-gray-300 focus:ring-green-500"
+                        />
+                        <FileText size={18} className="text-green-600" />
+                        <div className="flex-1">
+                          <div className="text-sm font-medium">請求書一覧CSV</div>
+                          <div className="text-xs text-gray-500">当月の売上リスト</div>
+                        </div>
+                      </label>
+                      <label className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={exportItems.batch}
+                          onChange={() => toggleExportItem('batch')}
+                          className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                        />
+                        <Printer size={18} className="text-blue-600" />
+                        <div className="flex-1">
+                          <div className="text-sm font-medium">請求書控え一括</div>
+                          <div className="text-xs text-gray-500">全請求書をまとめて出力</div>
+                        </div>
+                      </label>
+                      <label className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={exportItems.split}
+                          onChange={() => toggleExportItem('split')}
+                          className="w-4 h-4 text-purple-600 rounded border-gray-300 focus:ring-purple-500"
+                        />
+                        <Files size={18} className="text-purple-600" />
+                        <div className="flex-1">
+                          <div className="text-sm font-medium">請求書控え分割</div>
+                          <div className="text-xs text-gray-500">請求書ごとに個別出力</div>
+                        </div>
+                      </label>
                     </div>
                   </div>
-                  <div className="py-1">
-                    <button
-                      onClick={handleExportCSV}
-                      className="w-full px-4 py-3 text-left text-sm hover:bg-gray-100 flex items-center gap-3"
-                    >
-                      <FileText size={18} className="text-green-600" />
-                      <div>
-                        <div className="font-medium">請求書一覧CSV</div>
-                        <div className="text-xs text-gray-500">当月の売上リスト</div>
+
+                  {/* 出力形式選択（控え系が選択されている場合のみ表示） */}
+                  {hasInvoiceCopySelected && (
+                    <div className="px-4 py-3 border-b bg-blue-50">
+                      <div className="text-xs font-medium text-gray-600 mb-2">出力形式</div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setOutputFormat('print')}
+                          className={`flex-1 px-3 py-1.5 text-sm rounded-lg flex items-center justify-center gap-1.5 transition-colors ${
+                            outputFormat === 'print'
+                              ? 'bg-blue-600 text-white'
+                              : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-100'
+                          }`}
+                        >
+                          <Printer size={14} />
+                          印刷
+                        </button>
+                        <button
+                          onClick={() => setOutputFormat('pdf')}
+                          className={`flex-1 px-3 py-1.5 text-sm rounded-lg flex items-center justify-center gap-1.5 transition-colors ${
+                            outputFormat === 'pdf'
+                              ? 'bg-blue-600 text-white'
+                              : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-100'
+                          }`}
+                        >
+                          <FileText size={14} />
+                          PDF
+                        </button>
                       </div>
-                    </button>
+                    </div>
+                  )}
+
+                  {/* フッター */}
+                  <div className="px-4 py-3 bg-gray-50 rounded-b-lg flex items-center justify-between">
+                    <span className="text-xs text-gray-500">対象: {monthlyData.invoiceCount}件</span>
                     <button
-                      onClick={handleExportInvoicesCopy}
-                      className="w-full px-4 py-3 text-left text-sm hover:bg-gray-100 flex items-center gap-3"
+                      onClick={handleExecuteExport}
+                      disabled={!hasSelectedExport}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 ${
+                        hasSelectedExport
+                          ? 'bg-green-600 text-white hover:bg-green-700'
+                          : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                      }`}
                     >
-                      <Printer size={18} className="text-blue-600" />
-                      <div>
-                        <div className="font-medium">請求書控え一括</div>
-                        <div className="text-xs text-gray-500">全請求書をまとめて{outputFormat === 'pdf' ? 'PDF保存' : '印刷'}</div>
-                      </div>
+                      <Download size={16} />
+                      出力実行
                     </button>
-                    <button
-                      onClick={handleExportInvoicesSplit}
-                      className="w-full px-4 py-3 text-left text-sm hover:bg-gray-100 flex items-center gap-3"
-                    >
-                      <Files size={18} className="text-purple-600" />
-                      <div>
-                        <div className="font-medium">請求書控え分割</div>
-                        <div className="text-xs text-gray-500">請求書ごとに個別{outputFormat === 'pdf' ? 'PDF' : '印刷'}</div>
-                      </div>
-                    </button>
-                  </div>
-                  <div className="border-t px-4 py-2 text-xs text-gray-500">
-                    対象: {monthlyData.invoiceCount}件
                   </div>
                 </div>
               )}
