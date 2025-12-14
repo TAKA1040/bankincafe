@@ -230,6 +230,7 @@ export default function AdminSettingsPage() {
               <button
                 onClick={() => router.push('/')}
                 className="p-2 hover:bg-gray-100 rounded-lg"
+                title="メニューに戻る"
               >
                 <ArrowLeft className="w-5 h-5" />
               </button>
@@ -238,7 +239,13 @@ export default function AdminSettingsPage() {
                 <p className="text-gray-600">ユーザー管理・システム設定</p>
               </div>
             </div>
-            <Shield className="w-8 h-8 text-blue-600" />
+            <button
+              onClick={() => router.push('/')}
+              className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 flex items-center gap-2"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              メニューに戻る
+            </button>
           </div>
         </header>
 
