@@ -750,8 +750,14 @@ export default function InvoicePrintPage() {
               >
                 ページを再読み込み
               </button>
-              <button 
-                onClick={() => router.back()} 
+              <button
+                onClick={() => {
+                  if (window.history.length > 1) {
+                    router.back();
+                  } else {
+                    window.close();
+                  }
+                }}
                 className="bg-gray-600 text-white px-6 py-1 rounded-lg hover:bg-gray-700 transition-colors"
               >
                 前のページに戻る
@@ -1039,7 +1045,13 @@ export default function InvoicePrintPage() {
                 PDF
               </button>
               <button
-                onClick={() => router.back()}
+                onClick={() => {
+                  if (window.history.length > 1) {
+                    router.back();
+                  } else {
+                    window.close();
+                  }
+                }}
                 className="px-4 py-1 bg-gray-600 text-white rounded-lg hover:bg-gray-700 flex items-center gap-2 font-medium"
               >
                 <ArrowLeft size={20} />
