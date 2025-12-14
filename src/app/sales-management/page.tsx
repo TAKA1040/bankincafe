@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect, Fragment } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, BarChart3, Download, TrendingUp, Calendar, JapaneseYen, RefreshCw, Banknote, Home, HelpCircle, Search, Filter, Undo2 } from 'lucide-react'
+import { ArrowLeft, BarChart3, Download, TrendingUp, Calendar, JapaneseYen, RefreshCw, Banknote, Home, HelpCircle, Search, Filter, Undo2, FileText, Printer, ChevronDown, Files } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 import { useSalesData } from '@/hooks/useSalesData'
 import { supabase } from '@/lib/supabase'
@@ -832,8 +832,45 @@ const MonthlyClosingTab = ({ invoices, loading }: {
     localStorage.setItem('closedMonths', JSON.stringify(newClosedMonths));
   };
 
-  // CSV出力処理
+  // 出力メニューの表示状態
+  const [showExportMenu, setShowExportMenu] = useState(false);
+
+  // 請求書控え一括出力（新しいウィンドウで全請求書を表示）
+  const handleExportInvoicesCopy = () => {
+    if (monthlyData.invoices.length === 0) {
+      alert('出力する請求書がありません');
+      return;
+    }
+    // 請求書IDをカンマ区切りで渡す
+    const ids = monthlyData.invoices.map(inv => inv.invoice_id).join(',');
+    const url = `/invoice-print/batch?ids=${encodeURIComponent(ids)}&type=copy`;
+    window.open(url, '_blank');
+    setShowExportMenu(false);
+  };
+
+  // 請求書控え分割出力（各請求書を個別ウィンドウで開く）
+  const handleExportInvoicesSplit = () => {
+    if (monthlyData.invoices.length === 0) {
+      alert('出力する請求書がありません');
+      return;
+    }
+    if (monthlyData.invoices.length > 20) {
+      if (!confirm(`${monthlyData.invoices.length}件の請求書を個別に開きます。\nブラウザのポップアップブロックを解除してください。\n続行しますか？`)) {
+        return;
+      }
+    }
+    // 各請求書を個別に開く
+    monthlyData.invoices.forEach((inv, index) => {
+      setTimeout(() => {
+        window.open(`/invoice-print/${inv.invoice_id}?type=copy`, '_blank');
+      }, index * 300); // 300ms間隔で開く（ブラウザ負荷軽減）
+    });
+    setShowExportMenu(false);
+  };
+
+  // CSV出力処理（請求書一覧）
   const handleExportCSV = () => {
+    setShowExportMenu(false);
     const [year, month] = selectedMonth.split('-');
     const headers = [
       '請求書ID', '請求日', '顧客名', '件名', '請求金額',
@@ -923,13 +960,56 @@ const MonthlyClosingTab = ({ invoices, loading }: {
             )}
           </div>
           <div className="flex gap-2">
-            <button
-              onClick={handleExportCSV}
-              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2 text-sm"
-            >
-              <Download size={18} />
-              CSV出力
-            </button>
+            {/* 出力メニュー */}
+            <div className="relative">
+              <button
+                onClick={() => setShowExportMenu(!showExportMenu)}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2 text-sm"
+              >
+                <Download size={18} />
+                出力
+                <ChevronDown size={16} className={`transition-transform ${showExportMenu ? 'rotate-180' : ''}`} />
+              </button>
+              {showExportMenu && (
+                <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border z-50">
+                  <div className="py-1">
+                    <button
+                      onClick={handleExportCSV}
+                      className="w-full px-4 py-3 text-left text-sm hover:bg-gray-100 flex items-center gap-3"
+                    >
+                      <FileText size={18} className="text-green-600" />
+                      <div>
+                        <div className="font-medium">請求書一覧CSV</div>
+                        <div className="text-xs text-gray-500">当月の売上リスト</div>
+                      </div>
+                    </button>
+                    <button
+                      onClick={handleExportInvoicesCopy}
+                      className="w-full px-4 py-3 text-left text-sm hover:bg-gray-100 flex items-center gap-3"
+                    >
+                      <Printer size={18} className="text-blue-600" />
+                      <div>
+                        <div className="font-medium">請求書控え一括</div>
+                        <div className="text-xs text-gray-500">全請求書をまとめて印刷</div>
+                      </div>
+                    </button>
+                    <button
+                      onClick={handleExportInvoicesSplit}
+                      className="w-full px-4 py-3 text-left text-sm hover:bg-gray-100 flex items-center gap-3"
+                    >
+                      <Files size={18} className="text-purple-600" />
+                      <div>
+                        <div className="font-medium">請求書控え分割</div>
+                        <div className="text-xs text-gray-500">請求書ごとに個別出力</div>
+                      </div>
+                    </button>
+                  </div>
+                  <div className="border-t px-4 py-2 text-xs text-gray-500">
+                    対象: {monthlyData.invoiceCount}件
+                  </div>
+                </div>
+              )}
+            </div>
             {isClosed ? (
               <button
                 onClick={handleReopenMonth}
