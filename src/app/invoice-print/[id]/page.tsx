@@ -49,12 +49,14 @@ interface InvoiceData {
 type OutputFormat = 'current' | 'positive' | 'negative' | 'corrected';
 
 // 書類タイプ
-type DocumentType = 'invoice' | 'delivery' | 'copy';
+type DocumentType = 'invoice' | 'delivery' | 'copy' | 'estimate';
 const DOCUMENT_TYPE_LABELS: Record<DocumentType, string> = {
   invoice: '請求書',
   delivery: '納品書',
-  copy: '請求書（控）'
+  copy: '請求書（控）',
+  estimate: '見積書'
 };
+const DOCUMENT_TYPE_ORDER: DocumentType[] = ['invoice', 'delivery', 'copy', 'estimate'];
 
 // 関連請求書用の簡易型（line_itemsなし）
 interface RelatedInvoice {
@@ -96,7 +98,7 @@ export default function InvoicePrintPage() {
   const [customerCategoryDB, setCustomerCategoryDB] = useState<CustomerCategoryDB | null>(null);
   const [selectedLayout, setSelectedLayout] = useState<'minimal' | 'geometric' | 'standard' | 'modern' | 'compact' | 'detailed' | 'basic' | 'traditional' | 'classic' | 'amountFirst'>('minimal');
   const [outputFormat, setOutputFormat] = useState<OutputFormat>('current');
-  const [documentType, setDocumentType] = useState<DocumentType>('invoice');
+  const [selectedDocumentTypes, setSelectedDocumentTypes] = useState<DocumentType[]>(['invoice']);
   const [relatedInvoices, setRelatedInvoices] = useState<RelatedInvoice[]>([]);
   const [isLayoutSelectorOpen, setIsLayoutSelectorOpen] = useState(false);
   const [settingsApplied, setSettingsApplied] = useState(false);
@@ -458,22 +460,26 @@ export default function InvoicePrintPage() {
     return amount.toLocaleString('ja-JP');
   };
 
-  // 書類タイトル取得
-  const getDocumentTitle = () => {
-    switch (documentType) {
+  // 書類タイトル取得（引数で書類タイプを指定）
+  const getDocumentTitle = (docType?: DocumentType) => {
+    const type = docType || selectedDocumentTypes[0] || 'invoice';
+    switch (type) {
       case 'invoice': return '請 求 書';
       case 'delivery': return '納 品 書';
       case 'copy': return '請求書（控）';
+      case 'estimate': return '見 積 書';
       default: return '請 求 書';
     }
   };
 
   // 御書類タイトル取得（御請求書など）
-  const getHonorificDocumentTitle = () => {
-    switch (documentType) {
+  const getHonorificDocumentTitle = (docType?: DocumentType) => {
+    const type = docType || selectedDocumentTypes[0] || 'invoice';
+    switch (type) {
       case 'invoice': return '御 請 求 書';
       case 'delivery': return '御 納 品 書';
       case 'copy': return '請求書（控）';
+      case 'estimate': return '御 見 積 書';
       default: return '御 請 求 書';
     }
   };
@@ -999,18 +1005,31 @@ export default function InvoicePrintPage() {
           <div className="max-w-4xl mx-auto px-4 py-3 flex justify-between items-center">
             <div className="flex items-center gap-4">
               <h1 className="text-base font-bold text-gray-800">請求書印刷</h1>
-              {/* 書類タイプ選択 */}
-              <div className="flex items-center gap-2">
+              {/* 書類タイプ選択（複数選択可） */}
+              <div className="flex items-center gap-3">
                 <span className="text-sm text-gray-600">書類:</span>
-                <select
-                  value={documentType}
-                  onChange={(e) => setDocumentType(e.target.value as DocumentType)}
-                  className="px-3 py-1 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="invoice">請求書</option>
-                  <option value="delivery">納品書</option>
-                  <option value="copy">請求書（控）</option>
-                </select>
+                {DOCUMENT_TYPE_ORDER.map((docType) => (
+                  <label key={docType} className="flex items-center gap-1 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={selectedDocumentTypes.includes(docType)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedDocumentTypes(prev => [...prev, docType].sort((a, b) =>
+                            DOCUMENT_TYPE_ORDER.indexOf(a) - DOCUMENT_TYPE_ORDER.indexOf(b)
+                          ));
+                        } else {
+                          // 最低1つは選択必須
+                          if (selectedDocumentTypes.length > 1) {
+                            setSelectedDocumentTypes(prev => prev.filter(t => t !== docType));
+                          }
+                        }
+                      }}
+                      className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                    />
+                    <span className="text-sm text-gray-700">{DOCUMENT_TYPE_LABELS[docType]}</span>
+                  </label>
+                ))}
               </div>
             </div>
             <div className="flex gap-2">
@@ -1051,26 +1070,28 @@ export default function InvoicePrintPage() {
           <TabSelector />
         </div>
 
-        {/* 請求書本体 - 全レイアウトA4ページ対応 */}
-        <div className="a4-print-container">
-          {selectedLayout === 'minimal' && <MinimalLayout />}
-          {selectedLayout === 'geometric' && <GeometricLayout />}
-          {selectedLayout === 'standard' && <StandardLayout />}
-          {selectedLayout === 'modern' && <ModernLayout />}
-          {selectedLayout === 'compact' && <CompactLayout />}
-          {selectedLayout === 'detailed' && <DetailedLayout />}
-          {selectedLayout === 'basic' && <BasicLayout />}
-          {selectedLayout === 'traditional' && <TraditionalLayout />}
-          {selectedLayout === 'classic' && <ClassicLayout />}
-          {/* 新デザイン */}
-          {selectedLayout === 'amountFirst' && <AmountFirstLayout />}
-        </div>
+        {/* 請求書本体 - 全レイアウトA4ページ対応（選択した書類タイプごとに連続印刷） */}
+        {selectedDocumentTypes.map((docType) => (
+          <div key={docType} className="a4-print-container">
+            {selectedLayout === 'minimal' && <MinimalLayout docType={docType} />}
+            {selectedLayout === 'geometric' && <GeometricLayout docType={docType} />}
+            {selectedLayout === 'standard' && <StandardLayout docType={docType} />}
+            {selectedLayout === 'modern' && <ModernLayout docType={docType} />}
+            {selectedLayout === 'compact' && <CompactLayout docType={docType} />}
+            {selectedLayout === 'detailed' && <DetailedLayout docType={docType} />}
+            {selectedLayout === 'basic' && <BasicLayout docType={docType} />}
+            {selectedLayout === 'traditional' && <TraditionalLayout docType={docType} />}
+            {selectedLayout === 'classic' && <ClassicLayout docType={docType} />}
+            {/* 新デザイン */}
+            {selectedLayout === 'amountFirst' && <AmountFirstLayout docType={docType} />}
+          </div>
+        ))}
       </div>
     </>
   );
 
   // 1. ミニマル・クリーンデザイン - 共通ひな型使用
-  function MinimalLayout() {
+  function MinimalLayout({ docType }: { docType: DocumentType }) {
     // ヘッダー項目の表示判定ヘルパー
     const showHeaderItem = (id: string) => activeHeaderItems.length === 0 || activeHeaderItems.includes(id);
 
@@ -1080,7 +1101,7 @@ export default function InvoicePrintPage() {
         {/* ヘッダー: 請求書番号・発行日を左、支払期限/合計を右で強調 */}
         <div className="flex justify-between items-start pb-2 border-b-2 border-gray-800" style={{ marginBottom: '10px' }}>
           <div>
-            <h1 className="invoice-title" style={{ fontSize: '16px', fontWeight: 700 }}>{getDocumentTitle()}</h1>
+            <h1 className="invoice-title" style={{ fontSize: '16px', fontWeight: 700 }}>{getDocumentTitle(docType)}</h1>
             {showHeaderItem('invoice_number') && (
               <div className="invoice-body" style={{ fontSize: '12px', marginTop: '4px' }}>
                 No. {invoice?.invoice_number}
@@ -1290,7 +1311,7 @@ export default function InvoicePrintPage() {
   }
 
   // 2. 標準レイアウト（適格請求書対応）- A4最適化・ページ分割対応
-  function StandardLayout() {
+  function StandardLayout({ docType }: { docType: DocumentType }) {
     const MAX_DISPLAY_PAGE1 = 18;
     const MAX_DISPLAY_OTHER = 30;
     const FOOTER_ROWS = 6;
@@ -1429,7 +1450,7 @@ export default function InvoicePrintPage() {
   }
 
   // 3. モダンレイアウト - A4最適化・青基調・ページ分割対応
-  function ModernLayout() {
+  function ModernLayout({ docType }: { docType: DocumentType }) {
     const MAX_DISPLAY_PAGE1 = 18;
     const MAX_DISPLAY_OTHER = 30;
     const FOOTER_ROWS = 6;
@@ -1439,7 +1460,7 @@ export default function InvoicePrintPage() {
         <div className="border-b-2 border-blue-600 pb-2 mb-2">
           <div className="flex justify-between items-start">
             <div>
-              <h1 className="text-base font-bold text-blue-600">{getDocumentTitle()}</h1>
+              <h1 className="text-base font-bold text-blue-600">{getDocumentTitle(docType)}</h1>
               <div className="text-[10px] text-gray-600">
                 No. {invoice?.invoice_number} | {formatDate(invoice?.issue_date || '')}
               </div>
@@ -1565,7 +1586,7 @@ export default function InvoicePrintPage() {
   }
 
   // 4. コンパクトレイアウト - A4最適化・最小余白・ページ分割対応
-  function CompactLayout() {
+  function CompactLayout({ docType }: { docType: DocumentType }) {
     const MAX_DISPLAY_PAGE1 = 18;
     const MAX_DISPLAY_OTHER = 30;
     const FOOTER_ROWS = 6;
@@ -1695,7 +1716,7 @@ export default function InvoicePrintPage() {
   }
 
   // 5. 詳細型レイアウト - A4最適化・情報量多め・ページ分割対応
-  function DetailedLayout() {
+  function DetailedLayout({ docType }: { docType: DocumentType }) {
     const MAX_DISPLAY_PAGE1 = 18;
     const MAX_DISPLAY_OTHER = 30;
     const FOOTER_ROWS = 6;
@@ -1704,7 +1725,7 @@ export default function InvoicePrintPage() {
       <>
         <div className="border-2 border-gray-800 mb-2">
           <div className="bg-gray-800 text-white px-2 py-1 text-center">
-            <h1 className="text-base font-bold">{getDocumentTitle()}</h1>
+            <h1 className="text-base font-bold">{getDocumentTitle(docType)}</h1>
           </div>
           <div className="p-2 grid grid-cols-3 gap-2">
             <div>
@@ -1836,7 +1857,7 @@ export default function InvoicePrintPage() {
   }
 
   // 6. ジオメトリックレイアウト - A4最適化・ダーク基調・ページ分割対応
-  function GeometricLayout() {
+  function GeometricLayout({ docType }: { docType: DocumentType }) {
     const MAX_DISPLAY_PAGE1 = 18;
     const MAX_DISPLAY_OTHER = 30;
     const FOOTER_ROWS = 6;
@@ -1847,7 +1868,7 @@ export default function InvoicePrintPage() {
         <div className="text-white p-2 mb-2 rounded" style={geometricStyle}>
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-base font-bold">{getDocumentTitle()}</h1>
+              <h1 className="text-base font-bold">{getDocumentTitle(docType)}</h1>
               <div className="text-[10px] opacity-90">
                 No. {invoice?.invoice_number} | {formatDate(invoice?.issue_date || '')}
               </div>
@@ -1973,7 +1994,7 @@ export default function InvoicePrintPage() {
   }
 
   // 7. 基本レイアウト - A4最適化・シンプル・ページ分割対応
-  function BasicLayout() {
+  function BasicLayout({ docType }: { docType: DocumentType }) {
     const MAX_DISPLAY_PAGE1 = 18;
     const MAX_DISPLAY_OTHER = 30;
     const FOOTER_ROWS = 6;
@@ -1981,7 +2002,7 @@ export default function InvoicePrintPage() {
     const renderHeader = () => (
       <>
         <div className="text-center mb-2 pb-2 border-b-2 border-gray-400">
-          <h1 className="text-base font-bold">{getDocumentTitle()}</h1>
+          <h1 className="text-base font-bold">{getDocumentTitle(docType)}</h1>
           <div className="text-[10px] text-gray-600">
             No. {invoice?.invoice_number} | {formatDate(invoice?.issue_date || '')}
           </div>
@@ -2102,7 +2123,7 @@ export default function InvoicePrintPage() {
   }
 
   // 10. 伝統的レイアウト - A4最適化・日本式
-  function TraditionalLayout() {
+  function TraditionalLayout({ docType }: { docType: DocumentType }) {
     const MAX_DISPLAY_PAGE1 = 18;
     const MAX_DISPLAY_OTHER = 30;
     const FOOTER_ROWS = 6;
@@ -2112,7 +2133,7 @@ export default function InvoicePrintPage() {
         {/* ヘッダー */}
         <div className="border-2 border-gray-900 mb-2">
           <div className="bg-gray-900 text-white px-2 py-1 text-center">
-            <h1 className="text-base font-bold">{getHonorificDocumentTitle()}</h1>
+            <h1 className="text-base font-bold">{getHonorificDocumentTitle(docType)}</h1>
           </div>
           <div className="p-2 grid grid-cols-2 gap-2">
             <div>
@@ -2242,7 +2263,7 @@ export default function InvoicePrintPage() {
   }
 
   // 11. クラシックレイアウト - 白黒のオーソドックスデザイン（A4対応）
-  function ClassicLayout() {
+  function ClassicLayout({ docType }: { docType: DocumentType }) {
     const MAX_DISPLAY_PAGE1 = 18;
     const MAX_DISPLAY_OTHER = 30;
     const FOOTER_ROWS = 6;
@@ -2253,7 +2274,7 @@ export default function InvoicePrintPage() {
         <div className="border-b-2 border-gray-800 pb-2 mb-2">
           <div className="flex justify-between items-start">
             <div>
-              <h1 className="text-base font-serif font-bold text-gray-900">{getDocumentTitle()}</h1>
+              <h1 className="text-base font-serif font-bold text-gray-900">{getDocumentTitle(docType)}</h1>
               <div className="text-[10px] text-gray-600">
                 No. {invoice?.invoice_number} | {formatDate(invoice?.issue_date || '')}
               </div>
@@ -2389,7 +2410,7 @@ export default function InvoicePrintPage() {
   // ========================================
 
   // 金額重視型 - 合計金額を最上部に大きく表示
-  function AmountFirstLayout() {
+  function AmountFirstLayout({ docType }: { docType: DocumentType }) {
     const MAX_DISPLAY_PAGE1 = 18;
     const MAX_DISPLAY_OTHER = 30;
     const FOOTER_ROWS = 6;
