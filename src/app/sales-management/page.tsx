@@ -490,7 +490,7 @@ const PaymentManagementTab = ({ invoices, summary, onUpdate, onPartialPayment, o
                   <td className="px-4 py-2 whitespace-nowrap font-medium text-gray-900 border-l">{invoice.invoice_id}</td>
                   <td className="px-4 py-2 whitespace-nowrap text-gray-900 border-l">{invoice.issue_date}</td>
                   <td className="px-4 py-2 whitespace-nowrap text-gray-900 border-l">{invoice.subject_name || invoice.subject}</td>
-                  <td className="px-4 py-2 whitespace-nowrap text-gray-900 border-l">{invoice.order_number || 'N/A'}</td>
+                  <td className="px-4 py-2 whitespace-nowrap text-gray-900 border-l">{invoice.purchase_order_number || '-'}</td>
                   <td className="px-4 py-2 whitespace-nowrap text-right text-gray-900 border-l">¥{invoice.total_amount.toLocaleString()}</td>
                   <td className="px-4 py-2 whitespace-nowrap text-center border-l">
                     <button
@@ -505,7 +505,7 @@ const PaymentManagementTab = ({ invoices, summary, onUpdate, onPartialPayment, o
                   <td className="px-4 py-2 whitespace-nowrap text-gray-700 border-l">{invoice.issue_date ? new Date(invoice.issue_date).getMonth() + 1 : 'N/A'}月</td>
                   <td className="px-4 py-2 whitespace-nowrap text-gray-700 border-l">{invoice.payment_date || '-'}</td>
                   <td className="px-4 py-2 whitespace-nowrap text-gray-700 border-l">{invoice.registration_number || 'N/A'}</td>
-                  <td className="px-4 py-2 whitespace-nowrap text-gray-700 border-l">{invoice.order_id || 'N/A'}</td>
+                  <td className="px-4 py-2 whitespace-nowrap text-gray-700 border-l">{invoice.order_number || '-'}</td>
                   <td className="px-4 py-2 whitespace-nowrap text-right font-medium border-l">
                     <span className={invoice.payment_status === 'partial' ? 'text-orange-600' : 'text-gray-700'}>
                       ¥{(invoice.remaining_amount ?? invoice.total_amount).toLocaleString()}

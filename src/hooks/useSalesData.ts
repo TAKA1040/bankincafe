@@ -26,8 +26,8 @@ export interface SalesInvoice {
   created_at: string | null
   // 実際のDBカラム
   registration_number: string | null
+  purchase_order_number: string | null
   order_number: string | null
-  order_id: string | null
   // 新スキーマ対応フィールド
   invoice_type: 'standard' | 'credit_note'
   original_invoice_id: string | null
@@ -98,8 +98,8 @@ export function useSalesData() {
             status,
             payment_status,
             registration_number,
+            purchase_order_number,
             order_number,
-            order_id,
             invoice_type,
             original_invoice_id,
             created_at,
@@ -133,8 +133,8 @@ export function useSalesData() {
                 status,
                 payment_status,
                 registration_number,
+                purchase_order_number,
                 order_number,
-                order_id,
                 created_at
               `)
               .neq('status', 'deleted')
@@ -196,8 +196,8 @@ export function useSalesData() {
           created_at: invoice.created_at,
           // 実際のDBカラム
           registration_number: invoice.registration_number,
+          purchase_order_number: invoice.purchase_order_number,
           order_number: invoice.order_number,
-          order_id: invoice.order_id,
           // 新スキーマフィールド
           invoice_type: (invoice.invoice_type as 'standard' | 'credit_note') || 'standard',
           original_invoice_id: invoice.original_invoice_id,
