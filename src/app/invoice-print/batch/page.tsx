@@ -34,6 +34,7 @@ function BatchPrintContent() {
   const searchParams = useSearchParams()
   const idsParam = searchParams?.get('ids') || null
   const docType = searchParams?.get('type') || 'copy'
+  const outputFormat = searchParams?.get('format') || 'print'
 
   const [invoices, setInvoices] = useState<InvoiceData[]>([])
   const [companyInfo, setCompanyInfo] = useState<CompanyInfo | null>(null)
@@ -50,6 +51,8 @@ function BatchPrintContent() {
       default: return '請求書（控）'
     }
   }
+
+  const isPdfMode = outputFormat === 'pdf'
 
   useEffect(() => {
     const fetchData = async () => {
@@ -175,15 +178,24 @@ function BatchPrintContent() {
               戻る
             </button>
             <span className="text-gray-700">
-              {getDocTypeLabel()} 一括印刷 （{invoices.length}件）
+              {getDocTypeLabel()} {isPdfMode ? 'PDF出力' : '一括印刷'} （{invoices.length}件）
             </span>
+            {isPdfMode && (
+              <span className="px-2 py-1 bg-orange-100 text-orange-700 text-xs rounded">
+                印刷ダイアログで「PDFとして保存」を選択
+              </span>
+            )}
           </div>
           <button
             onClick={handlePrint}
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+            className={`px-6 py-2 text-white rounded-lg flex items-center gap-2 ${
+              isPdfMode
+                ? 'bg-orange-600 hover:bg-orange-700'
+                : 'bg-blue-600 hover:bg-blue-700'
+            }`}
           >
             <Printer size={18} />
-            印刷
+            {isPdfMode ? 'PDF保存' : '印刷'}
           </button>
         </div>
       </div>
