@@ -1023,6 +1023,86 @@ const MonthlyClosingTab = ({ invoices, loading }: {
     setTimeout(() => URL.revokeObjectURL(url), 100);
   };
 
+  // 締め後修正の検出（赤黒伝票対象）
+  const [corrections, setCorrections] = useState<{
+    originalId: string;
+    revisedId: string;
+    originalAmount: number;
+    revisedAmount: number;
+    customerName: string;
+    subjectName: string;
+    originalDate: string;
+    revisedDate: string;
+  }[]>([]);
+  const [loadingCorrections, setLoadingCorrections] = useState(false);
+
+  // 締め後修正を検出
+  useEffect(() => {
+    const detectCorrections = async () => {
+      if (!selectedMonth) return;
+      setLoadingCorrections(true);
+
+      try {
+        // 当月の請求書で、枝番が2以上のものを取得
+        const [year, month] = selectedMonth.split('-').map(Number);
+        const revisedInvoices = monthlyData.invoices.filter(inv => {
+          const parts = inv.invoice_id.split('-');
+          if (parts.length !== 2) return false;
+          const suffix = parseInt(parts[1]);
+          return suffix >= 2;
+        });
+
+        const correctionList: typeof corrections = [];
+
+        for (const revised of revisedInvoices) {
+          const baseNumber = revised.invoice_id.split('-')[0];
+
+          // 元の請求書（-1）を取得
+          const { data: original } = await supabase
+            .from('invoices')
+            .select('*')
+            .eq('invoice_id', `${baseNumber}-1`)
+            .single();
+
+          // 元請求書が締め済みかつ修正済みなら赤黒対象
+          if (original && (original as any).closed_at && (original as any).status === 'revised') {
+            correctionList.push({
+              originalId: `${baseNumber}-1`,
+              revisedId: revised.invoice_id,
+              originalAmount: (original as any).total_amount || (original as any).total || 0,
+              revisedAmount: revised.total_amount,
+              customerName: revised.customer_name || '',
+              subjectName: revised.subject_name || revised.subject || '',
+              originalDate: (original as any).issue_date || '',
+              revisedDate: revised.issue_date || ''
+            });
+          }
+        }
+
+        setCorrections(correctionList);
+      } catch (err) {
+        console.error('修正検出エラー:', err);
+      } finally {
+        setLoadingCorrections(false);
+      }
+    };
+
+    detectCorrections();
+  }, [selectedMonth, monthlyData.invoices]);
+
+  // 赤黒伝票を出力
+  const handleExportRedBlackSlips = () => {
+    if (corrections.length === 0) {
+      alert('出力する修正伝票がありません');
+      return;
+    }
+
+    // 赤伝と黒伝のペアを含むURLパラメータを作成
+    const params = corrections.map(c => `${c.originalId},${c.revisedId}`).join('|');
+    const url = `/invoice-print/adjustment?pairs=${encodeURIComponent(params)}&month=${selectedMonth}&format=${outputFormat}`;
+    window.open(url, '_blank');
+  };
+
   const isClosed = closedMonths.includes(selectedMonth);
   const [yearStr, monthStr] = selectedMonth.split('-');
 
@@ -1280,6 +1360,90 @@ const MonthlyClosingTab = ({ invoices, loading }: {
           )}
         </div>
       </div>
+
+      {/* 赤黒伝票（締め後修正） */}
+      {corrections.length > 0 && (
+        <div className="bg-amber-50 border border-amber-200 rounded-lg shadow-sm p-4">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <span className="text-amber-600 text-lg">📋</span>
+              <h3 className="text-sm font-bold text-amber-800">
+                赤黒伝票（締め後修正）- {corrections.length}件
+              </h3>
+            </div>
+            <button
+              onClick={handleExportRedBlackSlips}
+              className="px-3 py-1.5 bg-amber-600 text-white rounded-lg hover:bg-amber-700 flex items-center gap-2 text-sm"
+            >
+              <Printer size={16} />
+              赤黒伝票を出力
+            </button>
+          </div>
+          <p className="text-xs text-amber-700 mb-3">
+            以下の請求書は、締め処理後に修正されています。月締め時に赤伝・黒伝として出力してください。
+          </p>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-amber-100">
+                <tr>
+                  <th className="px-3 py-2 text-left font-bold text-amber-800">元請求書</th>
+                  <th className="px-3 py-2 text-left font-bold text-amber-800">修正後</th>
+                  <th className="px-3 py-2 text-left font-bold text-amber-800">顧客名</th>
+                  <th className="px-3 py-2 text-right font-bold text-amber-800">元金額</th>
+                  <th className="px-3 py-2 text-right font-bold text-amber-800">修正後金額</th>
+                  <th className="px-3 py-2 text-right font-bold text-amber-800">差額</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-amber-200">
+                {corrections.map((c, idx) => {
+                  const diff = c.revisedAmount - c.originalAmount;
+                  return (
+                    <tr key={idx} className="hover:bg-amber-50">
+                      <td className="px-3 py-2 font-mono text-xs text-red-600">{c.originalId}</td>
+                      <td className="px-3 py-2 font-mono text-xs text-blue-600">{c.revisedId}</td>
+                      <td className="px-3 py-2 text-gray-900 truncate max-w-[150px]">{c.customerName}</td>
+                      <td className="px-3 py-2 text-right text-red-600">
+                        ¥{c.originalAmount.toLocaleString()}
+                      </td>
+                      <td className="px-3 py-2 text-right text-blue-600">
+                        ¥{c.revisedAmount.toLocaleString()}
+                      </td>
+                      <td className={`px-3 py-2 text-right font-bold ${diff >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {diff >= 0 ? '+' : ''}¥{diff.toLocaleString()}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+              <tfoot className="bg-amber-100">
+                <tr>
+                  <td colSpan={3} className="px-3 py-2 text-right font-bold text-amber-800">合計</td>
+                  <td className="px-3 py-2 text-right font-bold text-red-600">
+                    ¥{corrections.reduce((sum, c) => sum + c.originalAmount, 0).toLocaleString()}
+                  </td>
+                  <td className="px-3 py-2 text-right font-bold text-blue-600">
+                    ¥{corrections.reduce((sum, c) => sum + c.revisedAmount, 0).toLocaleString()}
+                  </td>
+                  <td className={`px-3 py-2 text-right font-bold ${
+                    corrections.reduce((sum, c) => sum + (c.revisedAmount - c.originalAmount), 0) >= 0
+                      ? 'text-green-600' : 'text-red-600'
+                  }`}>
+                    {corrections.reduce((sum, c) => sum + (c.revisedAmount - c.originalAmount), 0) >= 0 ? '+' : ''}
+                    ¥{corrections.reduce((sum, c) => sum + (c.revisedAmount - c.originalAmount), 0).toLocaleString()}
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+          <div className="mt-3 p-3 bg-amber-100 rounded-lg text-xs text-amber-800">
+            <p><strong>📝 赤伝・黒伝の処理:</strong></p>
+            <ul className="list-disc list-inside mt-1 space-y-1">
+              <li><span className="text-red-600 font-bold">赤伝</span>: 元の金額をマイナスで計上（取消処理）</li>
+              <li><span className="text-blue-600 font-bold">黒伝</span>: 修正後の金額をプラスで計上（正しい売上）</li>
+            </ul>
+          </div>
+        </div>
+      )}
 
       {/* 締め済み月一覧 */}
       {closedMonths.length > 0 && (
