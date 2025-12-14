@@ -7,7 +7,10 @@ import { Car } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
 // 認証不要なページのパス
-const PUBLIC_PATHS = ['/login', '/auth/pending', '/auth/callback', '/test-auth', '/test-db']
+const PUBLIC_PATHS = ['/login', '/auth/pending', '/auth/callback', '/auth/password', '/test-auth', '/test-db']
+
+// 追加パスワードの有効期限（1時間 = 3600000ミリ秒）
+const PASSWORD_TIMEOUT_MS = 60 * 60 * 1000
 
 interface AuthProviderProps {
   children: React.ReactNode
@@ -60,8 +63,43 @@ export default function AuthProviderSimple({ children }: AuthProviderProps) {
                   body: JSON.stringify({ email: userEmail })
                 })
                 const { isAdmin: isAdminUser } = await response.json();
-              
+
                 if (isAdminUser) {
+                  // 追加パスワードチェック（キャッシュセッション用）
+                  const supabaseForPassword = createClient()
+                  const { data: userDataCached } = await supabaseForPassword
+                    .from('user_management')
+                    .select('additional_password')
+                    .eq('google_email', userEmail)
+                    .single()
+
+                  if (userDataCached?.additional_password) {
+                    const passwordVerified = sessionStorage.getItem('additional_password_verified')
+                    let needsPasswordAuth = true
+
+                    if (passwordVerified) {
+                      try {
+                        const verifiedData = JSON.parse(passwordVerified)
+                        if (verifiedData.user_email === userEmail) {
+                          const elapsed = Date.now() - verifiedData.verified_at
+                          if (elapsed < PASSWORD_TIMEOUT_MS) {
+                            needsPasswordAuth = false
+                            // 操作時刻を更新
+                            verifiedData.verified_at = Date.now()
+                            sessionStorage.setItem('additional_password_verified', JSON.stringify(verifiedData))
+                          }
+                        }
+                      } catch (e) {
+                        sessionStorage.removeItem('additional_password_verified')
+                      }
+                    }
+
+                    if (needsPasswordAuth) {
+                      setIsLoading(false)
+                      router.push('/auth/password')
+                      return
+                    }
+                  }
 
                   setIsAuthenticated(true)
                   setIsAdmin(true)
@@ -197,36 +235,74 @@ export default function AuthProviderSimple({ children }: AuthProviderProps) {
           console.warn('⚠️ セッションキャッシュ保存エラー:', e)
         }
         
-        // 承認済みユーザーのログイン履歴も記録
+        // 承認済みユーザーのログイン履歴も記録 & 追加パスワードチェック
+        let additionalPassword: string | null = null
         try {
-          const { error: insertError } = await supabase
+          const { data: existingUser, error: fetchError } = await supabase
             .from('user_management')
-            .insert({
-              google_email: userEmail,
-              display_name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || '管理者',
-              status: 'approved',
-              requested_at: new Date().toISOString(),
-              approved_at: new Date().toISOString(),
-              last_login_at: new Date().toISOString()
-            })
-          
-          // 既存ユーザーの場合はlast_login_atを更新
-          if (insertError && insertError.code === '23505') {
+            .select('additional_password')
+            .eq('google_email', userEmail)
+            .single()
+
+          if (!fetchError && existingUser) {
+            additionalPassword = existingUser.additional_password
+            // 既存ユーザーの場合はlast_login_atを更新
             await supabase
               .from('user_management')
               .update({
                 last_login_at: new Date().toISOString(),
                 display_name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || '管理者',
-                status: 'approved' // 承認済みユーザーとして確実に設定
+                status: 'approved'
               })
               .eq('google_email', userEmail)
+          } else {
+            // 新規ユーザーの場合は挿入
+            await supabase
+              .from('user_management')
+              .insert({
+                google_email: userEmail,
+                display_name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || '管理者',
+                status: 'approved',
+                requested_at: new Date().toISOString(),
+                approved_at: new Date().toISOString(),
+                last_login_at: new Date().toISOString()
+              })
           }
-          
 
         } catch (dbError) {
           console.warn('⚠️ ログイン履歴記録でエラー:', dbError)
         }
-        
+
+        // 追加パスワードが設定されている場合、パスワード認証が必要
+        if (additionalPassword) {
+          const passwordVerified = sessionStorage.getItem('additional_password_verified')
+          let needsPasswordAuth = true
+
+          if (passwordVerified) {
+            try {
+              const verifiedData = JSON.parse(passwordVerified)
+              // 同じユーザーで、1時間以内の認証であれば有効
+              if (verifiedData.user_email === userEmail) {
+                const elapsed = Date.now() - verifiedData.verified_at
+                if (elapsed < PASSWORD_TIMEOUT_MS) {
+                  needsPasswordAuth = false
+                  // 操作時刻を更新（アクティビティ追跡）
+                  verifiedData.verified_at = Date.now()
+                  sessionStorage.setItem('additional_password_verified', JSON.stringify(verifiedData))
+                }
+              }
+            } catch (e) {
+              console.warn('⚠️ パスワード認証データ解析エラー:', e)
+              sessionStorage.removeItem('additional_password_verified')
+            }
+          }
+
+          if (needsPasswordAuth) {
+            router.push('/auth/password')
+            return
+          }
+        }
+
         setIsAuthenticated(true)
         setIsAdmin(isAdmin)
         

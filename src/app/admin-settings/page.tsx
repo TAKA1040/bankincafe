@@ -13,6 +13,7 @@ interface UserManagement {
   requested_at: string | null
   approved_at: string | null
   last_login_at: string | null
+  additional_password: string | null
 }
 
 interface AdminSettings {
@@ -161,6 +162,28 @@ export default function AdminSettingsPage() {
     }
   }
 
+  // 追加パスワード更新
+  const updateAdditionalPassword = async (userId: string, password: string) => {
+    try {
+      const supabase = createClient()
+      const { error } = await supabase
+        .from('user_management')
+        .update({
+          additional_password: password || null,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', userId)
+
+      if (error) throw error
+
+      // データを再取得
+      await fetchData()
+    } catch (err) {
+      console.error('Error updating additional password:', err)
+      alert('パスワードの更新に失敗しました: ' + (err as Error).message)
+    }
+  }
+
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'approved':
@@ -251,7 +274,7 @@ export default function AdminSettingsPage() {
                   <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">メールアドレス</th>
                   <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">表示名</th>
                   <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">ステータス</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">申請日時</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">追加パスワード</th>
                   <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">最終ログイン</th>
                   <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">操作</th>
                 </tr>
@@ -278,11 +301,37 @@ export default function AdminSettingsPage() {
                           </span>
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-600">
-                        {user.requested_at ? new Date(user.requested_at).toLocaleString('ja-JP') : '未設定'}
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="text"
+                            value={user.additional_password || ''}
+                            onChange={(e) => {
+                              // ローカル状態を即座に更新
+                              setUsers(prev => prev.map(u =>
+                                u.id === user.id ? { ...u, additional_password: e.target.value } : u
+                              ))
+                            }}
+                            onBlur={(e) => {
+                              // フォーカスが外れたときにDBを更新
+                              updateAdditionalPassword(user.id, e.target.value)
+                            }}
+                            placeholder="未設定"
+                            className="w-24 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          />
+                          {user.additional_password && (
+                            <button
+                              onClick={() => updateAdditionalPassword(user.id, '')}
+                              className="text-xs text-red-600 hover:text-red-800"
+                              title="パスワードをクリア"
+                            >
+                              ×
+                            </button>
+                          )}
+                        </div>
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-600">
-                        {user.last_login_at 
+                        {user.last_login_at
                           ? new Date(user.last_login_at).toLocaleString('ja-JP')
                           : '未ログイン'
                         }
