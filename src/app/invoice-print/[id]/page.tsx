@@ -48,6 +48,14 @@ interface InvoiceData {
 // 出力形式タイプ
 type OutputFormat = 'current' | 'positive' | 'negative' | 'corrected';
 
+// 書類タイプ
+type DocumentType = 'invoice' | 'delivery' | 'copy';
+const DOCUMENT_TYPE_LABELS: Record<DocumentType, string> = {
+  invoice: '請求書',
+  delivery: '納品書',
+  copy: '請求書控え'
+};
+
 // 関連請求書用の簡易型（line_itemsなし）
 interface RelatedInvoice {
   invoice_id: string;
@@ -88,6 +96,7 @@ export default function InvoicePrintPage() {
   const [customerCategoryDB, setCustomerCategoryDB] = useState<CustomerCategoryDB | null>(null);
   const [selectedLayout, setSelectedLayout] = useState<'minimal' | 'geometric' | 'standard' | 'modern' | 'compact' | 'detailed' | 'basic' | 'traditional' | 'classic' | 'amountFirst'>('minimal');
   const [outputFormat, setOutputFormat] = useState<OutputFormat>('current');
+  const [documentType, setDocumentType] = useState<DocumentType>('invoice');
   const [relatedInvoices, setRelatedInvoices] = useState<RelatedInvoice[]>([]);
   const [isLayoutSelectorOpen, setIsLayoutSelectorOpen] = useState(false);
   const [settingsApplied, setSettingsApplied] = useState(false);
@@ -447,6 +456,26 @@ export default function InvoicePrintPage() {
   // 金額フォーマット
   const formatAmount = (amount: number) => {
     return amount.toLocaleString('ja-JP');
+  };
+
+  // 書類タイトル取得
+  const getDocumentTitle = () => {
+    switch (documentType) {
+      case 'invoice': return '請 求 書';
+      case 'delivery': return '納 品 書';
+      case 'copy': return '請求書控え';
+      default: return '請 求 書';
+    }
+  };
+
+  // 御書類タイトル取得（御請求書など）
+  const getHonorificDocumentTitle = () => {
+    switch (documentType) {
+      case 'invoice': return '御 請 求 書';
+      case 'delivery': return '御 納 品 書';
+      case 'copy': return '請求書控え';
+      default: return '御 請 求 書';
+    }
   };
 
   // 明細をline_noでグループ化して印刷用に整形
@@ -968,8 +997,21 @@ export default function InvoicePrintPage() {
         {/* ツールバー（印刷時非表示） */}
         <div className="no-print bg-white border-b sticky top-0 z-10">
           <div className="max-w-4xl mx-auto px-4 py-3 flex justify-between items-center">
-            <div>
+            <div className="flex items-center gap-4">
               <h1 className="text-base font-bold text-gray-800">請求書印刷</h1>
+              {/* 書類タイプ選択 */}
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-600">書類:</span>
+                <select
+                  value={documentType}
+                  onChange={(e) => setDocumentType(e.target.value as DocumentType)}
+                  className="px-3 py-1 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="invoice">請求書</option>
+                  <option value="delivery">納品書</option>
+                  <option value="copy">請求書控え</option>
+                </select>
+              </div>
             </div>
             <div className="flex gap-2">
               <button
@@ -1038,7 +1080,7 @@ export default function InvoicePrintPage() {
         {/* ヘッダー: 請求書番号・発行日を左、支払期限/合計を右で強調 */}
         <div className="flex justify-between items-start pb-2 border-b-2 border-gray-800" style={{ marginBottom: '10px' }}>
           <div>
-            <h1 className="invoice-title" style={{ fontSize: '16px', fontWeight: 700 }}>請 求 書</h1>
+            <h1 className="invoice-title" style={{ fontSize: '16px', fontWeight: 700 }}>{getDocumentTitle()}</h1>
             {showHeaderItem('invoice_number') && (
               <div className="invoice-body" style={{ fontSize: '12px', marginTop: '4px' }}>
                 No. {invoice?.invoice_number}
@@ -1397,7 +1439,7 @@ export default function InvoicePrintPage() {
         <div className="border-b-2 border-blue-600 pb-2 mb-2">
           <div className="flex justify-between items-start">
             <div>
-              <h1 className="text-base font-bold text-blue-600">請 求 書</h1>
+              <h1 className="text-base font-bold text-blue-600">{getDocumentTitle()}</h1>
               <div className="text-[10px] text-gray-600">
                 No. {invoice?.invoice_number} | {formatDate(invoice?.issue_date || '')}
               </div>
@@ -1662,7 +1704,7 @@ export default function InvoicePrintPage() {
       <>
         <div className="border-2 border-gray-800 mb-2">
           <div className="bg-gray-800 text-white px-2 py-1 text-center">
-            <h1 className="text-base font-bold">請 求 書</h1>
+            <h1 className="text-base font-bold">{getDocumentTitle()}</h1>
           </div>
           <div className="p-2 grid grid-cols-3 gap-2">
             <div>
@@ -1805,7 +1847,7 @@ export default function InvoicePrintPage() {
         <div className="text-white p-2 mb-2 rounded" style={geometricStyle}>
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-base font-bold">請 求 書</h1>
+              <h1 className="text-base font-bold">{getDocumentTitle()}</h1>
               <div className="text-[10px] opacity-90">
                 No. {invoice?.invoice_number} | {formatDate(invoice?.issue_date || '')}
               </div>
@@ -1939,7 +1981,7 @@ export default function InvoicePrintPage() {
     const renderHeader = () => (
       <>
         <div className="text-center mb-2 pb-2 border-b-2 border-gray-400">
-          <h1 className="text-base font-bold">請 求 書</h1>
+          <h1 className="text-base font-bold">{getDocumentTitle()}</h1>
           <div className="text-[10px] text-gray-600">
             No. {invoice?.invoice_number} | {formatDate(invoice?.issue_date || '')}
           </div>
@@ -2070,7 +2112,7 @@ export default function InvoicePrintPage() {
         {/* ヘッダー */}
         <div className="border-2 border-gray-900 mb-2">
           <div className="bg-gray-900 text-white px-2 py-1 text-center">
-            <h1 className="text-base font-bold">御 請 求 書</h1>
+            <h1 className="text-base font-bold">{getHonorificDocumentTitle()}</h1>
           </div>
           <div className="p-2 grid grid-cols-2 gap-2">
             <div>
@@ -2211,7 +2253,7 @@ export default function InvoicePrintPage() {
         <div className="border-b-2 border-gray-800 pb-2 mb-2">
           <div className="flex justify-between items-start">
             <div>
-              <h1 className="text-base font-serif font-bold text-gray-900">請 求 書</h1>
+              <h1 className="text-base font-serif font-bold text-gray-900">{getDocumentTitle()}</h1>
               <div className="text-[10px] text-gray-600">
                 No. {invoice?.invoice_number} | {formatDate(invoice?.issue_date || '')}
               </div>
