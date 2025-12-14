@@ -467,13 +467,16 @@ const PaymentManagementTab = ({ invoices, summary, onUpdate, onPartialPayment, o
 
       {/* 選択した請求書の合計金額 - 右側固定表示 */}
       {selectedIds.length > 0 && (
-        <div className="fixed right-4 top-1/3 z-50 bg-green-600 text-white rounded-lg shadow-lg p-4 min-w-[160px]">
+        <div
+          className="fixed z-[9999] bg-green-600 text-white rounded-lg shadow-2xl p-4 min-w-[180px]"
+          style={{ right: '20px', top: '120px' }}
+        >
           <div className="text-center">
             <div className="text-sm opacity-90 mb-1">選択中</div>
-            <div className="text-2xl font-bold mb-2">{selectedIds.length}件</div>
+            <div className="text-3xl font-bold mb-2">{selectedIds.length}件</div>
             <div className="border-t border-green-400 pt-2 mt-2">
               <div className="text-sm opacity-90 mb-1">合計金額</div>
-              <div className="text-xl font-bold">¥{selectedTotal.toLocaleString()}</div>
+              <div className="text-2xl font-bold">¥{selectedTotal.toLocaleString()}</div>
             </div>
           </div>
         </div>
