@@ -727,7 +727,327 @@ const PaymentManagementTab = ({ invoices, summary, onUpdate, onPartialPayment, o
   );
 };
 
+// 月締め処理タブコンポーネント
+const MonthlyClosingTab = ({ invoices, loading }: {
+  invoices: any[],
+  loading: boolean
+}) => {
+  // 対象月の選択
+  const [selectedMonth, setSelectedMonth] = useState<string>(() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  });
 
+  // 締め済み月の管理（ローカルストレージ）
+  const [closedMonths, setClosedMonths] = useState<string[]>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('closedMonths');
+      return saved ? JSON.parse(saved) : [];
+    }
+    return [];
+  });
+
+  // 選択可能な月を生成
+  const availableMonths = useMemo(() => {
+    const months = new Set<string>();
+    invoices.forEach(inv => {
+      if (inv.issue_date) {
+        const date = new Date(inv.issue_date);
+        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        months.add(monthKey);
+      }
+    });
+    return Array.from(months).sort().reverse();
+  }, [invoices]);
+
+  // 選択月のデータ集計
+  const monthlyData = useMemo(() => {
+    const [year, month] = selectedMonth.split('-').map(Number);
+    const filtered = invoices.filter(inv => {
+      if (!inv.issue_date) return false;
+      const date = new Date(inv.issue_date);
+      return date.getFullYear() === year && date.getMonth() + 1 === month;
+    });
+
+    const totalAmount = filtered.reduce((sum, inv) => sum + inv.total_amount, 0);
+    const paidAmount = filtered
+      .filter(inv => inv.payment_status === 'paid')
+      .reduce((sum, inv) => sum + inv.total_amount, 0);
+    const partialPaidAmount = filtered
+      .filter(inv => inv.payment_status === 'partial')
+      .reduce((sum, inv) => sum + inv.total_paid, 0);
+    const unpaidAmount = totalAmount - paidAmount - partialPaidAmount;
+
+    // 顧客別集計
+    const customerMap = new Map<string, { count: number, amount: number }>();
+    filtered.forEach(inv => {
+      const name = inv.customer_name || '不明';
+      const existing = customerMap.get(name) || { count: 0, amount: 0 };
+      existing.count++;
+      existing.amount += inv.total_amount;
+      customerMap.set(name, existing);
+    });
+    const customerBreakdown = Array.from(customerMap.entries())
+      .map(([name, data]) => ({ name, ...data }))
+      .sort((a, b) => b.amount - a.amount);
+
+    return {
+      invoiceCount: filtered.length,
+      totalAmount,
+      paidAmount,
+      partialPaidAmount,
+      unpaidAmount,
+      paidCount: filtered.filter(inv => inv.payment_status === 'paid').length,
+      unpaidCount: filtered.filter(inv => inv.payment_status === 'unpaid').length,
+      partialCount: filtered.filter(inv => inv.payment_status === 'partial').length,
+      customerBreakdown,
+      invoices: filtered
+    };
+  }, [invoices, selectedMonth]);
+
+  // 月締め確定処理
+  const handleCloseMonth = () => {
+    if (closedMonths.includes(selectedMonth)) {
+      alert('この月は既に締め済みです');
+      return;
+    }
+    if (monthlyData.unpaidCount > 0) {
+      if (!confirm(`未入金の請求書が ${monthlyData.unpaidCount} 件あります。\n締め処理を続行しますか？`)) {
+        return;
+      }
+    }
+    const newClosedMonths = [...closedMonths, selectedMonth];
+    setClosedMonths(newClosedMonths);
+    localStorage.setItem('closedMonths', JSON.stringify(newClosedMonths));
+    alert(`${selectedMonth.replace('-', '年')}月 の締め処理が完了しました`);
+  };
+
+  // 締め解除処理
+  const handleReopenMonth = () => {
+    if (!confirm(`${selectedMonth.replace('-', '年')}月 の締めを解除しますか？`)) {
+      return;
+    }
+    const newClosedMonths = closedMonths.filter(m => m !== selectedMonth);
+    setClosedMonths(newClosedMonths);
+    localStorage.setItem('closedMonths', JSON.stringify(newClosedMonths));
+  };
+
+  // CSV出力処理
+  const handleExportCSV = () => {
+    const [year, month] = selectedMonth.split('-');
+    const headers = [
+      '請求書ID', '請求日', '顧客名', '件名', '請求金額',
+      '入金状況', '入金済額', '残額', '発注番号', 'オーダー番号'
+    ];
+
+    const rows = monthlyData.invoices.map(inv => [
+      inv.invoice_id,
+      inv.issue_date || '',
+      `"${(inv.customer_name || '').replace(/"/g, '""')}"`,
+      `"${(inv.subject_name || inv.subject || '').replace(/"/g, '""')}"`,
+      inv.total_amount,
+      inv.payment_status === 'paid' ? '入金済' : inv.payment_status === 'partial' ? '一部入金' : '未入金',
+      inv.total_paid || 0,
+      inv.remaining_amount ?? inv.total_amount,
+      inv.purchase_order_number || '',
+      inv.order_number || ''
+    ]);
+
+    // サマリー行を追加
+    const summaryRows = [
+      [],
+      ['【月次サマリー】'],
+      ['対象月', `${year}年${month}月`],
+      ['請求件数', monthlyData.invoiceCount],
+      ['請求金額合計', monthlyData.totalAmount],
+      ['入金済み金額', monthlyData.paidAmount + monthlyData.partialPaidAmount],
+      ['未入金金額', monthlyData.unpaidAmount],
+      ['入金済み件数', monthlyData.paidCount],
+      ['一部入金件数', monthlyData.partialCount],
+      ['未入金件数', monthlyData.unpaidCount],
+      [],
+      ['【顧客別内訳】'],
+      ['顧客名', '件数', '金額']
+    ];
+
+    monthlyData.customerBreakdown.forEach(c => {
+      summaryRows.push([`"${c.name}"`, c.count, c.amount]);
+    });
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.join(',')),
+      ...summaryRows.map(row => row.join(','))
+    ].join('\n');
+
+    const bom = '\uFEFF';
+    const blob = new Blob([bom + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `月次売上レポート_${year}年${month}月_${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 100);
+  };
+
+  const isClosed = closedMonths.includes(selectedMonth);
+  const [yearStr, monthStr] = selectedMonth.split('-');
+
+  return (
+    <div className="lg:col-span-2 space-y-6">
+      {/* 月選択と操作 */}
+      <div className="bg-white rounded-lg shadow-sm p-4">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <Calendar size={20} className="text-gray-600" />
+            <label className="text-sm font-medium text-gray-700">対象月:</label>
+            <select
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            >
+              {availableMonths.map(month => {
+                const [y, m] = month.split('-');
+                const closed = closedMonths.includes(month);
+                return (
+                  <option key={month} value={month}>
+                    {y}年{parseInt(m)}月 {closed ? '【締済】' : ''}
+                  </option>
+                );
+              })}
+            </select>
+            {isClosed && (
+              <span className="px-2 py-1 bg-green-100 text-green-700 text-xs font-medium rounded">
+                締め済み
+              </span>
+            )}
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={handleExportCSV}
+              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2 text-sm"
+            >
+              <Download size={18} />
+              CSV出力
+            </button>
+            {isClosed ? (
+              <button
+                onClick={handleReopenMonth}
+                className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 flex items-center gap-2 text-sm"
+              >
+                <Undo2 size={18} />
+                締め解除
+              </button>
+            ) : (
+              <button
+                onClick={handleCloseMonth}
+                disabled={loading}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 flex items-center gap-2 text-sm"
+              >
+                <Banknote size={18} />
+                月締め確定
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* 月次サマリー */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="bg-white rounded-lg shadow-sm p-4">
+          <h3 className="text-sm font-medium text-gray-600">請求件数</h3>
+          <p className="text-2xl font-bold text-blue-600">{monthlyData.invoiceCount}件</p>
+        </div>
+        <div className="bg-white rounded-lg shadow-sm p-4">
+          <h3 className="text-sm font-medium text-gray-600">請求金額合計</h3>
+          <p className="text-2xl font-bold text-blue-600">¥{monthlyData.totalAmount.toLocaleString()}</p>
+        </div>
+        <div className="bg-white rounded-lg shadow-sm p-4">
+          <h3 className="text-sm font-medium text-gray-600">入金済み</h3>
+          <p className="text-2xl font-bold text-green-600">¥{(monthlyData.paidAmount + monthlyData.partialPaidAmount).toLocaleString()}</p>
+          <p className="text-xs text-gray-500">{monthlyData.paidCount}件（完了）+ {monthlyData.partialCount}件（一部）</p>
+        </div>
+        <div className="bg-white rounded-lg shadow-sm p-4">
+          <h3 className="text-sm font-medium text-gray-600">未入金</h3>
+          <p className="text-2xl font-bold text-orange-600">¥{monthlyData.unpaidAmount.toLocaleString()}</p>
+          <p className="text-xs text-gray-500">{monthlyData.unpaidCount}件</p>
+        </div>
+      </div>
+
+      {/* 入金状況バー */}
+      <div className="bg-white rounded-lg shadow-sm p-4">
+        <h3 className="text-sm font-medium text-gray-700 mb-2">入金進捗</h3>
+        <div className="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
+          {monthlyData.totalAmount > 0 && (
+            <>
+              <div
+                className="h-full bg-green-500 float-left"
+                style={{ width: `${(monthlyData.paidAmount / monthlyData.totalAmount) * 100}%` }}
+              />
+              <div
+                className="h-full bg-yellow-500 float-left"
+                style={{ width: `${(monthlyData.partialPaidAmount / monthlyData.totalAmount) * 100}%` }}
+              />
+            </>
+          )}
+        </div>
+        <div className="flex justify-between text-xs text-gray-500 mt-1">
+          <span>入金済: {monthlyData.totalAmount > 0 ? Math.round(((monthlyData.paidAmount + monthlyData.partialPaidAmount) / monthlyData.totalAmount) * 100) : 0}%</span>
+          <span>未入金: {monthlyData.totalAmount > 0 ? Math.round((monthlyData.unpaidAmount / monthlyData.totalAmount) * 100) : 0}%</span>
+        </div>
+      </div>
+
+      {/* 顧客別内訳 */}
+      <div className="bg-white rounded-lg shadow-sm p-4">
+        <h3 className="text-sm font-medium text-gray-700 mb-3">顧客別内訳（{yearStr}年{parseInt(monthStr)}月）</h3>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-4 py-2 text-left font-bold text-gray-700">顧客名</th>
+                <th className="px-4 py-2 text-right font-bold text-gray-700">件数</th>
+                <th className="px-4 py-2 text-right font-bold text-gray-700">金額</th>
+                <th className="px-4 py-2 text-right font-bold text-gray-700">構成比</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y">
+              {monthlyData.customerBreakdown.slice(0, 10).map((customer, idx) => (
+                <tr key={customer.name} className="hover:bg-gray-50">
+                  <td className="px-4 py-2 text-gray-900">{customer.name}</td>
+                  <td className="px-4 py-2 text-right text-gray-900">{customer.count}件</td>
+                  <td className="px-4 py-2 text-right text-gray-900">¥{customer.amount.toLocaleString()}</td>
+                  <td className="px-4 py-2 text-right text-gray-900">
+                    {monthlyData.totalAmount > 0 ? ((customer.amount / monthlyData.totalAmount) * 100).toFixed(1) : 0}%
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {monthlyData.customerBreakdown.length > 10 && (
+            <p className="text-xs text-gray-500 text-center mt-2">他 {monthlyData.customerBreakdown.length - 10} 社</p>
+          )}
+        </div>
+      </div>
+
+      {/* 締め済み月一覧 */}
+      {closedMonths.length > 0 && (
+        <div className="bg-white rounded-lg shadow-sm p-4">
+          <h3 className="text-sm font-medium text-gray-700 mb-3">締め済み月一覧</h3>
+          <div className="flex flex-wrap gap-2">
+            {closedMonths.sort().reverse().map(month => {
+              const [y, m] = month.split('-');
+              return (
+                <span key={month} className="px-3 py-1 bg-green-100 text-green-700 text-sm rounded-full">
+                  {y}年{parseInt(m)}月
+                </span>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 import { CustomerCategory, CustomerCategoryDB } from '@/lib/customer-categories'
 
@@ -752,7 +1072,7 @@ export default function SalesManagementPage() {
   } = useSalesData()
   
   const [selectedYear, setSelectedYear] = useState<number | undefined>(new Date().getFullYear())
-  const [viewMode, setViewMode] = useState<'monthly' | 'customer' | 'payment'>('monthly')
+  const [viewMode, setViewMode] = useState<'monthly' | 'customer' | 'payment' | 'closing'>('monthly')
   const [categories, setCategories] = useState<CustomerCategory[]>([])
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
 
@@ -925,6 +1245,16 @@ export default function SalesManagementPage() {
                 >
                   入金管理
                 </button>
+                <button
+                  onClick={() => setViewMode('closing')}
+                  className={`px-3 py-1 rounded text-sm ${
+                    viewMode === 'closing'
+                      ? 'bg-white text-blue-600 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-800'
+                  }`}
+                >
+                  月締め処理
+                </button>
               </div>
             </div>
           </div>
@@ -1052,6 +1382,14 @@ export default function SalesManagementPage() {
               selectedCategory={selectedCategory}
               onCategoryChange={setSelectedCategory}
               router={router}
+            />
+          )}
+
+          {/* 月締め処理タブ */}
+          {viewMode === 'closing' && (
+            <MonthlyClosingTab
+              invoices={invoices}
+              loading={loading}
             />
           )}
 
