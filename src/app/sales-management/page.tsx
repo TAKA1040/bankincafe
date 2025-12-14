@@ -952,17 +952,10 @@ const MonthlyClosingTab = ({ invoices, loading }: {
       alert('出力する請求書がありません');
       return;
     }
-    if (monthlyData.invoices.length > 20) {
-      if (!confirm(`${monthlyData.invoices.length}件の請求書を個別に開きます。\nブラウザのポップアップブロックを解除してください。\n続行しますか？`)) {
-        return;
-      }
-    }
-    // 各請求書を個別に開く
-    monthlyData.invoices.forEach((inv, index) => {
-      setTimeout(() => {
-        window.open(`/invoice-print/${inv.invoice_id}?type=copy&format=${outputFormat}`, '_blank');
-      }, index * 300); // 300ms間隔で開く（ブラウザ負荷軽減）
-    });
+    // ZIPファイルとしてまとめて出力
+    const ids = monthlyData.invoices.map(inv => inv.invoice_id).join(',');
+    const url = `/invoice-print/zip-export?ids=${encodeURIComponent(ids)}&type=copy&month=${selectedMonth}`;
+    window.open(url, '_blank');
   };
 
   // CSV出力処理（請求書一覧）
