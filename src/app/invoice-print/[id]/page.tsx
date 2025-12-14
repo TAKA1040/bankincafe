@@ -53,7 +53,7 @@ type DocumentType = 'invoice' | 'delivery' | 'copy';
 const DOCUMENT_TYPE_LABELS: Record<DocumentType, string> = {
   invoice: '請求書',
   delivery: '納品書',
-  copy: '請求書控え'
+  copy: '請求書（控）'
 };
 
 // 関連請求書用の簡易型（line_itemsなし）
@@ -463,7 +463,7 @@ export default function InvoicePrintPage() {
     switch (documentType) {
       case 'invoice': return '請 求 書';
       case 'delivery': return '納 品 書';
-      case 'copy': return '請求書控え';
+      case 'copy': return '請求書（控）';
       default: return '請 求 書';
     }
   };
@@ -473,7 +473,7 @@ export default function InvoicePrintPage() {
     switch (documentType) {
       case 'invoice': return '御 請 求 書';
       case 'delivery': return '御 納 品 書';
-      case 'copy': return '請求書控え';
+      case 'copy': return '請求書（控）';
       default: return '御 請 求 書';
     }
   };
@@ -1009,7 +1009,7 @@ export default function InvoicePrintPage() {
                 >
                   <option value="invoice">請求書</option>
                   <option value="delivery">納品書</option>
-                  <option value="copy">請求書控え</option>
+                  <option value="copy">請求書（控）</option>
                 </select>
               </div>
             </div>
