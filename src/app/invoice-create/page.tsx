@@ -578,6 +578,10 @@ function InvoiceCreateContent() {
   // 元の請求書情報（修正・赤伝用）
   const [originalInvoice, setOriginalInvoice] = useState<any>(null)
 
+  // 締め済み請求書の編集フラグ（ガイダンス表示用）
+  const [isClosedMonthEdit, setIsClosedMonthEdit] = useState(false)
+  const [closedMonthInfo, setClosedMonthInfo] = useState<string>('')
+
   const [db, setDb] = useState<WorkHistoryDB | null>(null)
   const [categoryDb, setCategoryDb] = useState<CustomerCategoryDB | null>(null)
   const [subjectDb, setSubjectDb] = useState<SubjectMasterDB | null>(null)
@@ -1209,12 +1213,17 @@ function InvoiceCreateContent() {
           if (invoiceError) throw invoiceError
           if (!invoiceData) throw new Error('請求書が見つかりません')
 
-          // 月〆後かつ修正モードでない場合はリダイレクト
-          // 月〆前であれば、ステータスに関係なく編集可能（枝番+1で新規作成）
-          if (!isRevisionMode && (invoiceData as any).closed_at) {
-            alert('この請求書は月〆処理済みです。修正を行う場合は、請求書詳細画面から「修正」ボタンを押してください。')
-            router.push(`/invoice-view/${editInvoiceId}`)
-            return
+          // 月〆後の編集の場合はガイダンスフラグを設定
+          // 編集自体は許可し、保存時に枝番+1で新規作成される
+          if ((invoiceData as any).closed_at) {
+            setIsClosedMonthEdit(true)
+            // 締め月の情報を取得
+            const closedAt = new Date((invoiceData as any).closed_at)
+            const billingMonth = invoiceData.billing_month || ''
+            const monthDisplay = billingMonth
+              ? `${billingMonth.slice(0, 4)}年${parseInt(billingMonth.slice(5))}月`
+              : `${closedAt.getFullYear()}年${closedAt.getMonth() + 1}月`
+            setClosedMonthInfo(monthDisplay)
           }
 
           // 修正モード用に元の請求書情報を保存
@@ -2448,6 +2457,27 @@ function InvoiceCreateContent() {
             </div>
           </div>
         </header>
+
+        {/* 締め済み請求書編集時のガイダンス */}
+        {isClosedMonthEdit && (
+          <div className="bg-amber-50 border border-amber-300 rounded-lg p-4 mb-6">
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0 text-amber-600 text-xl">⚠️</div>
+              <div>
+                <h3 className="text-amber-800 font-bold mb-1">
+                  締め処理済みデータの編集
+                </h3>
+                <p className="text-amber-700 text-sm">
+                  この請求書は <strong>{closedMonthInfo}</strong> の締め処理が完了しています。
+                </p>
+                <p className="text-amber-700 text-sm mt-1">
+                  修正を保存すると、月締め時に<strong>赤伝・黒伝</strong>として処理されます。
+                  （元の請求書データは修正前の状態で保持されます）
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* メインフォーム */}
