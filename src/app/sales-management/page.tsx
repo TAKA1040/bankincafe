@@ -32,6 +32,9 @@ const PaymentManagementTab = ({ invoices, summary, onUpdate, onPartialPayment, o
   // 入金金額入力
   const [inputPaymentAmount, setInputPaymentAmount] = useState<string>('');
 
+  // サイドパネル表示
+  const [showSidePanel, setShowSidePanel] = useState(false);
+
   // 選択した請求書の合計金額を計算
   const selectedTotal = useMemo(() => {
     return invoices
@@ -410,6 +413,17 @@ const PaymentManagementTab = ({ invoices, summary, onUpdate, onPartialPayment, o
           <button onClick={handleUpdate} disabled={loading || selectedIds.length === 0} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 flex items-center gap-2" title="チェックした請求書を全額入金済みとして処理します">
             {loading ? '更新中...' : 'チェック分を入金済みにする'}
           </button>
+          <button
+            onClick={() => setShowSidePanel(!showSidePanel)}
+            className={`px-4 py-2 rounded-lg flex items-center gap-2 font-medium transition-colors ${
+              showSidePanel
+                ? 'bg-purple-600 text-white hover:bg-purple-700'
+                : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
+            }`}
+            title="入金金額から請求書を自動選択"
+          >
+            🔍 {showSidePanel ? '検索パネルを閉じる' : '自動選択'}
+          </button>
         </div>
         {/* 表示件数コントロール */}
         <div className="flex items-center gap-3 mt-3 pt-3 border-t">
@@ -590,8 +604,8 @@ const PaymentManagementTab = ({ invoices, summary, onUpdate, onPartialPayment, o
         )}
       </div>
 
-      {/* 選択した請求書の合計金額 - 右側固定表示（選択があるか入金金額入力がある場合表示） */}
-      {(selectedIds.length > 0 || inputPaymentAmount) && (
+      {/* 選択した請求書の合計金額 - 右側固定表示（ボタンで表示切替） */}
+      {showSidePanel && (
         <div
           className="fixed z-[9999] bg-white border-2 border-green-600 rounded-lg shadow-2xl p-4 min-w-[220px] max-w-[280px]"
           style={{ right: '20px', top: '100px', maxHeight: 'calc(100vh - 120px)', overflowY: 'auto' }}
