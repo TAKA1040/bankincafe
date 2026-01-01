@@ -243,6 +243,48 @@ interface InvoiceData {
   memo: string
 }
 
+// DB請求書レコード型
+interface DBInvoiceRecord {
+  invoice_id: string
+  invoice_type?: string
+  original_invoice_id?: string | null
+  billing_date?: string | null
+  billing_month?: string | null
+  issue_date?: string | null
+  customer_name?: string | null
+  customer_category?: string | null
+  subject_name?: string | null
+  registration_number?: string | null
+  order_number?: string | null
+  purchase_order_number?: string | null
+  subtotal?: number
+  tax?: number
+  total_amount?: number
+  remarks?: string | null
+  closed_at?: string | null
+  created_at?: string
+  updated_at?: string
+}
+
+// DB明細レコード型
+interface DBLineItemRecord {
+  id?: number
+  invoice_id: string
+  line_no: number
+  sub_no?: number
+  target?: string | null
+  action1?: string | null
+  position1?: string | null
+  raw_label?: string | null
+  raw_label_part?: string | null
+  unit_price?: number
+  quantity?: number
+  amount?: number
+  task_type?: string | null
+  set_name?: string | null
+  is_set_detail?: boolean
+}
+
 interface WorkHistoryItem {
   id: number
   work_name: string
@@ -603,7 +645,7 @@ function InvoiceCreateContent() {
         : `^${year}${month}[0-9]{4}-[0-9]+$`
       
       const { data: invoices, error } = await supabase
-        .from('invoices')
+        .from<{ invoice_id: string }>('invoices')
         .select('invoice_id')
         .like('invoice_id', `${prefix}%`)
         .order('invoice_id', { ascending: false })
@@ -615,11 +657,12 @@ function InvoiceCreateContent() {
       }
 
       // クライアントサイドで正確にフィルタリング
-      const filteredInvoices = invoices.filter(inv => {
+      const typedInvoices = invoices as unknown as { invoice_id: string }[]
+      const filteredInvoices = typedInvoices.filter(inv => {
         const parsed = parseDocumentNumber(inv.invoice_id)
-        return parsed && 
-               parsed.year === year && 
-               parsed.month === month && 
+        return parsed &&
+               parsed.year === year &&
+               parsed.month === month &&
                parsed.isEstimate === (type === 'estimate')
       })
 
@@ -1081,6 +1124,11 @@ function InvoiceCreateContent() {
 
       
       // 件名IDに基づいて関連する登録番号を検索
+      type RelationRow = {
+        registration_number_master: { registration_number: string } | null
+        usage_count: number
+        is_primary: boolean
+      }
       const { data: relations, error: relationsError } = await supabase
         .from('subject_registration_numbers')
         .select(`
@@ -1088,31 +1136,30 @@ function InvoiceCreateContent() {
           usage_count,
           is_primary
         `)
-        .eq('subject_id', subjectData.id)
+        .eq('subject_id', (subjectData as { id: number }).id)
         .order('usage_count', { ascending: false })
         .limit(30)
-      
 
-      
+
       if (relationsError) {
         console.error('関連登録番号取得エラー:', relationsError)
         return
       }
-      
+
       if (relations && relations.length > 0) {
-        const relatedRegistrations = relations.map(rel => ({
+        const typedRelations = relations as unknown as RelationRow[]
+        const relatedRegistrations = typedRelations.map(rel => ({
           registrationNumber: rel.registration_number_master?.registration_number,
           usage_count: rel.usage_count,
           is_primary: rel.is_primary
         }))
-        
 
-        
+
         // プライマリの登録番号があれば最初に表示、なければ使用頻度順
         const sortedRegistrations = relatedRegistrations.sort((a, b) => {
           if (a.is_primary && !b.is_primary) return -1
           if (!a.is_primary && b.is_primary) return 1
-          return b.usage_count - a.usage_count
+          return (b.usage_count || 0) - (a.usage_count || 0)
         })
         
 
@@ -1207,21 +1254,23 @@ function InvoiceCreateContent() {
 
           
           // 請求書基本データを取得
-          const { data: invoiceData, error: invoiceError } = await supabase
+          const { data: rawInvoiceData, error: invoiceError } = await supabase
             .from('invoices')
             .select('*')
             .eq('invoice_id', editInvoiceId)
             .single()
 
           if (invoiceError) throw invoiceError
-          if (!invoiceData) throw new Error('請求書が見つかりません')
+          if (!rawInvoiceData) throw new Error('請求書が見つかりません')
+
+          const invoiceData = rawInvoiceData as unknown as DBInvoiceRecord
 
           // 月〆後の編集の場合はガイダンスフラグを設定
           // 編集自体は許可し、保存時に枝番+1で新規作成される
-          if ((invoiceData as any).closed_at) {
+          if (invoiceData.closed_at) {
             setIsClosedMonthEdit(true)
             // 締め月の情報を取得
-            const closedAt = new Date((invoiceData as any).closed_at)
+            const closedAt = new Date(invoiceData.closed_at)
             const billingMonth = invoiceData.billing_month || ''
             const monthDisplay = billingMonth
               ? `${billingMonth.slice(0, 4)}年${parseInt(billingMonth.slice(5))}月`
@@ -1230,11 +1279,11 @@ function InvoiceCreateContent() {
           }
 
           // 修正モード用に元の請求書情報を保存
-          setOriginalInvoice(invoiceData)
+          setOriginalInvoice(invoiceData as unknown as Record<string, unknown>)
 
           // 基本情報をセット
           setInvoiceNumber(invoiceData.invoice_id)
-          
+
           // 請求書IDから文書タイプを判定（Mがあれば見積書、なければ請求書）
           const docType = invoiceData.invoice_id.includes('M') ? 'estimate' : 'invoice'
           setDocumentType(docType)
@@ -1245,7 +1294,7 @@ function InvoiceCreateContent() {
             setInvoiceYear(date.getFullYear())
             setInvoiceMonth(date.getMonth() + 1)
           }
-          
+
           setCustomerCategory(invoiceData.customer_category === 'UD' ? 'ud' : 'other')
           setCustomerName(invoiceData.customer_name || '')
           setSubject(invoiceData.subject_name || '')
@@ -1255,7 +1304,7 @@ function InvoiceCreateContent() {
           setMemo(invoiceData.remarks || '')
 
           // 明細データを取得
-          const { data: lineItems, error: lineError } = await supabase
+          const { data: rawLineItems, error: lineError } = await supabase
             .from('invoice_line_items')
             .select('*')
             .eq('invoice_id', editInvoiceId)
@@ -1264,7 +1313,8 @@ function InvoiceCreateContent() {
           if (lineError) throw lineError
 
           // 明細データを作業項目に変換
-          if (lineItems && lineItems.length > 0) {
+          if (rawLineItems && rawLineItems.length > 0) {
+            const lineItems = rawLineItems as unknown as DBLineItemRecord[]
             const items: WorkItem[] = lineItems.map((item, index) => {
               const isSetWork = item.task_type === 'S' || item.task_type === 'set'
               const action1 = item.action1 || ''
@@ -1285,7 +1335,7 @@ function InvoiceCreateContent() {
                 quantity: Number(item.quantity || 1),
                 amount: Number(item.amount || 0),
                 memo: memoText,
-                set_details: isSetWork && item.raw_label ? item.raw_label.split(/[,、，]/).map(s => s.trim()).filter(s => s.length > 0) : [],
+                set_details: isSetWork && item.raw_label ? item.raw_label.split(/[,、，]/).map((s: string) => s.trim()).filter((s: string) => s.length > 0) : [],
                 detail_positions: []
               }
             })
@@ -1703,14 +1753,15 @@ function InvoiceCreateContent() {
       const getNextRevision = async (baseId: string): Promise<string> => {
         const parentNumber = baseId.split('-')[0]
         const { data: existingInvoices } = await supabase
-          .from('invoices')
+          .from<{ invoice_id: string }>('invoices')
           .select('invoice_id')
           .like('invoice_id', `${parentNumber}-%`)
           .order('invoice_id', { ascending: false })
 
         if (existingInvoices && existingInvoices.length > 0) {
+          const typedInvoices = existingInvoices as unknown as { invoice_id: string }[]
           const maxRevision = Math.max(
-            ...existingInvoices.map(inv => parseInt(inv.invoice_id.split('-')[1] || '1'))
+            ...typedInvoices.map(inv => parseInt(inv.invoice_id.split('-')[1] || '1'))
           )
           return `${parentNumber}-${maxRevision + 1}`
         }
@@ -2233,14 +2284,15 @@ function InvoiceCreateContent() {
         }
 
         const { data: matchedInvoices, error: invoiceError } = await supabase
-          .from('invoices')
+          .from<{ invoice_id: string }>('invoices')
           .select('invoice_id')
           .or(subjectConditions.join(','))
           .limit(500)
 
         if (invoiceError) throw invoiceError
 
-        targetInvoiceIds = matchedInvoices?.map(inv => inv.invoice_id) || []
+        const typedInvoices = matchedInvoices as unknown as { invoice_id: string }[] | null
+        targetInvoiceIds = typedInvoices?.map(inv => inv.invoice_id) || []
 
         // 件名でマッチするものがなければ結果なし
         if (targetInvoiceIds.length === 0) {
@@ -2289,15 +2341,36 @@ function InvoiceCreateContent() {
         query = query.in('invoice_id', targetInvoiceIds)
       }
 
+      type LineItemResult = {
+        id: number
+        raw_label: string | null
+        raw_label_part: string | null
+        unit_price: number
+        quantity: number
+        target: string | null
+        set_name: string | null
+        invoice_id: string
+        line_no: number
+        task_type: string | null
+      }
+      type InvoiceResult = {
+        invoice_id: string
+        customer_name: string | null
+        subject: string | null
+        issue_date: string | null
+      }
+
       const { data, error } = await query
         .order('invoice_id', { ascending: false })
         .limit(200)
 
       if (error) throw error
 
+      const typedData = (data || []) as unknown as LineItemResult[]
+
       // 重複排除（同じinvoice_id + line_noは1つだけ）
-      const uniqueMap = new Map<string, typeof data[0]>()
-      for (const item of data || []) {
+      const uniqueMap = new Map<string, LineItemResult>()
+      for (const item of typedData) {
         const key = `${item.invoice_id}-${item.line_no}`
         if (!uniqueMap.has(key)) {
           uniqueMap.set(key, item)
@@ -2313,7 +2386,8 @@ function InvoiceCreateContent() {
         .select('invoice_id, customer_name, subject, issue_date')
         .in('invoice_id', invoiceIds)
 
-      const invoiceMap = new Map(invoicesData?.map(inv => [inv.invoice_id, inv]) || [])
+      const typedInvoicesData = (invoicesData || []) as unknown as InvoiceResult[]
+      const invoiceMap = new Map(typedInvoicesData.map(inv => [inv.invoice_id, inv]))
 
       const results = Array.from(uniqueMap.values()).map(item => {
         const invoice = invoiceMap.get(item.invoice_id)
@@ -2342,6 +2416,23 @@ function InvoiceCreateContent() {
 
   // 請求書詳細を取得
   const fetchPriceInvoiceDetail = async (invoiceId: string) => {
+    type InvoiceDetailResult = {
+      invoice_id: string
+      customer_name: string | null
+      subject: string | null
+      issue_date: string | null
+    }
+    type LineItemDetailResult = {
+      line_no: number
+      sub_no: number | null
+      raw_label: string | null
+      raw_label_part: string | null
+      unit_price: number | null
+      quantity: number | null
+      amount: number | null
+      task_type: string | null
+      set_name: string | null
+    }
     setPriceDetailLoading(true)
     try {
       // 請求書情報と明細を並行取得（sub_noも取得してセット明細の各行を表示）
@@ -2362,8 +2453,8 @@ function InvoiceCreateContent() {
       if (invoiceRes.error) throw invoiceRes.error
       if (lineItemsRes.error) throw lineItemsRes.error
 
-      const invoiceData = invoiceRes.data
-      const lineItemsData = lineItemsRes.data || []
+      const invoiceData = invoiceRes.data as unknown as InvoiceDetailResult
+      const lineItemsData = (lineItemsRes.data || []) as unknown as LineItemDetailResult[]
 
       // 全てのアイテムを処理（sub_no > 1のものはセット明細として表示）
       const processedItems = lineItemsData.map(item => ({

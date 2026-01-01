@@ -65,12 +65,16 @@ export default function MasterConfirmationPage() {
       ])
 
       // ユニークな顧客数を計算
+      type InvoiceWithCustomer = { customer_name: string | null }
+      const typedInvoices = (invoicesResult.data || []) as unknown as InvoiceWithCustomer[]
       const uniqueCustomers = new Set(
-        invoicesResult.data?.map((inv: { customer_name: string | null }) => inv.customer_name).filter(Boolean)
+        typedInvoices.map(inv => inv.customer_name).filter(Boolean)
       ).size
 
       // 対象データの取得率を計算
-      const itemsWithTarget = invoiceItemsResult.data?.filter((item: { target: string | null }) => 
+      type LineItemWithTarget = { target: string | null }
+      const typedLineItems = (invoiceItemsResult.data || []) as unknown as LineItemWithTarget[]
+      const itemsWithTarget = typedLineItems.filter(item =>
         item.target && item.target.trim() !== ''
       ).length || 0
       

@@ -589,7 +589,7 @@ export default function WorkSearchPage() {
         } else if (isSetWork) {
           // S作業だがsub_noが1つだけの場合
           const breakdownItems = parentItem.raw_label
-            ? parentItem.raw_label.split(/[,、，・･]/).map(s => s.trim()).filter(s => s.length > 0)
+            ? parentItem.raw_label.split(/[,、，・･]/).map((s: string) => s.trim()).filter((s: string) => s.length > 0)
             : ['セット作業明細不明']
 
           for (let index = 0; index < breakdownItems.length; index++) {

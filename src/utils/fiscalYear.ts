@@ -17,7 +17,7 @@ export async function getFiscalYearInfo(): Promise<FiscalYearInfo> {
     `)
 
     let companyData = null
-    if (result.success && result.data?.rows?.length > 0) {
+    if (result.success && result.data?.rows && result.data.rows.length > 0) {
       companyData = result.data.rows[0]
     } else {
       console.warn('会社情報の取得に失敗、デフォルト値(3月決算)を使用:', result.error)

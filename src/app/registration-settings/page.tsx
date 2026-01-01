@@ -84,8 +84,8 @@ export default function RegistrationSettingsPage() {
         console.error('登録番号取得エラー:', error)
         throw error
       }
-      
-      setRegistrations(data || [])
+
+      setRegistrations((data || []) as unknown as RegistrationNumber[])
       setTotalCount(totalRecords)
       
     } catch (error) {

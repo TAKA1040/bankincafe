@@ -60,7 +60,7 @@ export default function InvoiceCorrectionsPage() {
         const { data, error } = await query
 
         if (error) throw error
-        setCorrections((data as CorrectionInvoice[]) || [])
+        setCorrections((data as unknown as CorrectionInvoice[]) || [])
       } catch (err) {
         console.error('Failed to fetch corrections:', err)
       } finally {

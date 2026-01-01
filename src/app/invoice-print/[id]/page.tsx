@@ -196,7 +196,8 @@ export default function InvoicePrintPage() {
 
         // データベース接続エラーの詳細判定
         if (invoiceError) {
-          if (invoiceError.code === 'PGRST116') {
+          const errCode = (invoiceError as { code?: string }).code
+          if (errCode === 'PGRST116') {
             throw new Error(`請求書ID「${invoiceId}」は存在しません。正しい請求書IDを確認してください。`);
           }
           if (invoiceError.message?.includes('connect') || invoiceError.message?.includes('timeout')) {
@@ -280,11 +281,25 @@ export default function InvoicePrintPage() {
 
       console.log('📊 Query result:', { data: initialData, error });
 
-      const data = initialData;
+      type CompanyRecord = {
+        company_name?: string
+        postal_code?: string
+        prefecture?: string
+        city?: string
+        address?: string
+        building_name?: string
+        phone_number?: string
+        bank_name?: string
+        bank_branch?: string
+        account_type?: string
+        account_number?: string
+        account_holder?: string
+      }
+      const data = initialData as unknown as CompanyRecord | null;
 
       if (data) {
         console.log('✅ Company data found, setting company info:', data);
-        const companyInfo = {
+        const companyInfo: CompanyInfo = {
           companyName: data.company_name || 'BankinCafe',
           postalCode: data.postal_code || '〒000-0000',
           prefecture: data.prefecture || '',
@@ -353,7 +368,7 @@ export default function InvoicePrintPage() {
         .order('invoice_id', { ascending: true });
 
       if (data && data.length > 1) {
-        setRelatedInvoices(data as RelatedInvoice[]);
+        setRelatedInvoices(data as unknown as RelatedInvoice[]);
       }
     };
 

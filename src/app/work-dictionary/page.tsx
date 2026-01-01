@@ -174,41 +174,49 @@ export default function WorkDictionaryPage() {
         (supabase as any).from('pending_master_items').select('*').eq('is_registered', false).order('created_at', { ascending: false })
       ])
 
-      if (targetsRes.data) setTargets(targetsRes.data.map(item => ({
+      type TargetRow = { id: number; name: string; reading?: string; sort_order?: number }
+      type ActionRow = { id: number; name: string; sort_order?: number }
+      type PositionRow = { id: number; name: string; sort_order?: number }
+      type ReadingRow = { word: string; word_type: string; reading_hiragana: string; reading_katakana: string }
+      type TargetActionRow = { target_id: number; action_id: number; targets?: { name: string }; actions?: { name: string } }
+      type ActionPositionRow = { action_id: number; position_id: number; actions?: { name: string }; positions?: { name: string } }
+      type PriceRow = { id: number; target_id: number; action_id: number; suggested_price: number; usage_count?: number; last_used_at?: string }
+
+      if (targetsRes.data) setTargets((targetsRes.data as unknown as TargetRow[]).map(item => ({
         ...item,
         reading: item.reading ?? undefined,
         sort_order: item.sort_order ?? 0
       })))
-      if (actionsRes.data) setActions(actionsRes.data.map(item => ({
+      if (actionsRes.data) setActions((actionsRes.data as unknown as ActionRow[]).map(item => ({
         ...item,
         sort_order: item.sort_order ?? 0
       })))
-      if (positionsRes.data) setPositions(positionsRes.data.map(item => ({
+      if (positionsRes.data) setPositions((positionsRes.data as unknown as PositionRow[]).map(item => ({
         ...item,
         sort_order: item.sort_order ?? 0
       })))
-      if (readingsRes.data) setReadingMappings(readingsRes.data.map(item => ({
+      if (readingsRes.data) setReadingMappings((readingsRes.data as unknown as ReadingRow[]).map(item => ({
         ...item,
         word_type: item.word_type as "target" | "action" | "position"
       })))
-      if (targetActionsRes.data) setTargetActions(targetActionsRes.data.map(item => ({
+      if (targetActionsRes.data) setTargetActions((targetActionsRes.data as unknown as TargetActionRow[]).map(item => ({
         target_id: item.target_id,
         action_id: item.action_id,
-        target_name: (item.targets as any)?.name,
-        action_name: (item.actions as any)?.name
+        target_name: item.targets?.name || '',
+        action_name: item.actions?.name || ''
       })))
-      if (actionPositionsRes.data) setActionPositions(actionPositionsRes.data.map(item => ({
+      if (actionPositionsRes.data) setActionPositions((actionPositionsRes.data as unknown as ActionPositionRow[]).map(item => ({
         action_id: item.action_id,
         position_id: item.position_id,
-        action_name: (item.actions as any)?.name,
-        position_name: (item.positions as any)?.name
+        action_name: item.actions?.name || '',
+        position_name: item.positions?.name || ''
       })))
-      if (pricesRes.data) setPriceSuggestions(pricesRes.data.map(item => ({
+      if (pricesRes.data) setPriceSuggestions((pricesRes.data as unknown as PriceRow[]).map(item => ({
         ...item,
         frequency: item.usage_count ?? 0,
         last_used: item.last_used_at ?? ''
       })))
-      if (pendingRes.data) setPendingItems(pendingRes.data)
+      if (pendingRes.data) setPendingItems(pendingRes.data as unknown as PendingMasterItem[])
       
     } catch (error) {
       console.error('データ読み込みエラー:', error)
@@ -727,11 +735,12 @@ export default function WorkDictionaryPage() {
       
       if (error) {
         console.error('削除処理でエラー:', error)
+        const dbError = error as { message?: string; details?: string; hint?: string; code?: string }
         console.error('エラー詳細:', {
-          message: error.message,
-          details: error.details,
-          hint: error.hint,
-          code: error.code
+          message: dbError.message,
+          details: dbError.details,
+          hint: dbError.hint,
+          code: dbError.code
         })
         throw error
       }

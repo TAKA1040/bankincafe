@@ -54,8 +54,8 @@ export default function RegistrationDetailPage() {
           console.error('登録番号取得エラー:', registrationError)
           throw registrationError
         }
-        
-        setRegistration(registrationData)
+
+        setRegistration(registrationData as unknown as RegistrationNumber | null)
         
         // JOINクエリで関連件名を取得
         const joinSql = `

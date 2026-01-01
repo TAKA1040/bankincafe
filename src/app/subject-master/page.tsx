@@ -63,11 +63,12 @@ export default function SubjectMasterPage() {
 
       
       // 登録番号数を設定（仮の値）
-      const subjectsWithCount = (data || []).map(subject => ({
+      const typedData = (data || []) as unknown as Subject[]
+      const subjectsWithCount = typedData.map(subject => ({
         ...subject,
         registration_count: Math.floor(Math.random() * 20) + 1
       }))
-      
+
       setSubjects(subjectsWithCount)
       setTotalCount(count || 0)
       

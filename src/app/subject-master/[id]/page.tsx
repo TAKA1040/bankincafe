@@ -56,9 +56,9 @@ export default function SubjectDetailPage() {
           console.error('件名取得エラー:', subjectError)
           throw subjectError
         }
-        
-        setSubject(subjectData)
-        
+
+        setSubject(subjectData as unknown as Subject | null)
+
         // 関連登録番号を取得
         const { data: relationsData, error: relationsError } = await supabase
           .from('subject_registration_numbers')
@@ -76,26 +76,39 @@ export default function SubjectDetailPage() {
           `)
           .eq('subject_id', subjectId)
           .order('usage_count', { ascending: false })
-        
+
         if (relationsError) {
           console.error('関連登録番号取得エラー:', relationsError)
           throw relationsError
         }
-        
+
         // データ整形
-        const formattedRelations = relationsData?.map(relation => ({
-          id: relation.id,
+        type RelationRecord = {
+          id: string
+          is_primary: boolean
+          usage_count: number | null
+          last_used_at: string | null
+          registration_number_master: {
+            id: number
+            registration_number: string
+            usage_count: number | null
+            last_used_at: string | null
+          } | null
+        }
+        const typedRelations = (relationsData || []) as unknown as RelationRecord[]
+        const formattedRelations: RegistrationRelation[] = typedRelations.map(relation => ({
+          id: String(relation.id),
           registration_number: {
-            id: relation.registration_number_master.id,
-            registration_number: relation.registration_number_master.registration_number,
-            usage_count: relation.registration_number_master.usage_count,
-            last_used_at: relation.registration_number_master.last_used_at
+            id: String(relation.registration_number_master?.id || 0),
+            registration_number: relation.registration_number_master?.registration_number || '',
+            usage_count: relation.registration_number_master?.usage_count || 0,
+            last_used_at: relation.registration_number_master?.last_used_at || null
           },
           is_primary: relation.is_primary,
-          usage_count: relation.usage_count,
+          usage_count: relation.usage_count || 0,
           last_used_at: relation.last_used_at
-        })) || []
-        
+        }))
+
         setRegistrations(formattedRelations)
         
       } catch (error) {

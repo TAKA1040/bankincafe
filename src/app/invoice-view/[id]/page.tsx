@@ -191,10 +191,12 @@ export default function InvoiceViewPage({ params }: PageProps) {
         let totalQuantity = 0;
         const workNames: string[] = [];
 
+        type SplitItem = { quantity?: number; raw_label_part?: string }
         lineItemsWithSplits.forEach((item: Record<string, unknown>) => {
-          if (item.split_items && (item.split_items as unknown[]).length > 0) {
-            totalQuantity += (item.split_items as unknown[]).reduce((sum: number, split: Record<string, unknown>) => sum + ((split.quantity as number) || 0), 0);
-            workNames.push(...(item.split_items as Record<string, unknown>[]).map((split: Record<string, unknown>) => split.raw_label_part as string));
+          if (item.split_items && (item.split_items as SplitItem[]).length > 0) {
+            const splits = item.split_items as SplitItem[]
+            totalQuantity += splits.reduce((sum: number, split: SplitItem) => sum + (split.quantity || 0), 0);
+            workNames.push(...splits.map((split: SplitItem) => split.raw_label_part || ''));
           } else {
             totalQuantity += (item.quantity as number) || 0;
             workNames.push((item.raw_label as string) || [item.target, item.action, item.position].filter(Boolean).join(' '));

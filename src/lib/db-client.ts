@@ -508,15 +508,19 @@ export class UpsertBuilder<T = Record<string, unknown>> {
   private upsertData: Record<string, unknown>[] = []
   private conflictColumns: string[] = []
   private returnData = false
+  private doNothing = false
 
   constructor(tableName: string) {
     this.tableName = tableName
   }
 
-  upsert(data: Record<string, unknown> | Record<string, unknown>[], options?: { onConflict?: string }): this {
+  upsert(data: Record<string, unknown> | Record<string, unknown>[], options?: { onConflict?: string; ignoreDuplicates?: boolean }): this {
     this.upsertData = Array.isArray(data) ? data : [data]
     if (options?.onConflict) {
       this.conflictColumns = options.onConflict.split(',').map(c => c.trim())
+    }
+    if (options?.ignoreDuplicates) {
+      this.doNothing = true
     }
     return this
   }
@@ -543,13 +547,17 @@ export class UpsertBuilder<T = Record<string, unknown>> {
         ? `(${this.conflictColumns.map(c => escapeIdentifier(c)).join(', ')})`
         : `(${escapeIdentifier(columns[0])})`
 
-      const updateList = columns
-        .filter(c => !this.conflictColumns.includes(c))
-        .map(c => `${escapeIdentifier(c)} = EXCLUDED.${escapeIdentifier(c)}`)
-        .join(', ')
-
       let sql = `INSERT INTO ${escapeIdentifier(this.tableName)} (${columnList}) VALUES ${valuesList}`
-      sql += ` ON CONFLICT ${conflictTarget} DO UPDATE SET ${updateList}`
+
+      if (this.doNothing) {
+        sql += ` ON CONFLICT ${conflictTarget} DO NOTHING`
+      } else {
+        const updateList = columns
+          .filter(c => !this.conflictColumns.includes(c))
+          .map(c => `${escapeIdentifier(c)} = EXCLUDED.${escapeIdentifier(c)}`)
+          .join(', ')
+        sql += ` ON CONFLICT ${conflictTarget} DO UPDATE SET ${updateList}`
+      }
 
       if (this.returnData) {
         sql += ' RETURNING *'
@@ -589,7 +597,7 @@ export const dbClient = {
         return ub.update(data)
       },
       delete: () => new DeleteBuilder(tableName),
-      upsert: (data: Record<string, unknown> | Record<string, unknown>[], options?: { onConflict?: string }) => {
+      upsert: (data: Record<string, unknown> | Record<string, unknown>[], options?: { onConflict?: string; ignoreDuplicates?: boolean }) => {
         const ub = new UpsertBuilder<T>(tableName)
         return ub.upsert(data, options)
       },
