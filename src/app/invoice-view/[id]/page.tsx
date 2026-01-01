@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Edit, Download, Trash2, RotateCcw, FileText, Calendar, User, Hash, Building2, Phone, Printer, Home, Undo2 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { dbClient, escapeValue } from '@/lib/db-client';
 import type { InvoiceWithItems } from '@/hooks/useInvoiceList';
 
 interface PageProps {
@@ -44,22 +44,20 @@ export default function InvoiceViewPage({ params }: PageProps) {
     setCancelingPayment(true);
     try {
       // 入金履歴を削除
-      const { error: deleteError } = await supabase
-        .from('invoice_payments')
-        .delete()
-        .eq('invoice_id', invoice.invoice_id);
+      const deleteResult = await dbClient.executeSQL(
+        `DELETE FROM "invoice_payments" WHERE "invoice_id" = ${escapeValue(invoice.invoice_id)}`
+      );
 
-      if (deleteError) {
-        console.warn('入金履歴の削除に失敗:', deleteError);
+      if (!deleteResult.success) {
+        console.warn('入金履歴の削除に失敗:', deleteResult.error);
       }
 
       // 支払い状況を未入金に更新
-      const { error: updateError } = await supabase
-        .from('invoices')
-        .update({ payment_status: 'unpaid' })
-        .eq('invoice_id', invoice.invoice_id);
+      const updateResult = await dbClient.executeSQL(
+        `UPDATE "invoices" SET "payment_status" = 'unpaid' WHERE "invoice_id" = ${escapeValue(invoice.invoice_id)}`
+      );
 
-      if (updateError) throw updateError;
+      if (!updateResult.success) throw new Error(updateResult.error);
 
       // 画面をリロード
       window.location.reload();
@@ -82,20 +80,19 @@ export default function InvoiceViewPage({ params }: PageProps) {
     setCancelingPayment(true);
     try {
       // 入金記録を削除
-      const { error: deleteError } = await supabase
-        .from('invoice_payments')
-        .delete()
-        .eq('id', paymentId);
+      const deleteResult = await dbClient.executeSQL(
+        `DELETE FROM "invoice_payments" WHERE "id" = ${paymentId}`
+      );
 
-      if (deleteError) throw deleteError;
+      if (!deleteResult.success) throw new Error(deleteResult.error);
 
       // 残りの入金記録を確認して支払い状況を更新
-      const { data: remainingPayments } = await supabase
-        .from('invoice_payments')
-        .select('payment_amount')
-        .eq('invoice_id', invoice.invoice_id);
+      const paymentsResult = await dbClient.executeSQL<{ payment_amount: number }>(
+        `SELECT "payment_amount" FROM "invoice_payments" WHERE "invoice_id" = ${escapeValue(invoice.invoice_id)}`
+      );
 
-      const totalPaid = remainingPayments?.reduce((sum, p) => sum + (p.payment_amount || 0), 0) || 0;
+      const remainingPayments = paymentsResult.data?.rows || [];
+      const totalPaid = remainingPayments.reduce((sum, p) => sum + (p.payment_amount || 0), 0);
       const total = invoice.total || 0;
 
       let newStatus: 'unpaid' | 'paid' | 'partial' = 'unpaid';
@@ -105,10 +102,9 @@ export default function InvoiceViewPage({ params }: PageProps) {
         newStatus = 'partial';
       }
 
-      await supabase
-        .from('invoices')
-        .update({ payment_status: newStatus })
-        .eq('invoice_id', invoice.invoice_id);
+      await dbClient.executeSQL(
+        `UPDATE "invoices" SET "payment_status" = ${escapeValue(newStatus)} WHERE "invoice_id" = ${escapeValue(invoice.invoice_id)}`
+      );
 
       // 画面をリロード
       window.location.reload();
@@ -128,47 +124,42 @@ export default function InvoiceViewPage({ params }: PageProps) {
         setError(null);
 
         // 請求書基本情報を取得
-        const { data: invoiceData, error: invoiceError } = await supabase
-          .from('invoices')
-          .select('*')
-          .eq('invoice_id', params.id)
-          .single();
+        const invoiceResult = await dbClient.executeSQL<Record<string, unknown>>(
+          `SELECT * FROM "invoices" WHERE "invoice_id" = ${escapeValue(params.id)} LIMIT 1`
+        );
 
-        if (invoiceError) {
-          throw invoiceError;
+        if (!invoiceResult.success) {
+          throw new Error(invoiceResult.error);
         }
 
+        const invoiceData = invoiceResult.data?.rows?.[0];
         if (!invoiceData) {
           throw new Error('請求書が見つかりません');
         }
 
         // ライン項目を取得（line_no, sub_no順でソート）
-        const { data: lineItems, error: lineError } = await supabase
-          .from('invoice_line_items')
-          .select('*')
-          .eq('invoice_id', params.id)
-          .order('line_no', { ascending: true })
-          .order('sub_no', { ascending: true });
+        const lineItemsResult = await dbClient.executeSQL<Record<string, unknown>>(
+          `SELECT * FROM "invoice_line_items" WHERE "invoice_id" = ${escapeValue(params.id)} ORDER BY "line_no" ASC, "sub_no" ASC`
+        );
 
-        if (lineError) {
-          throw lineError;
+        if (!lineItemsResult.success) {
+          throw new Error(lineItemsResult.error);
         }
+
+        const lineItems = lineItemsResult.data?.rows || [];
 
         // 各ライン項目の分割データを取得
         const lineItemsWithSplits = await Promise.all(
-          (lineItems || []).map(async (item) => {
+          lineItems.map(async (item: Record<string, unknown>) => {
             // invoice_line_items_splitテーブルが存在しない場合の対応
             let splitItems = null;
             try {
-              const { data, error: splitError } = await supabase
-                .from('invoice_line_items' as any)
-                .select('*')
-                .eq('invoice_id', item.invoice_id)
-                .eq('line_no', item.line_no)
-                .order('line_no', { ascending: true });
-              
-              if (!splitError) {
-                splitItems = data;
+              const splitResult = await dbClient.executeSQL(
+                `SELECT * FROM "invoice_line_items" WHERE "invoice_id" = ${escapeValue(item.invoice_id as string)} AND "line_no" = ${item.line_no} ORDER BY "line_no" ASC`
+              );
+
+              if (splitResult.success) {
+                splitItems = splitResult.data?.rows;
               }
             } catch (e) {
               // テーブルが存在しない場合はスキップ
@@ -191,7 +182,7 @@ export default function InvoiceViewPage({ params }: PageProps) {
               raw_label_part: item.raw_label_part,
               set_name: item.set_name,
               performed_at: item.performed_at,
-              split_items: (splitItems as any) || []
+              split_items: (splitItems as unknown) || []
             };
           })
         );
@@ -200,46 +191,44 @@ export default function InvoiceViewPage({ params }: PageProps) {
         let totalQuantity = 0;
         const workNames: string[] = [];
 
-        lineItemsWithSplits.forEach(item => {
-          if (item.split_items && item.split_items.length > 0) {
-            totalQuantity += item.split_items.reduce((sum: number, split: any) => sum + split.quantity, 0);
-            workNames.push(...item.split_items.map((split: any) => split.raw_label_part));
+        lineItemsWithSplits.forEach((item: Record<string, unknown>) => {
+          if (item.split_items && (item.split_items as unknown[]).length > 0) {
+            totalQuantity += (item.split_items as unknown[]).reduce((sum: number, split: Record<string, unknown>) => sum + ((split.quantity as number) || 0), 0);
+            workNames.push(...(item.split_items as Record<string, unknown>[]).map((split: Record<string, unknown>) => split.raw_label_part as string));
           } else {
-            totalQuantity += item.quantity || 0;
-            workNames.push(item.raw_label || [item.target, item.action, item.position].filter(Boolean).join(' '));
+            totalQuantity += (item.quantity as number) || 0;
+            workNames.push((item.raw_label as string) || [item.target, item.action, item.position].filter(Boolean).join(' '));
           }
         });
 
         const invoiceWithItems: InvoiceWithItems = {
-          ...invoiceData,
-          invoice_number: (invoiceData as any).invoice_number || invoiceData.invoice_id,
-          customer_category: ((invoiceData as any).customer_category as 'UD' | 'その他') || 'その他',
-          subject: (invoiceData as any).subject || (invoiceData as any).subject_name || '',
+          ...invoiceData as Record<string, unknown>,
+          invoice_number: (invoiceData as Record<string, unknown>).invoice_number as string || (invoiceData.invoice_id as string),
+          customer_category: ((invoiceData as Record<string, unknown>).customer_category as 'UD' | 'その他') || 'その他',
+          subject: (invoiceData as Record<string, unknown>).subject as string || (invoiceData as Record<string, unknown>).subject_name as string || '',
           line_items: lineItemsWithSplits,
           total_quantity: totalQuantity,
           work_names: workNames.join(' / '),
           status: (invoiceData.status as 'draft' | 'finalized' | 'sent' | 'paid') || 'draft',
           payment_status: (invoiceData.payment_status as 'unpaid' | 'paid' | 'partial') || 'unpaid',
-          subtotal: invoiceData.subtotal || 0,
-          tax: invoiceData.tax || 0,
-          total: invoiceData.total || 0,
-          remarks: invoiceData.remarks || null,
-          closed_at: (invoiceData as any).closed_at || null,
-          invoice_type: (invoiceData as any).invoice_type || 'standard'
-        };
+          subtotal: (invoiceData.subtotal as number) || 0,
+          tax: (invoiceData.tax as number) || 0,
+          total: (invoiceData.total as number) || 0,
+          remarks: (invoiceData.remarks as string) || null,
+          closed_at: (invoiceData as Record<string, unknown>).closed_at as string || null,
+          invoice_type: (invoiceData as Record<string, unknown>).invoice_type as string || 'standard'
+        } as InvoiceWithItems;
 
         setInvoice(invoiceWithItems);
 
         // 入金情報を取得
         try {
-          const { data: paymentData, error: paymentError } = await supabase
-            .from('invoice_payments')
-            .select('*')
-            .eq('invoice_id', params.id)
-            .order('payment_date', { ascending: true });
+          const paymentResult = await dbClient.executeSQL<PaymentRecord>(
+            `SELECT * FROM "invoice_payments" WHERE "invoice_id" = ${escapeValue(params.id)} ORDER BY "payment_date" ASC`
+          );
 
-          if (!paymentError && paymentData) {
-            setPayments(paymentData);
+          if (paymentResult.success && paymentResult.data?.rows) {
+            setPayments(paymentResult.data.rows);
           }
         } catch (e) {
           // invoice_paymentsテーブルが存在しない場合はスキップ
@@ -845,25 +834,23 @@ export default function InvoiceViewPage({ params }: PageProps) {
               <button
                 onClick={async () => {
                   setShowDeleteConfirm(false);
-                  if ((invoice as any).closed_at) {
+                  if ((invoice as InvoiceWithItems & { closed_at?: string }).closed_at) {
                     // 月〆後: 赤伝処理
                     router.push(`/invoice-create?delete=${invoice.invoice_id}&red=true`);
                   } else {
                     // 月〆前: 直接削除
                     if (confirm('本当に削除しますか？')) {
-                      const { error } = await supabase
-                        .from('invoices')
-                        .delete()
-                        .eq('invoice_id', invoice.invoice_id);
+                      const deleteResult = await dbClient.executeSQL(
+                        `DELETE FROM "invoices" WHERE "invoice_id" = ${escapeValue(invoice.invoice_id)}`
+                      );
 
-                      if (error) {
-                        alert('削除に失敗しました: ' + error.message);
+                      if (!deleteResult.success) {
+                        alert('削除に失敗しました: ' + deleteResult.error);
                       } else {
                         // 明細も削除
-                        await supabase
-                          .from('invoice_line_items')
-                          .delete()
-                          .eq('invoice_id', invoice.invoice_id);
+                        await dbClient.executeSQL(
+                          `DELETE FROM "invoice_line_items" WHERE "invoice_id" = ${escapeValue(invoice.invoice_id)}`
+                        );
 
                         alert('請求書を削除しました');
                         router.push('/invoice-list');
@@ -873,7 +860,7 @@ export default function InvoiceViewPage({ params }: PageProps) {
                 }}
                 className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
               >
-                {(invoice as any).closed_at ? '赤伝を発行' : '削除する'}
+                {(invoice as InvoiceWithItems & { closed_at?: string }).closed_at ? '赤伝を発行' : '削除する'}
               </button>
             </div>
           </div>

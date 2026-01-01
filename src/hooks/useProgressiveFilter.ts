@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { supabase } from '../lib/supabase'
+import { dbClient } from '@/lib/db-client'
 
 type Target = {
   id: number
@@ -49,11 +49,11 @@ export function useProgressiveFilter() {
   const [targets, setTargets] = useState<Target[]>([])
   const [availableActions, setAvailableActions] = useState<AvailableAction[]>([])
   const [availablePositions, setAvailablePositions] = useState<AvailablePosition[]>([])
-  
+
   const [selectedTarget, setSelectedTarget] = useState<Target | null>(null)
   const [selectedAction, setSelectedAction] = useState<Action | null>(null)
   const [selectedPosition, setSelectedPosition] = useState<Position | null>(null)
-  
+
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -62,14 +62,12 @@ export function useProgressiveFilter() {
     async function fetchTargets() {
       setLoading(true)
       try {
-        const { data, error } = await supabase
-          .from('targets')
-          .select('*')
-          .eq('is_active', true)
-          .order('sort_order')
-        
-        if (error) throw error
-        setTargets((data || []).map(item => ({
+        const result = await dbClient.executeSQL<any>(`
+          SELECT * FROM targets WHERE is_active = TRUE ORDER BY sort_order
+        `)
+
+        if (!result.success) throw new Error(result.error)
+        setTargets((result.data?.rows || []).map((item: any) => ({
           ...item,
           name_norm: item.name_norm || '',
           is_active: item.is_active ?? true,
@@ -81,7 +79,7 @@ export function useProgressiveFilter() {
         setLoading(false)
       }
     }
-    
+
     fetchTargets()
   }, [])
 
@@ -97,14 +95,14 @@ export function useProgressiveFilter() {
     async function fetchAvailableActions() {
       setLoading(true)
       try {
-        const { data, error } = await supabase
-          .from('available_actions_by_target')
-          .select('*')
-          .eq('target_name', selectedTarget?.name || '')
-          .order('sort_order')
-        
-        if (error) throw error
-        setAvailableActions((data || []).map(item => ({
+        const result = await dbClient.executeSQL<any>(`
+          SELECT * FROM available_actions_by_target
+          WHERE target_name = '${(selectedTarget?.name || '').replace(/'/g, "''")}'
+          ORDER BY sort_order
+        `)
+
+        if (!result.success) throw new Error(result.error)
+        setAvailableActions((result.data?.rows || []).map((item: any) => ({
           ...item,
           target_id: item.target_id ?? 0,
           target_name: item.target_name || '',
@@ -120,7 +118,7 @@ export function useProgressiveFilter() {
         setLoading(false)
       }
     }
-    
+
     fetchAvailableActions()
   }, [selectedTarget])
 
@@ -135,15 +133,15 @@ export function useProgressiveFilter() {
     async function fetchAvailablePositions() {
       setLoading(true)
       try {
-        const { data, error } = await supabase
-          .from('available_positions_by_target_action')
-          .select('*')
-          .eq('target_name', selectedTarget?.name || '')
-          .eq('action_name', selectedAction?.name || '')
-          .order('position_sort_order')
-        
-        if (error) throw error
-        setAvailablePositions((data || []).map(item => ({
+        const result = await dbClient.executeSQL<any>(`
+          SELECT * FROM available_positions_by_target_action
+          WHERE target_name = '${(selectedTarget?.name || '').replace(/'/g, "''")}'
+            AND action_name = '${(selectedAction?.name || '').replace(/'/g, "''")}'
+          ORDER BY position_sort_order
+        `)
+
+        if (!result.success) throw new Error(result.error)
+        setAvailablePositions((result.data?.rows || []).map((item: any) => ({
           ...item,
           target_id: item.target_id ?? 0,
           target_name: item.target_name || '',
@@ -162,7 +160,7 @@ export function useProgressiveFilter() {
         setLoading(false)
       }
     }
-    
+
     fetchAvailablePositions()
   }, [selectedTarget, selectedAction])
 
@@ -206,16 +204,16 @@ export function useProgressiveFilter() {
     targets,
     availableActions,
     availablePositions,
-    
+
     // 選択状態
     selectedTarget,
     selectedAction,
     selectedPosition,
-    
+
     // 状態管理
     loading,
     error,
-    
+
     // アクション
     handleTargetSelect,
     handleActionSelect,

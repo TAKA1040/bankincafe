@@ -127,20 +127,9 @@ export default function DashboardClient({ user }: DashboardClientProps) {
   }
 
   const handleLogout = async () => {
-    // ログアウト処理
-    
-    // Supabaseログアウト処理
-    const { createClient } = await import('@/lib/supabase/client')
-    const supabase = createClient()
-    
-    const { error } = await supabase.auth.signOut()
-    if (error) {
-      // ログアウトエラー
-      alert(`ログアウトエラー: ${error.message}`)
-    } else {
-      // ログアウト成功
-      router.push('/login')
-    }
+    // NextAuthによるログアウト処理
+    const { signOut } = await import('next-auth/react')
+    await signOut({ callbackUrl: '/login' })
   }
 
   return (

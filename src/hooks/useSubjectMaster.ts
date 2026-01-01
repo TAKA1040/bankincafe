@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { supabase } from '@/lib/supabase'
+import { dbClient, escapeValue } from '@/lib/db-client'
 
 export interface SubjectMaster {
   id: string
@@ -25,15 +25,18 @@ export function useSubjectMaster() {
       setLoading(true)
       setError(null)
 
-      const { data, error } = await supabase
-        .from('task_master')
-        .select('*')
-        .eq('is_active', true)
-        .order('sort_order', { ascending: true })
+      const sql = `
+        SELECT * FROM task_master
+        WHERE is_active = TRUE
+        ORDER BY sort_order ASC
+      `
+      const result = await dbClient.executeSQL<SubjectMaster>(sql)
 
-      if (error) throw error
+      if (!result.success) {
+        throw new Error(result.error || 'データ取得に失敗しました')
+      }
 
-      setSubjects(data as SubjectMaster[])
+      setSubjects(result.data?.rows || [])
     } catch (err) {
       console.error('Failed to fetch subjects:', err)
       setError(err instanceof Error ? err.message : '件名マスターの取得に失敗しました')
@@ -44,10 +47,14 @@ export function useSubjectMaster() {
 
   const addSubject = useCallback(async (subject: Omit<SubjectMaster, 'id' | 'created_at' | 'updated_at' | 'is_active'>) => {
     try {
-      const { error } = await supabase
-        .from('task_master')
-        .insert([{ ...subject, is_active: true }])
-      if (error) throw error
+      const sql = `
+        INSERT INTO task_master (canonical_name, category, usage_count, last_used_at, sort_order, is_active)
+        VALUES (${escapeValue(subject.canonical_name)}, ${escapeValue(subject.category || null)},
+                ${subject.usage_count || 0}, ${escapeValue(subject.last_used_at || null)},
+                ${subject.sort_order || 0}, TRUE)
+      `
+      const result = await dbClient.executeSQL(sql)
+      if (!result.success) throw new Error(result.error)
       await fetchSubjects()
       return true
     } catch (err) {
@@ -59,11 +66,33 @@ export function useSubjectMaster() {
 
   const updateSubject = useCallback(async (id: string, updates: Partial<SubjectMaster>) => {
     try {
-      const { error } = await supabase
-        .from('task_master')
-        .update(updates)
-        .eq('id', id)
-      if (error) throw error
+      const setClauses: string[] = []
+      if (updates.canonical_name !== undefined) {
+        setClauses.push(`canonical_name = ${escapeValue(updates.canonical_name)}`)
+      }
+      if (updates.category !== undefined) {
+        setClauses.push(`category = ${escapeValue(updates.category)}`)
+      }
+      if (updates.usage_count !== undefined) {
+        setClauses.push(`usage_count = ${updates.usage_count}`)
+      }
+      if (updates.last_used_at !== undefined) {
+        setClauses.push(`last_used_at = ${escapeValue(updates.last_used_at)}`)
+      }
+      if (updates.sort_order !== undefined) {
+        setClauses.push(`sort_order = ${updates.sort_order}`)
+      }
+      if (updates.is_active !== undefined) {
+        setClauses.push(`is_active = ${updates.is_active}`)
+      }
+      setClauses.push(`updated_at = ${escapeValue(new Date().toISOString())}`)
+
+      if (setClauses.length > 0) {
+        const sql = `UPDATE task_master SET ${setClauses.join(', ')} WHERE id = ${escapeValue(id)}`
+        const result = await dbClient.executeSQL(sql)
+        if (!result.success) throw new Error(result.error)
+      }
+
       await fetchSubjects()
       return true
     } catch (err) {
@@ -76,11 +105,9 @@ export function useSubjectMaster() {
   const deleteSubject = useCallback(async (id: string) => {
     try {
       // 論理削除
-      const { error } = await supabase
-        .from('task_master')
-        .update({ is_active: false })
-        .eq('id', id)
-      if (error) throw error
+      const sql = `UPDATE task_master SET is_active = FALSE WHERE id = ${escapeValue(id)}`
+      const result = await dbClient.executeSQL(sql)
+      if (!result.success) throw new Error(result.error)
       await fetchSubjects()
       return true
     } catch (err) {
@@ -92,19 +119,12 @@ export function useSubjectMaster() {
 
   const reorderSubjects = useCallback(async (orderedSubjects: SubjectMaster[]) => {
     try {
-      const updates = orderedSubjects.map((subject, index) => ({
-        id: subject.id,
-        canonical_name: subject.canonical_name,
-        category: subject.category,
-        usage_count: subject.usage_count,
-        last_used_at: subject.last_used_at,
-        is_active: subject.is_active,
-        sort_order: index,
-      }))
+      for (let i = 0; i < orderedSubjects.length; i++) {
+        const subject = orderedSubjects[i]
+        const sql = `UPDATE task_master SET sort_order = ${i} WHERE id = ${escapeValue(subject.id)}`
+        await dbClient.executeSQL(sql)
+      }
 
-      const { error } = await supabase.from('task_master').upsert(updates)
-
-      if (error) throw error
       await fetchSubjects()
       return true
     } catch (err) {

@@ -1,10 +1,10 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { supabase } from '@/lib/supabase'
+import { dbClient, escapeValue } from '@/lib/db-client'
 
 
-// Supabaseから取得するデータの型定義
+// データの型定義
 export interface Target {
   id: number
   name: string
@@ -75,7 +75,7 @@ export function useWorkDictionary() {
     async function fetchDictionary() {
       try {
         setLoading(true)
-        
+
         // 並行してデータを取得
         const [
           targetsRes,
@@ -85,63 +85,63 @@ export function useWorkDictionary() {
           targetActionsRes,
           actionPositionsRes
         ] = await Promise.all([
-          supabase.from('targets').select('*').eq('is_active', true).order('sort_order'),
-          supabase.from('actions').select('*').eq('is_active', true).order('sort_order'),
-          supabase.from('positions').select('*').eq('is_active', true).order('sort_order'),
-          supabase.from('reading_mappings').select('*'),
-          supabase.from('target_actions').select(`
-            target_id,
-            action_id,
-            targets(name),
-            actions(name)
+          dbClient.executeSQL<any>(`SELECT * FROM targets WHERE is_active = TRUE ORDER BY sort_order`),
+          dbClient.executeSQL<any>(`SELECT * FROM actions WHERE is_active = TRUE ORDER BY sort_order`),
+          dbClient.executeSQL<any>(`SELECT * FROM positions WHERE is_active = TRUE ORDER BY sort_order`),
+          dbClient.executeSQL<any>(`SELECT * FROM reading_mappings`),
+          dbClient.executeSQL<any>(`
+            SELECT ta.target_id, ta.action_id, t.name as target_name, a.name as action_name
+            FROM target_actions ta
+            LEFT JOIN targets t ON ta.target_id = t.id
+            LEFT JOIN actions a ON ta.action_id = a.id
           `),
-          supabase.from('action_positions').select(`
-            action_id,
-            position_id,
-            actions(name),
-            positions(name)
+          dbClient.executeSQL<any>(`
+            SELECT ap.action_id, ap.position_id, a.name as action_name, p.name as position_name
+            FROM action_positions ap
+            LEFT JOIN actions a ON ap.action_id = a.id
+            LEFT JOIN positions p ON ap.position_id = p.id
           `)
         ])
 
         // エラーチェック
-        if (targetsRes.error) throw targetsRes.error
-        if (actionsRes.error) throw actionsRes.error
-        if (positionsRes.error) throw positionsRes.error
-        if (readingsRes.error) throw readingsRes.error
-        if (targetActionsRes.error) throw targetActionsRes.error
-        if (actionPositionsRes.error) throw actionPositionsRes.error
+        if (!targetsRes.success) throw new Error(targetsRes.error)
+        if (!actionsRes.success) throw new Error(actionsRes.error)
+        if (!positionsRes.success) throw new Error(positionsRes.error)
+        if (!readingsRes.success) throw new Error(readingsRes.error)
+        if (!targetActionsRes.success) throw new Error(targetActionsRes.error)
+        if (!actionPositionsRes.success) throw new Error(actionPositionsRes.error)
 
-        // データ設定 - nullをundefinedに変換
-        setTargets((targetsRes.data || []).map(item => ({
+        // データ設定
+        setTargets((targetsRes.data?.rows || []).map((item: any) => ({
           ...item,
           reading: item.reading ?? undefined,
           sort_order: item.sort_order ?? 0
         })))
-        setActions((actionsRes.data || []).map(item => ({
+        setActions((actionsRes.data?.rows || []).map((item: any) => ({
           ...item,
           sort_order: item.sort_order ?? 0
         })))
-        setPositions((positionsRes.data || []).map(item => ({
+        setPositions((positionsRes.data?.rows || []).map((item: any) => ({
           ...item,
           sort_order: item.sort_order ?? 0
         })))
-        setReadingMappings((readingsRes.data || []).map(item => ({
+        setReadingMappings((readingsRes.data?.rows || []).map((item: any) => ({
           ...item,
           word_type: item.word_type as "target" | "action" | "position"
         })))
-        setTargetActions((targetActionsRes.data || []).map(item => ({
+        setTargetActions((targetActionsRes.data?.rows || []).map((item: any) => ({
           target_id: item.target_id,
           action_id: item.action_id,
-          target_name: (item.targets as any)?.name,
-          action_name: (item.actions as any)?.name
+          target_name: item.target_name,
+          action_name: item.action_name
         })))
-        setActionPositions((actionPositionsRes.data || []).map(item => ({
+        setActionPositions((actionPositionsRes.data?.rows || []).map((item: any) => ({
           action_id: item.action_id,
           position_id: item.position_id,
-          action_name: (item.actions as any)?.name,
-          position_name: (item.positions as any)?.name
+          action_name: item.action_name,
+          position_name: item.position_name
         })))
-        
+
         setError(null)
       } catch (err) {
         console.error('辞書データ取得エラー:', err)
@@ -155,15 +155,15 @@ export function useWorkDictionary() {
   }, [])
 
   // prototypeページ用の配列形式に変換
-  const targetsArray = useMemo(() => 
+  const targetsArray = useMemo(() =>
     targets.map(t => t.name).sort()
   , [targets])
 
-  const actionsArray = useMemo(() => 
+  const actionsArray = useMemo(() =>
     ['（指定なし）', ...actions.map(a => a.name).sort()]
   , [actions])
 
-  const positionsArray = useMemo(() => 
+  const positionsArray = useMemo(() =>
     positions.map(p => p.name).sort()
   , [positions])
 
@@ -243,21 +243,14 @@ export function useWorkDictionary() {
       if (actionName && actionName !== '（指定なし）') rawLabel += ` ${actionName}`
       if (memo) rawLabel += ` (${memo})`
 
-      const { error } = await supabase
-        .from('work_history')
-        .insert({
-          target_id: target.id,
-          action_id: action.id,
-          position_id: position?.id || null,
-          memo,
-          unit_price: unitPrice,
-          quantity,
-          raw_label: rawLabel.trim(),
-          task_type: 'structured'
-        })
+      const sql = `
+        INSERT INTO work_history (target_id, action_id, position_id, memo, unit_price, quantity, raw_label, task_type)
+        VALUES (${target.id}, ${action.id}, ${position?.id || 'NULL'},
+                ${escapeValue(memo)}, ${unitPrice}, ${quantity}, ${escapeValue(rawLabel.trim())}, 'structured')
+      `
+      const result = await dbClient.executeSQL(sql)
+      if (!result.success) throw new Error(result.error)
 
-      if (error) throw error
-      
       return true
     } catch (err) {
       console.error('作業履歴保存エラー:', err)
@@ -279,17 +272,16 @@ export function useWorkDictionary() {
   ) {
     try {
       // セットヘッダー作成
-      const { data: workSet, error: setError } = await supabase
-        .from('work_sets')
-        .insert({
-          set_name: setName,
-          unit_price: unitPrice,
-          quantity
-        })
-        .select()
-        .single()
-
-      if (setError || !workSet) throw setError || new Error('セット作成に失敗')
+      const insertSetSQL = `
+        INSERT INTO work_sets (set_name, unit_price, quantity)
+        VALUES (${escapeValue(setName)}, ${unitPrice}, ${quantity})
+        RETURNING *
+      `
+      const setResult = await dbClient.executeSQL<any>(insertSetSQL)
+      if (!setResult.success || !setResult.data?.rows?.[0]) {
+        throw new Error(setResult.error || 'セット作成に失敗')
+      }
+      const workSet = setResult.data.rows[0]
 
       // セット詳細作成
       for (let i = 0; i < details.length; i++) {
@@ -299,18 +291,13 @@ export function useWorkDictionary() {
         const position = detail.positionName ? positions.find(p => p.name === detail.positionName) : null
 
         if (target && action) {
-          const { error: detailError } = await supabase
-            .from('work_set_details')
-            .insert({
-              work_set_id: workSet.id,
-              target_id: target.id,
-              action_id: action.id,
-              position_id: position?.id || null,
-              memo: detail.memo || '',
-              sort_order: i + 1
-            })
-
-          if (detailError) throw detailError
+          const insertDetailSQL = `
+            INSERT INTO work_set_details (work_set_id, target_id, action_id, position_id, memo, sort_order)
+            VALUES (${workSet.id}, ${target.id}, ${action.id}, ${position?.id || 'NULL'},
+                    ${escapeValue(detail.memo || '')}, ${i + 1})
+          `
+          const detailResult = await dbClient.executeSQL(insertDetailSQL)
+          if (!detailResult.success) throw new Error(detailResult.error)
         }
       }
 
@@ -329,22 +316,22 @@ export function useWorkDictionary() {
     readingMappings,
     targetActions,
     actionPositions,
-    
+
     // prototypeページ互換の配列
     targetsArray,
     actionsArray,
     positionsArray,
-    
+
     // prototypeページ互換のマッピング
     readingMap,
     targetActionsMap,
     actionPositionsMap,
     priceBookMap,
-    
+
     // 関数
     saveWorkHistory,
     saveWorkSet,
-    
+
     // 状態
     loading,
     error

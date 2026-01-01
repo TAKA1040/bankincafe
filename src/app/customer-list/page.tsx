@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Plus, Search, Edit, Trash2, Users, X, Save, Building2, UserCircle, RefreshCw, ArrowUpCircle, HelpCircle, Home } from 'lucide-react'
-import { supabase } from '@/lib/supabase'
+import { dbClient, escapeValue } from '@/lib/db-client'
 import { CustomerCategoryDB } from '@/lib/customer-categories'
 
 // 型定義
@@ -135,17 +135,16 @@ class CustomerDB {
   async syncFromOtherCustomersMaster(): Promise<number> {
     let addedCount = 0
     try {
-      const { data, error } = await (supabase as any)
-        .from('other_customers')
-        .select('*')
-        .eq('is_active', true)
+      const result = await dbClient.executeSQL<{ customer_name: string }>(
+        `SELECT * FROM "other_customers" WHERE "is_active" = TRUE`
+      )
 
-      if (error) {
-        console.error('その他顧客取得エラー:', error)
+      if (!result.success) {
+        console.error('その他顧客取得エラー:', result.error)
         return 0
       }
 
-      for (const other of (data || [])) {
+      for (const other of (result.data?.rows || [])) {
         const existing = this.findByCompanyName(other.customer_name)
         if (!existing) {
           this.addCustomer({
@@ -273,13 +272,12 @@ export default function CustomerListPage() {
           }
         } else {
           // その他顧客マスタを更新
-          await (supabase as any)
-            .from('other_customers')
-            .update({
-              customer_name: newCustomer.company_name,
-              updated_at: new Date().toISOString()
-            })
-            .eq('customer_name', editingCustomer.company_name)
+          const newName = escapeValue(newCustomer.company_name)
+          const updatedAt = escapeValue(new Date().toISOString())
+          const oldName = escapeValue(editingCustomer.company_name)
+          await dbClient.executeSQL(
+            `UPDATE "other_customers" SET "customer_name" = ${newName}, "updated_at" = ${updatedAt} WHERE "customer_name" = ${oldName}`
+          )
         }
 
         alert('顧客情報を更新しました')
@@ -296,15 +294,10 @@ export default function CustomerListPage() {
           })
         } else {
           // その他顧客マスタに追加
-          await (supabase as any)
-            .from('other_customers')
-            .upsert({
-              customer_name: newCustomer.company_name,
-              usage_count: 0,
-              is_active: true
-            }, {
-              onConflict: 'customer_name'
-            })
+          const customerName = escapeValue(newCustomer.company_name)
+          await dbClient.executeSQL(
+            `INSERT INTO "other_customers" ("customer_name", "usage_count", "is_active") VALUES (${customerName}, 0, TRUE) ON CONFLICT ("customer_name") DO UPDATE SET "is_active" = TRUE`
+          )
         }
 
         alert('新規顧客を登録しました')
@@ -359,10 +352,11 @@ export default function CustomerListPage() {
 
     // マスタからも削除/無効化
     if (customer.category_type === 'other') {
-      await (supabase as any)
-        .from('other_customers')
-        .update({ is_active: false, updated_at: new Date().toISOString() })
-        .eq('customer_name', customer.company_name)
+      const updatedAt = escapeValue(new Date().toISOString())
+      const customerName = escapeValue(customer.company_name)
+      await dbClient.executeSQL(
+        `UPDATE "other_customers" SET "is_active" = FALSE, "updated_at" = ${updatedAt} WHERE "customer_name" = ${customerName}`
+      )
     }
 
     setCustomers([...db.customers])
@@ -389,34 +383,30 @@ export default function CustomerListPage() {
       db.updateCustomer(customer.id, { category_type: 'category' })
 
       // 3. 既存の請求書データを更新（その他 + この顧客名 → 新カテゴリ）
-      const { error: updateError } = await supabase
-        .from('invoices')
-        .update({ customer_category: customer.company_name })
-        .eq('customer_category', 'その他')
-        .eq('customer_name', customer.company_name)
+      const customerName = escapeValue(customer.company_name)
+      const updateResult = await dbClient.executeSQL(
+        `UPDATE "invoices" SET "customer_category" = ${customerName} WHERE "customer_category" = 'その他' AND "customer_name" = ${customerName}`
+      )
 
-      if (updateError) {
-        console.error('請求書更新エラー:', updateError)
+      if (!updateResult.success) {
+        console.error('請求書更新エラー:', updateResult.error)
       }
 
       // 4. other_customersを無効化
-      await (supabase as any)
-        .from('other_customers')
-        .update({
-          is_active: false,
-          updated_at: new Date().toISOString()
-        })
-        .eq('customer_name', customer.company_name)
+      const updatedAt = escapeValue(new Date().toISOString())
+      await dbClient.executeSQL(
+        `UPDATE "other_customers" SET "is_active" = FALSE, "updated_at" = ${updatedAt} WHERE "customer_name" = ${customerName}`
+      )
 
       // 更新数を取得して通知
-      const { count } = await supabase
-        .from('invoices')
-        .select('*', { count: 'exact', head: true })
-        .eq('customer_category', customer.company_name)
+      const countResult = await dbClient.executeSQL<{ count: number }>(
+        `SELECT COUNT(*) as count FROM "invoices" WHERE "customer_category" = ${customerName}`
+      )
+      const count = countResult.data?.rows?.[0]?.count || 0
 
       alert(`「${customer.company_name}」をカテゴリに昇格しました！\n\n` +
         `・カテゴリ顧客に移動しました\n` +
-        `・${count || 0}件の請求書データが更新されました`)
+        `・${count}件の請求書データが更新されました`)
 
       // データ再取得
       setCustomers([...db.customers])

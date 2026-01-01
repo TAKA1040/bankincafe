@@ -3,7 +3,10 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { Settings, Plus, Trash2, Edit2, Save, X, ArrowLeft, ArrowUp, ArrowDown, Home, Search } from 'lucide-react'
-import { supabase } from '@/lib/supabase'
+import { dbClient, escapeValue } from '@/lib/db-client'
+
+// Supabase互換のためのエイリアス
+const supabase = dbClient
 import type { Target, Action, Position, ReadingMapping, TargetAction, ActionPosition, PriceSuggestion } from '@/hooks/useWorkDictionary'
 
 type TabType = 'targets' | 'actions' | 'positions' | 'readings' | 'relations' | 'pending'
@@ -781,7 +784,7 @@ export default function WorkDictionaryPage() {
       // ユーザーに分かりやすいエラーメッセージ
       let userMessage = 'データベース接続エラーが発生しました。'
       if (errorMessage.includes('fetch')) {
-        userMessage += '\nSupabaseサービスが起動していない可能性があります。'
+        userMessage += '\nデータベースサービスが起動していない可能性があります。'
       }
       
       showError(`削除エラー: ${userMessage}`)

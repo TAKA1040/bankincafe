@@ -3,7 +3,10 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { Search, Plus, ArrowLeft, Car, Home } from 'lucide-react'
-import { supabase } from '@/lib/supabase'
+import { dbClient, escapeValue } from '@/lib/db-client'
+
+// Supabase互換のためのエイリアス
+const supabase = dbClient
 
 type RegistrationNumber = {
   id: string

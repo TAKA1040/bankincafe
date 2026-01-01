@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { supabase } from '../lib/supabase'
+import { dbClient } from '@/lib/db-client'
 
 type WorkHistoryItem = {
   id: number
@@ -45,14 +45,14 @@ export function useWorkHistory() {
     async function fetchWorkHistory() {
       setLoading(true)
       try {
-        const { data, error } = await supabase
-          .from('work_history_complete_view')
-          .select('*')
-          .order('created_at', { ascending: false })
-        
-        if (error) throw error
-        
-        const items: WorkHistoryItem[] = (data || []).map(item => ({
+        const result = await dbClient.executeSQL<any>(`
+          SELECT * FROM work_history_complete_view
+          ORDER BY created_at DESC
+        `)
+
+        if (!result.success) throw new Error(result.error)
+
+        const items: WorkHistoryItem[] = (result.data?.rows || []).map((item: any) => ({
           id: item.id || 0,
           target_id: item.target_id || 0,
           action_id: item.action_id || 0,
@@ -69,7 +69,7 @@ export function useWorkHistory() {
           created_at: item.created_at || '',
           updated_at: item.updated_at
         }))
-        
+
         setWorkItems(items)
         setFilteredItems(items)
       } catch (err) {
@@ -78,7 +78,7 @@ export function useWorkHistory() {
         setLoading(false)
       }
     }
-    
+
     fetchWorkHistory()
   }, [])
 
@@ -98,7 +98,7 @@ export function useWorkHistory() {
           item.raw_label || '',
           new Date(item.created_at).toLocaleDateString('ja-JP')
         ].join(' ').toLowerCase()
-        
+
         const allTokensMatch = tokens.every(token => searchText.includes(token))
         if (!allTokensMatch) return false
       }
@@ -158,7 +158,7 @@ export function useWorkHistory() {
 
       return true
     })
-    
+
     setFilteredItems(filtered)
   }, [workItems])
 
@@ -201,7 +201,7 @@ export function useWorkHistory() {
     const headers = [
       'ID', '対象', '動作', '位置', 'メモ', '単価', '数量', '合計金額', '作成日'
     ]
-    
+
     const rows = items.map(item => [
       sanitizeCSVValue(item.id.toString()),
       sanitizeCSVValue(item.target_name),
@@ -218,19 +218,19 @@ export function useWorkHistory() {
     const csvContent = '\uFEFF' + [headers.join(','), ...rows.map(row => row.join(','))].join('\n')
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
     const url = URL.createObjectURL(blob)
-    
+
     // ファイル名に期間やキーワードを含める
     let filename = '作業履歴'
     if (filters.keyword) filename += `_${filters.keyword.replace(/[\s\/\\:*?"<>|]/g, '_')}`
     if (filters.startDate) filename += `_${filters.startDate}`
     if (filters.endDate) filename += `_${filters.endDate}`
     filename += `_${new Date().toISOString().split('T')[0]}.csv`
-    
+
     const link = document.createElement('a')
     link.href = url
     link.download = filename
     link.click()
-    
+
     // メモリリーク防止
     setTimeout(() => {
       URL.revokeObjectURL(url)
@@ -254,13 +254,13 @@ function sanitizeCSVValue(value: string): string {
   if (/^[=+\-@]/.test(value)) {
     value = "'" + value  // 先頭にシングルクォートを追加
   }
-  
+
   // カンマ、改行、ダブルクォートが含まれる場合はクォートで囲む
   if (value.includes(',') || value.includes('\n') || value.includes('"')) {
     // ダブルクォートのエスケープ
     value = value.replace(/"/g, '""')
     value = `"${value}"`
   }
-  
+
   return value
 }

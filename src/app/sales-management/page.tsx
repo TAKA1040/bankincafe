@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { ArrowLeft, BarChart3, Download, TrendingUp, Calendar, JapaneseYen, RefreshCw, Banknote, Home, HelpCircle, Search, Filter, Undo2, FileText, Printer, ChevronDown, Files } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 import { useSalesData } from '@/hooks/useSalesData'
-import { supabase } from '@/lib/supabase'
+import { dbClient, escapeValue } from '@/lib/db-client'
 
 const PaymentManagementTab = ({ invoices, summary, onUpdate, onPartialPayment, onCancelPayment, loading, categories, selectedCategory, onCategoryChange, router }: {
   invoices: any[],
@@ -823,14 +823,14 @@ const MonthlyClosingTab = ({ invoices, loading }: {
       const invoiceIds = monthlyData.invoices.map(inv => inv.invoice_id);
 
       if (invoiceIds.length > 0) {
-        const { error } = await supabase
-          .from('invoices')
-          .update({ closed_at: closedAt })
-          .in('invoice_id', invoiceIds);
+        const inList = invoiceIds.map(id => escapeValue(id)).join(', ')
+        const result = await dbClient.executeSQL(
+          `UPDATE "invoices" SET "closed_at" = ${escapeValue(closedAt)} WHERE "invoice_id" IN (${inList})`
+        )
 
-        if (error) {
-          console.error('締め処理エラー:', error);
-          alert('締め処理に失敗しました: ' + error.message);
+        if (!result.success) {
+          console.error('締め処理エラー:', result.error);
+          alert('締め処理に失敗しました: ' + result.error);
           return;
         }
       }
@@ -858,14 +858,14 @@ const MonthlyClosingTab = ({ invoices, loading }: {
       const invoiceIds = monthlyData.invoices.map(inv => inv.invoice_id);
 
       if (invoiceIds.length > 0) {
-        const { error } = await supabase
-          .from('invoices')
-          .update({ closed_at: null })
-          .in('invoice_id', invoiceIds);
+        const inList = invoiceIds.map(id => escapeValue(id)).join(', ')
+        const result = await dbClient.executeSQL(
+          `UPDATE "invoices" SET "closed_at" = NULL WHERE "invoice_id" IN (${inList})`
+        )
 
-        if (error) {
-          console.error('締め解除エラー:', error);
-          alert('締め解除に失敗しました: ' + error.message);
+        if (!result.success) {
+          console.error('締め解除エラー:', result.error);
+          alert('締め解除に失敗しました: ' + result.error);
           return;
         }
       }
@@ -1051,11 +1051,10 @@ const MonthlyClosingTab = ({ invoices, loading }: {
           const baseNumber = revised.invoice_id.split('-')[0];
 
           // 元の請求書（-1）を取得
-          const { data: original } = await supabase
-            .from('invoices')
-            .select('*')
-            .eq('invoice_id', `${baseNumber}-1`)
-            .single();
+          const originalResult = await dbClient.executeSQL<Record<string, unknown>>(
+            `SELECT * FROM "invoices" WHERE "invoice_id" = ${escapeValue(`${baseNumber}-1`)} LIMIT 1`
+          )
+          const original = originalResult.data?.rows?.[0];
 
           // 元請求書が締め済みかつ修正済みなら赤黒対象
           if (original && (original as any).closed_at && (original as any).status === 'revised') {

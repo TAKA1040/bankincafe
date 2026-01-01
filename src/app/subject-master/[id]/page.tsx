@@ -3,7 +3,10 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import { ArrowLeft, Hash, Car, Clock, Edit } from 'lucide-react'
-import { supabase } from '@/lib/supabase'
+import { dbClient, escapeValue } from '@/lib/db-client'
+
+// Supabase互換のためのエイリアス
+const supabase = dbClient
 
 type Subject = {
   id: string

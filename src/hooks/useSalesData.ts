@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { supabase } from '@/lib/supabase'
+import { dbClient, escapeValue } from '@/lib/db-client'
 
 // 入金記録
 export interface PaymentRecord {
@@ -75,116 +75,56 @@ export function useSalesData() {
       setLoading(true)
       setError(null)
 
-      // ページネーションで全件取得
-      let allData: any[] = []
-      let currentPage = 0
-      const pageSize = 1000
-      let hasMore = true
+      // 請求書を取得
+      const invoicesSQL = `
+        SELECT
+          invoice_id, issue_date, billing_date, billing_month, customer_name,
+          subject_name, subject, total, total_amount, status, payment_status,
+          registration_number, purchase_order_number, order_number,
+          invoice_type, original_invoice_id, created_at
+        FROM invoices
+        WHERE status != 'deleted'
+        ORDER BY issue_date DESC
+      `
+      const invoicesResult = await dbClient.executeSQL<any>(invoicesSQL)
+      if (!invoicesResult.success) {
+        throw new Error(invoicesResult.error || '請求書の取得に失敗しました')
+      }
 
-      while (hasMore) {
-        const fromIndex = currentPage * pageSize
-        const toIndex = fromIndex + pageSize - 1
+      const rows = invoicesResult.data?.rows || []
 
-        const { data: pageData, error: pageError } = await supabase
-          .from('invoices')
-          .select(`
-            invoice_id,
-            issue_date,
-            billing_date,
-            billing_month,
-            customer_name,
-            subject_name,
-            subject,
-            total,
-            total_amount,
-            status,
-            payment_status,
-            registration_number,
-            purchase_order_number,
-            order_number,
-            invoice_type,
-            original_invoice_id,
-            created_at,
-            invoice_payments(
-              id,
-              payment_date,
-              payment_amount,
-              payment_method,
-              notes,
-              created_at
-            )
-          `)
-          .neq('status', 'deleted')
-          .order('issue_date', { ascending: false })
-          .range(fromIndex, toIndex)
+      // 入金データを一括取得
+      const invoiceIds = rows.map((r: any) => r.invoice_id)
+      const paymentsMap = new Map<string, PaymentRecord[]>()
 
-        if (pageError) {
-          // フォールバック処理（invoice_paymentsテーブルがない場合）
-          if ((pageError as any).code === '42P01') {
-            const { data: fallbackData, error: fallbackError } = await supabase
-              .from('invoices')
-              .select(`
-                invoice_id,
-                issue_date,
-                billing_date,
-                billing_month,
-                customer_name,
-                subject_name,
-                subject,
-                total,
-                total_amount,
-                status,
-                payment_status,
-                registration_number,
-                purchase_order_number,
-                order_number,
-                created_at
-              `)
-              .neq('status', 'deleted')
-              .order('issue_date', { ascending: false })
-              .range(fromIndex, toIndex)
-
-            if (fallbackError) throw fallbackError
-            if (fallbackData && fallbackData.length > 0) {
-              allData = [...allData, ...fallbackData]
-              hasMore = fallbackData.length === pageSize
-              currentPage++
-            } else {
-              hasMore = false
-            }
-          } else {
-            throw pageError
-          }
-        } else if (pageData && pageData.length > 0) {
-          allData = [...allData, ...pageData]
-          hasMore = pageData.length === pageSize
-          currentPage++
-        } else {
-          hasMore = false
+      if (invoiceIds.length > 0) {
+        const paymentsSQL = `
+          SELECT id, invoice_id, payment_date, payment_amount, payment_method, notes, created_at
+          FROM invoice_payments
+          WHERE invoice_id IN (${invoiceIds.map((id: string) => escapeValue(id)).join(', ')})
+          ORDER BY payment_date DESC
+        `
+        const paymentsResult = await dbClient.executeSQL<any>(paymentsSQL)
+        if (paymentsResult.success && paymentsResult.data?.rows) {
+          paymentsResult.data.rows.forEach((p: any) => {
+            const existing = paymentsMap.get(p.invoice_id) || []
+            existing.push({
+              id: p.id,
+              payment_date: p.payment_date,
+              payment_amount: p.payment_amount || 0,
+              payment_method: p.payment_method,
+              notes: p.notes,
+              created_at: p.created_at
+            })
+            paymentsMap.set(p.invoice_id, existing)
+          })
         }
       }
 
-      const rows: any[] = allData
-
       const salesInvoices: SalesInvoice[] = rows.map((invoice: any) => {
-        // 入金履歴の処理
-        const payments: PaymentRecord[] = (invoice.invoice_payments || []).map((p: any) => ({
-          id: p.id,
-          payment_date: p.payment_date,
-          payment_amount: p.payment_amount || 0,
-          payment_method: p.payment_method,
-          notes: p.notes,
-          created_at: p.created_at
-        }))
-
-        // 入金合計の計算
+        const payments = paymentsMap.get(invoice.invoice_id) || []
         const totalPaid = payments.reduce((sum, p) => sum + p.payment_amount, 0)
-        
-        // 最終入金日の取得
-        const lastPaymentDate = payments.length > 0 
-          ? payments.sort((a, b) => new Date(b.payment_date).getTime() - new Date(a.payment_date).getTime())[0].payment_date
-          : null
-
+        const lastPaymentDate = payments.length > 0 ? payments[0].payment_date : null
         const totalAmount = invoice.total_amount || invoice.total || 0
 
         return {
@@ -198,25 +138,19 @@ export function useSalesData() {
           status: (invoice.status as 'draft' | 'finalized' | 'sent' | 'paid') || 'draft',
           payment_status: (invoice.payment_status as 'unpaid' | 'paid' | 'partial') || 'unpaid',
           created_at: invoice.created_at,
-          // 実際のDBカラム
           registration_number: invoice.registration_number,
           purchase_order_number: invoice.purchase_order_number,
           order_number: invoice.order_number,
-          // 新スキーマフィールド
           invoice_type: (invoice.invoice_type as 'standard' | 'credit_note') || 'standard',
           original_invoice_id: invoice.original_invoice_id,
-          // 計算フィールド
           total_paid: totalPaid,
           remaining_amount: totalAmount - totalPaid,
           last_payment_date: lastPaymentDate,
-          payment_history: payments.sort((a, b) =>
-            new Date(b.payment_date).getTime() - new Date(a.payment_date).getTime()
-          )
+          payment_history: payments
         }
       })
 
       // 枝番フィルタリング: 同じ基本番号の請求書は最大枝番のみを表示
-      // 請求書番号形式: YYMM連番-枝番 (例: 25053398-1, 25053398-2)
       const getBaseNumber = (invoiceId: string): string => {
         const match = invoiceId.match(/^(.+)-\d+$/)
         return match ? match[1] : invoiceId
@@ -226,7 +160,6 @@ export function useSalesData() {
         return match ? parseInt(match[1], 10) : 1
       }
 
-      // 基本番号ごとに最大枝番を特定
       const maxBranchMap = new Map<string, number>()
       salesInvoices.forEach(invoice => {
         const baseNum = getBaseNumber(invoice.invoice_id)
@@ -237,7 +170,6 @@ export function useSalesData() {
         }
       })
 
-      // 最大枝番のみをフィルタリング
       const filteredInvoices = salesInvoices.filter(invoice => {
         const baseNum = getBaseNumber(invoice.invoice_id)
         const branchNum = getBranchNumber(invoice.invoice_id)
@@ -255,7 +187,7 @@ export function useSalesData() {
 
   const getMonthlySales = useCallback((year?: number): MonthlySales[] => {
     let filteredData = invoices
-    
+
     if (year) {
       filteredData = invoices.filter(invoice => {
         if (!invoice.issue_date) return false
@@ -263,19 +195,19 @@ export function useSalesData() {
         return invoiceYear === year
       })
     }
-    
+
     const monthlyMap = new Map<string, MonthlySales>()
-    
+
     filteredData.forEach(invoice => {
       if (!invoice.issue_date) return
-      
+
       const date = new Date(invoice.issue_date)
       const invoiceYear = date.getFullYear()
       const invoiceMonth = date.getMonth() + 1
       const key = `${invoiceYear}-${invoiceMonth}`
-      
+
       const existing = monthlyMap.get(key)
-      
+
       if (existing) {
         existing.amount += invoice.total_amount
         existing.count += 1
@@ -289,7 +221,7 @@ export function useSalesData() {
         })
       }
     })
-    
+
     return Array.from(monthlyMap.values()).sort((a, b) => {
       if (a.year !== b.year) return a.year - b.year
       return a.monthNum - b.monthNum
@@ -298,7 +230,7 @@ export function useSalesData() {
 
   const getCustomerSales = useCallback((year?: number): CustomerSales[] => {
     let filteredData = invoices
-    
+
     if (year) {
       filteredData = invoices.filter(invoice => {
         if (!invoice.issue_date) return false
@@ -306,14 +238,14 @@ export function useSalesData() {
         return invoiceYear === year
       })
     }
-    
+
     const totalAmount = filteredData.reduce((sum, invoice) => sum + invoice.total_amount, 0)
     const customerMap = new Map<string, CustomerSales>()
-    
+
     filteredData.forEach(invoice => {
       const customerName = invoice.customer_name || '不明'
       const existing = customerMap.get(customerName)
-      
+
       if (existing) {
         existing.total_amount += invoice.total_amount
         existing.invoice_count += 1
@@ -326,18 +258,18 @@ export function useSalesData() {
         })
       }
     })
-    
+
     const customers = Array.from(customerMap.values())
     customers.forEach(customer => {
       customer.percentage = totalAmount > 0 ? (customer.total_amount / totalAmount) * 100 : 0
     })
-    
+
     return customers.sort((a, b) => b.total_amount - a.total_amount)
   }, [invoices])
 
   const getStatistics = useCallback((year?: number): SalesStatistics => {
     let filteredData = invoices
-    
+
     if (year) {
       filteredData = invoices.filter(invoice => {
         if (!invoice.issue_date) return false
@@ -345,7 +277,7 @@ export function useSalesData() {
         return invoiceYear === year
       })
     }
-    
+
     if (filteredData.length === 0) {
       return {
         totalSales: 0,
@@ -360,24 +292,21 @@ export function useSalesData() {
     }
 
     const totalSales = filteredData.reduce((sum, invoice) => sum + invoice.total_amount, 0)
-    
-    // 支払い状況別の金額集計（新スキーマベース）
+
     const paidAmount = filteredData
       .filter(invoice => invoice.payment_status === 'paid')
       .reduce((sum, invoice) => sum + invoice.total_paid, 0)
-    
+
     const partialAmount = filteredData
       .filter(invoice => invoice.payment_status === 'partial')
       .reduce((sum, invoice) => sum + invoice.total_paid, 0)
-    
+
     const unpaidAmount = totalSales - paidAmount - partialAmount
     const averageAmount = Math.round(totalSales / filteredData.length)
 
-    // 顧客別売上
     const customerSales = getCustomerSales(year)
     const topCustomer = customerSales[0]?.customer_name || ''
 
-    // 月別売上
     const monthlySales = getMonthlySales(year)
     const topMonth = monthlySales.sort((a, b) => b.amount - a.amount)[0]?.month || ''
 
@@ -395,20 +324,20 @@ export function useSalesData() {
 
   const getAvailableYears = useCallback((): number[] => {
     const years = new Set<number>()
-    
+
     invoices.forEach(invoice => {
       if (invoice.issue_date) {
         const year = new Date(invoice.issue_date).getFullYear()
         years.add(year)
       }
     })
-    
+
     return Array.from(years).sort((a, b) => b - a)
   }, [invoices])
 
   const exportToCSV = useCallback((year?: number): void => {
     let filteredData = invoices
-    
+
     if (year) {
       filteredData = invoices.filter(invoice => {
         if (!invoice.issue_date) return false
@@ -416,12 +345,12 @@ export function useSalesData() {
         return invoiceYear === year
       })
     }
-    
+
     const headers = [
-      '請求書ID', '請求日', '顧客名', '件名', '金額', 'ステータス', 
+      '請求書ID', '請求日', '顧客名', '件名', '金額', 'ステータス',
       '支払い状況', '入金合計', '残額', '最終入金日', '作成日'
     ]
-    
+
     const getStatusLabel = (status: string): string => {
       const statusMap = {
         draft: '下書き',
@@ -440,7 +369,7 @@ export function useSalesData() {
       }
       return statusMap[status as keyof typeof statusMap] || status
     }
-    
+
     const rows = filteredData.map(invoice => [
       invoice.invoice_id,
       invoice.issue_date ? new Date(invoice.issue_date).toLocaleDateString('ja-JP') : '',
@@ -458,12 +387,12 @@ export function useSalesData() {
     const csvContent = [headers.join(','), ...rows.map(row => row.join(','))].join('\n')
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
     const url = URL.createObjectURL(blob)
-    
+
     const link = document.createElement('a')
     link.href = url
     link.download = `売上データ_${year || '全年度'}_${new Date().toISOString().split('T')[0]}.csv`
     link.click()
-    
+
     setTimeout(() => URL.revokeObjectURL(url), 100)
   }, [invoices])
 
@@ -491,18 +420,17 @@ export function useSalesData() {
         summary[status].remaining += invoice.remaining_amount
       }
     }
-    
+
     return summary
   }, [invoices])
 
-  // 新スキーマ対応: invoice_payments テーブルへの入金記録 - 楽観的UI更新
+  // 入金記録 - 楽観的UI更新
   const recordPayment = useCallback(async (invoiceId: string, paymentData: {
     payment_date: string
     payment_amount: number
     payment_method?: string
     notes?: string
   }): Promise<boolean> => {
-    // 楽観的UI更新: 先にローカル状態を更新
     const originalInvoices = [...invoices]
     setInvoices(prev => prev.map(inv => {
       if (inv.invoice_id !== invoiceId) return inv
@@ -526,61 +454,38 @@ export function useSalesData() {
     try {
       setError(null)
 
-      // invoice_payments テーブルに入金記録を挿入
-      const { error: paymentError } = await supabase
-        .from('invoice_payments')
-        .insert({
-          invoice_id: invoiceId,
-          payment_date: paymentData.payment_date,
-          payment_amount: paymentData.payment_amount,
-          payment_method: paymentData.payment_method || null,
-          notes: paymentData.notes || null
-        })
+      // 入金記録を挿入
+      const insertSQL = `
+        INSERT INTO invoice_payments (invoice_id, payment_date, payment_amount, payment_method, notes)
+        VALUES (${escapeValue(invoiceId)}, ${escapeValue(paymentData.payment_date)},
+                ${paymentData.payment_amount}, ${escapeValue(paymentData.payment_method || null)},
+                ${escapeValue(paymentData.notes || null)})
+      `
+      const insertResult = await dbClient.executeSQL(insertSQL)
+      if (!insertResult.success) throw new Error(insertResult.error)
 
-      if (paymentError) {
-        // フォールバック: 古いテーブル構造での更新
-        const { error: fallbackError } = await supabase
-          .from('invoices')
-          .update({
-            payment_status: 'paid',
-          })
-          .eq('invoice_id', invoiceId)
+      // 請求書の支払い状況を更新
+      const paymentsSQL = `
+        SELECT SUM(payment_amount) as total FROM invoice_payments WHERE invoice_id = ${escapeValue(invoiceId)}
+      `
+      const paymentsResult = await dbClient.executeSQL<any>(paymentsSQL)
+      const totalPaid = paymentsResult.data?.rows?.[0]?.total || 0
 
-        if (fallbackError) {
-          setInvoices(originalInvoices)
-          throw fallbackError
-        }
-      } else {
-        // 請求書の支払い状況を更新
-        // 入金合計を計算して支払い状況を決定
-        const { data: payments } = await supabase
-          .from('invoice_payments')
-          .select('payment_amount')
-          .eq('invoice_id', invoiceId)
+      const invoiceSQL = `SELECT total, total_amount FROM invoices WHERE invoice_id = ${escapeValue(invoiceId)}`
+      const invoiceResult = await dbClient.executeSQL<any>(invoiceSQL)
+      const total = invoiceResult.data?.rows?.[0]?.total_amount || invoiceResult.data?.rows?.[0]?.total || 0
 
-        const { data: invoice } = await supabase
-          .from('invoices')
-          .select('total')
-          .eq('invoice_id', invoiceId)
-          .single()
-
-        if (payments && invoice) {
-          const totalPaid = payments.reduce((sum, p) => sum + (p.payment_amount || 0), 0)
-          const total = invoice.total || 0
-
-          let newStatus: 'unpaid' | 'paid' | 'partial' = 'unpaid'
-          if (totalPaid >= total) {
-            newStatus = 'paid'
-          } else if (totalPaid > 0) {
-            newStatus = 'partial'
-          }
-
-          await supabase
-            .from('invoices')
-            .update({ payment_status: newStatus })
-            .eq('invoice_id', invoiceId)
-        }
+      let newStatus: 'unpaid' | 'paid' | 'partial' = 'unpaid'
+      if (totalPaid >= total) {
+        newStatus = 'paid'
+      } else if (totalPaid > 0) {
+        newStatus = 'partial'
       }
+
+      const updateSQL = `
+        UPDATE invoices SET payment_status = ${escapeValue(newStatus)} WHERE invoice_id = ${escapeValue(invoiceId)}
+      `
+      await dbClient.executeSQL(updateSQL)
 
       return true
     } catch (err) {
@@ -591,9 +496,8 @@ export function useSalesData() {
     }
   }, [invoices])
 
-  // 複数請求書の一括支払い更新（新スキーマ対応）- 楽観的UI更新
+  // 複数請求書の一括支払い更新 - 楽観的UI更新
   const updateInvoicesPaymentStatus = useCallback(async (invoiceIds: string[], paymentDate: string): Promise<boolean> => {
-    // 楽観的UI更新: 先にローカル状態を更新
     const originalInvoices = [...invoices]
     setInvoices(prev => prev.map(inv =>
       invoiceIds.includes(inv.invoice_id)
@@ -604,44 +508,29 @@ export function useSalesData() {
     try {
       setError(null)
 
-      // 各請求書の残額を取得して入金記録を作成
-      const { data: invoicesData } = await supabase
-        .from('invoices')
-        .select('invoice_id, total')
-        .in('invoice_id', invoiceIds)
+      for (const invoiceId of invoiceIds) {
+        // 請求書の合計額を取得
+        const invoiceSQL = `SELECT total, total_amount FROM invoices WHERE invoice_id = ${escapeValue(invoiceId)}`
+        const invoiceResult = await dbClient.executeSQL<any>(invoiceSQL)
+        const total = invoiceResult.data?.rows?.[0]?.total_amount || invoiceResult.data?.rows?.[0]?.total || 0
 
-      if (!invoicesData) {
-        setInvoices(originalInvoices)
-        throw new Error('請求書データの取得に失敗しました')
-      }
-
-      // 各請求書に対して入金記録を作成
-      for (const invoice of invoicesData) {
         // 既存の入金額を取得
-        const { data: existingPayments } = await supabase
-          .from('invoice_payments')
-          .select('payment_amount')
-          .eq('invoice_id', invoice.invoice_id)
+        const paymentsSQL = `SELECT SUM(payment_amount) as total FROM invoice_payments WHERE invoice_id = ${escapeValue(invoiceId)}`
+        const paymentsResult = await dbClient.executeSQL<any>(paymentsSQL)
+        const existingTotal = paymentsResult.data?.rows?.[0]?.total || 0
 
-        const existingTotal = existingPayments?.reduce((sum, p) => sum + (p.payment_amount || 0), 0) || 0
-        const remainingAmount = (invoice.total || 0) - existingTotal
+        const remainingAmount = total - existingTotal
 
         if (remainingAmount > 0) {
-          await supabase
-            .from('invoice_payments')
-            .insert({
-              invoice_id: invoice.invoice_id,
-              payment_date: paymentDate,
-              payment_amount: remainingAmount,
-              payment_method: '一括更新',
-              notes: '売上管理画面からの一括支払い更新'
-            })
+          const insertSQL = `
+            INSERT INTO invoice_payments (invoice_id, payment_date, payment_amount, payment_method, notes)
+            VALUES (${escapeValue(invoiceId)}, ${escapeValue(paymentDate)}, ${remainingAmount},
+                    '一括更新', '売上管理画面からの一括支払い更新')
+          `
+          await dbClient.executeSQL(insertSQL)
 
-          // 支払い状況を「支払済み」に更新
-          await supabase
-            .from('invoices')
-            .update({ payment_status: 'paid' })
-            .eq('invoice_id', invoice.invoice_id)
+          const updateSQL = `UPDATE invoices SET payment_status = 'paid' WHERE invoice_id = ${escapeValue(invoiceId)}`
+          await dbClient.executeSQL(updateSQL)
         }
       }
 
@@ -654,9 +543,8 @@ export function useSalesData() {
     }
   }, [invoices])
 
-  // 入金取り消し（入金履歴を全削除して未入金に戻す）- 楽観的UI更新
+  // 入金取り消し - 楽観的UI更新
   const cancelPayment = useCallback(async (invoiceId: string, deleteHistory: boolean = true): Promise<boolean> => {
-    // 楽観的UI更新: 先にローカル状態を更新
     const originalInvoices = [...invoices]
     setInvoices(prev => prev.map(inv =>
       inv.invoice_id === invoiceId
@@ -668,82 +556,54 @@ export function useSalesData() {
       setError(null)
 
       if (deleteHistory) {
-        // invoice_payments テーブルから入金記録を削除
-        const { error: deleteError } = await supabase
-          .from('invoice_payments')
-          .delete()
-          .eq('invoice_id', invoiceId)
-
-        if (deleteError) {
-          console.warn('入金履歴の削除に失敗:', deleteError)
-          // テーブルがない場合は無視して続行
-        }
+        const deleteSQL = `DELETE FROM invoice_payments WHERE invoice_id = ${escapeValue(invoiceId)}`
+        await dbClient.executeSQL(deleteSQL)
       }
 
-      // 請求書の支払い状況を「未入金」に更新
-      const { error: updateError } = await supabase
-        .from('invoices')
-        .update({ payment_status: 'unpaid' })
-        .eq('invoice_id', invoiceId)
-
-      if (updateError) {
-        // エラー時はロールバック
+      const updateSQL = `UPDATE invoices SET payment_status = 'unpaid' WHERE invoice_id = ${escapeValue(invoiceId)}`
+      const result = await dbClient.executeSQL(updateSQL)
+      if (!result.success) {
         setInvoices(originalInvoices)
-        throw updateError
+        throw new Error(result.error)
       }
 
       return true
     } catch (err) {
       console.error('Failed to cancel payment:', err)
       setError(err instanceof Error ? err.message : '入金取り消しに失敗しました')
-      // ロールバック
       setInvoices(originalInvoices)
       return false
     }
   }, [invoices])
 
-  // 特定の入金記録を削除（一部入金の取り消し用）
+  // 特定の入金記録を削除
   const deletePaymentRecord = useCallback(async (paymentId: number, invoiceId: string): Promise<boolean> => {
     try {
       setLoading(true)
       setError(null)
 
-      // 入金記録を削除
-      const { error: deleteError } = await supabase
-        .from('invoice_payments')
-        .delete()
-        .eq('id', paymentId)
-
-      if (deleteError) throw deleteError
+      const deleteSQL = `DELETE FROM invoice_payments WHERE id = ${paymentId}`
+      const deleteResult = await dbClient.executeSQL(deleteSQL)
+      if (!deleteResult.success) throw new Error(deleteResult.error)
 
       // 残りの入金記録を確認して支払い状況を更新
-      const { data: remainingPayments } = await supabase
-        .from('invoice_payments')
-        .select('payment_amount')
-        .eq('invoice_id', invoiceId)
+      const paymentsSQL = `SELECT SUM(payment_amount) as total FROM invoice_payments WHERE invoice_id = ${escapeValue(invoiceId)}`
+      const paymentsResult = await dbClient.executeSQL<any>(paymentsSQL)
+      const totalPaid = paymentsResult.data?.rows?.[0]?.total || 0
 
-      const { data: invoice } = await supabase
-        .from('invoices')
-        .select('total')
-        .eq('invoice_id', invoiceId)
-        .single()
+      const invoiceSQL = `SELECT total, total_amount FROM invoices WHERE invoice_id = ${escapeValue(invoiceId)}`
+      const invoiceResult = await dbClient.executeSQL<any>(invoiceSQL)
+      const total = invoiceResult.data?.rows?.[0]?.total_amount || invoiceResult.data?.rows?.[0]?.total || 0
 
-      if (invoice) {
-        const totalPaid = remainingPayments?.reduce((sum, p) => sum + (p.payment_amount || 0), 0) || 0
-        const total = invoice.total || 0
-
-        let newStatus: 'unpaid' | 'paid' | 'partial' = 'unpaid'
-        if (totalPaid >= total) {
-          newStatus = 'paid'
-        } else if (totalPaid > 0) {
-          newStatus = 'partial'
-        }
-
-        await supabase
-          .from('invoices')
-          .update({ payment_status: newStatus })
-          .eq('invoice_id', invoiceId)
+      let newStatus: 'unpaid' | 'paid' | 'partial' = 'unpaid'
+      if (totalPaid >= total) {
+        newStatus = 'paid'
+      } else if (totalPaid > 0) {
+        newStatus = 'partial'
       }
+
+      const updateSQL = `UPDATE invoices SET payment_status = ${escapeValue(newStatus)} WHERE invoice_id = ${escapeValue(invoiceId)}`
+      await dbClient.executeSQL(updateSQL)
 
       await fetchInvoices()
       return true

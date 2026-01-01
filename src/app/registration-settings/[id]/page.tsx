@@ -3,7 +3,10 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import { ArrowLeft, FileText, Clock, Car, Edit } from 'lucide-react'
-import { supabase } from '@/lib/supabase'
+import { dbClient, escapeValue } from '@/lib/db-client'
+
+// Supabase互換のためのエイリアス
+const supabase = dbClient
 
 type RegistrationNumber = {
   id: string
@@ -54,38 +57,51 @@ export default function RegistrationDetailPage() {
         
         setRegistration(registrationData)
         
-        const { data: relationsData, error: relationsError } = await supabase
-          .from('subject_registration_numbers')
-          .select(`
-            id,
-            is_primary,
-            usage_count,
-            last_used_at,
-            subject_master (
-              id,
-              subject_name,
-              subject_name_kana
-            )
-          `)
-          .eq('registration_number_id', registrationId)
-          .order('usage_count', { ascending: false })
-        
-        if (relationsError) {
-          console.error('関連件名取得エラー:', relationsError)
-          throw relationsError
+        // JOINクエリで関連件名を取得
+        const joinSql = `
+          SELECT
+            srn.id,
+            srn.is_primary,
+            srn.usage_count,
+            srn.last_used_at,
+            sm.id as subject_id,
+            sm.subject_name,
+            sm.subject_name_kana
+          FROM subject_registration_numbers srn
+          LEFT JOIN subject_master sm ON srn.subject_id = sm.id
+          WHERE srn.registration_number_id = ${escapeValue(registrationId)}
+          ORDER BY srn.usage_count DESC NULLS LAST
+        `
+
+        console.log('JOINクエリ実行:', joinSql)
+        const relationsResult = await dbClient.executeSQL<{
+          id: string
+          is_primary: boolean
+          usage_count: number
+          last_used_at: string | null
+          subject_id: string
+          subject_name: string
+          subject_name_kana: string | null
+        }>(joinSql)
+
+        console.log('JOINクエリ結果:', relationsResult)
+
+        if (!relationsResult.success) {
+          console.error('関連件名取得エラー:', relationsResult.error)
+          // エラーがあってもregistrationは表示する
         }
-        
-        const formattedRelations = relationsData?.map(relation => ({
+
+        const formattedRelations = (relationsResult.data?.rows || []).map(relation => ({
           id: relation.id,
           subject: {
-            id: relation.subject_master.id,
-            subject_name: relation.subject_master.subject_name,
-            subject_name_kana: relation.subject_master.subject_name_kana
+            id: relation.subject_id,
+            subject_name: relation.subject_name || '',
+            subject_name_kana: relation.subject_name_kana
           },
           is_primary: relation.is_primary,
-          usage_count: relation.usage_count,
+          usage_count: Number(relation.usage_count) || 0,
           last_used_at: relation.last_used_at
-        })) || []
+        }))
         
         setSubjects(formattedRelations)
         

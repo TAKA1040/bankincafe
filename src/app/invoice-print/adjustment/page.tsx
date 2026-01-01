@@ -2,7 +2,10 @@
 
 import { useEffect, useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
+import { dbClient, escapeValue } from '@/lib/db-client'
+
+// Supabase互換のためのエイリアス
+const supabase = dbClient
 import { Printer, ArrowLeft } from 'lucide-react'
 
 interface InvoiceData {

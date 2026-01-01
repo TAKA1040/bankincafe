@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/client'
+import { dbClient } from '@/lib/db-client'
 
 export interface FiscalYearInfo {
   fiscalYearEndMonth: number
@@ -11,27 +11,26 @@ export interface FiscalYearInfo {
  */
 export async function getFiscalYearInfo(): Promise<FiscalYearInfo> {
   try {
-    const supabase = createClient()
-    
     // 会社情報から決算月を取得
-    const { data: companyData, error } = await supabase
-      .from('company_info')
-      .select('fiscal_year_end_month')
-      .limit(1)
-      .single()
-    
-    if (error) {
-      console.warn('会社情報の取得に失敗、デフォルト値(3月決算)を使用:', error.message)
+    const result = await dbClient.executeSQL<any>(`
+      SELECT fiscal_year_end_month FROM company_info LIMIT 1
+    `)
+
+    let companyData = null
+    if (result.success && result.data?.rows?.length > 0) {
+      companyData = result.data.rows[0]
+    } else {
+      console.warn('会社情報の取得に失敗、デフォルト値(3月決算)を使用:', result.error)
     }
-    
+
     // 決算月（デフォルト: 3月）
     const fiscalYearEndMonth = parseInt(companyData?.fiscal_year_end_month || '3')
-    
+
     // 現在日時
     const now = new Date()
     const currentYear = now.getFullYear()
     const currentMonth = now.getMonth() + 1 // 1-12
-    
+
     // 現在の決算期を計算
     let currentFiscalYear: number
     if (currentMonth > fiscalYearEndMonth) {
@@ -41,9 +40,9 @@ export async function getFiscalYearInfo(): Promise<FiscalYearInfo> {
       // 決算月前の場合、今年度が現在の決算期
       currentFiscalYear = currentYear
     }
-    
+
     const previousFiscalYear = currentFiscalYear - 1
-    
+
     return {
       fiscalYearEndMonth,
       currentFiscalYear,
@@ -51,13 +50,13 @@ export async function getFiscalYearInfo(): Promise<FiscalYearInfo> {
     }
   } catch (error) {
     console.error('決算期情報の取得エラー:', error)
-    
+
     // エラー時はデフォルト（3月決算）を返す
     const now = new Date()
     const currentYear = now.getFullYear()
     const currentMonth = now.getMonth() + 1
     const currentFiscalYear = currentMonth > 3 ? currentYear + 1 : currentYear
-    
+
     return {
       fiscalYearEndMonth: 3,
       currentFiscalYear,
@@ -75,10 +74,10 @@ export async function getFiscalYearInfo(): Promise<FiscalYearInfo> {
 export function getFiscalYearRange(fiscalYear: number, fiscalYearEndMonth: number): {startDate: string, endDate: string} {
   const startYear = fiscalYear - 1
   const startMonth = (fiscalYearEndMonth % 12) + 1 // 決算月の翌月が期首
-  
+
   const startDate = `${startYear}-${startMonth.toString().padStart(2, '0')}-01`
   const endDate = `${fiscalYear}-${fiscalYearEndMonth.toString().padStart(2, '0')}-${getLastDayOfMonth(fiscalYear, fiscalYearEndMonth)}`
-  
+
   return { startDate, endDate }
 }
 

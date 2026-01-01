@@ -1,11 +1,11 @@
 'use client'
 
 import { useState } from 'react'
+import { signIn } from 'next-auth/react'
 import { LogIn, Shield, AlertCircle, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { createClient } from '@/lib/supabase/client'
 
-export default function LoginPageSimple() {
+export default function LoginPage() {
   const [isLoggingIn, setIsLoggingIn] = useState(false)
   const [loginError, setLoginError] = useState<string | null>(null)
 
@@ -15,30 +15,12 @@ export default function LoginPageSimple() {
     try {
       setIsLoggingIn(true)
       setLoginError(null)
-      
 
-      const supabase = createClient()
-      
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'consent',
-          }
-        }
+      await signIn('google', {
+        callbackUrl: '/',
       })
-
-      if (error) {
-        console.error('❌ ログインエラー:', error)
-        setLoginError(error.message)
-        setIsLoggingIn(false)
-      } else {
-
-      }
     } catch (error) {
-      console.error('❌ 予期しないログインエラー:', error)
+      console.error('ログインエラー:', error)
       setLoginError('ログイン処理中にエラーが発生しました')
       setIsLoggingIn(false)
     }
@@ -87,7 +69,7 @@ export default function LoginPageSimple() {
           )}
 
           {/* ログインボタン */}
-          <Button 
+          <Button
             onClick={handleGoogleLogin}
             disabled={isLoggingIn}
             className="w-full gap-3 py-4 text-lg mb-6 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] rounded-xl"
@@ -105,7 +87,7 @@ export default function LoginPageSimple() {
             )}
           </Button>
 
-          
+
           {/* フッター */}
           <div className="mt-8 pt-6 border-t border-gray-100">
             <p className="text-xs text-gray-400 flex items-center justify-center gap-1">

@@ -3,7 +3,7 @@
 import React, { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Search, Calendar, Filter, X, ChevronDown, ChevronUp } from 'lucide-react'
-import { supabase } from '@/lib/supabase'
+import { dbClient, escapeValue } from '@/lib/db-client'
 
 // ひらがな⇔カタカナ変換
 function hiraganaToKatakana(str: string): string {
@@ -125,48 +125,52 @@ export default function WorkHistoryPage() {
 
       // 件名・顧客名フィルターがある場合、先にinvoicesを検索
       if (subjectKeyword.trim() || customerKeyword.trim() || startDate || endDate) {
-        let invoiceQuery = supabase.from('invoices').select('invoice_id')
+        const conditions: string[] = []
 
         // 件名検索（あいまい検索）
         if (subjectKeyword.trim()) {
           const subjectHiragana = katakanaToHiragana(subjectKeyword.trim())
           const subjectKatakana = hiraganaToKatakana(subjectKeyword.trim())
-          const subjectConditions = [`subject.ilike.%${subjectKeyword.trim()}%`]
+          const subjectConditions = [`"subject" ILIKE '%${subjectKeyword.trim().replace(/'/g, "''")}%'`]
           if (subjectHiragana !== subjectKeyword.trim()) {
-            subjectConditions.push(`subject.ilike.%${subjectHiragana}%`)
+            subjectConditions.push(`"subject" ILIKE '%${subjectHiragana.replace(/'/g, "''")}%'`)
           }
           if (subjectKatakana !== subjectKeyword.trim() && subjectKatakana !== subjectHiragana) {
-            subjectConditions.push(`subject.ilike.%${subjectKatakana}%`)
+            subjectConditions.push(`"subject" ILIKE '%${subjectKatakana.replace(/'/g, "''")}%'`)
           }
-          invoiceQuery = invoiceQuery.or(subjectConditions.join(','))
+          conditions.push(`(${subjectConditions.join(' OR ')})`)
         }
 
         // 顧客名検索（あいまい検索）
         if (customerKeyword.trim()) {
           const customerHiragana = katakanaToHiragana(customerKeyword.trim())
           const customerKatakana = hiraganaToKatakana(customerKeyword.trim())
-          const customerConditions = [`customer_name.ilike.%${customerKeyword.trim()}%`]
+          const customerConditions = [`"customer_name" ILIKE '%${customerKeyword.trim().replace(/'/g, "''")}%'`]
           if (customerHiragana !== customerKeyword.trim()) {
-            customerConditions.push(`customer_name.ilike.%${customerHiragana}%`)
+            customerConditions.push(`"customer_name" ILIKE '%${customerHiragana.replace(/'/g, "''")}%'`)
           }
           if (customerKatakana !== customerKeyword.trim() && customerKatakana !== customerHiragana) {
-            customerConditions.push(`customer_name.ilike.%${customerKatakana}%`)
+            customerConditions.push(`"customer_name" ILIKE '%${customerKatakana.replace(/'/g, "''")}%'`)
           }
-          invoiceQuery = invoiceQuery.or(customerConditions.join(','))
+          conditions.push(`(${customerConditions.join(' OR ')})`)
         }
 
         // 期間フィルター
         if (startDate) {
-          invoiceQuery = invoiceQuery.gte('issue_date', startDate)
+          conditions.push(`"issue_date" >= ${escapeValue(startDate)}`)
         }
         if (endDate) {
-          invoiceQuery = invoiceQuery.lte('issue_date', endDate)
+          conditions.push(`"issue_date" <= ${escapeValue(endDate)}`)
         }
 
-        const { data: matchedInvoices, error: invoiceError } = await invoiceQuery.limit(1000)
-        if (invoiceError) throw invoiceError
+        const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''
+        const invoicesResult = await dbClient.executeSQL<{ invoice_id: string }>(
+          `SELECT "invoice_id" FROM "invoices" ${whereClause} LIMIT 1000`
+        )
 
-        targetInvoiceIds = matchedInvoices?.map(inv => inv.invoice_id) || []
+        if (!invoicesResult.success) throw new Error(invoicesResult.error)
+
+        targetInvoiceIds = invoicesResult.data?.rows?.map(inv => inv.invoice_id) || []
 
         // マッチするものがなければ結果なし
         if (targetInvoiceIds.length === 0) {
@@ -176,62 +180,64 @@ export default function WorkHistoryPage() {
       }
 
       // invoice_line_itemsを検索
-      let query = supabase
-        .from('invoice_line_items')
-        .select(`
-          id,
-          raw_label,
-          raw_label_part,
-          unit_price,
-          quantity,
-          target,
-          set_name,
-          invoice_id,
-          line_no,
-          task_type
-        `)
+      const lineConditions: string[] = []
 
       // 作業名フィルター（raw_label_partのみ検索）
       if (workKeyword.trim()) {
         const keywordHiragana = katakanaToHiragana(workKeyword.trim())
         const keywordKatakana = hiraganaToKatakana(workKeyword.trim())
-        const orConditions = [`raw_label_part.ilike.%${workKeyword.trim()}%`]
+        const orConditions = [`"raw_label_part" ILIKE '%${workKeyword.trim().replace(/'/g, "''")}%'`]
         if (keywordHiragana !== workKeyword.trim()) {
-          orConditions.push(`raw_label_part.ilike.%${keywordHiragana}%`)
+          orConditions.push(`"raw_label_part" ILIKE '%${keywordHiragana.replace(/'/g, "''")}%'`)
         }
         if (keywordKatakana !== workKeyword.trim() && keywordKatakana !== keywordHiragana) {
-          orConditions.push(`raw_label_part.ilike.%${keywordKatakana}%`)
+          orConditions.push(`"raw_label_part" ILIKE '%${keywordKatakana.replace(/'/g, "''")}%'`)
         }
-        query = query.or(orConditions.join(','))
+        lineConditions.push(`(${orConditions.join(' OR ')})`)
       }
 
       // 種別フィルター
       if (taskTypeFilter !== 'all') {
-        query = query.eq('task_type', taskTypeFilter)
+        lineConditions.push(`"task_type" = ${escapeValue(taskTypeFilter)}`)
       }
 
       // 価格範囲フィルター
       if (minPrice) {
-        query = query.gte('unit_price', parseInt(minPrice))
+        lineConditions.push(`"unit_price" >= ${parseInt(minPrice)}`)
       }
       if (maxPrice) {
-        query = query.lte('unit_price', parseInt(maxPrice))
+        lineConditions.push(`"unit_price" <= ${parseInt(maxPrice)}`)
       }
 
       // 請求書IDフィルター
-      if (targetInvoiceIds) {
-        query = query.in('invoice_id', targetInvoiceIds)
+      if (targetInvoiceIds && targetInvoiceIds.length > 0) {
+        const inList = targetInvoiceIds.map(id => escapeValue(id)).join(', ')
+        lineConditions.push(`"invoice_id" IN (${inList})`)
       }
 
-      const { data, error } = await query
-        .order('invoice_id', { ascending: false })
-        .limit(500)
+      const lineWhereClause = lineConditions.length > 0 ? `WHERE ${lineConditions.join(' AND ')}` : ''
+      const lineItemsResult = await dbClient.executeSQL<{
+        id: number
+        raw_label: string | null
+        raw_label_part: string | null
+        unit_price: number
+        quantity: number
+        target: string | null
+        set_name: string | null
+        invoice_id: string
+        line_no: number
+        task_type: string | null
+      }>(
+        `SELECT "id", "raw_label", "raw_label_part", "unit_price", "quantity", "target", "set_name", "invoice_id", "line_no", "task_type" FROM "invoice_line_items" ${lineWhereClause} ORDER BY "invoice_id" DESC LIMIT 500`
+      )
 
-      if (error) throw error
+      if (!lineItemsResult.success) throw new Error(lineItemsResult.error)
+
+      const data = lineItemsResult.data?.rows || []
 
       // 重複排除（同じinvoice_id + line_noは1つだけ）
       const uniqueMap = new Map<string, typeof data[0]>()
-      for (const item of data || []) {
+      for (const item of data) {
         const key = `${item.invoice_id}-${item.line_no}`
         if (!uniqueMap.has(key)) {
           uniqueMap.set(key, item)
@@ -241,20 +247,22 @@ export default function WorkHistoryPage() {
       // 請求書情報を取得
       const invoiceIds = [...new Set(Array.from(uniqueMap.values()).map(item => item.invoice_id))]
 
-      const { data: invoicesData } = await supabase
-        .from('invoices')
-        .select('invoice_id, customer_name, subject, issue_date')
-        .in('invoice_id', invoiceIds)
-
-      const invoiceMap = new Map(invoicesData?.map(inv => [inv.invoice_id, inv]) || [])
+      let invoiceMap = new Map<string, { invoice_id: string; customer_name: string | null; subject: string | null; issue_date: string | null }>()
+      if (invoiceIds.length > 0) {
+        const inList = invoiceIds.map(id => escapeValue(id)).join(', ')
+        const invoicesResult = await dbClient.executeSQL<{ invoice_id: string; customer_name: string | null; subject: string | null; issue_date: string | null }>(
+          `SELECT "invoice_id", "customer_name", "subject", "issue_date" FROM "invoices" WHERE "invoice_id" IN (${inList})`
+        )
+        invoiceMap = new Map(invoicesResult.data?.rows?.map(inv => [inv.invoice_id, inv]) || [])
+      }
 
       const results = Array.from(uniqueMap.values()).map(item => {
         const invoice = invoiceMap.get(item.invoice_id)
         return {
           id: item.id,
           raw_label_part: item.raw_label_part || null,
-          unit_price: item.unit_price || 0,
-          quantity: item.quantity || 0,
+          unit_price: Number(item.unit_price) || 0,
+          quantity: Number(item.quantity) || 0,
           subject: invoice?.subject || null,
           customer_name: invoice?.customer_name || null,
           issue_date: invoice?.issue_date || null,
@@ -278,34 +286,35 @@ export default function WorkHistoryPage() {
     setDetailLoading(true)
     try {
       const [invoiceRes, lineItemsRes] = await Promise.all([
-        supabase
-          .from('invoices')
-          .select('invoice_id, customer_name, subject, issue_date, remarks')
-          .eq('invoice_id', invoiceId)
-          .single(),
-        supabase
-          .from('invoice_line_items')
-          .select('line_no, sub_no, raw_label, raw_label_part, unit_price, quantity, amount, task_type, set_name')
-          .eq('invoice_id', invoiceId)
-          .order('line_no', { ascending: true })
-          .order('sub_no', { ascending: true })
+        dbClient.executeSQL<{ invoice_id: string; customer_name: string | null; subject: string | null; issue_date: string | null; remarks: string | null }>(
+          `SELECT "invoice_id", "customer_name", "subject", "issue_date", "remarks" FROM "invoices" WHERE "invoice_id" = ${escapeValue(invoiceId)} LIMIT 1`
+        ),
+        dbClient.executeSQL<{ line_no: number; sub_no: number; raw_label: string | null; raw_label_part: string | null; unit_price: number | null; quantity: number | null; amount: number | null; task_type: string | null; set_name: string | null }>(
+          `SELECT "line_no", "sub_no", "raw_label", "raw_label_part", "unit_price", "quantity", "amount", "task_type", "set_name" FROM "invoice_line_items" WHERE "invoice_id" = ${escapeValue(invoiceId)} ORDER BY "line_no" ASC, "sub_no" ASC`
+        )
       ])
 
-      if (invoiceRes.error) throw invoiceRes.error
+      if (!invoiceRes.success) throw new Error(invoiceRes.error)
+
+      const invoiceData = invoiceRes.data?.rows?.[0]
+      if (!invoiceData) throw new Error('請求書が見つかりません')
 
       // セット明細の判定: task_type='S'でsub_no > 1の場合のみセット明細
       // sub_no=1はセットの親行、sub_no > 1は子行（金額表示なし）
-      const lineItems = (lineItemsRes.data || []).map(item => ({
+      const lineItems = (lineItemsRes.data?.rows || []).map(item => ({
         ...item,
+        unit_price: Number(item.unit_price) || 0,
+        quantity: Number(item.quantity) || 0,
+        amount: Number(item.amount) || 0,
         is_set_detail: item.task_type === 'S' && item.sub_no > 1
       }))
 
       setSelectedInvoice({
-        invoice_id: invoiceRes.data.invoice_id,
-        customer_name: invoiceRes.data.customer_name,
-        subject: invoiceRes.data.subject,
-        issue_date: invoiceRes.data.issue_date,
-        remarks: invoiceRes.data.remarks,
+        invoice_id: invoiceData.invoice_id,
+        customer_name: invoiceData.customer_name,
+        subject: invoiceData.subject,
+        issue_date: invoiceData.issue_date,
+        remarks: invoiceData.remarks,
         line_items: lineItems
       })
     } catch (error) {

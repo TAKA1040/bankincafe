@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase'
+import { dbClient } from '@/lib/db-client'
 
 // 対象マスタの型定義
 interface Target {
@@ -17,25 +17,24 @@ async function getTargets(): Promise<Target[]> {
   if (targetCache) {
     return targetCache
   }
-  const { data: targets, error } = await supabase
-    .from('targets')
-    .select('id, name, reading')
-    .eq('is_active', true)
-    .order('name')
+  const result = await dbClient.executeSQL<Target>(
+    `SELECT "id", "name", "reading" FROM "targets" WHERE "is_active" = TRUE ORDER BY "name"`
+  )
 
-
-  if (error) {
-    console.error('❌ 対象マスタ取得エラー:', error)
+  if (!result.success) {
+    console.error('❌ 対象マスタ取得エラー:', result.error)
     return []
   }
 
-  if (!targets || targets.length === 0) {
+  const targets = result.data?.rows || []
+
+  if (targets.length === 0) {
     console.warn('⚠️ No targets found in database!')
     return []
   }
 
   // null -> undefined 変換で型安全性を向上
-  targetCache = (targets || []).map(target => ({
+  targetCache = targets.map(target => ({
     ...target,
     reading: target.reading ?? undefined
   }))

@@ -4,7 +4,10 @@ import React, { useState, useEffect, useMemo, useRef, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Plus, Trash2, Save, Search, Calculator, Home, AlertCircle, HelpCircle } from 'lucide-react'
 import { useWorkDictionary } from '@/hooks/useWorkDictionary'
-import { supabase } from '@/lib/supabase'
+import { dbClient, escapeValue } from '@/lib/db-client'
+
+// Supabase互換のためのエイリアス
+const supabase = dbClient
 import { generateDocumentNumber, parseDocumentNumber } from '@/lib/utils'
 
 // ひらがな・カタカナ変換のヘルパー関数

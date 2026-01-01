@@ -3,7 +3,10 @@
 import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Database, CheckCircle, AlertCircle, Users, Briefcase, Target, Settings, FileText, Home } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
+import { dbClient, escapeValue } from '@/lib/db-client'
+
+// Supabase互換のためのエイリアス
+const supabase = dbClient
 
 interface MasterStats {
   invoices: number
@@ -46,8 +49,6 @@ export default function MasterConfirmationPage() {
       setLoading(true)
       setError(null)
       
-      const supabase = createClient()
-
       // 各マスターテーブルのデータ件数を取得
       const [
         invoicesResult,
@@ -157,7 +158,6 @@ export default function MasterConfirmationPage() {
   const fetchTableData = async (tableName: string) => {
     setDataLoading(true)
     try {
-      const supabase = createClient()
       const { data, error } = await supabase
         .from(tableName)
         .select('*')
@@ -188,8 +188,7 @@ export default function MasterConfirmationPage() {
       setLineItemsData(data)
     } else if (tabName === 'targets' && targetsData.length === 0) {
       setDataLoading(true)
-      const supabase = createClient()
-      const { data } = await supabase
+            const { data } = await supabase
         .from('targets')
         .select('*')
         .eq('is_active', true)
@@ -198,8 +197,7 @@ export default function MasterConfirmationPage() {
       setDataLoading(false)
     } else if (tabName === 'actions' && actionsData.length === 0) {
       setDataLoading(true)
-      const supabase = createClient()
-      const { data } = await supabase
+            const { data } = await supabase
         .from('actions')
         .select('*')
         .eq('is_active', true)
@@ -208,8 +206,7 @@ export default function MasterConfirmationPage() {
       setDataLoading(false)
     } else if (tabName === 'positions' && positionsData.length === 0) {
       setDataLoading(true)
-      const supabase = createClient()
-      const { data } = await supabase
+            const { data } = await supabase
         .from('positions')
         .select('*')
         .eq('is_active', true)

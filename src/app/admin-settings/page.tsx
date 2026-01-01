@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Users, Settings, Shield, CheckCircle, Clock, XCircle, Trash2 } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
+import { dbClient, escapeValue } from '@/lib/db-client'
 
 interface UserManagement {
   id: string
@@ -38,32 +38,28 @@ export default function AdminSettingsPage() {
     try {
       setLoading(true)
       setError(null)
-      
-      const supabase = createClient()
 
       // ユーザー管理データを取得
-      const { data: usersData, error: usersError } = await supabase
-        .from('user_management')
-        .select('*')
-        .order('requested_at', { ascending: false })
+      const usersResult = await dbClient.executeSQL<UserManagement>(
+        `SELECT * FROM "user_management" ORDER BY "requested_at" DESC`
+      )
 
-      if (usersError && usersError.code !== 'PGRST116') {
+      if (!usersResult.success) {
         // テーブルが存在しない場合は空配列を設定
         setUsers([])
       } else {
-        setUsers(usersData || [])
+        setUsers(usersResult.data?.rows || [])
       }
 
       // 管理者設定データを取得
-      const { data: settingsData, error: settingsError } = await supabase
-        .from('admin_settings')
-        .select('*')
-        .order('setting_key')
+      const settingsResult = await dbClient.executeSQL<AdminSettings>(
+        `SELECT * FROM "admin_settings" ORDER BY "setting_key"`
+      )
 
-      if (settingsError && settingsError.code !== 'PGRST116') {
+      if (!settingsResult.success) {
         setSettings([])
       } else {
-        setSettings(settingsData || [])
+        setSettings(settingsResult.data?.rows || [])
       }
     } catch (err) {
       console.error('Error fetching data:', err)
@@ -80,13 +76,11 @@ export default function AdminSettingsPage() {
     }
 
     try {
-      const supabase = createClient()
-      const { error } = await supabase
-        .from('user_management')
-        .delete()
-        .eq('id', userId)
+      const result = await dbClient.executeSQL(
+        `DELETE FROM "user_management" WHERE "id" = ${escapeValue(userId)}`
+      )
 
-      if (error) throw error
+      if (!result.success) throw new Error(result.error)
 
       // データを再取得
       await fetchData()
@@ -99,23 +93,18 @@ export default function AdminSettingsPage() {
   // ユーザーステータス更新
   const updateUserStatus = async (userId: string, newStatus: 'approved' | 'rejected') => {
     try {
-      const supabase = createClient()
-      const updates: any = {
-        status: newStatus,
-        updated_at: new Date().toISOString()
-      }
+      const updatedAt = escapeValue(new Date().toISOString())
+      let sql = `UPDATE "user_management" SET "status" = ${escapeValue(newStatus)}, "updated_at" = ${updatedAt}`
 
       if (newStatus === 'approved') {
-        updates.approved_at = new Date().toISOString()
-        // TODO: 実際の認証実装時にapproved_byを設定
+        sql += `, "approved_at" = ${updatedAt}`
       }
 
-      const { error } = await supabase
-        .from('user_management')
-        .update(updates)
-        .eq('id', userId)
+      sql += ` WHERE "id" = ${escapeValue(userId)}`
 
-      if (error) throw error
+      const result = await dbClient.executeSQL(sql)
+
+      if (!result.success) throw new Error(result.error)
 
       // データを再取得
       await fetchData()
@@ -128,16 +117,12 @@ export default function AdminSettingsPage() {
   // 設定値更新
   const updateSetting = async (settingKey: string, newValue: string) => {
     try {
-      const supabase = createClient()
-      const { error } = await supabase
-        .from('admin_settings')
-        .update({
-          setting_value: newValue,
-          updated_at: new Date().toISOString()
-        })
-        .eq('setting_key', settingKey)
+      const updatedAt = escapeValue(new Date().toISOString())
+      const result = await dbClient.executeSQL(
+        `UPDATE "admin_settings" SET "setting_value" = ${escapeValue(newValue)}, "updated_at" = ${updatedAt} WHERE "setting_key" = ${escapeValue(settingKey)}`
+      )
 
-      if (error) throw error
+      if (!result.success) throw new Error(result.error)
 
       // データを再取得
       await fetchData()
@@ -150,16 +135,13 @@ export default function AdminSettingsPage() {
   // 追加パスワード更新
   const updateAdditionalPassword = async (userId: string, password: string) => {
     try {
-      const supabase = createClient()
-      const { error } = await supabase
-        .from('user_management')
-        .update({
-          additional_password: password || null,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', userId)
+      const updatedAt = escapeValue(new Date().toISOString())
+      const passwordValue = password ? escapeValue(password) : 'NULL'
+      const result = await dbClient.executeSQL(
+        `UPDATE "user_management" SET "additional_password" = ${passwordValue}, "updated_at" = ${updatedAt} WHERE "id" = ${escapeValue(userId)}`
+      )
 
-      if (error) throw error
+      if (!result.success) throw new Error(result.error)
 
       // データを再取得
       await fetchData()

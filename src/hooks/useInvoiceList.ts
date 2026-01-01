@@ -1,12 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { createClient } from '@/lib/supabase/client'
-import { dataGuard } from '@/lib/data-guard'
-import type { Database } from '@/types/supabase'
-
-type InvoiceRow = Database['public']['Tables']['invoices']['Row']
-type InvoiceLineItemRow = Database['public']['Tables']['invoice_line_items']['Row']
+import { dbClient, escapeValue } from '@/lib/db-client'
 
 export interface SplitItem {
   id: number
@@ -81,7 +76,7 @@ export interface SearchFilters {
 // 文字正規化関数（ひらがな/カタカナ、大文字小文字、全角半角を統一）
 const normalizeSearchText = (text: string): string => {
   if (!text) return ''
-  
+
   return text
     // 全角英数字を半角に変換
     .replace(/[Ａ-Ｚａ-ｚ０-９]/g, (char) => {
@@ -104,141 +99,88 @@ export function useInvoiceList(yearFilter?: string | string[]) {
   const [invoices, setInvoices] = useState<InvoiceWithItems[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  
+
 
   const fetchInvoices = useCallback(async () => {
     try {
       setLoading(true)
       setError(null)
 
-      const startTime = performance.now()
+      // 請求書を取得
+      let invoiceSQL = `
+        SELECT
+          invoice_id, invoice_number, issue_date, billing_date, billing_month,
+          customer_category, customer_name, subject_name, subject,
+          registration_number, order_number, purchase_order_number,
+          subtotal, tax, total, total_amount, status, payment_status,
+          created_at, updated_at, remarks, closed_at, invoice_type, original_invoice_id
+        FROM invoices
+        WHERE status != 'deleted'
+      `
 
-      // データ保護チェック実行
-      const dataStatus = await dataGuard.getDataStatus()
-      
-      if (dataStatus.invoices.status === 'DANGER') {
-        throw new Error(`🚨 データ不足: 請求書が${dataStatus.invoices.current}件しかありません（最低${dataStatus.invoices.minimum}件必要）`)
-      }
-
-      // データベースの請求書を取得（年度フィルター対応）
-      const supabase = createClient()
-      let query = supabase
-        .from('invoices')
-        .select(`
-          invoice_id,
-          invoice_number,
-          issue_date,
-          billing_date,
-          billing_month,
-          customer_category,
-          customer_name,
-          subject_name,
-          subject,
-          registration_number,
-          order_number,
-          purchase_order_number,
-          subtotal,
-          tax,
-          total,
-          total_amount,
-          status,
-          payment_status,
-          created_at,
-          updated_at,
-          invoice_line_items (
-            id,
-            line_no,
-            task_type,
-            target,
-            action1,
-            position1,
-            quantity,
-            unit_price,
-            amount,
-            raw_label,
-            performed_at
-          )
-        `)
-        // ソフト削除された請求書を除外（経理データ保護）
-        .neq('status', 'deleted')
-        .order('billing_date', { ascending: false })
-
-      // 年度フィルターが指定されている場合は条件を追加
+      // 年度フィルター条件を追加
       if (yearFilter && yearFilter !== 'all' && yearFilter !== 'multi') {
-        // 単一年度指定
         if (typeof yearFilter === 'string') {
           const year = parseInt(yearFilter)
-          const startDate = `${year}-01-01`
-          const endDate = `${year}-12-31`
-          query = query
-            .gte('billing_date', startDate)
-            .lte('billing_date', endDate)
+          invoiceSQL += ` AND billing_date >= '${year}-01-01' AND billing_date <= '${year}-12-31'`
         }
       } else if (Array.isArray(yearFilter) && yearFilter.length > 0) {
-        // 複数年度指定（決算期ベース）
         const fiscalYears = yearFilter.map(y => parseInt(y)).filter(y => !isNaN(y))
         if (fiscalYears.length > 0) {
           const minFiscalYear = Math.min(...fiscalYears)
           const maxFiscalYear = Math.max(...fiscalYears)
-          
-          // 決算期の期間を計算（3月決算と仮定、実際はcompany_infoから取得すべき）
-          // 最小決算期の開始日（前年4月）から最大決算期の終了日（当年3月）まで
           const startDate = `${minFiscalYear - 1}-04-01`
           const endDate = `${maxFiscalYear}-03-31`
-          
-          query = query
-            .gte('billing_date', startDate)
-            .lte('billing_date', endDate)
-        }
-      } else {
-      }
-
-      // 🔥 強制全件取得：ページネーション方式で制限を回避
-      let joinedData: any[] = []
-      let currentPage = 0
-      const pageSize = 1000
-      let hasMore = true
-
-      while (hasMore) {
-        const fromIndex = currentPage * pageSize
-        const toIndex = fromIndex + pageSize - 1
-        
-        
-        const { data: pageData, error: pageError } = await query
-          .range(fromIndex, toIndex)
-        
-        if (pageError) {
-          throw pageError
-        }
-        
-        if (pageData && pageData.length > 0) {
-          joinedData = [...joinedData, ...pageData]
-          
-          // 取得件数がページサイズ未満なら最後のページ
-          hasMore = pageData.length === pageSize
-          currentPage++
-        } else {
-          hasMore = false
+          invoiceSQL += ` AND billing_date >= '${startDate}' AND billing_date <= '${endDate}'`
         }
       }
-      
-      const joinError = null // エラーは上記でハンドリング済み
 
+      invoiceSQL += ` ORDER BY billing_date DESC`
 
-      if (joinError) {
-        throw joinError
+      const invoicesResult = await dbClient.executeSQL<any>(invoiceSQL)
+      if (!invoicesResult.success) {
+        throw new Error(invoicesResult.error || '請求書の取得に失敗しました')
       }
+
+      const invoiceRows = invoicesResult.data?.rows || []
+
+      // 請求書IDリストを取得
+      const invoiceIds = invoiceRows.map((inv: any) => inv.invoice_id)
+
+      // 明細行を一括取得
+      let lineItems: any[] = []
+      if (invoiceIds.length > 0) {
+        const lineItemsSQL = `
+          SELECT id, invoice_id, line_no, task_type, target, action1, position1,
+                 quantity, unit_price, amount, raw_label, performed_at
+          FROM invoice_line_items
+          WHERE invoice_id IN (${invoiceIds.map((id: string) => escapeValue(id)).join(', ')})
+          ORDER BY invoice_id, line_no
+        `
+        const lineItemsResult = await dbClient.executeSQL<any>(lineItemsSQL)
+        if (lineItemsResult.success) {
+          lineItems = lineItemsResult.data?.rows || []
+        }
+      }
+
+      // 明細行を請求書IDでグループ化
+      const lineItemsByInvoice = new Map<string, any[]>()
+      lineItems.forEach((item: any) => {
+        const existing = lineItemsByInvoice.get(item.invoice_id) || []
+        existing.push(item)
+        lineItemsByInvoice.set(item.invoice_id, existing)
+      })
 
       // 請求書データを構築
-      const allInvoices: InvoiceWithItems[] = (joinedData || []).map((invoice: any) => {
-        const lineItems = invoice.invoice_line_items || []
+      const allInvoices: InvoiceWithItems[] = invoiceRows.map((invoice: any) => {
+        const items = lineItemsByInvoice.get(invoice.invoice_id) || []
 
         return {
           ...invoice,
           invoice_number: invoice.invoice_number || invoice.invoice_id,
           customer_category: (invoice.customer_category as 'UD' | 'その他') || 'その他',
           subject: invoice.subject || invoice.subject_name,
-          line_items: lineItems.map((item: any) => ({
+          line_items: items.map((item: any) => ({
             id: item.id,
             line_no: item.line_no,
             task_type: item.task_type,
@@ -251,8 +193,8 @@ export function useInvoiceList(yearFilter?: string | string[]) {
             raw_label: item.raw_label,
             performed_at: item.performed_at
           })),
-          total_quantity: lineItems.reduce((sum: number, item: any) => sum + (item.quantity || 0), 0),
-          work_names: lineItems.map((item: any) =>
+          total_quantity: items.reduce((sum: number, item: any) => sum + (item.quantity || 0), 0),
+          work_names: items.map((item: any) =>
             item.raw_label || [item.target, item.action1, item.position1].filter(Boolean).join(' ')
           ).join(', '),
           status: (invoice.status as 'draft' | 'finalized' | 'sent' | 'paid') || 'draft',
@@ -264,7 +206,6 @@ export function useInvoiceList(yearFilter?: string | string[]) {
       })
 
       // 枝番フィルタリング: 同じ基本番号の請求書は最大枝番のみを表示
-      // 請求書番号形式: YYMM連番-枝番 (例: 25053398-1, 25053398-2)
       const getBaseNumber = (invoiceId: string): string => {
         const match = invoiceId.match(/^(.+)-\d+$/)
         return match ? match[1] : invoiceId
@@ -306,7 +247,7 @@ export function useInvoiceList(yearFilter?: string | string[]) {
       // キーワード検索（曖昧検索）
       if (filters.keyword.trim()) {
         const normalizedKeyword = normalizeSearchText(filters.keyword)
-        const matchesKeyword = 
+        const matchesKeyword =
           normalizeSearchText(invoice.invoice_id).includes(normalizedKeyword) ||
           normalizeSearchText(invoice.invoice_number || '').includes(normalizedKeyword) ||
           normalizeSearchText(invoice.customer_name || '').includes(normalizedKeyword) ||
@@ -316,7 +257,7 @@ export function useInvoiceList(yearFilter?: string | string[]) {
           normalizeSearchText(invoice.work_names).includes(normalizedKeyword) ||
           normalizeSearchText(invoice.issue_date || '').includes(normalizedKeyword) ||
           normalizeSearchText(invoice.billing_date || '').includes(normalizedKeyword) ||
-          invoice.line_items.some(item => 
+          invoice.line_items.some(item =>
             normalizeSearchText(item.raw_label || '').includes(normalizedKeyword) ||
             normalizeSearchText(item.target || '').includes(normalizedKeyword) ||
             normalizeSearchText(item.action || '').includes(normalizedKeyword) ||
@@ -354,16 +295,13 @@ export function useInvoiceList(yearFilter?: string | string[]) {
   // ステータス更新機能
   const updateInvoiceStatus = useCallback(async (invoiceId: string, newStatus: 'draft' | 'finalized' | 'sent' | 'paid') => {
     try {
-      const supabase = createClient()
-      const { error } = await supabase
-        .from('invoices')
-        .update({ 
-          status: newStatus,
-          updated_at: new Date().toISOString()
-        })
-        .eq('invoice_id', invoiceId)
-
-      if (error) throw error
+      const updateSQL = `
+        UPDATE invoices
+        SET status = ${escapeValue(newStatus)}, updated_at = ${escapeValue(new Date().toISOString())}
+        WHERE invoice_id = ${escapeValue(invoiceId)}
+      `
+      const result = await dbClient.executeSQL(updateSQL)
+      if (!result.success) throw new Error(result.error)
 
       // データを再取得してUIを更新
       await fetchInvoices()
@@ -378,16 +316,13 @@ export function useInvoiceList(yearFilter?: string | string[]) {
   // 支払いステータス更新機能
   const updatePaymentStatus = useCallback(async (invoiceId: string, newPaymentStatus: 'unpaid' | 'paid' | 'partial') => {
     try {
-      const supabase = createClient()
-      const { error } = await supabase
-        .from('invoices')
-        .update({ 
-          payment_status: newPaymentStatus,
-          updated_at: new Date().toISOString()
-        })
-        .eq('invoice_id', invoiceId)
-
-      if (error) throw error
+      const updateSQL = `
+        UPDATE invoices
+        SET payment_status = ${escapeValue(newPaymentStatus)}, updated_at = ${escapeValue(new Date().toISOString())}
+        WHERE invoice_id = ${escapeValue(invoiceId)}
+      `
+      const result = await dbClient.executeSQL(updateSQL)
+      if (!result.success) throw new Error(result.error)
 
       // データを再取得してUIを更新
       await fetchInvoices()
@@ -405,40 +340,23 @@ export function useInvoiceList(yearFilter?: string | string[]) {
       setError(null)
 
       // 元請求書の取得
-      const supabase = createClient()
-      const { data: originalInvoice, error: invoiceErr } = await supabase
-        .from('invoices')
-        .select('*')
-        .eq('invoice_id', originalId)
-        .single()
-
-      if (invoiceErr || !originalInvoice) {
-        throw invoiceErr || new Error('元の請求書が見つかりません')
+      const invoiceSQL = `SELECT * FROM invoices WHERE invoice_id = ${escapeValue(originalId)}`
+      const invoiceResult = await dbClient.executeSQL<any>(invoiceSQL)
+      if (!invoiceResult.success || !invoiceResult.data?.rows?.[0]) {
+        throw new Error('元の請求書が見つかりません')
       }
+      const originalInvoice = invoiceResult.data.rows[0]
 
       // 元のライン項目の取得
-      const { data: lineItems, error: lineErr } = await supabase
-        .from('invoice_line_items')
-        .select('*')
-        .eq('invoice_id', originalId)
-        .order('line_no', { ascending: true })
+      const lineItemsSQL = `
+        SELECT * FROM invoice_line_items
+        WHERE invoice_id = ${escapeValue(originalId)}
+        ORDER BY line_no
+      `
+      const lineItemsResult = await dbClient.executeSQL<any>(lineItemsSQL)
+      const lineItems = lineItemsResult.data?.rows || []
 
-      if (lineErr) throw lineErr
-
-      // 元の分割項目（行ごと）をまとめて取得
-      const splitMap: Record<string, SplitItem[]> = {}
-      for (const li of lineItems || []) {
-        const { data: splits, error: splitErr } = await supabase
-          .from('invoice_line_items_split')
-          .select('*')
-          .eq('invoice_id', originalId)
-          .eq('line_no', li.line_no)
-          .order('sub_no', { ascending: true })
-        if (splitErr) throw splitErr
-        splitMap[String(li.line_no)] = (splits as unknown as SplitItem[]) || []
-      }
-
-      // 新しい請求書ID（元ID + タイムスタンプ）
+      // 新しい請求書ID
       const now = new Date()
       const yyyy = now.getFullYear()
       const mm = String(now.getMonth() + 1).padStart(2, '0')
@@ -449,67 +367,48 @@ export function useInvoiceList(yearFilter?: string | string[]) {
       const newInvoiceId = `${originalId}-R-${yyyy}${mm}${dd}${HH}${MM}${SS}`
       const issueDate = `${yyyy}-${mm}-${dd}`
 
-      // 合計値（存在すればそれを反転、なければ項目から算出）
-      const origSubtotal = (originalInvoice as any).subtotal ?? null
-      const origTax = (originalInvoice as any).tax ?? null
-      const origTotal = (originalInvoice as any).total_amount ?? null
+      // 合計値を反転
+      const origSubtotal = originalInvoice.subtotal ?? 0
+      const origTax = originalInvoice.tax ?? 0
+      const origTotal = originalInvoice.total_amount ?? origSubtotal + origTax
 
-      let subtotal = origSubtotal != null
-        ? Number(origSubtotal)
-        : (lineItems || []).reduce((s: number, li: any) => s + Number(li.amount || 0), 0)
-      let tax = origTax != null ? Number(origTax) : 0
-      let total_amount = origTotal != null ? Number(origTotal) : subtotal + tax
+      const subtotal = -Number(origSubtotal)
+      const tax = -Number(origTax)
+      const total_amount = -Number(origTotal)
 
-      subtotal = -subtotal
-      tax = -tax
-      total_amount = -total_amount
+      // 赤伝請求書を作成
+      const insertInvoiceSQL = `
+        INSERT INTO invoices (
+          invoice_id, issue_date, customer_name, subject_name, registration_number,
+          billing_month, purchase_order_number, order_number, remarks,
+          subtotal, tax, total_amount, status, invoice_type, original_invoice_id, updated_at
+        ) VALUES (
+          ${escapeValue(newInvoiceId)}, ${escapeValue(issueDate)},
+          ${escapeValue(originalInvoice.customer_name)}, ${escapeValue(originalInvoice.subject_name)},
+          ${escapeValue(originalInvoice.registration_number)}, ${escapeValue(originalInvoice.billing_month)},
+          ${escapeValue(originalInvoice.purchase_order_number)}, ${escapeValue(originalInvoice.order_number)},
+          ${escapeValue(`赤伝（元: ${originalId}）${originalInvoice.remarks ? '\n' + originalInvoice.remarks : ''}`)},
+          ${subtotal}, ${tax}, ${total_amount}, 'draft', 'red', ${escapeValue(originalId)}, ${escapeValue(now.toISOString())}
+        )
+      `
+      const insertResult = await dbClient.executeSQL(insertInvoiceSQL)
+      if (!insertResult.success) throw new Error(insertResult.error)
 
-      // トランザクションで複数テーブル操作の整合性を確保
-      const { error: transactionError } = await supabase.rpc('create_red_invoice_transaction', {
-        p_invoice_id: newInvoiceId,
-        p_issue_date: issueDate,
-        p_customer_name: (originalInvoice as any).customer_name ?? null,
-        p_subject_name: (originalInvoice as any).subject_name ?? null,
-        p_registration_number: (originalInvoice as any).registration_number ?? null,
-        p_billing_month: (originalInvoice as any).billing_month ?? null,
-        p_purchase_order_number: (originalInvoice as any).purchase_order_number ?? null,
-        p_order_number: (originalInvoice as any).order_number ?? null,
-        p_remarks: `赤伝（元: ${originalId}）` + ((originalInvoice as any).remarks ? `\n${(originalInvoice as any).remarks}` : ''),
-        p_subtotal: subtotal,
-        p_tax: tax,
-        p_total_amount: total_amount,
-        p_updated_at: now.toISOString(),
-        p_line_items: lineItems ? JSON.stringify(lineItems.map((li: any) => ({
-          line_no: li.line_no,
-          task_type: li.task_type,
-          action: li.action,
-          target: li.target,
-          position: li.position,
-          raw_label: li.raw_label,
-          unit_price: li.unit_price != null ? -Number(li.unit_price) : null,
-          quantity: li.quantity,
-          performed_at: li.performed_at,
-          amount: li.amount != null ? -Number(li.amount) : null
-        }))) : '[]',
-        p_split_items: JSON.stringify(Object.entries(splitMap).flatMap(([lineNo, splits]) => 
-          splits.map((sp) => ({
-            line_no: parseInt(lineNo),
-            sub_no: sp.sub_no,
-            raw_label_part: sp.raw_label_part,
-            action: sp.action,
-            target: sp.target,
-            position: sp.position,
-            unit_price: sp.unit_price != null ? -Number(sp.unit_price) : null,
-            quantity: sp.quantity,
-            amount: sp.amount != null ? -Number(sp.amount) : null,
-            is_cancelled: sp.is_cancelled
-          }))
-        ))
-      })
-      
-      if (transactionError) {
-        // トランザクション失敗時は自動ロールバック済み
-        throw new Error(`Transaction failed: ${transactionError.message}`)
+      // 明細行を挿入（金額反転）
+      for (const li of lineItems) {
+        const insertLineSQL = `
+          INSERT INTO invoice_line_items (
+            invoice_id, line_no, task_type, action, target, position, raw_label,
+            unit_price, quantity, performed_at, amount
+          ) VALUES (
+            ${escapeValue(newInvoiceId)}, ${li.line_no}, ${escapeValue(li.task_type)},
+            ${escapeValue(li.action)}, ${escapeValue(li.target)}, ${escapeValue(li.position)},
+            ${escapeValue(li.raw_label)}, ${li.unit_price != null ? -Number(li.unit_price) : 'NULL'},
+            ${li.quantity}, ${escapeValue(li.performed_at)},
+            ${li.amount != null ? -Number(li.amount) : 'NULL'}
+          )
+        `
+        await dbClient.executeSQL(insertLineSQL)
       }
 
       await fetchInvoices()
@@ -525,19 +424,16 @@ export function useInvoiceList(yearFilter?: string | string[]) {
   const deleteInvoice = useCallback(async (invoiceId: string) => {
     try {
       setError(null)
-      const supabase = createClient()
-      
+
       // 物理削除禁止 - ソフト削除（論理削除）で経理データを保護
-      const { error: updateErr } = await supabase
-        .from('invoices')
-        .update({ 
-          status: 'deleted',
-          deleted_at: new Date().toISOString(),
-          deleted_by: (await supabase.auth.getUser()).data.user?.id
-        })
-        .eq('invoice_id', invoiceId)
-      
-      if (updateErr) throw updateErr
+      const updateSQL = `
+        UPDATE invoices
+        SET status = 'deleted', deleted_at = ${escapeValue(new Date().toISOString())}
+        WHERE invoice_id = ${escapeValue(invoiceId)}
+      `
+      const result = await dbClient.executeSQL(updateSQL)
+      if (!result.success) throw new Error(result.error)
+
       await fetchInvoices()
       return true
     } catch (e) {

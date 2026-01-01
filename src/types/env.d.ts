@@ -3,10 +3,17 @@
  */
 declare namespace NodeJS {
   interface ProcessEnv {
-    NEXT_PUBLIC_SUPABASE_URL: string
-    NEXT_PUBLIC_SUPABASE_ANON_KEY: string
+    // manarieDB
+    MANARIEDB_API_KEY: string
+
+    // NextAuth.js
+    AUTH_SECRET: string
+    NEXTAUTH_URL: string
+    GOOGLE_CLIENT_ID: string
+    GOOGLE_CLIENT_SECRET: string
+
+    // アプリケーション設定
     ALLOWED_EMAILS: string // サーバーサイド専用（セキュリティ向上）
-    SUPABASE_SERVICE_ROLE_KEY?: string
   }
 }
 

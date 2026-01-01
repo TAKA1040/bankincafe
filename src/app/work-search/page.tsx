@@ -3,14 +3,9 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Search, Download, BarChart3, X, Home } from 'lucide-react'
-import { supabase } from '@/lib/supabase'
-import type { Database } from '@/types/supabase'
+import { dbClient } from '@/lib/db-client'
 import { CustomerCategoryDB, CustomerCategory } from '@/lib/customer-categories'
 // import { extractTargetFromWorkName } from '@/lib/target-extractor' // 不要：DBのtargetをそのまま使用
-
-// 型定義
-type InvoiceRow = Database['public']['Tables']['invoices']['Row']
-type InvoiceLineItemRow = Database['public']['Tables']['invoice_line_items']['Row']
 
 // 画面表示用の新しいデータ構造
 interface SplitDetail {
@@ -146,82 +141,48 @@ export default function WorkSearchPage() {
       setLoading(true)
       setError(null)
       try {
-        // 1. 分割データと請求書データを取得
-        
-        // 2. 分割データがある請求書IDを先に取得
-
-        const { data: splitInvoiceIds } = await supabase
-          .from('invoice_line_items_split')
-          .select('invoice_id')
-          .limit(1000)
-        
-        const uniqueInvoiceIds = [...new Set(splitInvoiceIds?.map(s => s.invoice_id) || [])]
-
-
-        // 3. 元の請求書項目を取得
-        const lineItemsRes = await supabase.from('invoice_line_items').select(`
-          id,
-          invoice_id,
-          line_no,
-          raw_label,
-          unit_price,
-          quantity,
-          amount,
-          task_type,
-          target,
-          set_name
+        // 1. 元の請求書項目を取得
+        const lineItemsRes = await dbClient.executeSQL<any>(`
+          SELECT id, invoice_id, line_no, raw_label, unit_price, quantity, amount, task_type, target, set_name
+          FROM invoice_line_items
         `)
-        
-        if (lineItemsRes.error) {
-          console.error('Line items error:', lineItemsRes.error)
-          throw new Error(`請求書項目の取得に失敗しました: ${lineItemsRes.error.message}`)
-        }
-        
-        const lineItems = lineItemsRes.data || []
-        
-        // 4. 実際に使用されているinvoice_idのベースIDを取得
-        const uniqueBaseIds = [...new Set(lineItems.map(item => item.invoice_id.split('-')[0]))]
 
-        
-        // 5. 分割データと請求書データを並行取得
+        if (!lineItemsRes.success) {
+          console.error('Line items error:', lineItemsRes.error)
+          throw new Error(`請求書項目の取得に失敗しました: ${lineItemsRes.error}`)
+        }
+
+        const lineItems = lineItemsRes.data?.rows || []
+
+        // 2. 実際に使用されているinvoice_idのベースIDを取得
+        const uniqueBaseIds = [...new Set(lineItems.map((item: any) => item.invoice_id.split('-')[0]))]
+
+
+        // 3. 分割データと請求書データを並行取得
         const [splitItemsRes, invoicesRes] = await Promise.all([
-          supabase.from('invoice_line_items_split').select(`
-            id,
-            invoice_id,
-            line_no,
-            raw_label_part,
-            target,
-            set_name
+          dbClient.executeSQL<any>(`
+            SELECT id, invoice_id, line_no, raw_label_part, target, set_name
+            FROM invoice_line_items_split
           `),
-          // 必要なinvoiceIDのみを取得（ベースIDで部分一致検索）
-          supabase.from('invoices')
-            .select(`
-              invoice_id,
-              customer_name,
-              subject,
-              subject_name,
-              registration_number,
-              issue_date,
-              billing_month
-            `)
-            .or(uniqueBaseIds
-              .filter(baseId => /^[0-9]+$/.test(baseId)) // 数字のみ許可
-              .map(baseId => `invoice_id.like.${baseId}-%`)
-              .join(','))
+          dbClient.executeSQL<any>(`
+            SELECT invoice_id, customer_name, subject, subject_name, registration_number, issue_date, billing_month
+            FROM invoices
+            WHERE status != 'deleted'
+          `)
         ])
 
-        
-        if (splitItemsRes.error) {
+
+        if (!splitItemsRes.success) {
           console.error('Split items error:', splitItemsRes.error)
-          throw new Error(`分割作業項目の取得に失敗しました: ${splitItemsRes.error.message}`)
+          throw new Error(`分割作業項目の取得に失敗しました: ${splitItemsRes.error}`)
         }
-        if (invoicesRes.error) {
+        if (!invoicesRes.success) {
           console.error('Invoices error:', invoicesRes.error)
-          throw new Error(`請求情報の取得に失敗しました: ${invoicesRes.error.message}`)
+          throw new Error(`請求情報の取得に失敗しました: ${invoicesRes.error}`)
         }
 
-        const splitItems = splitItemsRes.data || []
-        const invoices = invoicesRes.data || []
+        const splitItems = splitItemsRes.data?.rows || []
+        const invoices = invoicesRes.data?.rows || []
 
 
         
@@ -530,35 +491,24 @@ export default function WorkSearchPage() {
   const fetchInvoiceDetail = async (workItem: WorkSearchItem) => {
     try {
       // 同じ請求書IDのすべての作業項目を取得（sub_noも含む）
-      const { data: invoiceWorkItems, error } = await supabase
-        .from('invoice_line_items')
-        .select(`
-          id,
-          line_no,
-          sub_no,
-          raw_label,
-          raw_label_part,
-          unit_price,
-          quantity,
-          amount,
-          task_type,
-          target,
-          set_name,
-          action1
-        `)
-        .eq('invoice_id', workItem.invoice_id)
-        .order('line_no')
-        .order('sub_no')
+      const lineItemsRes = await dbClient.executeSQL<any>(`
+        SELECT id, line_no, sub_no, raw_label, raw_label_part, unit_price, quantity, amount, task_type, target, set_name, action1
+        FROM invoice_line_items
+        WHERE invoice_id = '${workItem.invoice_id.replace(/'/g, "''")}'
+        ORDER BY line_no, sub_no
+      `)
 
-      if (error) throw error
+      if (!lineItemsRes.success) throw new Error(lineItemsRes.error)
+      const invoiceWorkItems = lineItemsRes.data?.rows || []
 
       // 分割データも取得
-      const { data: splitData, error: splitError } = await supabase
-        .from('invoice_line_items_split')
-        .select('*')
-        .eq('invoice_id', workItem.invoice_id)
+      const splitRes = await dbClient.executeSQL<any>(`
+        SELECT * FROM invoice_line_items_split
+        WHERE invoice_id = '${workItem.invoice_id.replace(/'/g, "''")}'
+      `)
 
-      if (splitError) throw splitError
+      if (!splitRes.success) throw new Error(splitRes.error)
+      const splitData = splitRes.data?.rows || []
 
       // 分割データをグループ化
       const splitMap = new Map()
@@ -683,11 +633,10 @@ export default function WorkSearchPage() {
         .reduce((sum, item) => sum + item.amount, 0)
       
       // 請求書のremarksを取得
-      const { data: invoiceData } = await supabase
-        .from('invoices')
-        .select('remarks')
-        .eq('invoice_id', workItem.invoice_id)
-        .single()
+      const invoiceDataRes = await dbClient.executeSQL<any>(`
+        SELECT remarks FROM invoices WHERE invoice_id = '${workItem.invoice_id.replace(/'/g, "''")}'
+      `)
+      const invoiceData = invoiceDataRes.data?.rows?.[0] || null
 
       // raw_labelsを抽出（sub_no=1のみ、重複排除）
       const raw_labels = [...new Set(

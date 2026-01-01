@@ -1,8 +1,9 @@
-import { type NextRequest } from 'next/server'
-import { updateSession } from '@/lib/supabase/middleware'
+import { type NextRequest, NextResponse } from 'next/server'
 
 export async function middleware(request: NextRequest) {
-  return await updateSession(request)
+  // NextAuth対応のミドルウェア（Supabase認証を削除）
+  // 特別な処理が必要な場合はここに追加
+  return NextResponse.next()
 }
 
 export const config = {

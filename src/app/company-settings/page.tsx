@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useToast } from '@/hooks/use-toast'
-import { supabase } from '@/lib/supabase'
+import { dbClient, escapeValue } from '@/lib/db-client'
 
 interface CompanyInfo {
   companyName: string
@@ -75,70 +75,48 @@ export default function CompanySettingsPage() {
 
   const loadCompanyInfo = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-      const userId = user?.id || '00000000-0000-0000-0000-000000000000'
-      
-      // まず現在のユーザーIDでデータを取得
-      const { data: initialData, error } = await supabase
-        .from('company_info')
-        .select('*')
-        .eq('user_id', userId)
-        .maybeSingle()
-      
-      let data = initialData
-      // データが見つからない場合、デフォルトユーザーIDでも試す
-      if (!data && !error && userId !== '00000000-0000-0000-0000-000000000000') {
-        const { data: fallbackData, error: fallbackError } = await supabase
-          .from('company_info')
-          .select('*')
-          .eq('user_id', '00000000-0000-0000-0000-000000000000')
-          .maybeSingle()
-        
-        if (fallbackData && !fallbackError) {
-          // データを現在のユーザーIDに移行
-          await (supabase as any)
-            .from('company_info')
-            .update({ user_id: userId })
-            .eq('user_id', '00000000-0000-0000-0000-000000000000')
-          
-          data = { ...fallbackData, user_id: userId }
-        }
-      }
-      
-      if (error) {
-        console.error('データ読み込みエラー:', error)
+      const userId = '00000000-0000-0000-0000-000000000000'
+
+      // ユーザーIDでデータを取得
+      const result = await dbClient.executeSQL<Record<string, unknown>>(
+        `SELECT * FROM "company_info" WHERE "user_id" = ${escapeValue(userId)} LIMIT 1`
+      )
+
+      if (!result.success) {
+        console.error('データ読み込みエラー:', result.error)
         return
       }
-      
+
+      const data = result.data?.rows?.[0]
       if (!data) {
         return
       }
 
       const newCompanyInfo = {
-        companyName: data.company_name || '',
-        companyNameKana: data.company_name_kana || '',
-        representativeName: data.representative_name || '',
-        postalCode: data.postal_code || '',
-        prefecture: data.prefecture || '',
-        city: data.city || '',
-        address: data.address || '',
-        buildingName: data.building_name || '',
-        phoneNumber: data.phone_number || '',
-        faxNumber: data.fax_number || '',
-        mobileNumber: data.mobile_number || '',
-        email: data.email || '',
-        website: data.website || '',
-        fiscalYearEndMonth: data.fiscal_year_end_month?.toString() || '3',
-        taxRegistrationNumber: data.tax_registration_number || '',
-        invoiceRegistrationNumber: data.invoice_registration_number || '',
-        bankName: data.bank_name || '',
-        bankBranch: data.bank_branch || '',
-        accountType: data.account_type || '普通',
-        accountNumber: data.account_number || '',
-        accountHolder: data.account_holder || '',
-        remarks: data.remarks || ''
+        companyName: (data.company_name as string) || '',
+        companyNameKana: (data.company_name_kana as string) || '',
+        representativeName: (data.representative_name as string) || '',
+        postalCode: (data.postal_code as string) || '',
+        prefecture: (data.prefecture as string) || '',
+        city: (data.city as string) || '',
+        address: (data.address as string) || '',
+        buildingName: (data.building_name as string) || '',
+        phoneNumber: (data.phone_number as string) || '',
+        faxNumber: (data.fax_number as string) || '',
+        mobileNumber: (data.mobile_number as string) || '',
+        email: (data.email as string) || '',
+        website: (data.website as string) || '',
+        fiscalYearEndMonth: (data.fiscal_year_end_month as string)?.toString() || '3',
+        taxRegistrationNumber: (data.tax_registration_number as string) || '',
+        invoiceRegistrationNumber: (data.invoice_registration_number as string) || '',
+        bankName: (data.bank_name as string) || '',
+        bankBranch: (data.bank_branch as string) || '',
+        accountType: (data.account_type as string) || '普通',
+        accountNumber: (data.account_number as string) || '',
+        accountHolder: (data.account_holder as string) || '',
+        remarks: (data.remarks as string) || ''
       }
-      
+
       setCompanyInfo(newCompanyInfo)
     } catch (error) {
       console.error('会社情報読み込みエラー:', error)
@@ -155,62 +133,67 @@ export default function CompanySettingsPage() {
   const handleSave = async () => {
     setIsLoading(true)
     try {
-      const { data: { user }, error: authError } = await supabase.auth.getUser()
-      
-      const userId = user?.id || '00000000-0000-0000-0000-000000000000'
+      const userId = '00000000-0000-0000-0000-000000000000'
 
-      const dbData = {
-        user_id: userId,
-        company_name: companyInfo.companyName,
-        company_name_kana: companyInfo.companyNameKana,
-        representative_name: companyInfo.representativeName,
-        postal_code: companyInfo.postalCode,
-        prefecture: companyInfo.prefecture,
-        city: companyInfo.city,
-        address: companyInfo.address,
-        building_name: companyInfo.buildingName,
-        phone_number: companyInfo.phoneNumber,
-        fax_number: companyInfo.faxNumber,
-        mobile_number: companyInfo.mobileNumber,
-        email: companyInfo.email,
-        website: companyInfo.website,
-        fiscal_year_end_month: companyInfo.fiscalYearEndMonth,
-        tax_registration_number: companyInfo.taxRegistrationNumber,
-        invoice_registration_number: companyInfo.invoiceRegistrationNumber,
-        bank_name: companyInfo.bankName,
-        bank_branch: companyInfo.bankBranch,
-        account_type: companyInfo.accountType,
-        account_number: companyInfo.accountNumber,
-        account_holder: companyInfo.accountHolder,
-        remarks: companyInfo.remarks
-      }
+      // UPSERT用のSQL（ON CONFLICT）
+      const sql = `
+        INSERT INTO "company_info" (
+          "user_id", "company_name", "company_name_kana", "representative_name",
+          "postal_code", "prefecture", "city", "address", "building_name",
+          "phone_number", "fax_number", "mobile_number", "email", "website",
+          "fiscal_year_end_month", "tax_registration_number", "invoice_registration_number",
+          "bank_name", "bank_branch", "account_type", "account_number", "account_holder", "remarks"
+        ) VALUES (
+          ${escapeValue(userId)}, ${escapeValue(companyInfo.companyName)}, ${escapeValue(companyInfo.companyNameKana)}, ${escapeValue(companyInfo.representativeName)},
+          ${escapeValue(companyInfo.postalCode)}, ${escapeValue(companyInfo.prefecture)}, ${escapeValue(companyInfo.city)}, ${escapeValue(companyInfo.address)}, ${escapeValue(companyInfo.buildingName)},
+          ${escapeValue(companyInfo.phoneNumber)}, ${escapeValue(companyInfo.faxNumber)}, ${escapeValue(companyInfo.mobileNumber)}, ${escapeValue(companyInfo.email)}, ${escapeValue(companyInfo.website)},
+          ${escapeValue(companyInfo.fiscalYearEndMonth)}, ${escapeValue(companyInfo.taxRegistrationNumber)}, ${escapeValue(companyInfo.invoiceRegistrationNumber)},
+          ${escapeValue(companyInfo.bankName)}, ${escapeValue(companyInfo.bankBranch)}, ${escapeValue(companyInfo.accountType)}, ${escapeValue(companyInfo.accountNumber)}, ${escapeValue(companyInfo.accountHolder)}, ${escapeValue(companyInfo.remarks)}
+        )
+        ON CONFLICT ("user_id") DO UPDATE SET
+          "company_name" = EXCLUDED."company_name",
+          "company_name_kana" = EXCLUDED."company_name_kana",
+          "representative_name" = EXCLUDED."representative_name",
+          "postal_code" = EXCLUDED."postal_code",
+          "prefecture" = EXCLUDED."prefecture",
+          "city" = EXCLUDED."city",
+          "address" = EXCLUDED."address",
+          "building_name" = EXCLUDED."building_name",
+          "phone_number" = EXCLUDED."phone_number",
+          "fax_number" = EXCLUDED."fax_number",
+          "mobile_number" = EXCLUDED."mobile_number",
+          "email" = EXCLUDED."email",
+          "website" = EXCLUDED."website",
+          "fiscal_year_end_month" = EXCLUDED."fiscal_year_end_month",
+          "tax_registration_number" = EXCLUDED."tax_registration_number",
+          "invoice_registration_number" = EXCLUDED."invoice_registration_number",
+          "bank_name" = EXCLUDED."bank_name",
+          "bank_branch" = EXCLUDED."bank_branch",
+          "account_type" = EXCLUDED."account_type",
+          "account_number" = EXCLUDED."account_number",
+          "account_holder" = EXCLUDED."account_holder",
+          "remarks" = EXCLUDED."remarks"
+      `
 
-      const { data: result, error } = await (supabase as any)
-        .from('company_info')
-        .upsert(dbData)
+      const result = await dbClient.executeSQL(sql)
 
-      if (error) {
-        throw error
+      if (!result.success) {
+        throw new Error(result.error)
       }
 
       toast({
         title: "保存完了",
         description: "会社情報が正常に保存されました。",
       })
-      
+
       // 保存後にデータを再読み込み
       await loadCompanyInfo()
-    } catch (error: any) {
-      console.error('保存エラー詳細:', {
-        error,
-        message: error?.message,
-        code: error?.code,
-        details: error?.details,
-        hint: error?.hint
-      })
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+      console.error('保存エラー詳細:', error)
       toast({
         title: "保存エラー",
-        description: `会社情報の保存に失敗しました。エラー: ${error?.message || 'Unknown error'}`,
+        description: `会社情報の保存に失敗しました。エラー: ${errorMessage}`,
         variant: "destructive"
       })
     } finally {

@@ -2,7 +2,10 @@
 
 import { useEffect, useState, useRef, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
+import { dbClient, escapeValue } from '@/lib/db-client'
+
+// Supabase互換のためのエイリアス
+const supabase = dbClient
 import JSZip from 'jszip'
 import html2canvas from 'html2canvas'
 import jsPDF from 'jspdf'

@@ -3,7 +3,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import { Printer, Download, ArrowLeft, Home, FileText, Layout, Grid, Briefcase, ChevronDown, ChevronUp, Settings } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { dbClient, escapeValue } from '@/lib/db-client'
+
+// Supabase互換のためのエイリアス
+const supabase = dbClient;
 import { CustomerCategoryDB } from '@/lib/customer-categories';
 import { useInvoicePrintSettings, LayoutId } from '@/hooks/useInvoicePrintSettings';
 import { InvoicePagesContainer, PageRenderInfo } from '@/components/invoice-print/InvoicePageTemplate';
@@ -262,11 +265,10 @@ export default function InvoicePrintPage() {
   const fetchCompanyInfo = async () => {
     try {
       console.log('🏢 Fetching company info...');
-      const { data: { user } } = await supabase.auth.getUser();
-      const userId = user?.id || '00000000-0000-0000-0000-000000000000';
+      const userId = '00000000-0000-0000-0000-000000000000';
       console.log('👤 User ID:', userId);
-      
-      // 現在のユーザーIDで最新のデータを取得
+
+      // デフォルトユーザーIDで会社情報を取得
       console.log('🔍 Querying company_info with user_id:', userId);
       const { data: initialData, error } = await supabase
         .from('company_info')
@@ -274,26 +276,11 @@ export default function InvoicePrintPage() {
         .eq('user_id', userId)
         .order('updated_at', { ascending: false })
         .limit(1)
-        .maybeSingle();
-      
-      console.log('📊 Initial query result:', { data: initialData, error });
-      console.log('📊 Raw data fields:', initialData ? Object.keys(initialData) : 'No data');
-      
-      let data = initialData;
-      // データが見つからない場合、デフォルトユーザーIDでも試す
-      if (!data && !error && userId !== '00000000-0000-0000-0000-000000000000') {
-        console.log('🔄 Trying fallback with default user ID...');
-        const { data: fallbackData, error: fallbackError } = await supabase
-          .from('company_info')
-          .select('*')
-          .eq('user_id', '00000000-0000-0000-0000-000000000000')
-          .order('updated_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
-        
-        console.log('📊 Fallback query result:', { data: fallbackData, error: fallbackError });
-        data = fallbackData;
-      }
+        .single();
+
+      console.log('📊 Query result:', { data: initialData, error });
+
+      const data = initialData;
 
       if (data) {
         console.log('✅ Company data found, setting company info:', data);
